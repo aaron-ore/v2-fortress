@@ -8,8 +8,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import BarcodeReader from "react-barcode-reader"; // Changed import to react-barcode-reader
-import { Scan, XCircle } from "lucide-react"; // Changed icon to Scan
+import { BarcodeReader } from "react-barcode-reader"; // Changed to named import
+import { Scan, XCircle } from "lucide-react";
 import { showError } from "@/utils/toast";
 
 interface CameraScannerDialogProps {
@@ -35,18 +35,18 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
     }
   }, [isOpen]);
 
-  const handleScan = (result: string) => { // result is directly the string from react-barcode-reader
+  const handleScan = (result: string) => {
     if (result) {
       onScan(result);
-      onClose(); // Close dialog after successful scan
+      onClose();
     }
   };
 
   const handleError = (err: any) => {
     console.error("Barcode scan error:", err);
-    if (isCameraActive) { // Only show error if camera was actively trying to scan
+    if (isCameraActive) {
       onError(err.message || "Unknown camera error");
-      onClose(); // Close dialog on error
+      onClose();
     }
   };
 
@@ -64,10 +64,8 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
         <div className="flex-grow flex items-center justify-center bg-black rounded-md overflow-hidden relative">
           {isCameraActive && (
             <BarcodeReader
-              onReceive={handleScan} // Use onReceive for successful scans
+              onReceive={handleScan}
               onError={handleError}
-              // No 'constraints' or 'facingMode' props for react-barcode-reader
-              // The component typically uses the default camera (often the back camera on mobile)
             />
           )}
           {!isCameraActive && (
@@ -75,7 +73,6 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
               Scanner is not active.
             </div>
           )}
-          {/* Removed the "Toggle Camera" button */}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
