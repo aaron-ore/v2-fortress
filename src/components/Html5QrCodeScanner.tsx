@@ -15,6 +15,12 @@ const Html5QrCodeScanner: React.FC<Html5QrCodeScannerProps> = ({ onScan, onError
   const html5QrcodeScannerRef = useRef<Html5QrcodeScanner | null>(null);
 
   useEffect(() => {
+    // NEW LOGS: Inspect the Html5QrcodeScanner class itself
+    console.log("Html5QrcodeScanner class imported:", Html5QrcodeScanner);
+    console.log("Html5QrcodeScanner.prototype:", Html5QrcodeScanner.prototype);
+    console.log("Html5QrcodeScanner.prototype.start:", typeof (Html5QrcodeScanner.prototype as any).start);
+
+
     const element = document.getElementById(qrcodeRegionId);
     if (!element) {
       const msg = `DOM element with ID '${qrcodeRegionId}' not found. Cannot initialize scanner.`;
