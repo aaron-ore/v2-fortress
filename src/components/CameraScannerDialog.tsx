@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import BarcodeReader from "react-barcode-reader"; // Reverted to default import
+import { QrReader } from "react-qr-reader"; // Changed to react-qr-reader
 import { Scan, XCircle } from "lucide-react";
 import { showError } from "@/utils/toast";
 
@@ -26,6 +26,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   onError,
 }) => {
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("environment"); // Default to back camera
 
   useEffect(() => {
     if (isOpen) {
@@ -35,17 +36,22 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
     }
   }, [isOpen]);
 
-  const handleScan = (result: string) => {
-    if (result) {
-      onScan(result);
+  const handleScanResult = (result: any, error: any) => {
+    if (!!result) {
+      onScan(result?.text);
       onClose();
+    }
+
+    if (!!error && isCameraActive) {
+      // Log errors but don't necessarily close the dialog unless it's a critical camera error
+      // console.error("QR Reader error:", error);
     }
   };
 
-  const handleError = (err: any) => {
-    console.error("Barcode scan error:", err);
+  const handleCameraError = (err: any) => {
+    console.error("Camera access error:", err);
     if (isCameraActive) {
-      onError(err.message || "Unknown camera error");
+      onError(err.message || "Failed to access camera.");
       onClose();
     }
   };
@@ -58,19 +64,22 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
             <Scan className="h-6 w-6 text-primary" /> Scan Barcode
           </DialogTitle>
           <DialogDescription>
-            Point your camera at a barcode.
+            Point your camera at a barcode or QR code.
           </DialogDescription>
         </DialogHeader>
         <div className="flex-grow flex items-center justify-center bg-black rounded-md overflow-hidden relative">
-          {isCameraActive && (
-            <BarcodeReader
-              onReceive={handleScan}
-              onError={handleError}
+          {isCameraActive ? (
+            <QrReader
+              onResult={handleScanResult}
+              videoContainerStyle={{ width: '100%', height: '100%', padding: 0 }}
+              videoStyle={{ objectFit: 'cover' }}
+              constraints={{ facingMode: facingMode }}
+              scanDelay={300} // Add a small delay to prevent multiple rapid scans
+              onErrorHandler={handleCameraError} // Handle camera access errors
             />
-          )}
-          {!isCameraActive && (
+          ) : (
             <div className="text-muted-foreground text-center">
-              Scanner is not active.
+              Camera is not active.
             </div>
           )}
         </div>
