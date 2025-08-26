@@ -42,7 +42,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   }, [isOpen]);
 
   const handleScanResult = (result: any, error: any) => {
-    // isLoadingCamera is now handled by handleCameraLoad
+    if (isLoadingCamera) setIsLoadingCamera(false); // Camera stream started successfully
     if (!!result) {
       onScan(result?.text);
       onClose();
@@ -59,11 +59,6 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
     setCameraError(err.message || "Failed to access camera.");
     onError(err.message || "Failed to access camera.");
     // We don't close the dialog immediately here, so the user can try switching cameras.
-  };
-
-  const handleCameraLoad = () => {
-    setIsLoadingCamera(false); // Camera stream is ready
-    setCameraError(null); // Clear any previous errors
   };
 
   const toggleFacingMode = () => {
@@ -102,11 +97,11 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
               <QrReader
                 key={facingMode} // Force re-mount on camera switch
                 onResult={handleScanResult}
-                onLoad={handleCameraLoad} // Callback when video stream is ready
                 onError={handleCameraError} // General error handler
                 constraints={{ facingMode: facingMode }}
                 scanDelay={300}
-                // Removed videoContainerStyle and videoStyle to simplify
+                videoContainerStyle={{ width: '100%', height: '100%', padding: 0 }} // Explicit container style
+                videoStyle={{ objectFit: 'cover', width: '100%', height: '100%' }} // Explicit video style
               />
             </>
           ) : (
@@ -120,7 +115,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
             <XCircle className="h-4 w-4 mr-2" /> Cancel
           </Button>
           <Button variant="secondary" onClick={toggleFacingMode} className="w-full sm:w-auto">
-            <Camera className="h-4 w-4 mr-2" /> Switch Camera ({facingMode === "environment" ? "Back" : "Front"})
+            <Camera className="h-4 w-4 mr-2" /> Switch to {facingMode === "environment" ? "Front" : "Back"} Camera
           </Button>
         </DialogFooter>
       </DialogContent>
