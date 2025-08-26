@@ -12,10 +12,9 @@ interface Html5QrCodeScannerProps {
 const qrcodeRegionId = "html5qr-code-full-region";
 
 const Html5QrCodeScanner: React.FC<Html5QrCodeScannerProps> = ({ onScan, onError, onReady, facingMode }) => {
-  const scannerInstanceRef = useRef<Html5QrcodeScanner | null>(null);
+  const html5QrcodeScannerRef = useRef<Html5QrcodeScanner | null>(null);
 
   useEffect(() => {
-    // 1. Ensure the DOM element exists
     const element = document.getElementById(qrcodeRegionId);
     if (!element) {
       const msg = `DOM element with ID '${qrcodeRegionId}' not found. Cannot initialize scanner.`;
@@ -24,10 +23,10 @@ const Html5QrCodeScanner: React.FC<Html5QrCodeScannerProps> = ({ onScan, onError
       return;
     }
 
-    // 2. Stop any existing scanner instance if it's valid
-    if (scannerInstanceRef.current && typeof scannerInstanceRef.current.stop === 'function') {
-      scannerInstanceRef.current.stop().catch(e => console.warn("Error stopping previous scanner:", e));
-      scannerInstanceRef.current = null;
+    // Stop any existing scanner instance before creating a new one
+    if (html5QrcodeScannerRef.current && typeof html5QrcodeScannerRef.current.stop === 'function') {
+      html5QrcodeScannerRef.current.stop().catch(e => console.warn("Error stopping previous scanner:", e));
+      html5QrcodeScannerRef.current = null;
     }
 
     // Debugging: Check if Html5QrcodeScanner is a function (constructor)
@@ -38,10 +37,9 @@ const Html5QrCodeScanner: React.FC<Html5QrCodeScannerProps> = ({ onScan, onError
       return;
     }
 
-    // 3. Create a new Html5QrcodeScanner instance
-    let newScanner: Html5QrcodeScanner;
+    let scanner: Html5QrcodeScanner;
     try {
-      newScanner = new Html5QrcodeScanner(
+      scanner = new Html5QrcodeScanner(
         qrcodeRegionId,
         {
           fps: 10,
@@ -61,7 +59,7 @@ const Html5QrCodeScanner: React.FC<Html5QrCodeScannerProps> = ({ onScan, onError
         },
         /* verbose= */ false
       );
-      scannerInstanceRef.current = newScanner;
+      html5QrcodeScannerRef.current = scanner; // Assign the newly created scanner to the ref
     } catch (e: any) {
       const msg = `Html5QrcodeScanner constructor failed: ${e.message || e}`;
       console.error(msg, e);
@@ -69,20 +67,18 @@ const Html5QrCodeScanner: React.FC<Html5QrCodeScannerProps> = ({ onScan, onError
       return;
     }
 
-    // 4. Define callbacks
     const qrCodeSuccessCallback = (decodedText: string, decodedResult: any) => {
-      scannerInstanceRef.current?.pause(); // Pause after successful scan
+      html5QrcodeScannerRef.current?.pause(); // Use the ref for pausing
       onScan(decodedText);
     };
 
     const qrCodeErrorCallback = (errorMessage: string) => {
-      // This callback is called continuously, only log/show error if it's a critical failure
-      // console.warn("QR Code Scan Error (continuous):", errorMessage);
+      // This callback is called continuously, usually not critical for the 'start' error
     };
 
-    // 5. Start the scanner
-    if (scannerInstanceRef.current && typeof scannerInstanceRef.current.start === 'function') {
-      scannerInstanceRef.current.start(
+    // Use the local 'scanner' variable, which is guaranteed to be the new instance
+    if (typeof scanner.start === 'function') {
+      scanner.start(
         { facingMode: facingMode },
         qrCodeSuccessCallback,
         qrCodeErrorCallback
@@ -94,16 +90,16 @@ const Html5QrCodeScanner: React.FC<Html5QrCodeScannerProps> = ({ onScan, onError
         onError(msg);
       });
     } else {
-      const msg = "Html5QrcodeScanner instance or its start method is invalid after successful construction.";
-      console.error(msg, scannerInstanceRef.current);
+      const msg = "Html5QrcodeScanner instance's start method is invalid after successful construction.";
+      console.error(msg, "Scanner object:", scanner, "Type of scanner.start:", typeof scanner.start);
       onError(msg);
     }
 
-    // 6. Cleanup function
     return () => {
-      if (scannerInstanceRef.current && typeof scannerInstanceRef.current.stop === 'function') {
-        scannerInstanceRef.current.stop().catch(e => console.warn("Error stopping scanner on cleanup:", e));
-        scannerInstanceRef.current = null;
+      // Cleanup: Stop the scanner when the component unmounts or dependencies change
+      if (html5QrcodeScannerRef.current && typeof html5QrcodeScannerRef.current.stop === 'function') {
+        html5QrcodeScannerRef.current.stop().catch(e => console.warn("Error stopping scanner on cleanup:", e));
+        html5QrcodeScannerRef.current = null;
       }
     };
   }, [facingMode, onScan, onError, onReady]); // Dependencies
