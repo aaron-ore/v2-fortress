@@ -1,25 +1,37 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { showError } from '@/utils/toast';
 
 interface Html5QrCodeScannerProps {
   onScan: (decodedText: string) => void;
   onError: (errorMessage: string) => void;
+  onReady: () => void; // New prop to signal when camera is ready
   facingMode: "user" | "environment";
 }
 
-const qrcodeRegionId = "html5qr-code-full-region";
-
-const Html5QrCodeScanner: React.FC<Html5QrCodeScannerProps> = ({ onScan, onError, facingMode }) => {
-  const [isScanning, setIsScanning] = useState(false);
+const Html5QrCodeScanner: React.FC<Html5QrCodeScannerProps> = ({ onScan, onError, onReady, facingMode }) => {
+  const scannerContainerRef = useRef<HTMLDivElement>(null);
+  const html5QrcodeScannerInstanceRef = useRef<Html5QrcodeScanner | null>(null);
 
   useEffect(() => {
+    if (!scannerContainerRef.current) {
+      return; // Wait for the div to be mounted
+    }
+
+    const qrcodeRegionId = scannerContainerRef.current.id;
+
+    // Ensure any previous scanner instance is stopped before creating a new one
+    if (html5QrcodeScannerInstanceRef.current) {
+      html5QrcodeScannerInstanceRef.current.stop().catch(e => console.warn("Error stopping previous scanner:", e));
+      html5QrcodeScannerInstanceRef.current = null;
+    }
+
     const html5QrcodeScanner = new Html5QrcodeScanner(
       qrcodeRegionId,
       {
         fps: 10,
         qrbox: { width: 250, height: 250 },
-        disableFlip: false, // Allow flipping for front camera
+        disableFlip: false,
         formatsToSupport: [
           Html5QrcodeSupportedFormats.QR_CODE,
           Html5QrcodeSupportedFormats.CODE_128,
@@ -34,14 +46,12 @@ const Html5QrCodeScanner: React.FC<Html5QrCodeScannerProps> = ({ onScan, onError
       },
       /* verbose= */ false
     );
+    html5QrcodeScannerInstanceRef.current = html5QrcodeScanner;
 
     const qrCodeSuccessCallback = (decodedText: string, decodedResult: any) => {
-      // Only process if actively scanning and not already paused/stopped
-      if (isScanning) {
-        html5QrcodeScanner.pause(); // Pause scanner after successful scan
-        onScan(decodedText);
-        setIsScanning(false);
-      }
+      // Pause the scanner to prevent multiple scans after a successful read
+      html5QrcodeScanner.pause();
+      onScan(decodedText);
     };
 
     const qrCodeErrorCallback = (errorMessage: string) => {
@@ -54,22 +64,23 @@ const Html5QrCodeScanner: React.FC<Html5QrCodeScannerProps> = ({ onScan, onError
       qrCodeSuccessCallback,
       qrCodeErrorCallback
     ).then(() => {
-      setIsScanning(true); // Set scanning true after successful start
+      onReady(); // Signal that the camera has started successfully
     }).catch((err: any) => {
       console.error("Failed to start HTML5 QR Code scanner:", err);
       onError(err.message || "Failed to start camera.");
-      setIsScanning(false);
     });
 
     return () => {
       // Stop the scanner when the component unmounts or dependencies change
-      // The library handles if it's already stopped or not.
-      html5QrcodeScanner.stop().catch(e => console.warn("Error stopping scanner:", e));
+      if (html5QrcodeScannerInstanceRef.current) {
+        html5QrcodeScannerInstanceRef.current.stop().catch(e => console.warn("Error stopping scanner:", e));
+        html5QrcodeScannerInstanceRef.current = null;
+      }
     };
-  }, [facingMode, onScan, onError, isScanning]); // Added isScanning to dependencies to ensure qrCodeSuccessCallback uses latest state
+  }, [facingMode, onScan, onError, onReady]); // Dependencies for re-initialization
 
   return (
-    <div id={qrcodeRegionId} className="w-full h-full flex justify-center items-center">
+    <div id="html5qr-code-full-region" ref={scannerContainerRef} className="w-full h-full flex justify-center items-center">
       {/* The scanner will render its video feed and UI inside this div */}
     </div>
   );

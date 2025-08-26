@@ -41,6 +41,11 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
     }
   }, [isOpen]);
 
+  const handleScannerReady = () => {
+    setIsLoadingCamera(false); // Camera is ready, stop loading
+    setCameraError(null); // Clear any previous errors
+  };
+
   const handleScannerError = (errMessage: string) => {
     console.error("Html5QrCodeScanner error:", errMessage);
     setIsLoadingCamera(false); // Stop loading on error
@@ -91,6 +96,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
                 key={facingMode} // Force re-mount on camera switch
                 onScan={handleScannerScan}
                 onError={handleScannerError}
+                onReady={handleScannerReady} // Pass the new onReady handler
                 facingMode={facingMode}
               />
             </>
