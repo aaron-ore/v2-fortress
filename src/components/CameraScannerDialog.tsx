@@ -26,7 +26,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   onError,
 }) => {
   const [isCameraActive, setIsCameraActive] = useState(false);
-  const [facingMode, setFacingMode] = useState<"user" | "environment">("environment"); // Default to back camera
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user"); // Default to front camera for laptops
   const [isLoadingCamera, setIsLoadingCamera] = useState(true); // New loading state
   const [cameraError, setCameraError] = useState<string | null>(null); // New error state
 
@@ -115,7 +115,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
             <XCircle className="h-4 w-4 mr-2" /> Cancel
           </Button>
           <Button variant="secondary" onClick={toggleFacingMode} className="w-full sm:w-auto">
-            <Camera className="h-4 w-4 mr-2" /> Switch to {facingMode === "environment" ? "Front" : "Back"} Camera
+            <Camera className="h-4 w-4 mr-2" /> Switch to {facingMode === "user" ? "Back" : "Front"} Camera
           </Button>
         </DialogFooter>
       </DialogContent>
