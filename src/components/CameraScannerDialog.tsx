@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { BarcodeReader } from "react-barcode-reader"; // Changed to named import
+import BarcodeReader from "react-barcode-reader"; // Reverted to default import
 import { Scan, XCircle } from "lucide-react";
 import { showError } from "@/utils/toast";
 
