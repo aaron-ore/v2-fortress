@@ -76,26 +76,33 @@ const Html5QrCodeScanner: React.FC<Html5QrCodeScannerProps> = ({ onScan, onError
       // This callback is called continuously, usually not critical for the 'start' error
     };
 
-    // Use the local 'scanner' variable, which is guaranteed to be the new instance
-    if (typeof scanner.start === 'function') {
-      scanner.start(
-        { facingMode: facingMode },
-        qrCodeSuccessCallback,
-        qrCodeErrorCallback
-      ).then(() => {
-        onReady(); // Camera started successfully
-      }).catch((err: any) => {
-        const msg = `Html5QrcodeScanner.start() failed: ${err.message || err}`;
-        console.error(msg, err);
+    // Log the scanner object and its start method type before attempting to call it
+    console.log("Scanner object before start:", scanner);
+    console.log("Type of scanner.start before start:", typeof scanner.start);
+
+    // Use a setTimeout to defer the start call, giving the component and DOM a moment to settle
+    const startTimeout = setTimeout(() => {
+      if (typeof scanner.start === 'function') {
+        scanner.start(
+          { facingMode: facingMode },
+          qrCodeSuccessCallback,
+          qrCodeErrorCallback
+        ).then(() => {
+          onReady(); // Camera started successfully
+        }).catch((err: any) => {
+          const msg = `Html5QrcodeScanner.start() failed: ${err.message || err}`;
+          console.error(msg, err);
+          onError(msg);
+        });
+      } else {
+        const msg = "Html5QrcodeScanner instance's start method is invalid after successful construction.";
+        console.error(msg, "Scanner object:", scanner, "Type of scanner.start:", typeof scanner.start);
         onError(msg);
-      });
-    } else {
-      const msg = "Html5QrcodeScanner instance's start method is invalid after successful construction.";
-      console.error(msg, "Scanner object:", scanner, "Type of scanner.start:", typeof scanner.start);
-      onError(msg);
-    }
+      }
+    }, 100); // 100ms delay
 
     return () => {
+      clearTimeout(startTimeout); // Clear timeout if component unmounts before it fires
       // Cleanup: Stop the scanner when the component unmounts or dependencies change
       if (html5QrcodeScannerRef.current && typeof html5QrcodeScannerRef.current.stop === 'function') {
         html5QrcodeScannerRef.current.stop().catch(e => console.warn("Error stopping scanner on cleanup:", e));
