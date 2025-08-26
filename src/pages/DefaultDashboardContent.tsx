@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import AddInventoryDialog from "@/components/AddInventoryDialog";
 import ScanItemDialog from "@/components/ScanItemDialog";
+import { DateRangePicker } from "@/components/DateRangePicker"; // New import
+import { DateRange } from "react-day-picker"; // New import
 
 // Import new dashboard components
 import WalletCard from "@/components/dashboard/WalletCard";
@@ -15,18 +17,34 @@ import LocationStockHealthCard from "@/components/dashboard/LocationStockHealthC
 import MonthlyOverviewChartCard from "@/components/dashboard/MonthlyOverviewChartCard"; // Updated import
 import ProfitabilityMetricsCard from "@/components/dashboard/ProfitabilityMetricsCard"; // Updated import
 import GenerateReportButton from "@/components/dashboard/GenerateReportButton";
+import { Button } from "@/components/ui/button"; // Import Button for Clear Filter
 
 const DefaultDashboardContent: React.FC = () => {
   const [isAddInventoryDialogOpen, setIsAddInventoryDialogOpen] = useState(false);
   const [isScanItemDialogOpen, setIsScanItemDialogOpen] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined); // New state for date range
 
   const handleScanItem = () => {
     setIsScanItemDialogOpen(true);
   };
 
+  const handleClearDateFilter = () => {
+    setDateRange(undefined);
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Dashboard</h1>
+
+      {/* Date Filter and Clear Button */}
+      <div className="flex items-center gap-4">
+        <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
+        {dateRange?.from && (
+          <Button variant="outline" onClick={handleClearDateFilter}>
+            Clear Filter
+          </Button>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {/* Top Row: 3 cards + 1 column of 3 small cards */}

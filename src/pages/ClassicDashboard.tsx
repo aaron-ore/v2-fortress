@@ -17,6 +17,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DateRangePicker } from "@/components/DateRangePicker"; // New import
+import { DateRange } from "react-day-picker"; // New import
 
 const ClassicDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -25,6 +27,22 @@ const ClassicDashboard: React.FC = () => {
 
   const [isAddInventoryDialogOpen, setIsAddInventoryDialogOpen] = useState(false);
   const [isScanItemDialogOpen, setIsScanItemDialogOpen] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined); // New state for date range
+
+  // Helper function to check if a date falls within the selected range
+  const isDateInRange = (dateString: string) => {
+    if (!dateRange?.from) return true; // No filter applied
+    const itemDate = new Date(dateString);
+    itemDate.setHours(0, 0, 0, 0); // Normalize to start of day
+
+    const from = dateRange.from;
+    from.setHours(0, 0, 0, 0);
+
+    const to = dateRange.to || dateRange.from; // If only 'from' is selected, 'to' is 'from'
+    to.setHours(23, 59, 59, 999); // Normalize to end of day
+
+    return itemDate >= from && itemDate <= to;
+  };
 
   // Key Metrics
   const totalStockValue = useMemo(() => {
@@ -46,18 +64,31 @@ const ClassicDashboard: React.FC = () => {
   // Recent Orders (last 5, excluding archived)
   const recentOrders = useMemo(() => {
     return orders
-      .filter(order => order.status !== "Archived")
+      .filter(order => order.status !== "Archived" && isDateInRange(order.date)) // Apply date filter
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 5);
-  }, [orders]);
+  }, [orders, dateRange]); // Add dateRange to dependencies
 
   const handleCreatePO = () => navigate("/create-po");
   const handleCreateInvoice = () => navigate("/create-invoice");
+  const handleClearDateFilter = () => {
+    setDateRange(undefined);
+  };
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Classic Dashboard</h1>
       <p className="text-muted-foreground">A streamlined overview of your inventory and orders.</p>
+
+      {/* Date Filter and Clear Button */}
+      <div className="flex items-center gap-4">
+        <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
+        {dateRange?.from && (
+          <Button variant="outline" onClick={handleClearDateFilter}>
+            Clear Filter
+          </Button>
+        )}
+      </div>
 
       {/* Section 1: Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -150,7 +181,6 @@ const ClassicDashboard: React.FC = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Item Name</TableHead>
-                      <TableHead>SKU</TableHead>
                       <TableHead className="text-right">On Hand</TableHead>
                       <TableHead className="text-right">Reorder Level</TableHead>
                     </TableRow>
@@ -159,7 +189,6 @@ const ClassicDashboard: React.FC = () => {
                     {lowStockItems.slice(0, 5).map((item) => (
                       <TableRow key={item.id}>
                         <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell>{item.sku}</TableCell>
                         <TableCell className="text-right text-destructive">{item.quantity}</TableCell>
                         <TableCell className="text-right">{item.reorderLevel}</TableCell>
                       </TableRow>
