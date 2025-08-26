@@ -8,9 +8,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { QrReader } from "react-qr-reader";
-import { Scan, XCircle, Camera } from "lucide-react"; // Added Camera icon
+import { Scan, XCircle, Camera } from "lucide-react";
 import { showError } from "@/utils/toast";
+import Html5QrCodeScanner from "./Html5QrCodeScanner"; // Import the new scanner component
 
 interface CameraScannerDialogProps {
   isOpen: boolean;
@@ -41,24 +41,17 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
     }
   }, [isOpen]);
 
-  const handleScanResult = (result: any, error: any) => {
-    if (isLoadingCamera) setIsLoadingCamera(false); // Camera stream started successfully
-    if (!!result) {
-      onScan(result?.text);
-      onClose();
-    }
-
-    if (!!error && isCameraActive) {
-      // console.error("QR Reader error:", error); // Keep this for console debugging
-    }
+  const handleScannerError = (errMessage: string) => {
+    console.error("Html5QrCodeScanner error:", errMessage);
+    setIsLoadingCamera(false); // Stop loading on error
+    setCameraError(errMessage);
+    onError(errMessage);
   };
 
-  const handleCameraError = (err: any) => {
-    console.error("Camera access error:", err);
-    setIsLoadingCamera(false); // Stop loading on error
-    setCameraError(err.message || "Failed to access camera.");
-    onError(err.message || "Failed to access camera.");
-    // We don't close the dialog immediately here, so the user can try switching cameras.
+  const handleScannerScan = (decodedText: string) => {
+    setIsLoadingCamera(false); // A scan means camera is active
+    onScan(decodedText);
+    onClose();
   };
 
   const toggleFacingMode = () => {
@@ -94,14 +87,11 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
                   <p className="text-xs mt-2">Try switching cameras or refreshing the page.</p>
                 </div>
               )}
-              <QrReader
+              <Html5QrCodeScanner
                 key={facingMode} // Force re-mount on camera switch
-                onResult={handleScanResult}
-                onError={handleCameraError} // General error handler
-                constraints={{ facingMode: facingMode }}
-                scanDelay={300}
-                videoContainerStyle={{ width: '100%', height: '100%', padding: 0 }} // Explicit container style
-                videoStyle={{ objectFit: 'cover', width: '100%', height: '100%' }} // Explicit video style
+                onScan={handleScannerScan}
+                onError={handleScannerError}
+                facingMode={facingMode}
               />
             </>
           ) : (
