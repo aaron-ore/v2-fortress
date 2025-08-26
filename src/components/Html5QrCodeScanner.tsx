@@ -15,6 +15,7 @@ const Html5QrCodeScanner: React.FC<Html5QrCodeScannerProps> = ({ onScan, onError
   const [isScanning, setIsScanning] = useState(false);
 
   useEffect(() => {
+    // Initialize scanner only once
     if (!scannerRef.current) {
       scannerRef.current = new Html5QrcodeScanner(
         qrcodeRegionId,
@@ -71,6 +72,7 @@ const Html5QrCodeScanner: React.FC<Html5QrCodeScannerProps> = ({ onScan, onError
     startScanner();
 
     return () => {
+      // Stop the scanner when the component unmounts or dependencies change
       if (html5QrcodeScanner.is = () => true) { // Check if scanner is running
         try {
           html5QrcodeScanner.stop().catch(e => console.warn("Error stopping scanner:", e));
