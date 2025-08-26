@@ -24,8 +24,8 @@ const Html5QrCodeScanner: React.FC<Html5QrCodeScannerProps> = ({ onScan, onError
       return;
     }
 
-    // 2. Stop any existing scanner instance
-    if (scannerInstanceRef.current) {
+    // 2. Stop any existing scanner instance if it's valid
+    if (scannerInstanceRef.current && typeof scannerInstanceRef.current.stop === 'function') {
       scannerInstanceRef.current.stop().catch(e => console.warn("Error stopping previous scanner:", e));
       scannerInstanceRef.current = null;
     }
@@ -101,7 +101,7 @@ const Html5QrCodeScanner: React.FC<Html5QrCodeScannerProps> = ({ onScan, onError
 
     // 6. Cleanup function
     return () => {
-      if (scannerInstanceRef.current) {
+      if (scannerInstanceRef.current && typeof scannerInstanceRef.current.stop === 'function') {
         scannerInstanceRef.current.stop().catch(e => console.warn("Error stopping scanner on cleanup:", e));
         scannerInstanceRef.current = null;
       }
