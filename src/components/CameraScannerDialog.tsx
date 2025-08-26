@@ -8,8 +8,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { QrReader } from "react-qr-reader"; // Using react-qr-reader
-import { Camera, XCircle } from "lucide-react";
+import BarcodeReader from "react-barcode-reader"; // Changed import to react-barcode-reader
+import { Scan, XCircle } from "lucide-react"; // Changed icon to Scan
 import { showError } from "@/utils/toast";
 
 interface CameraScannerDialogProps {
@@ -26,7 +26,6 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   onError,
 }) => {
   const [isCameraActive, setIsCameraActive] = useState(false);
-  const [facingMode, setFacingMode] = useState<"user" | "environment">("environment"); // 'environment' for back camera
 
   useEffect(() => {
     if (isOpen) {
@@ -36,7 +35,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
     }
   }, [isOpen]);
 
-  const handleScan = (result: string | null | undefined) => {
+  const handleScan = (result: string) => { // result is directly the string from react-barcode-reader
     if (result) {
       onScan(result);
       onClose(); // Close dialog after successful scan
@@ -44,15 +43,11 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   };
 
   const handleError = (err: any) => {
-    console.error("Camera scan error:", err);
+    console.error("Barcode scan error:", err);
     if (isCameraActive) { // Only show error if camera was actively trying to scan
       onError(err.message || "Unknown camera error");
       onClose(); // Close dialog on error
     }
-  };
-
-  const toggleFacingMode = () => {
-    setFacingMode(prev => (prev === "user" ? "environment" : "user"));
   };
 
   return (
@@ -60,46 +55,27 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
       <DialogContent className="sm:max-w-[425px] flex flex-col h-[80vh] max-h-[600px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Camera className="h-6 w-6 text-primary" /> Scan Barcode/QR
+            <Scan className="h-6 w-6 text-primary" /> Scan Barcode
           </DialogTitle>
           <DialogDescription>
-            Point your camera at a barcode or QR code.
+            Point your camera at a barcode.
           </DialogDescription>
         </DialogHeader>
         <div className="flex-grow flex items-center justify-center bg-black rounded-md overflow-hidden relative">
           {isCameraActive && (
-            <QrReader
-              onResult={(result, error) => {
-                if (!!result) {
-                  handleScan(result?.getText());
-                }
-
-                if (!!error) {
-                  // console.info(error); // Log errors but don't show toast for every minor detection issue
-                }
-              }}
+            <BarcodeReader
+              onReceive={handleScan} // Use onReceive for successful scans
               onError={handleError}
-              constraints={{ facingMode: facingMode }}
-              scanDelay={300} // Delay between scans
-              videoStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              containerStyle={{ width: '100%', height: '100%', padding: 0 }}
-              videoContainerStyle={{ width: '100%', height: '100%', padding: 0 }}
+              // No 'constraints' or 'facingMode' props for react-barcode-reader
+              // The component typically uses the default camera (often the back camera on mobile)
             />
           )}
           {!isCameraActive && (
             <div className="text-muted-foreground text-center">
-              Camera is not active.
+              Scanner is not active.
             </div>
           )}
-          <Button
-            variant="secondary"
-            size="icon"
-            className="absolute bottom-4 right-4 z-10"
-            onClick={toggleFacingMode}
-            title="Toggle Camera"
-          >
-            <Camera className="h-5 w-5" />
-          </Button>
+          {/* Removed the "Toggle Camera" button */}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
