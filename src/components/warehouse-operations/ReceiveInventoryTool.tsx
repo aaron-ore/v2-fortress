@@ -1,0 +1,268 @@
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Barcode, CheckCircle, Package } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { showSuccess, showError } from "@/utils/toast";
+import { useOrders, OrderItem, POItem } from "@/context/OrdersContext";
+import { useInventory, InventoryItem } from "@/context/InventoryContext";
+import { useStockMovement } from "@/context/StockMovementContext";
+
+interface ReceivedItemDisplay extends POItem {
+  receivedQuantity: number;
+  inventoryItemDetails?: InventoryItem; // To store full item details
+}
+
+interface ReceiveInventoryToolProps {
+  onScanRequest: (callback: (scannedData: string) => void) => void;
+  scannedDataFromGlobal?: string | null;
+  onScannedDataProcessed: () => void;
+}
+
+const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanRequest, scannedDataFromGlobal, onScannedDataProcessed }) => {
+  const { orders, fetchOrders, updateOrder } = useOrders();
+  const { inventoryItems, refreshInventory, updateInventoryItem } = useInventory();
+  const { addStockMovement } = useStockMovement();
+
+  const [poNumberInput, setPoNumberInput] = useState("");
+  const [selectedPO, setSelectedPO] = useState<OrderItem | null>(null);
+  const [receivedItems, setReceivedItems] = useState<ReceivedItemDisplay[]>([]);
+  const [isScanning, setIsScanning] = useState(false);
+
+  useEffect(() => {
+    // Reset state when component mounts or PO input changes
+    setSelectedPO(null);
+    setReceivedItems([]);
+  }, [poNumberInput]);
+
+  useEffect(() => {
+    if (scannedDataFromGlobal && !isScanning) {
+      // If global scan is used, it should typically go to Item Lookup.
+      // For Receive, we expect a PO to be loaded first.
+      // So, we'll ignore global scan here unless a PO is already loaded.
+      // If a PO is loaded, we can try to scan against its items.
+      if (selectedPO) {
+        handleScannedBarcode(scannedDataFromGlobal);
+      }
+      onScannedDataProcessed(); // Acknowledge that the scanned data has been processed
+    }
+  }, [scannedDataFromGlobal, isScanning, onScannedDataProcessed, selectedPO]);
+
+  const handlePoNumberSubmit = async () => {
+    if (!poNumberInput.trim()) {
+      showError("Please enter a Purchase Order Number.");
+      return;
+    }
+
+    // Ensure orders are fetched
+    await fetchOrders();
+
+    const foundPO = orders.find(
+      (order) => order.id.toLowerCase() === poNumberInput.trim().toLowerCase() && order.type === "Purchase"
+    );
+
+    if (foundPO) {
+      setSelectedPO(foundPO);
+      const itemsWithDetails: ReceivedItemDisplay[] = foundPO.items.map((poItem) => {
+        const inventoryItem = inventoryItems.find(inv => inv.id === poItem.inventoryItemId);
+        return {
+          ...poItem,
+          receivedQuantity: 0, // Initialize received quantity to 0
+          inventoryItemDetails: inventoryItem,
+        };
+      });
+      setReceivedItems(itemsWithDetails);
+      showSuccess(`Purchase Order ${foundPO.id} loaded.`);
+    } else {
+      showError(`Purchase Order "${poNumberInput.trim()}" not found or is not a Purchase Order.`);
+      setSelectedPO(null);
+      setReceivedItems([]);
+    }
+  };
+
+  const handleReceivedQuantityChange = (itemId: number, quantity: string) => {
+    setReceivedItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId ? { ...item, receivedQuantity: parseInt(quantity) || 0 } : item
+      )
+    );
+  };
+
+  const handleScannedBarcode = (scannedData: string) => {
+    setIsScanning(false); // Scanning is complete
+    if (!selectedPO) {
+      showError("Please load a Purchase Order before scanning items.");
+      return;
+    }
+
+    const lowerCaseScannedData = scannedData.toLowerCase();
+    const itemToReceive = receivedItems.find(item => 
+      item.inventoryItemDetails?.sku.toLowerCase() === lowerCaseScannedData ||
+      item.inventoryItemDetails?.barcodeUrl?.toLowerCase().includes(lowerCaseScannedData)
+    );
+
+    if (itemToReceive) {
+      if (itemToReceive.receivedQuantity < itemToReceive.quantity) {
+        setReceivedItems(prev => prev.map(item =>
+          item.id === itemToReceive.id ? { ...item, receivedQuantity: item.receivedQuantity + 1 } : item
+        ));
+        showSuccess(`Scanned: ${itemToReceive.itemName}. Received count increased.`);
+      } else {
+        showError(`${itemToReceive.itemName} already fully received for this PO.`);
+      }
+    } else {
+      showError(`Scanned item (SKU/Barcode: ${scannedData}) not found in this Purchase Order.`);
+    }
+  };
+
+  const handleScanItem = () => {
+    setIsScanning(true);
+    onScanRequest(handleScannedBarcode);
+  };
+
+  const handleCompleteReceive = async () => {
+    if (!selectedPO) {
+      showError("No Purchase Order selected to complete receiving.");
+      return;
+    }
+
+    let allItemsReceived = true;
+    let updatesSuccessful = true;
+
+    for (const item of receivedItems) {
+      if (item.receivedQuantity > 0) {
+        const inventoryItem = inventoryItems.find(inv => inv.id === item.inventoryItemId);
+        if (inventoryItem) {
+          const oldQuantity = inventoryItem.quantity;
+          const newQuantity = oldQuantity + item.receivedQuantity;
+          const updatedInventoryItem = {
+            ...inventoryItem,
+            quantity: newQuantity,
+            incomingStock: Math.max(0, inventoryItem.incomingStock - item.receivedQuantity), // Deduct from incoming
+            lastUpdated: new Date().toISOString().split('T')[0],
+          };
+          await updateInventoryItem(updatedInventoryItem);
+          await addStockMovement({
+            itemId: inventoryItem.id,
+            itemName: inventoryItem.name,
+            type: "add",
+            amount: item.receivedQuantity,
+            oldQuantity: oldQuantity,
+            newQuantity: newQuantity,
+            reason: `Received from PO ${selectedPO.id} (Mobile)`,
+          });
+        } else {
+          showError(`Inventory item for ${item.itemName} not found.`);
+          updatesSuccessful = false;
+        }
+      }
+      if (item.receivedQuantity < item.quantity) {
+        allItemsReceived = false;
+      }
+    }
+
+    if (updatesSuccessful) {
+      const newStatus = allItemsReceived ? "Shipped" : "Processing"; // If partially received, keep as processing
+      const updatedPO = { ...selectedPO, status: newStatus };
+      await updateOrder(updatedPO);
+      showSuccess(`Receiving for PO ${selectedPO.id} completed. Status updated to "${newStatus}".`);
+      refreshInventory(); // Ensure inventory context is refreshed
+      setPoNumberInput("");
+      setSelectedPO(null);
+      setReceivedItems([]);
+    } else {
+      showError("Some items could not be updated. Please check the console for details.");
+    }
+  };
+
+  const isCompleteButtonDisabled = !selectedPO || receivedItems.every(item => item.receivedQuantity === 0);
+
+  return (
+    <div className="flex flex-col h-full space-y-4">
+      <h2 className="text-xl font-bold text-center">Receive Inventory</h2>
+
+      <div className="space-y-4">
+        <Label htmlFor="poNumber" className="text-lg font-semibold">Purchase Order Number</Label>
+        <div className="flex gap-2">
+          <Input
+            id="poNumber"
+            placeholder="Enter PO Number"
+            value={poNumberInput}
+            onChange={(e) => setPoNumberInput(e.target.value)}
+            className="flex-grow"
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handlePoNumberSubmit();
+              }
+            }}
+          />
+          <Button onClick={handlePoNumberSubmit} disabled={!poNumberInput.trim()}>Load PO</Button>
+        </div>
+        <Button
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg py-3 flex items-center justify-center gap-2"
+          onClick={handleScanItem}
+          disabled={isScanning || !selectedPO}
+        >
+          <Barcode className="h-6 w-6" />
+          {isScanning ? "Scanning..." : "Scan Item"}
+        </Button>
+      </div>
+
+      <div className="flex-grow space-y-4 overflow-hidden">
+        {selectedPO ? (
+          <>
+            <h3 className="text-lg font-semibold">Items for PO: {selectedPO.id}</h3>
+            <ScrollArea className="h-full max-h-[calc(100vh-400px)]"> {/* Adjust max-height dynamically */}
+              <div className="space-y-3 pr-2">
+                {receivedItems.map((item) => (
+                  <Card key={item.id} className="bg-card border-border shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="font-semibold text-lg">{item.itemName}</h4>
+                        <span className="text-sm text-muted-foreground">SKU: {item.inventoryItemDetails?.sku}</span>
+                      </div>
+                      <p className="text-muted-foreground text-sm mb-2 flex items-center gap-1">
+                        <Package className="h-4 w-4" /> Expected: {item.quantity}
+                      </p>
+                      <div className="flex justify-between items-center">
+                        <Label htmlFor={`received-qty-${item.id}`} className="font-semibold">Received Qty:</Label>
+                        <Input
+                          id={`received-qty-${item.id}`}
+                          type="number"
+                          value={item.receivedQuantity === 0 ? "" : item.receivedQuantity}
+                          onChange={(e) => handleReceivedQuantityChange(item.id, e.target.value)}
+                          className="w-24 text-right"
+                          min="0"
+                          max={item.quantity} // Max received quantity is expected quantity
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </ScrollArea>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
+            <Package className="h-12 w-12 mb-4" />
+            <p className="text-lg">Enter a PO number to begin receiving.</p>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6">
+        <Button
+          className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-3 flex items-center justify-center gap-2"
+          onClick={handleCompleteReceive}
+          disabled={isCompleteButtonDisabled}
+        >
+          <CheckCircle className="h-6 w-6" /> Complete Receive
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default ReceiveInventoryTool;

@@ -1,0 +1,245 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Default Dark Theme Variables - applied to :root, which is usually html */
+  :root {
+    --background: 220 10% 8%; /* Very dark blue/black */
+    --foreground: 0 0% 100%; /* White */
+
+    --card: 220 10% 12%; /* Slightly lighter dark grey */
+    --card-foreground: 0 0% 100%; /* White */
+
+    --popover: 220 10% 12%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 250 80% 60%; /* Vibrant purple/blue accent */
+    --primary-foreground: 0 0% 100%; /* White */
+
+    --secondary: 220 5% 20%; /* Lighter grey for secondary elements */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 5% 30%; /* Slightly lighter grey for muted text */
+    --muted-foreground: 220 5% 50%; /* Darker grey for muted text */
+
+    --accent: 250 80% 75%; /* Lighter shade of primary for accent */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 80% 60%; /* Red for negative changes */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 5% 20%; /* Subtle light grey border - Made darker for dark theme */
+    --input: 220 10% 12%; /* Similar to card background */
+    --ring: 250 80% 60%; /* Primary accent color */
+
+    --radius: 0.5rem;
+  }
+
+  /* Explicitly apply dark theme variables when html has 'dark' class */
+  html.dark {
+    --background: 220 10% 8%;
+    --foreground: 0 0% 100%;
+    --card: 220 10% 12%;
+    --card-foreground: 0 0% 100%;
+    --popover: 220 10% 12%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 250 80% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 5% 20%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 220 5% 30%;
+    --muted-foreground: 220 5% 50%;
+    --accent: 250 80% 75%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 5% 20%;
+    --input: 220 10% 12%;
+    --ring: 250 80% 60%;
+  }
+
+  /* Ocean Breeze Palette */
+  html.ocean-breeze {
+    --background: 0 0% 98%; /* Very light grey */
+    --foreground: 220 10% 8%; /* Dark text */
+
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 220 10% 8%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 10% 8%;
+
+    --primary: 232 96% 87%; /* Light Sky Blue (#BFC8FC) */
+    --primary-foreground: 220 10% 8%; /* Dark text for primary buttons */
+
+    --secondary: 268 39% 84%; /* Lavender (#D9C7E6) */
+    --secondary-foreground: 220 10% 8%;
+
+    --muted: 210 20% 90%; /* Light grey */
+    --muted-foreground: 220 5% 50%;
+
+    --accent: 148 50% 79%; /* Soft Mint (#C7EDD8) */
+    --accent-foreground: 220 10% 8%;
+
+    --destructive: 0 80% 40%; /* Standard red */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 20% 60%; /* Darker grey border for light themes */
+    --input: 210 20% 92%; /* Slightly darker input background for light themes */
+    --ring: 232 96% 87%; /* Primary color */
+  }
+
+  /* Sunset Glow Palette */
+  html.sunset-glow {
+    --background: 60 100% 99%; /* Cream Yellow (#FFFACD) */
+    --foreground: 220 10% 8%; /* Dark text */
+
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 220 10% 8%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 10% 8%;
+
+    --primary: 0 69% 72%; /* Coral Pink (#F08080) */
+    --primary-foreground: 0 0% 100%; /* White text for primary buttons */
+
+    --secondary: 30 100% 86%; /* Light Peach (#FFDAB9) */
+    --secondary-foreground: 220 10% 8%;
+
+    --muted: 210 20% 90%;
+    --muted-foreground: 220 5% 50%;
+
+    --accent: 30 100% 86%; /* Light Peach */
+    --accent-foreground: 220 10% 8%;
+
+    --destructive: 0 80% 40%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 20% 60%; /* Darker grey border for light themes */
+    --input: 210 20% 92%; /* Slightly darker input background for light themes */
+    --ring: 0 69% 72%; /* Primary color */
+  }
+
+  /* Forest Whisper Palette */
+  html.forest-whisper {
+    --background: 0 0% 96%; /* Off White (#F5F5F5) */
+    --foreground: 220 10% 8%; /* Dark text */
+
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 220 10% 8%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 10% 8%;
+
+    --primary: 168 48% 85%; /* Teal (#C7EAE4) */
+    --primary-foreground: 220 10% 8%; /* Dark text for primary buttons */
+
+    --secondary: 258 39% 85%; /* Muted Lipac (#D0C7EA) */
+    --secondary-foreground: 220 10% 8%;
+
+    --muted: 210 20% 90%;
+    --muted-foreground: 220 5% 50%;
+
+    --accent: 258 39% 85%; /* Muted Lipac */
+    --accent-foreground: 220 10% 8%;
+
+    --destructive: 0 80% 40%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 20% 60%; /* Darker grey border for light themes */
+    --input: 210 20% 92%; /* Slightly darker input background for light themes */
+    --ring: 168 48% 85%; /* Primary color */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground; /* Apply theme colors to body */
+  }
+
+  html, body, #root {
+    height: 100%; /* Ensure html, body, and root div take full height */
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Styles for PDF preview within the dialog */
+.dialog-print-area-wrapper .dialog-content-inner.pdf-preview-scaled {
+  transform: scale(0.7); /* Adjust scale as needed to fit the dialog */
+  transform-origin: top center;
+  margin: 20px auto; /* Add some margin around the scaled content */
+  box-shadow: 0 0 10px rgba(0,0,0,0.1); /* Add a subtle shadow for preview */
+  background-color: white; /* Ensure white background for preview */
+  color: black; /* Ensure text is black for preview */
+}
+
+/* Hide print-only content by default */
+.print-only-content {
+  display: none;
+}
+
+/* Print-specific styles */
+@media print {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important; /* Allow content to dictate height */
+    overflow: visible !important; /* Allow content to overflow if needed for pagination */
+  }
+
+  /* Set physical page margins for A4 size */
+  @page {
+    size: A4; /* 210mm x 297mm */
+    margin: 0 !important; /* Force browser to use 0 margins, we'll apply them to content */
+  }
+
+  /* Hide the main application layout */
+  .app-main-layout {
+    display: none !important;
+  }
+
+  /* Hide sonner toasts during print */
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+
+  /* Make the print-only content visible and correctly positioned */
+  .print-only-content {
+    display: block !important;
+    position: static !important; /* Allow it to flow normally in print */
+    width: 100% !important; /* Take full width of the print page */
+    height: auto !important; /* Height determined by content */
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: auto !important; /* Reset z-index */
+    background-color: white !important;
+    color: black !important;
+    overflow: visible !important;
+  }
+
+  /* The actual content container for the PDF (e.g., PurchaseOrderPdfContent) */
+  .print-only-content > div { /* Target the direct child of print-only-content */
+    display: block !important;
+    width: 210mm !important; /* A4 width */
+    min-height: 297mm !important; /* A4 height */
+    margin: 0 auto !important; /* Center on page */
+    box-shadow: none !important;
+    border: none !important;
+    background-color: white !important;
+    color: black !important;
+    transform: none !important; /* Remove any scaling */
+    /* The padding is already applied by the component itself (p-[20mm]) */
+    box-sizing: border-box !important;
+  }
+
+  /* Ensure text color is black for printing */
+  .print-only-content * {
+    color: black !important;
+  }
+}
