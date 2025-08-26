@@ -42,7 +42,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   }, [isOpen]);
 
   const handleScanResult = (result: any, error: any) => {
-    if (isLoadingCamera) setIsLoadingCamera(false); // Camera stream started
+    // isLoadingCamera is now handled by handleCameraLoad
     if (!!result) {
       onScan(result?.text);
       onClose();
@@ -59,6 +59,11 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
     setCameraError(err.message || "Failed to access camera.");
     onError(err.message || "Failed to access camera.");
     // We don't close the dialog immediately here, so the user can try switching cameras.
+  };
+
+  const handleCameraLoad = () => {
+    setIsLoadingCamera(false); // Camera stream is ready
+    setCameraError(null); // Clear any previous errors
   };
 
   const toggleFacingMode = () => {
@@ -95,12 +100,13 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
                 </div>
               )}
               <QrReader
+                key={facingMode} // Force re-mount on camera switch
                 onResult={handleScanResult}
-                videoContainerStyle={{ width: '100%', height: '100%', padding: 0 }}
-                videoStyle={{ objectFit: 'cover' }}
+                onLoad={handleCameraLoad} // Callback when video stream is ready
+                onError={handleCameraError} // General error handler
                 constraints={{ facingMode: facingMode }}
                 scanDelay={300}
-                onErrorHandler={handleCameraError}
+                // Removed videoContainerStyle and videoStyle to simplify
               />
             </>
           ) : (
