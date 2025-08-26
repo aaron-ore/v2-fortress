@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import AddInventoryDialog from "@/components/AddInventoryDialog";
 import ScanItemDialog from "@/components/ScanItemDialog";
-import { DateRangePicker } from "@/components/DateRangePicker"; // New import
-import { DateRange } from "react-day-picker"; // New import
+import { DateRangePicker } from "@/components/DateRangePicker";
+import { DateRange } from "react-day-picker";
 
 // Import new dashboard components
 import WalletCard from "@/components/dashboard/WalletCard";
@@ -14,15 +14,15 @@ import LiveMetricsCard from "@/components/dashboard/LiveMetricsCard";
 import LiveInformationAreaChartCard from "@/components/dashboard/LiveInformationAreaChartCard";
 import RiskRadarChartCard from "@/components/dashboard/RiskRadarChartCard";
 import LocationStockHealthCard from "@/components/dashboard/LocationStockHealthCard";
-import MonthlyOverviewChartCard from "@/components/dashboard/MonthlyOverviewChartCard"; // Updated import
-import ProfitabilityMetricsCard from "@/components/dashboard/ProfitabilityMetricsCard"; // Updated import
+import MonthlyOverviewChartCard from "@/components/dashboard/MonthlyOverviewChartCard";
+import ProfitabilityMetricsCard from "@/components/dashboard/ProfitabilityMetricsCard";
 import GenerateReportButton from "@/components/dashboard/GenerateReportButton";
-import { Button } from "@/components/ui/button"; // Import Button for Clear Filter
+import { Button } from "@/components/ui/button";
 
 const DefaultDashboardContent: React.FC = () => {
   const [isAddInventoryDialogOpen, setIsAddInventoryDialogOpen] = useState(false);
   const [isScanItemDialogOpen, setIsScanItemDialogOpen] = useState(false);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined); // New state for date range
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
   const handleScanItem = () => {
     setIsScanItemDialogOpen(true);
@@ -34,16 +34,17 @@ const DefaultDashboardContent: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
-
-      {/* Date Filter and Clear Button */}
-      <div className="flex items-center gap-4">
-        <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
-        {dateRange?.from && (
-          <Button variant="outline" onClick={handleClearDateFilter}>
-            Clear Filter
-          </Button>
-        )}
+      {/* Header and Date Filter in the same row */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <div className="flex items-center gap-4">
+          <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
+          {dateRange?.from && (
+            <Button variant="outline" onClick={handleClearDateFilter}>
+              Clear Filter
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -77,10 +78,10 @@ const DefaultDashboardContent: React.FC = () => {
 
         {/* Bottom Row: 1 very wide card + 1 regular card */}
         <div className="col-span-full md:col-span-2 lg:col-span-3 xl:col-span-3">
-          <MonthlyOverviewChartCard /> {/* Updated component usage */}
+          <MonthlyOverviewChartCard />
         </div>
         <div className="col-span-full md:col-span-1">
-          <ProfitabilityMetricsCard /> {/* Updated component usage */}
+          <ProfitabilityMetricsCard />
         </div>
       </div>
 

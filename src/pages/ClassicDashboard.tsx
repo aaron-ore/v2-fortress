@@ -17,8 +17,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DateRangePicker } from "@/components/DateRangePicker"; // New import
-import { DateRange } from "react-day-picker"; // New import
+import { DateRangePicker } from "@/components/DateRangePicker";
+import { DateRange } from "react-day-picker";
 
 const ClassicDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ const ClassicDashboard: React.FC = () => {
 
   const [isAddInventoryDialogOpen, setIsAddInventoryDialogOpen] = useState(false);
   const [isScanItemDialogOpen, setIsScanItemDialogOpen] = useState(false);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined); // New state for date range
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
   // Helper function to check if a date falls within the selected range
   const isDateInRange = (dateString: string) => {
@@ -64,10 +64,10 @@ const ClassicDashboard: React.FC = () => {
   // Recent Orders (last 5, excluding archived)
   const recentOrders = useMemo(() => {
     return orders
-      .filter(order => order.status !== "Archived" && isDateInRange(order.date)) // Apply date filter
+      .filter(order => order.status !== "Archived" && isDateInRange(order.date))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 5);
-  }, [orders, dateRange]); // Add dateRange to dependencies
+  }, [orders, dateRange]);
 
   const handleCreatePO = () => navigate("/create-po");
   const handleCreateInvoice = () => navigate("/create-invoice");
@@ -77,18 +77,20 @@ const ClassicDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Classic Dashboard</h1>
-      <p className="text-muted-foreground">A streamlined overview of your inventory and orders.</p>
-
-      {/* Date Filter and Clear Button */}
-      <div className="flex items-center gap-4">
-        <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
-        {dateRange?.from && (
-          <Button variant="outline" onClick={handleClearDateFilter}>
-            Clear Filter
-          </Button>
-        )}
+      {/* Header and Date Filter in the same row */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <h1 className="text-3xl font-bold">Classic Dashboard</h1>
+        <div className="flex items-center gap-4">
+          <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
+          {dateRange?.from && (
+            <Button variant="outline" onClick={handleClearDateFilter}>
+              Clear Filter
+            </Button>
+          )}
+        </div>
       </div>
+
+      <p className="text-muted-foreground">A streamlined overview of your inventory and orders.</p>
 
       {/* Section 1: Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
