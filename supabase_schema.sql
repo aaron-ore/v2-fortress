@@ -183,7 +183,7 @@ ALTER COLUMN email SET DEFAULT '';
 
 -- Ensure the 'phone' column in 'vendors' has a default
 ALTER TABLE public.vendors
-ALTER COLUMN COLUMN phone SET DEFAULT '';
+ALTER COLUMN phone SET DEFAULT '';
 
 -- Ensure the 'address' column in 'vendors' has a default
 ALTER TABLE public.vendors
