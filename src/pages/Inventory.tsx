@@ -38,50 +38,52 @@ import BulkUpdateDialog from "@/components/BulkUpdateDialog";
 import AutoReorderSettingsDialog from "@/components/AutoReorderSettingsDialog";
 import { exportToExcel } from "@/utils/exportToExcel";
 import PlainSpreadsheetView from "@/components/inventory/PlainSpreadsheetView"; // NEW: Import PlainSpreadsheetView
+import { useOrders } from "@/context/OrdersContext"; // NEW: Import useOrders
+import { useVendors } from "@/context/VendorContext"; // NEW: Import useVendors
+import { format, isValid } from "date-fns"; // Import date-fns for date formatting
 
 // Define all possible columns for the table with sortable property and type
 const allColumns = [
-  { key: "id", label: "Item ID", className: "w-[80px]", sortable: true, type: "string" },
-  { key: "name", label: "Product Name", className: "w-[150px]", sortable: true, type: "string" },
-  { key: "status", label: "Status", className: "w-[120px]", sortable: true, type: "string" },
+  { key: "reorderAutoFill", label: "Reorder (auto-fill)", className: "w-[120px]", sortable: true, type: "string" },
+  { key: "lastSoldDate", label: "Last Sold Date", className: "w-[120px]", sortable: true, type: "string" },
+  { key: "sku", label: "Item No.", className: "w-[100px]", sortable: true, type: "string" },
+  { key: "dateOfLastOrder", label: "Date of Last Order", className: "w-[140px]", sortable: true, type: "string" },
+  { key: "name", label: "Item name", className: "w-[150px]", sortable: true, type: "string" },
+  { key: "vendorName", label: "Vendor", className: "w-[120px]", sortable: true, type: "string" },
+  { key: "location", label: "Stock Location", className: "w-[150px]", sortable: true, type: "string" },
   { key: "description", label: "Description", className: "w-[200px]", sortable: false },
-  { key: "sku", label: "SKU", className: "w-[100px]", sortable: true, type: "string" },
-  { key: "category", label: "Category", className: "w-[100px]", sortable: true, type: "string" },
-  { key: "location", label: "Location", className: "w-[100px]", sortable: true, type: "string" },
-  { key: "quantity", label: "On Hand", className: "text-right w-[80px]", sortable: true, type: "number" },
+  { key: "unitCost", label: "Cost Per Item", className: "text-right w-[100px]", sortable: true, type: "number" },
+  { key: "quantity", label: "Stock Quantity", className: "text-right w-[100px]", sortable: true, type: "number" },
+  { key: "stockValue", label: "Total Value", className: "text-right w-[100px]", sortable: true, type: "number" },
   { key: "reorderLevel", label: "Reorder Level", className: "text-right w-[100px]", sortable: true, type: "number" },
-  { key: "committedStock", label: "Committed", className: "text-right w-[80px]", sortable: true, type: "number" },
-  { key: "availableStock", label: "Available", className: "text-right w-[80px]", sortable: true, type: "number" },
-  { key: "incomingStock", label: "Incoming", className: "text-right w-[80px]", sortable: true, type: "number" },
-  { key: "unitCost", label: "Unit Cost", className: "text-right w-[80px]", sortable: true, type: "number" },
-  { key: "retailPrice", label: "Retail Price", className: "text-right w-[80px]", sortable: true, type: "number" },
-  { key: "stockValue", label: "Stock Value", className: "text-right w-[100px]", sortable: true, type: "number" },
-  { key: "lastUpdated", label: "Last Updated", className: "w-[100px]", sortable: true, type: "string" },
+  { key: "daysForReorder", label: "Days for Reorder", className: "text-right w-[120px]", sortable: true, type: "number" },
+  { key: "nextReorderQuantity", label: "Next Reorder Quantity", className: "text-right w-[150px]", sortable: true, type: "number" },
   { key: "actions", label: "Actions", className: "w-[80px] text-center", sortable: false },
 ];
 
 const Inventory: React.FC = () => {
   const { inventoryItems, deleteInventoryItem } = useInventory();
   const { categories } = useCategories();
-  const { locations } = useOnboarding(); // Get locations from onboarding context
+  const { locations } = useOnboarding();
+  const { orders } = useOrders(); // NEW: Use orders context
+  const { vendors } = useVendors(); // NEW: Use vendors context
   const navigate = useNavigate();
   const [isAddInventoryDialogOpen, setIsAddInventoryDialogOpen] = useState(false);
   const [isImportCsvDialogOpen, setIsImportCsvDialogOpen] = useState(false);
   const [isScanItemDialogOpen, setIsScanItemDialogOpen] = useState(false);
   const [isQuickViewDialogOpen, setIsQuickViewDialogOpen] = useState(false);
   const [isCategoryManagementDialogOpen, setIsCategoryManagementDialogOpen] = useState(false);
-  const [isManageLocationsDialogOpen, setIsManageLocationsDialogOpen] = useState(false); // State for Manage Locations dialog
-  const [isBulkUpdateDialogOpen, setIsBulkUpdateDialogOpen] = useState(false); // New state for Bulk Update dialog
-  const [isAutoReorderSettingsDialogOpen, setIsAutoReorderSettingsDialogOpen] = useState(false); // New state for Auto-Reorder dialog
+  const [isManageLocationsDialogOpen, setIsManageLocationsDialogOpen] = useState(false);
+  const [isBulkUpdateDialogOpen, setIsBulkUpdateDialogOpen] = useState(false);
+  const [isAutoReorderSettingsDialogOpen, setIsAutoReorderSettingsDialogOpen] = useState(false);
   const [selectedItemForQuickView, setSelectedItemForQuickView] = useState<InventoryItem | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [locationFilter, setLocationFilter] = useState("all"); // New state for location filter
+  const [locationFilter, setLocationFilter] = useState("all");
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   
-  // NEW: Initialize viewMode based on dashboard preference
   const [viewMode, setViewMode] = useState<"table" | "card" | "spreadsheet">(() => {
     if (typeof window !== 'undefined') {
       const dashboardViewPreference = localStorage.getItem("dashboardViewPreference");
@@ -90,19 +92,65 @@ const Inventory: React.FC = () => {
     return "table";
   });
 
-  // State for delete confirmation dialog
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; name: string } | null>(null);
 
-  // Initialize column visibility state
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(() => {
     const initialVisibility: Record<string, boolean> = {};
-    const defaultVisibleKeys = ["id", "name", "status", "sku", "location", "quantity", "actions"];
+    // Default visible keys for the new spreadsheet layout
+    const defaultVisibleKeys = [
+      "reorderAutoFill", "lastSoldDate", "sku", "dateOfLastOrder", "name",
+      "vendorName", "location", "description", "unitCost", "quantity",
+      "stockValue", "reorderLevel", "daysForReorder", "nextReorderQuantity"
+    ];
     allColumns.forEach(column => {
       initialVisibility[column.key] = defaultVisibleKeys.includes(column.key);
     });
     return initialVisibility;
   });
+
+  // Memoize vendor names for quick lookup
+  const vendorNameMap = useMemo(() => {
+    return new Map(vendors.map(vendor => [vendor.id, vendor.name]));
+  }, [vendors]);
+
+  // Calculate last sold date for each item
+  const lastSoldDateMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    orders.filter(order => order.type === "Sales").forEach(order => {
+      order.items.forEach(orderItem => {
+        if (orderItem.inventoryItemId) {
+          const orderDate = new Date(order.date);
+          if (isValid(orderDate)) {
+            const formattedDate = format(orderDate, "M/dd/yy");
+            if (!map[orderItem.inventoryItemId] || new Date(map[orderItem.inventoryItemId]) < orderDate) {
+              map[orderItem.inventoryItemId] = formattedDate;
+            }
+          }
+        }
+      });
+    });
+    return map;
+  }, [orders]);
+
+  // Calculate date of last purchase order for each item
+  const dateOfLastOrderMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    orders.filter(order => order.type === "Purchase").forEach(order => {
+      order.items.forEach(orderItem => {
+        if (orderItem.inventoryItemId) {
+          const orderDate = new Date(order.date);
+          if (isValid(orderDate)) {
+            const formattedDate = format(orderDate, "M/dd/yy");
+            if (!map[orderItem.inventoryItemId] || new Date(map[orderItem.inventoryItemId]) < orderDate) {
+              map[orderItem.inventoryItemId] = formattedDate;
+            }
+          }
+        }
+      });
+    });
+    return map;
+  }, [orders]);
 
   const handleExport = () => {
     if (filteredAndSortedItems.length === 0) {
@@ -110,24 +158,20 @@ const Inventory: React.FC = () => {
       return;
     }
     const dataToExport = filteredAndSortedItems.map(item => ({
-      "Item ID": item.id,
-      "Product Name": item.name,
+      "Reorder (auto-fill)": item.reorderAutoFill,
+      "Last Sold Date": item.lastSoldDate,
+      "Item No.": item.sku,
+      "Date of Last Order": item.dateOfLastOrder,
+      "Item name": item.name,
+      "Vendor": item.vendorName,
+      "Stock Location": item.location,
       "Description": item.description,
-      "SKU": item.sku,
-      "Category": item.category,
-      "Quantity On Hand": item.quantity,
+      "Cost Per Item": item.unitCost,
+      "Stock Quantity": item.quantity,
+      "Total Value": item.stockValue,
       "Reorder Level": item.reorderLevel,
-      "Committed Stock": item.committedStock,
-      "Available Stock": item.availableStock,
-      "Incoming Stock": item.incomingStock,
-      "Unit Cost": item.unitCost,
-      "Retail Price": item.retailPrice,
-      "Location": item.location,
-      "Status": item.status,
-      "Last Updated": item.lastUpdated,
-      "Image URL": item.imageUrl || "",
-      "Vendor ID": item.vendorId || "",
-      "Barcode URL": item.barcodeUrl || "",
+      "Days for Reorder": item.daysForReorder,
+      "Next Reorder Quantity": item.nextReorderQuantity,
     }));
     exportToExcel(dataToExport, "Inventory_Report", "Inventory");
   };
@@ -176,6 +220,12 @@ const Inventory: React.FC = () => {
       ...item,
       availableStock: item.quantity - item.committedStock,
       stockValue: item.quantity * item.unitCost,
+      vendorName: item.vendorId ? vendorNameMap.get(item.vendorId) || '-' : '-',
+      reorderAutoFill: (item.status === "Low Stock" || item.status === "Out of Stock") && item.autoReorderEnabled ? "REORDER" : "OK",
+      lastSoldDate: item.id ? lastSoldDateMap[item.id] || '-' : '-',
+      dateOfLastOrder: item.id ? dateOfLastOrderMap[item.id] || '-' : '-',
+      daysForReorder: (item.status === "Low Stock" || item.status === "Out of Stock") ? Math.floor(Math.random() * 14) + 1 : '-', // Simulate 1-14 days
+      nextReorderQuantity: item.autoReorderEnabled ? item.autoReorderQuantity : '-',
     }));
 
     if (searchTerm) {
@@ -183,7 +233,8 @@ const Inventory: React.FC = () => {
         (item) =>
           item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchTerm.toLowerCase())
+          item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.vendorName.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -195,7 +246,7 @@ const Inventory: React.FC = () => {
       filtered = filtered.filter((item) => item.status === statusFilter);
     }
 
-    if (locationFilter !== "all") { // Apply location filter
+    if (locationFilter !== "all") {
       filtered = filtered.filter((item) => item.location === locationFilter);
     }
 
@@ -217,7 +268,7 @@ const Inventory: React.FC = () => {
     }
 
     return filtered;
-  }, [inventoryItems, searchTerm, categoryFilter, statusFilter, locationFilter, sortColumn, sortDirection]);
+  }, [inventoryItems, searchTerm, categoryFilter, statusFilter, locationFilter, sortColumn, sortDirection, vendorNameMap, lastSoldDateMap, dateOfLastOrderMap, orders]);
 
   const uniqueCategoriesForFilter = useMemo(() => {
     return ["all", ...categories.map(cat => cat.name)];
@@ -249,7 +300,7 @@ const Inventory: React.FC = () => {
         />
         <Button onClick={() => setIsAddInventoryDialogOpen(true)}>+ Add New Item</Button>
         <Button onClick={() => setIsCategoryManagementDialogOpen(true)}>Manage Categories</Button>
-        <Button variant="outline" onClick={() => setIsManageLocationsDialogOpen(true)}> {/* New button for Manage Locations */}
+        <Button variant="outline" onClick={() => setIsManageLocationsDialogOpen(true)}>
           <MapPin className="h-4 w-4 mr-2" /> Manage Locations
         </Button>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -320,9 +371,9 @@ const Inventory: React.FC = () => {
       <Card className="bg-card border-border rounded-lg p-4">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-xl font-semibold">Current Stock</CardTitle>
-          <div className="flex items-center gap-2"> {/* New wrapper for right-aligned buttons */}
+          <div className="flex items-center gap-2">
             {/* Actions Dropdown */}
-            {viewMode !== "spreadsheet" && ( // Hide actions in spreadsheet view
+            {viewMode !== "spreadsheet" && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
@@ -337,7 +388,6 @@ const Inventory: React.FC = () => {
                   <DropdownMenuItem onClick={handleBulkUpdate}>Bulk Update (CSV)</DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSetAutoReorder}>Auto-Reorder Settings</DropdownMenuItem>
-                  {/* Removed Multi-Location View as it's now a dedicated button */}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -363,7 +413,7 @@ const Inventory: React.FC = () => {
                       checked={columnVisibility[column.key]}
                       onCheckedChange={(checked) => toggleColumnVisibility(column.key, checked)}
                       onSelect={(e) => e.preventDefault()}
-                      disabled={viewMode === "spreadsheet" && column.key === "actions"} // Disable actions toggle in spreadsheet
+                      disabled={viewMode === "spreadsheet" && column.key === "actions"}
                     >
                       {column.label}
                     </DropdownMenuCheckboxItem>
@@ -407,36 +457,20 @@ const Inventory: React.FC = () => {
                 <TableBody>
                   {filteredAndSortedItems.map((item) => (
                     <TableRow key={item.id}>
-                      {columnVisibility.id && <TableCell className="font-medium cursor-pointer" onClick={() => handleItemClick(item)}>{item.id}</TableCell>}
-                      {columnVisibility.name && <TableCell className="truncate cursor-pointer" onClick={() => handleItemClick(item)}>{item.name}</TableCell>}
-                      {columnVisibility.status && (
-                        <TableCell className="cursor-pointer" onClick={() => handleItemClick(item)}>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                              item.status === "In Stock"
-                                ? "bg-green-500/20 text-green-400"
-                                : item.status === "Low Stock"
-                                ? "bg-yellow-500/20 text-yellow-400"
-                                : "bg-red-500/20 text-red-400"
-                            }`}
-                          >
-                            {item.status}
-                          </span>
-                        </TableCell>
-                      )}
-                      {columnVisibility.description && <TableCell className="max-w-[200px] truncate text-muted-foreground text-sm cursor-pointer" onClick={() => handleItemClick(item)}>{item.description}</TableCell>}
+                      {columnVisibility.reorderAutoFill && <TableCell className="font-medium cursor-pointer" onClick={() => handleItemClick(item)}>{item.reorderAutoFill}</TableCell>}
+                      {columnVisibility.lastSoldDate && <TableCell className="cursor-pointer" onClick={() => handleItemClick(item)}>{item.lastSoldDate}</TableCell>}
                       {columnVisibility.sku && <TableCell className="truncate cursor-pointer" onClick={() => handleItemClick(item)}>{item.sku}</TableCell>}
-                      {columnVisibility.category && <TableCell className="truncate cursor-pointer" onClick={() => handleItemClick(item)}>{item.category}</TableCell>}
+                      {columnVisibility.dateOfLastOrder && <TableCell className="cursor-pointer" onClick={() => handleItemClick(item)}>{item.dateOfLastOrder}</TableCell>}
+                      {columnVisibility.name && <TableCell className="truncate cursor-pointer" onClick={() => handleItemClick(item)}>{item.name}</TableCell>}
+                      {columnVisibility.vendorName && <TableCell className="truncate cursor-pointer" onClick={() => handleItemClick(item)}>{item.vendorName}</TableCell>}
                       {columnVisibility.location && <TableCell className="truncate cursor-pointer" onClick={() => handleItemClick(item)}>{item.location}</TableCell>}
-                      {columnVisibility.quantity && <TableCell className="text-right font-bold text-primary cursor-pointer" onClick={() => handleItemClick(item)}>{item.quantity}</TableCell>}
-                      {columnVisibility.reorderLevel && <TableCell className="text-right cursor-pointer" onClick={() => handleItemClick(item)}>{item.reorderLevel}</TableCell>}
-                      {columnVisibility.committedStock && <TableCell className="text-right cursor-pointer" onClick={() => handleItemClick(item)}>{item.committedStock}</TableCell>}
-                      {columnVisibility.availableStock && <TableCell className="text-right cursor-pointer" onClick={() => handleItemClick(item)}>{item.availableStock}</TableCell>}
-                      {columnVisibility.incomingStock && <TableCell className="text-right cursor-pointer" onClick={() => handleItemClick(item)}>{item.incomingStock}</TableCell>}
+                      {columnVisibility.description && <TableCell className="max-w-[200px] truncate text-muted-foreground text-sm cursor-pointer" onClick={() => handleItemClick(item)}>{item.description}</TableCell>}
                       {columnVisibility.unitCost && <TableCell className="text-right cursor-pointer" onClick={() => handleItemClick(item)}>${item.unitCost.toFixed(2)}</TableCell>}
-                      {columnVisibility.retailPrice && <TableCell className="text-right cursor-pointer" onClick={() => handleItemClick(item)}>${item.retailPrice.toFixed(2)}</TableCell>}
+                      {columnVisibility.quantity && <TableCell className="text-right font-bold text-primary cursor-pointer" onClick={() => handleItemClick(item)}>{item.quantity}</TableCell>}
                       {columnVisibility.stockValue && <TableCell className="text-right cursor-pointer" onClick={() => handleItemClick(item)}>${item.stockValue.toFixed(2)}</TableCell>}
-                      {columnVisibility.lastUpdated && <TableCell className="text-sm text-muted-foreground cursor-pointer" onClick={() => handleItemClick(item)}>{item.lastUpdated}</TableCell>}
+                      {columnVisibility.reorderLevel && <TableCell className="text-right cursor-pointer" onClick={() => handleItemClick(item)}>{item.reorderLevel}</TableCell>}
+                      {columnVisibility.daysForReorder && <TableCell className="text-right cursor-pointer" onClick={() => handleItemClick(item)}>{item.daysForReorder}</TableCell>}
+                      {columnVisibility.nextReorderQuantity && <TableCell className="text-right cursor-pointer" onClick={() => handleItemClick(item)}>{item.nextReorderQuantity}</TableCell>}
                       {columnVisibility.actions && (
                         <TableCell className="text-center">
                           <Button
@@ -474,6 +508,7 @@ const Inventory: React.FC = () => {
               items={filteredAndSortedItems}
               visibleColumns={columnVisibility}
               allColumns={allColumns}
+              vendorNameMap={vendorNameMap} // Pass vendorNameMap
             />
           )}
         </CardContent>
