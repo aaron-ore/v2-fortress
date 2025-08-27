@@ -126,7 +126,7 @@ importers:
         specifier: ^1.4.1
         version: 1.4.1
       html5-qrcode:
-        specifier: ^2.3.8
+        specifier: 2.3.8
         version: 2.3.8
       input-otp:
         specifier: ^1.2.4
