@@ -30,6 +30,8 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
           await qrCode.stop();
           console.log(`[QrScanner] Scanner stopped successfully for readerId: ${readerId}.`);
         }
+        // Add a small delay here before clearing, to ensure browser has processed stop
+        await new Promise(resolve => setTimeout(resolve, 50)); // Small delay
         await qrCode.clear();
         console.log(`[QrScanner] Scanner UI cleared and resources released for readerId: ${readerId}.`);
       } catch (e) {
@@ -37,6 +39,8 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
         // It's usually safe to ignore during cleanup.
         console.warn(`[QrScanner] Error during scanner cleanup for readerId: ${readerId}:`, e);
       } finally {
+        // Nullify the ref *after* all operations and a small delay
+        await new Promise(resolve => setTimeout(resolve, 50)); // Another small delay
         html5QrCodeRef.current = null;
         if (isMounted.current) { // Only update state if still mounted
           setIsCameraInitialized(false);
@@ -58,8 +62,15 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
   useEffect(() => {
     isMounted.current = true; // Component is mounted
 
-    // Call cleanup when facingMode changes or component mounts
-    stopAndClearScanner();
+    // Ensure any previous scanner is stopped and cleared before starting a new one
+    // This is crucial for re-renders or facingMode changes
+    const cleanupPrevious = async () => {
+      if (html5QrCodeRef.current) {
+        await stopAndClearScanner();
+      }
+    };
+    cleanupPrevious();
+
 
     const qrCode = new Html5Qrcode(readerId, { verbose: false });
     html5QrCodeRef.current = qrCode;
@@ -86,6 +97,8 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
               await qrCode.stop(); // Await stop before calling onScan
               console.log(`[QrScanner] Scanner stopped after successful scan for readerId: ${readerId}.`);
             }
+            // Add a small delay here before calling onScan to ensure resources are released
+            await new Promise(resolve => setTimeout(resolve, 100));
             if (isMounted.current) { // Only call onScan if still mounted
               onScan(decodedText);
             }
