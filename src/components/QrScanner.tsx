@@ -24,35 +24,39 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
   const stopAndClearScanner = useCallback(async () => {
     if (html5QrCodeRef.current) {
       const qrCode = html5QrCodeRef.current;
-      console.log(`[QrScanner] Attempting to stop and clear scanner for readerId: ${readerId}.`);
+      console.log(`[QrScanner-${readerId}] Attempting to stop and clear scanner. isScanning: ${qrCode.isScanning}`);
       try {
         if (qrCode.isScanning) {
           await qrCode.stop();
-          console.log(`[QrScanner] Scanner stopped successfully for readerId: ${readerId}.`);
+          console.log(`[QrScanner-${readerId}] Scanner stopped successfully.`);
+        } else {
+          console.log(`[QrScanner-${readerId}] Scanner not in scanning state, skipping stop.`);
         }
-        // Add a small delay here before clearing, to ensure browser has processed stop
-        await new Promise(resolve => setTimeout(resolve, 50)); // Small delay
-        await qrCode.clear();
-        console.log(`[QrScanner] Scanner UI cleared and resources released for readerId: ${readerId}.`);
       } catch (e) {
-        // This error is often "Cannot access video stream" if camera was already off or failed to start.
-        // It's usually safe to ignore during cleanup.
-        console.warn(`[QrScanner] Error during scanner cleanup for readerId: ${readerId}:`, e);
+        console.warn(`[QrScanner-${readerId}] Error during qrCode.stop():`, e);
+        // Continue to clear even if stop fails
       } finally {
-        // Nullify the ref *after* all operations and a small delay
-        await new Promise(resolve => setTimeout(resolve, 50)); // Another small delay
-        html5QrCodeRef.current = null;
-        if (isMounted.current) { // Only update state if still mounted
-          setIsCameraInitialized(false);
+        try {
+          await new Promise(resolve => setTimeout(resolve, 50)); // Small delay before clearing
+          await qrCode.clear();
+          console.log(`[QrScanner-${readerId}] Scanner UI cleared and resources released.`);
+        } catch (e) {
+          console.warn(`[QrScanner-${readerId}] Error during qrCode.clear():`, e);
+        } finally {
+          await new Promise(resolve => setTimeout(resolve, 50)); // Another small delay
+          html5QrCodeRef.current = null;
+          if (isMounted.current) {
+            setIsCameraInitialized(false);
+          }
+          if (errorTimeoutRef.current) {
+            clearTimeout(errorTimeoutRef.current);
+            errorTimeoutRef.current = null;
+          }
+          lastReportedErrorRef.current = null;
         }
-        if (errorTimeoutRef.current) {
-          clearTimeout(errorTimeoutRef.current);
-          errorTimeoutRef.current = null;
-        }
-        lastReportedErrorRef.current = null;
       }
     }
-  }, [readerId]); // Dependencies for useCallback
+  }, [readerId]);
 
   // Expose stopAndClearScanner via ref
   useImperativeHandle(ref, () => ({
@@ -60,20 +64,11 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
   }));
 
   useEffect(() => {
-    isMounted.current = true; // Component is mounted
-
-    // Ensure any previous scanner is stopped and cleared before starting a new one
-    // This is crucial for re-renders or facingMode changes
-    const cleanupPrevious = async () => {
-      if (html5QrCodeRef.current) {
-        await stopAndClearScanner();
-      }
-    };
-    cleanupPrevious();
-
+    isMounted.current = true;
+    console.log(`[QrScanner-${readerId}] Component mounted. Initializing Html5Qrcode instance.`);
 
     const qrCode = new Html5Qrcode(readerId, { verbose: false });
-    html5QrCodeRef.current = qrCode;
+    html5QrCodeRef.current = qrCode; // Assign the new instance immediately
 
     const config = {
       fps: 10,
@@ -82,24 +77,40 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
       disableFlip: false,
     };
 
-    const startScanner = async () => {
-      if (!isMounted.current) return; // Don't start if component unmounted
+    let startCameraTimeout: NodeJS.Timeout | null = null;
 
-      console.log(`[QrScanner] Starting scanner for readerId: ${readerId} with facingMode: ${facingMode}`);
+    const startScanner = async () => {
+      if (!isMounted.current || qrCode.isScanning) {
+        console.log(`[QrScanner-${readerId}] Skipping startScanner: isMounted=${isMounted.current}, isScanning=${qrCode.isScanning}`);
+        return;
+      }
+
+      console.log(`[QrScanner-${readerId}] Attempting to start scanner with facingMode: ${facingMode}`);
+      setIsCameraInitialized(false); // Reset initialization state
+      
+      // Set a timeout for the camera to start
+      startCameraTimeout = setTimeout(() => {
+        if (isMounted.current && !isCameraInitialized) {
+          console.error(`[QrScanner-${readerId}] Camera initialization timed out (10s).`);
+          onError("Camera initialization timed out. Please try again.");
+          setIsCameraInitialized(false);
+          stopAndClearScanner(); // Attempt to clean up on timeout
+        }
+      }, 10000); // 10 seconds timeout
+
       try {
         await qrCode.start(
           { facingMode: facingMode },
           config,
-          async (decodedText) => { // Make this async to await stop()
-            console.log(`[QrScanner] Scan success for readerId: ${readerId}: ${decodedText}`);
-            // Stop scanner immediately on successful scan
+          async (decodedText) => {
+            if (startCameraTimeout) clearTimeout(startCameraTimeout);
+            console.log(`[QrScanner-${readerId}] Scan success: ${decodedText}`);
             if (qrCode.isScanning) {
-              await qrCode.stop(); // Await stop before calling onScan
-              console.log(`[QrScanner] Scanner stopped after successful scan for readerId: ${readerId}.`);
+              await qrCode.stop();
+              console.log(`[QrScanner-${readerId}] Scanner stopped after successful scan.`);
             }
-            // Add a small delay here before calling onScan to ensure resources are released
-            await new Promise(resolve => setTimeout(resolve, 100));
-            if (isMounted.current) { // Only call onScan if still mounted
+            await new Promise(resolve => setTimeout(resolve, 100)); // Delay before onScan
+            if (isMounted.current) {
               onScan(decodedText);
             }
           },
@@ -113,36 +124,40 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
               lowerCaseMessage.includes("video stream has ended") ||
               lowerCaseMessage.includes("notfoundexception") ||
               lowerCaseMessage.includes("notallowederror") ||
-              lowerCaseMessage.includes("overconstrainederror") // Added this
+              lowerCaseMessage.includes("overconstrainederror")
             ) {
-              return;
+              return; // Ignore common transient errors or non-critical messages
             }
 
+            // Only report unique and persistent errors
             if (lastReportedErrorRef.current !== errorMessage) {
               lastReportedErrorRef.current = errorMessage;
               if (errorTimeoutRef.current) {
                 clearTimeout(errorTimeoutRef.current);
               }
               errorTimeoutRef.current = setTimeout(() => {
-                if (isMounted.current) { // Only report error if still mounted
-                  console.error(`[QrScanner] Reported error for readerId: ${readerId}: ${errorMessage}`);
+                if (isMounted.current) {
+                  console.error(`[QrScanner-${readerId}] Reported runtime error: ${errorMessage}`);
                   onError(errorMessage);
                 }
                 errorTimeoutRef.current = null;
-              }, 1000);
+              }, 1000); // Debounce error reporting
             }
           }
         );
-        if (isMounted.current) { // Only update state if still mounted
-          console.log(`[QrScanner] Camera initialized successfully for readerId: ${readerId}.`);
+        if (startCameraTimeout) clearTimeout(startCameraTimeout);
+        if (isMounted.current) {
+          console.log(`[QrScanner-${readerId}] Camera initialized successfully.`);
           setIsCameraInitialized(true);
           onReady();
         }
       } catch (err: any) {
-        if (isMounted.current) { // Only report error if still mounted
-          console.error(`[QrScanner] Failed to start camera for readerId: ${readerId}:`, err);
+        if (startCameraTimeout) clearTimeout(startCameraTimeout);
+        if (isMounted.current) {
+          console.error(`[QrScanner-${readerId}] Failed to start camera:`, err);
           onError(err.message || "Failed to start camera.");
-          setIsCameraInitialized(false);
+          setIsCameraInitialized(false); // Explicitly set to false on start failure
+          stopAndClearScanner(); // Attempt to clean up even on start failure
         }
       }
     };
@@ -151,11 +166,13 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
 
     // Cleanup function for when the component unmounts
     return () => {
-      isMounted.current = false; // Component is unmounting
-      console.log(`[QrScanner] Cleanup function called for readerId: ${readerId} on unmount.`);
+      isMounted.current = false;
+      if (startCameraTimeout) clearTimeout(startCameraTimeout);
+      if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
+      console.log(`[QrScanner-${readerId}] Component unmounted. Performing cleanup.`);
       stopAndClearScanner();
     };
-  }, [facingMode, onScan, onError, onReady, readerId, stopAndClearScanner]); // Added stopAndClearScanner to dependencies
+  }, [facingMode, onScan, onError, onReady, readerId, stopAndClearScanner]);
 
   return (
     <div className="w-full h-full flex justify-center items-center relative">
