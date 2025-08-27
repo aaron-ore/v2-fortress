@@ -59,14 +59,44 @@ const Users: React.FC = () => {
       showSuccess(`Invitation sent to ${inviteEmail}! User will set their password upon first login.`);
       setInviteEmail("");
       
-      // 2. After successful signup, the handle_new_user trigger will create the profile.
-      // We then immediately update their role AND organization_id using the Edge Function.
       if (data.user) {
-        // Give a small delay for the trigger to run and create the initial profile
-        setTimeout(async () => {
-          await updateUserRole(data.user!.id, inviteRole, profile.organizationId); // Pass admin's organizationId
-          fetchAllProfiles(); // Refresh list
-        }, 1000);
+        const newUserId = data.user.id;
+        const maxRetries = 5;
+        let retries = 0;
+        const pollInterval = 1000; // 1 second
+
+        const pollForProfile = async () => {
+          try {
+            const { data: newProfile, error: profileError } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('id', newUserId)
+              .single();
+
+            if (newProfile && !profileError) {
+              // Profile found, proceed to update role
+              await updateUserRole(newUserId, inviteRole, profile.organizationId); // Pass admin's organizationId
+              fetchAllProfiles(); // Refresh list
+            } else if (retries < maxRetries) {
+              retries++;
+              console.log(`[Users.tsx] Profile not found for ${newUserId}, retrying... (${retries}/${maxRetries})`);
+              setTimeout(pollForProfile, pollInterval);
+            } else {
+              showError(`Failed to find profile for new user ${newUserId} after multiple attempts. Please check Supabase logs.`);
+              fetchAllProfiles(); // Still refresh in case of partial success
+            }
+          } catch (pollError) {
+            console.error("[Users.tsx] Error polling for profile:", pollError);
+            if (retries < maxRetries) {
+              retries++;
+              setTimeout(pollForProfile, pollInterval);
+            } else {
+              showError(`Failed to find profile for new user ${newUserId} due to an error after multiple attempts.`);
+              fetchAllProfiles();
+            }
+          }
+        };
+        pollForProfile();
       } else {
         // If data.user is null (e.g., user already exists), just refresh profiles
         fetchAllProfiles();
