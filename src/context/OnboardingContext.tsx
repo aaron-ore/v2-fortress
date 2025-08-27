@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 import { showSuccess, showError } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
 import { supabase } from "@/lib/supabaseClient";
+import { generateUniqueCode } from "@/utils/numberGenerator"; // Import the new utility
 
 interface CompanyProfile {
   name: string;
@@ -93,8 +94,17 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
         if (orgError) throw orgError;
 
         const newOrganizationId = orgData.id;
+        const newUniqueCode = generateUniqueCode(); // Generate unique code
 
-        // 2. Update user's profile with organization_id and set role to admin
+        // 2. Update the newly created organization with the unique code
+        const { error: updateOrgError } = await supabase
+          .from('organizations')
+          .update({ unique_code: newUniqueCode })
+          .eq('id', newOrganizationId);
+
+        if (updateOrgError) throw updateOrgError;
+
+        // 3. Update user's profile with organization_id and set role to admin
         const { error: profileUpdateError } = await supabase
           .from('profiles')
           .update({ organization_id: newOrganizationId, role: 'admin' })
@@ -102,9 +112,9 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
 
         if (profileUpdateError) throw profileUpdateError;
 
-        // 3. Refresh the profile context to get the updated organizationId and role
+        // 4. Refresh the profile context to get the updated organizationId and role
         await fetchProfile();
-        showSuccess(`Organization "${profileData.name}" created and assigned! You are now an admin.`);
+        showSuccess(`Organization "${profileData.name}" created and assigned! You are now an admin. Your unique company code is: ${newUniqueCode}`);
 
       } catch (error: any) {
         console.error("Error during initial organization setup:", error);
