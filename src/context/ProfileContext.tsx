@@ -42,30 +42,65 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       return;
     }
 
+    let userProfileData = null;
+    let profileFetchError = null;
+
+    // Attempt to fetch the profile
     const { data, error } = await supabase
       .from("profiles")
       .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at") // Explicitly list columns
       .eq("id", session.user.id)
       .single();
 
-    if (error) {
-      console.error("Error fetching profile:", error);
+    if (error && error.code === 'PGRST116') { // PGRST116 means "no rows found"
+      console.warn(`[ProfileContext] No profile found for user ${session.user.id}. Attempting to create one.`);
+      // If no profile exists, create a basic one
+      const { data: newProfileData, error: createError } = await supabase
+        .from("profiles")
+        .insert({
+          id: session.user.id,
+          full_name: session.user.email?.split('@')[0] || "New User", // Default name from email or "New User"
+          // The email field is not strictly necessary in the profiles table if it's always derived from auth.users,
+          // but including it here for consistency with the initial profile creation logic.
+          // It will be overwritten by session.user.email when setting the profile state.
+          email: session.user.email, 
+          role: "viewer", // Default role
+          organization_id: null, // Initially null, onboarding will set this
+        })
+        .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at")
+        .single();
+
+      if (createError) {
+        console.error("[ProfileContext] Error creating new profile:", createError);
+        profileFetchError = createError; // Use this error for toast
+      } else if (newProfileData) {
+        userProfileData = newProfileData;
+        showSuccess("A new profile has been created for you!");
+      }
+    } else if (error) {
+      console.error("[ProfileContext] Error fetching profile:", error);
+      profileFetchError = error;
+    } else if (data) {
+      userProfileData = data;
+    }
+
+    if (profileFetchError) {
       if (errorToastId.current === null) {
         errorToastId.current = showError("Failed to load user profile. Please try again.");
         setTimeout(() => { errorToastId.current = null; }, 3000);
       }
       setProfile(null);
-    } else if (data) {
+    } else if (userProfileData) {
       setProfile({
-        id: data.id,
-        fullName: data.full_name,
-        email: session.user.email || "",
-        phone: data.phone || undefined,
-        address: data.address || undefined,
-        avatarUrl: data.avatar_url || undefined,
-        role: data.role,
-        organizationId: data.organization_id, // Map organization_id
-        createdAt: data.created_at,
+        id: userProfileData.id,
+        fullName: userProfileData.full_name,
+        email: session.user.email || "", // Always use session email as source of truth
+        phone: userProfileData.phone || undefined,
+        address: userProfileData.address || undefined,
+        avatarUrl: userProfileData.avatar_url || undefined,
+        role: userProfileData.role,
+        organizationId: userProfileData.organization_id, // Map organization_id
+        createdAt: userProfileData.created_at,
       });
     }
     setIsLoadingProfile(false); // Set loading false at end
