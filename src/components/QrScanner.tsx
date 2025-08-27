@@ -30,7 +30,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
     };
 
     const stopAndClearScanner = async () => {
-      if (html5QrCodeRef.current) {
+      if (html5QrCodeRef.current && typeof html5QrCodeRef.current.stop === 'function') {
         console.log("[QrScanner] Attempting to stop scanner...");
         try {
           await html5QrCodeRef.current.stop();
@@ -40,6 +40,9 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         } finally {
           html5QrCodeRef.current = null; // Ensure ref is cleared
         }
+      } else {
+        console.log("[QrScanner] No active scanner instance to stop or stop method not found.");
+        html5QrCodeRef.current = null; // Ensure ref is cleared even if stop wasn't a function
       }
     };
 
@@ -52,7 +55,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       // Ensure the DOM element exists before initializing the scanner
       const scannerElement = document.getElementById(scannerId);
       if (!scannerElement) {
-        console.error(`[QrScanner] DOM element with ID '${scannerId}' not found.`);
+        console.error(`[QrScanner] DOM element with ID '${scannerId}' not found. Cannot start scanner.`);
         onError(`DOM element for scanner not found: ${scannerId}`);
         return;
       }
@@ -61,19 +64,28 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       await stopAndClearScanner();
 
       console.log(`[QrScanner] Initializing new scanner for facingMode: ${facingMode}`);
-      html5QrCodeRef.current = new Html5QrcodeScanner(
-        scannerId,
-        {
-          ...config,
-          videoConstraints: {
-            facingMode: facingMode,
-          },
-        },
-        false // Verbose logging
-      );
-
       try {
+        html5QrCodeRef.current = new Html5QrcodeScanner(
+          scannerId,
+          {
+            ...config,
+            videoConstraints: {
+              facingMode: facingMode,
+            },
+          },
+          false // Verbose logging
+        );
+
+        // Check if the instance was successfully created
+        if (!html5QrCodeRef.current || typeof html5QrCodeRef.current.start !== 'function') {
+          console.error("[QrScanner] Failed to create Html5QrcodeScanner instance or start method is missing.");
+          onError("Failed to initialize QR scanner.");
+          return;
+        }
+
+        // The start method expects camera config as the first argument, followed by callbacks
         await html5QrCodeRef.current.start(
+          { facingMode: facingMode }, // Pass facingMode here for camera selection
           (decodedText, decodedResult) => {
             if (isMounted.current) {
               console.log("[QrScanner] Scan successful:", decodedText);
@@ -108,11 +120,13 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
 
     useEffect(() => {
       isMounted.current = true;
-      console.log("[QrScanner] Component mounted or facingMode changed. Starting scanner...");
-      startScanner();
+      console.log("[QrScanner] Component mounted or facingMode changed. Scheduling scanner start...");
+      // Add a small delay to ensure DOM is fully rendered and stable
+      const timer = setTimeout(startScanner, 100); // 100ms delay
 
       return () => {
         isMounted.current = false;
+        clearTimeout(timer); // Clear timeout if component unmounts before it fires
         console.log("[QrScanner] Component unmounting. Stopping scanner...");
         stopAndClearScanner();
       };
