@@ -4,6 +4,7 @@ DROP POLICY IF EXISTS "Admins can update profiles within their organization." ON
 DROP POLICY IF EXISTS "Admins can view all profiles within their organization." ON public.profiles;
 DROP POLICY IF EXISTS "Users can update their own profile." ON public.profiles;
 DROP POLICY IF EXISTS "Users can view their own profile." ON public.profiles;
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles; -- Drop if it exists from a previous attempt
 
 -- Policy 1: Allow authenticated users to view their own profile
 -- This is essential for the application to fetch the current user's profile without recursion.
@@ -20,4 +21,13 @@ ON public.profiles
 FOR UPDATE
 TO authenticated
 USING (auth.uid() = id)
+WITH CHECK (auth.uid() = id);
+
+-- Policy 3: Allow authenticated users to insert their own profile
+-- This is CRUCIAL for the automatic profile creation logic when a user logs in for the first time
+-- and no profile exists yet.
+CREATE POLICY "Users can insert own profile"
+ON public.profiles
+FOR INSERT
+TO authenticated
 WITH CHECK (auth.uid() = id);
