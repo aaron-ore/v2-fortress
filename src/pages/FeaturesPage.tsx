@@ -1,7 +1,12 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import AIReorderSuggestions from "@/components/features/AIReorderSuggestions"; // Import the new AIReorderSuggestions component
-import { Sparkles } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"; // Import Tabs components
+import AIReorderSuggestions from "@/components/features/AIReorderSuggestions";
+import PredictiveMaintenance from "@/components/features/PredictiveMaintenance"; // NEW: Import PredictiveMaintenance
+import SupplierPerformanceRating from "@/components/features/SupplierPerformanceRating"; // NEW: Import SupplierPerformanceRating
+import DynamicPricingOptimization from "@/components/features/DynamicPricingOptimization"; // NEW: Import DynamicPricingOptimization
+import AdvancedDemandForecasting from "@/components/features/AdvancedDemandForecasting"; // NEW: Import AdvancedDemandForecasting
+import { Sparkles, Brain, Wrench, Star, DollarSign, TrendingUp } from "lucide-react"; // Import new icons
 
 /**
  * @component FeaturesPage
@@ -19,41 +24,41 @@ const FeaturesPage: React.FC = () => {
         Explore advanced functionalities designed to optimize your inventory management.
       </p>
 
-      {/* Section for AI-driven Reorder Suggestions */}
-      <Card className="bg-card border-border rounded-lg shadow-sm p-6">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold flex items-center gap-2">
-            AI-Driven Reorder Suggestions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground mb-4">
-            Leverage simulated AI insights to optimize your inventory reordering process.
-            This tool analyzes stock levels and historical trends to suggest ideal reorder quantities.
-          </p>
-          <AIReorderSuggestions /> {/* Render the AIReorderSuggestions component */}
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="ai-reorder" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 h-auto"> {/* Adjusted grid for more tabs */}
+          <TabsTrigger value="ai-reorder" className="flex items-center gap-2 py-2">
+            <Brain className="h-4 w-4" /> AI Reorder
+          </TabsTrigger>
+          <TabsTrigger value="predictive-maintenance" className="flex items-center gap-2 py-2">
+            <Wrench className="h-4 w-4" /> Predictive Maint.
+          </TabsTrigger>
+          <TabsTrigger value="supplier-performance" className="flex items-center gap-2 py-2">
+            <Star className="h-4 w-4" /> Supplier Perf.
+          </TabsTrigger>
+          <TabsTrigger value="dynamic-pricing" className="flex items-center gap-2 py-2">
+            <DollarSign className="h-4 w-4" /> Dynamic Pricing
+          </TabsTrigger>
+          <TabsTrigger value="demand-forecasting" className="flex items-center gap-2 py-2">
+            <TrendingUp className="h-4 w-4" /> Demand Forecast
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Placeholder for future value-added features */}
-      <Card className="bg-card border-border rounded-lg shadow-sm p-6">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold">
-            Future Value-Added Feature Ideas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="list-disc list-inside text-muted-foreground space-y-2">
-            <li>Predictive Maintenance for Warehouse Equipment</li>
-            <li>Automated Supplier Performance Rating</li>
-            <li>Dynamic Pricing Optimization</li>
-            <li>Advanced Demand Forecasting with External Data</li>
-          </ul>
-          <p className="text-sm text-muted-foreground mt-4">
-            These are examples of how this 'Features' tab can grow with more intelligent tools.
-          </p>
-        </CardContent>
-      </Card>
+        <TabsContent value="ai-reorder" className="mt-4">
+          <AIReorderSuggestions />
+        </TabsContent>
+        <TabsContent value="predictive-maintenance" className="mt-4">
+          <PredictiveMaintenance />
+        </TabsContent>
+        <TabsContent value="supplier-performance" className="mt-4">
+          <SupplierPerformanceRating />
+        </TabsContent>
+        <TabsContent value="dynamic-pricing" className="mt-4">
+          <DynamicPricingOptimization />
+        </TabsContent>
+        <TabsContent value="demand-forecasting" className="mt-4">
+          <AdvancedDemandForecasting />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
