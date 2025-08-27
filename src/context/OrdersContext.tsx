@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect, useCa
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext"; // Import useProfile
+import { mockOrders } from "@/utils/mockData"; // NEW: Import mock data
 
 export interface POItem {
   id: number;
@@ -62,6 +63,11 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
     if (error) {
       console.error("Error fetching orders:", error);
       showError("Failed to load orders.");
+      // NEW: If error and in dev, load mock data
+      if (import.meta.env.DEV) {
+        console.warn("Loading mock orders due to Supabase error in development mode.");
+        setOrders(mockOrders);
+      }
     } else {
       const fetchedOrders: OrderItem[] = data.map((order: any) => ({
         id: order.id,
@@ -79,7 +85,13 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         organizationId: order.organization_id, // Map organization_id
         terms: order.terms || undefined, // Map terms
       }));
-      setOrders(fetchedOrders);
+      // NEW: If no data from Supabase and in dev, load mock data
+      if (fetchedOrders.length === 0 && import.meta.env.DEV) {
+        console.warn("Loading mock orders as Supabase returned no data in development mode.");
+        setOrders(mockOrders);
+      } else {
+        setOrders(fetchedOrders);
+      }
     }
   }, [profile?.organizationId]); // Depend on profile.organizationId
 

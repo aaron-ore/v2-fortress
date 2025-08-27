@@ -3,6 +3,7 @@ import { showSuccess, showError } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
 import { supabase } from "@/lib/supabaseClient";
 import { generateUniqueCode } from "@/utils/numberGenerator"; // Import the new utility
+import { mockLocations, mockCompanyProfile } from "@/utils/mockData"; // NEW: Import mock data
 
 interface CompanyProfile {
   name: string;
@@ -36,6 +37,11 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   const [companyProfile, setCompanyProfileState] = useState<CompanyProfile | null>(() => {
     if (typeof window !== 'undefined') {
       const storedProfile = localStorage.getItem("companyProfile");
+      // NEW: If no stored profile and in dev, load mock company profile
+      if (!storedProfile && import.meta.env.DEV) {
+        console.warn("Loading mock company profile as local storage is empty in development mode.");
+        return mockCompanyProfile;
+      }
       return storedProfile ? JSON.parse(storedProfile) : null;
     }
     return null;
@@ -44,6 +50,11 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   const [locations, setLocations] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const storedLocations = localStorage.getItem("inventoryLocations");
+      // NEW: If no stored locations and in dev, load mock locations
+      if (!storedLocations && import.meta.env.DEV) {
+        console.warn("Loading mock locations as local storage is empty in development mode.");
+        return mockLocations;
+      }
       return storedLocations ? JSON.parse(storedLocations) : [];
     }
     return [];

@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
+import { mockUserProfile, mockAllProfiles } from "@/utils/mockData"; // NEW: Import mock data
 
 export interface UserProfile {
   id: string; // This will be the user's UUID from auth.users
@@ -39,6 +40,11 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (!session) {
       setProfile(null);
       setIsLoadingProfile(false); // Set loading false if no session
+      // NEW: If no session and in dev, load mock user profile
+      if (import.meta.env.DEV) {
+        console.warn("Loading mock user profile as no session found in development mode.");
+        setProfile(mockUserProfile);
+      }
       return;
     }
 
@@ -69,6 +75,11 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         setTimeout(() => { errorToastId.current = null; }, 3000);
       }
       setProfile(null);
+      // NEW: If error and in dev, load mock user profile
+      if (import.meta.env.DEV) {
+        console.warn("Loading mock user profile due to Supabase error in development mode.");
+        setProfile(mockUserProfile);
+      }
     } else if (userProfileData) {
       setProfile({
         id: userProfileData.id,
@@ -89,6 +100,11 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     // Only attempt to fetch all profiles if a session exists AND the current profile's role is 'admin'
     if (!profile?.role || profile.role !== 'admin' || !profile.organizationId) { // Check profile role and organizationId
       setAllProfiles([]);
+      // NEW: If not admin/no orgId and in dev, load mock all profiles
+      if (import.meta.env.DEV) {
+        console.warn("Loading mock all profiles as current user is not admin or has no organization in development mode.");
+        setAllProfiles(mockAllProfiles);
+      }
       return;
     }
 
@@ -100,6 +116,11 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (error) {
       console.error("Error fetching all profiles:", error);
       showError("Failed to load all user profiles.");
+      // NEW: If error and in dev, load mock all profiles
+      if (import.meta.env.DEV) {
+        console.warn("Loading mock all profiles due to Supabase error in development mode.");
+        setAllProfiles(mockAllProfiles);
+      }
     } else if (data) {
       const fetchedProfiles: UserProfile[] = data.map((p: any) => ({
         id: p.id,
@@ -112,7 +133,13 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         organizationId: p.organization_id, // Map organization_id
         createdAt: p.created_at,
       }));
-      setAllProfiles(fetchedProfiles);
+      // NEW: If no data from Supabase and in dev, load mock all profiles
+      if (fetchedProfiles.length === 0 && import.meta.env.DEV) {
+        console.warn("Loading mock all profiles as Supabase returned no data in development mode.");
+        setAllProfiles(mockAllProfiles);
+      } else {
+        setAllProfiles(fetchedProfiles);
+      }
     }
   }, [profile?.role, profile?.organizationId]); // Depend on profile.role and organizationId
 
@@ -125,6 +152,12 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         setProfile(null);
         setAllProfiles([]);
         setIsLoadingProfile(false); // Also set loading false if session is null
+        // NEW: If no session and in dev, load mock user profile and all profiles
+        if (import.meta.env.DEV) {
+          console.warn("Loading mock user profile and all profiles as no session found in development mode.");
+          setProfile(mockUserProfile);
+          setAllProfiles(mockAllProfiles);
+        }
       }
     });
     return () => subscription.unsubscribe();
@@ -135,6 +168,11 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       fetchAllProfiles();
     } else {
       setAllProfiles([]);
+      // NEW: If not admin/no orgId and in dev, load mock all profiles
+      if (import.meta.env.DEV) {
+        console.warn("Loading mock all profiles as current user is not admin or has no organization in development mode.");
+        setAllProfiles(mockAllProfiles);
+      }
     }
   }, [profile?.role, profile?.organizationId, fetchAllProfiles]);
 

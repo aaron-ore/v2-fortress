@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect, useCa
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext"; // Import useProfile
+import { mockVendors } from "@/utils/mockData"; // NEW: Import mock data
 
 export interface Vendor {
   id: string;
@@ -45,6 +46,11 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (error) {
       console.error("Error fetching vendors:", error);
       showError("Failed to load vendors.");
+      // NEW: If error and in dev, load mock data
+      if (import.meta.env.DEV) {
+        console.warn("Loading mock vendors due to Supabase error in development mode.");
+        setVendors(mockVendors);
+      }
     } else {
       const fetchedVendors: Vendor[] = data.map((vendor: any) => ({
         id: vendor.id,
@@ -57,7 +63,13 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         organizationId: vendor.organization_id, // Map organization_id
         createdAt: vendor.created_at,
       }));
-      setVendors(fetchedVendors);
+      // NEW: If no data from Supabase and in dev, load mock data
+      if (fetchedVendors.length === 0 && import.meta.env.DEV) {
+        console.warn("Loading mock vendors as Supabase returned no data in development mode.");
+        setVendors(mockVendors);
+      } else {
+        setVendors(fetchedVendors);
+      }
     }
   }, [profile?.organizationId]); // Depend on profile.organizationId
 

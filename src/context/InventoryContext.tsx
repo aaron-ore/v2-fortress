@@ -9,6 +9,7 @@ import React, {
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext"; // Import useProfile
+import { mockInventoryItems } from "@/utils/mockData"; // NEW: Import mock data
 
 export interface InventoryItem {
   id: string;
@@ -67,6 +68,11 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
     if (error) {
       console.error("Error fetching inventory items:", error);
       showError("Failed to load inventory items.");
+      // NEW: If error and in dev, load mock data
+      if (import.meta.env.DEV) {
+        console.warn("Loading mock inventory items due to Supabase error in development mode.");
+        setInventoryItems(mockInventoryItems);
+      }
     } else {
       const fetchedItems: InventoryItem[] = data.map((item: any) => ({
         id: item.id,
@@ -88,7 +94,13 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         barcodeUrl: item.barcode_url || undefined, // Map new field
         organizationId: item.organization_id, // Map organization_id
       }));
-      setInventoryItems(fetchedItems);
+      // NEW: If no data from Supabase and in dev, load mock data
+      if (fetchedItems.length === 0 && import.meta.env.DEV) {
+        console.warn("Loading mock inventory items as Supabase returned no data in development mode.");
+        setInventoryItems(mockInventoryItems);
+      } else {
+        setInventoryItems(fetchedItems);
+      }
     }
   }, [profile?.organizationId]); // Depend on profile.organizationId
 
