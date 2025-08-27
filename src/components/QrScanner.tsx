@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 
 interface QrScannerProps {
@@ -14,43 +14,46 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, onReady, facingM
   const [isCameraInitialized, setIsCameraInitialized] = useState(false);
   const lastReportedErrorRef = useRef<string | null>(null);
   const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isMounted = useRef(true); // To track if the component is mounted
+
+  // Centralized function to stop and clear the scanner
+  const stopAndClearScanner = useCallback(async () => {
+    if (html5QrCodeRef.current) {
+      const qrCode = html5QrCodeRef.current;
+      console.log(`[QrScanner] Attempting to stop and clear scanner for readerId: ${readerId}.`);
+      try {
+        if (qrCode.isScanning) {
+          await qrCode.stop();
+          console.log(`[QrScanner] Scanner stopped successfully for readerId: ${readerId}.`);
+        }
+        await qrCode.clear();
+        console.log(`[QrScanner] Scanner UI cleared and resources released for readerId: ${readerId}.`);
+      } catch (e) {
+        // This error is often "Cannot access video stream" if camera was already off or failed to start.
+        // It's usually safe to ignore during cleanup.
+        console.warn(`[QrScanner] Error during scanner cleanup for readerId: ${readerId}:`, e);
+      } finally {
+        html5QrCodeRef.current = null;
+        if (isMounted.current) { // Only update state if still mounted
+          setIsCameraInitialized(false);
+        }
+        if (errorTimeoutRef.current) {
+          clearTimeout(errorTimeoutRef.current);
+          errorTimeoutRef.current = null;
+        }
+        lastReportedErrorRef.current = null;
+      }
+    }
+  }, [readerId]); // Dependencies for useCallback
 
   useEffect(() => {
-    console.log(`[QrScanner] useEffect triggered for facingMode: ${facingMode}, readerId: ${readerId}`);
+    isMounted.current = true; // Component is mounted
 
-    // Consolidated cleanup function for scanner instance
-    const cleanupScanner = async () => {
-      if (html5QrCodeRef.current) {
-        console.log(`[QrScanner] Attempting to stop and clear scanner for readerId: ${readerId}.`);
-        try {
-          // Stop scanning if active
-          if (html5QrCodeRef.current.isScanning) {
-            await html5QrCodeRef.current.stop();
-            console.log(`[QrScanner] Scanner stopped successfully for readerId: ${readerId}.`);
-          }
-          // Clear UI and release camera resources
-          await html5QrCodeRef.current.clear(); 
-          console.log(`[QrScanner] Scanner UI cleared and resources released for readerId: ${readerId}.`);
-        } catch (e) {
-          console.warn(`[QrScanner] Error during scanner cleanup for readerId: ${readerId}:`, e);
-          // This is the error we are trying to fix. Log it but don't re-throw.
-        }
-      }
-      html5QrCodeRef.current = null;
-      setIsCameraInitialized(false);
-      if (errorTimeoutRef.current) {
-        clearTimeout(errorTimeoutRef.current);
-        errorTimeoutRef.current = null;
-      }
-      lastReportedErrorRef.current = null;
-    };
-
-    // Call cleanup for any existing scanner before starting a new one
-    // This handles cases where dependencies change and the effect re-runs.
-    cleanupScanner();
+    // Call cleanup when facingMode changes or component mounts
+    stopAndClearScanner();
 
     const qrCode = new Html5Qrcode(readerId, { verbose: false });
-    html5QrCodeRef.current = qrCode; // Store the new instance
+    html5QrCodeRef.current = qrCode;
 
     const config = {
       fps: 10,
@@ -60,19 +63,21 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, onReady, facingM
     };
 
     const startScanner = async () => {
+      if (!isMounted.current) return; // Don't start if component unmounted
+
       console.log(`[QrScanner] Starting scanner for readerId: ${readerId} with facingMode: ${facingMode}`);
       try {
         await qrCode.start(
           { facingMode: facingMode },
           config,
-          (decodedText) => {
+          async (decodedText) => { // Make this async to await stop()
             console.log(`[QrScanner] Scan success for readerId: ${readerId}: ${decodedText}`);
             // Stop scanner immediately on successful scan
             if (qrCode.isScanning) {
-              qrCode.stop().then(() => {
-                onScan(decodedText);
-              }).catch(e => console.error(`[QrScanner] Error stopping scanner after scan for readerId: ${readerId}:`, e));
-            } else {
+              await qrCode.stop(); // Await stop before calling onScan
+              console.log(`[QrScanner] Scanner stopped after successful scan for readerId: ${readerId}.`);
+            }
+            if (isMounted.current) { // Only call onScan if still mounted
               onScan(decodedText);
             }
           },
@@ -84,8 +89,9 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, onReady, facingM
               lowerCaseMessage.includes("decode error") ||
               lowerCaseMessage.includes("could not find any device") ||
               lowerCaseMessage.includes("video stream has ended") ||
-              lowerCaseMessage.includes("notfoundexception") || // Explicitly filter this common non-critical error
-              lowerCaseMessage.includes("notallowederror") // Filter this common non-critical error
+              lowerCaseMessage.includes("notfoundexception") ||
+              lowerCaseMessage.includes("notallowederror") ||
+              lowerCaseMessage.includes("overconstrainederror") // Added this
             ) {
               return;
             }
@@ -96,32 +102,38 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, onReady, facingM
                 clearTimeout(errorTimeoutRef.current);
               }
               errorTimeoutRef.current = setTimeout(() => {
-                console.error(`[QrScanner] Reported error for readerId: ${readerId}: ${errorMessage}`);
-                onError(errorMessage);
+                if (isMounted.current) { // Only report error if still mounted
+                  console.error(`[QrScanner] Reported error for readerId: ${readerId}: ${errorMessage}`);
+                  onError(errorMessage);
+                }
                 errorTimeoutRef.current = null;
               }, 1000);
             }
           }
         );
-        console.log(`[QrScanner] Camera initialized successfully for readerId: ${readerId}.`);
-        setIsCameraInitialized(true);
-        onReady();
+        if (isMounted.current) { // Only update state if still mounted
+          console.log(`[QrScanner] Camera initialized successfully for readerId: ${readerId}.`);
+          setIsCameraInitialized(true);
+          onReady();
+        }
       } catch (err: any) {
-        console.error(`[QrScanner] Failed to start camera for readerId: ${readerId}:`, err);
-        onError(err.message || "Failed to start camera.");
-        setIsCameraInitialized(false);
+        if (isMounted.current) { // Only report error if still mounted
+          console.error(`[QrScanner] Failed to start camera for readerId: ${readerId}:`, err);
+          onError(err.message || "Failed to start camera.");
+          setIsCameraInitialized(false);
+        }
       }
     };
 
     startScanner();
 
-    // The return function of useEffect is the cleanup for the current effect run.
-    // It will be called when the component unmounts OR when dependencies change (before the new effect runs).
+    // Cleanup function for when the component unmounts
     return () => {
-      console.log(`[QrScanner] Cleanup function called for readerId: ${readerId} on unmount/dependency change.`);
-      cleanupScanner(); // Use the defined cleanup function
+      isMounted.current = false; // Component is unmounting
+      console.log(`[QrScanner] Cleanup function called for readerId: ${readerId} on unmount.`);
+      stopAndClearScanner();
     };
-  }, [facingMode, onScan, onError, onReady, readerId]);
+  }, [facingMode, onScan, onError, onReady, readerId, stopAndClearScanner]); // Added stopAndClearScanner to dependencies
 
   return (
     <div className="w-full h-full flex justify-center items-center relative">
