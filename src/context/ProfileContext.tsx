@@ -5,7 +5,7 @@ import { showError, showSuccess } from "@/utils/toast";
 export interface UserProfile {
   id: string; // This will be the user's UUID from auth.users
   fullName: string;
-  email: string; // Derived from auth.users session, not stored in profiles table
+  email: string; // Now stored in profiles table
   phone?: string;
   address?: string;
   avatarUrl?: string;
@@ -48,7 +48,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     // Attempt to fetch the profile
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at") // Explicitly list columns
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email") // Explicitly list columns, including email
       .eq("id", session.user.id)
       .single();
 
@@ -73,7 +73,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       setProfile({
         id: userProfileData.id,
         fullName: userProfileData.full_name,
-        email: session.user.email || "", // Always use session email as source of truth
+        email: userProfileData.email || session.user.email || "", // Use email from profile, fallback to session
         phone: userProfileData.phone || undefined,
         address: userProfileData.address || undefined,
         avatarUrl: userProfileData.avatar_url || undefined,
@@ -94,7 +94,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at") // Explicitly list columns
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email") // Explicitly list columns, including email
       .eq("organization_id", profile.organizationId); // Filter by organization_id
 
     if (error) {
@@ -104,7 +104,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       const fetchedProfiles: UserProfile[] = data.map((p: any) => ({
         id: p.id,
         fullName: p.full_name,
-        email: "Email N/A", // Email is not stored in profiles table, derived from auth.users
+        email: p.email || "Email N/A", // Use email from profile
         phone: p.phone || undefined,
         address: p.address || undefined,
         avatarUrl: p.avatar_url || undefined,
@@ -165,7 +165,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       setProfile({
         id: data.id,
         fullName: data.full_name,
-        email: session.user.email || "",
+        email: data.email || session.user.email || "", // Use email from profile, fallback to session
         phone: data.phone || undefined,
         address: data.address || undefined,
         avatarUrl: data.avatar_url || undefined,
@@ -218,6 +218,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
             phone: updatedProfileData.phone,
             address: updatedProfileData.address,
             avatarUrl: updatedProfileData.avatar_url,
+            email: updatedProfileData.email, // Update email if returned
           } : p
         )
       );

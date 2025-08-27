@@ -11,6 +11,7 @@ const Auth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [companyCode, setCompanyCode] = useState(""); // New state for company code
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -27,12 +28,19 @@ const Auth: React.FC = () => {
         navigate("/");
       }
     } else {
-      const { error } = await supabase.auth.signUp({ email, password });
+      // Sign Up logic
+      const options = {
+        data: {
+          company_code: companyCode.trim() || null, // Pass company code to meta data
+        },
+      };
+      const { error } = await supabase.auth.signUp({ email, password, options });
       if (error) {
         showError(error.message);
       } else {
         showSuccess("Account created! Please check your email to confirm.");
         setIsLogin(true); // Switch to login after successful signup
+        setCompanyCode(""); // Clear company code after signup attempt
       }
     }
     setLoading(false);
@@ -114,6 +122,21 @@ const Auth: React.FC = () => {
                 required
               />
             </div>
+            {!isLogin && ( // Only show company code input on signup form
+              <div className="space-y-2">
+                <Label htmlFor="companyCode">Company Code (Optional)</Label>
+                <Input
+                  id="companyCode"
+                  type="text"
+                  placeholder="Enter company code (e.g., FORTRESS123)"
+                  value={companyCode}
+                  onChange={(e) => setCompanyCode(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  If you have a company code, enter it to join your organization.
+                </p>
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Loading..." : (isLogin ? "Sign In" : "Sign Up")}
             </Button>
