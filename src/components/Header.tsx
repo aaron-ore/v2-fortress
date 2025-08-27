@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Search, Bell, User, LogOut, Users as UsersIcon, Settings as SettingsIcon, PackagePlus, ChevronDown, Warehouse, Sparkles } from "lucide-react"; // Added Sparkles icon
+import { Search, Bell, User, LogOut, Users as UsersIcon, Settings as SettingsIcon, PackagePlus, ChevronDown, Warehouse, Sparkles } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,15 +18,15 @@ import CurrentDateTime from "./CurrentDateTime";
 import { useNotifications } from "@/context/NotificationContext";
 import { useProfile } from "@/context/ProfileContext";
 import { supabase } from "@/lib/supabaseClient";
-import { useIsMobile } from "@/hooks/use-mobile"; // Import useIsMobile
-import MobileNav from "./mobile/MobileNav"; // Import MobileNav
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileNav from "./mobile/MobileNav";
 
 const Header: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
-  const isMobile = useIsMobile(); // Use the hook
+  const isMobile = useIsMobile();
 
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
   const [isGlobalSearchDialogOpen, setIsGlobalSearchDialogOpen] = useState(false);
@@ -38,7 +38,7 @@ const Header: React.FC = () => {
     { to: "/vendors", label: "Vendors" },
     { to: "/reports", label: "Reports" },
     { to: "/warehouse-operations", label: "Warehouse Ops" },
-    { to: "/features", label: "Features" }, // NEW: Added Features tab
+    { to: "/features", label: "Features" },
   ];
 
   const handleLogout = async () => {
@@ -52,8 +52,8 @@ const Header: React.FC = () => {
 
   return (
     <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
-      <div className="flex items-center space-x-8"> {/* Increased space-x from 4 to 8 */}
-        {isMobile && <MobileNav />} {/* Render MobileNav on mobile */}
+      <div className="flex items-center space-x-8">
+        {isMobile && <MobileNav />}
         {/* Logo */}
         <div className="flex items-center space-x-2">
           <svg
@@ -81,13 +81,13 @@ const Header: React.FC = () => {
 
         {/* Desktop Navigation Links */}
         {!isMobile && (
-          <nav className="flex space-x-8"> {/* Increased space-x from 6 to 8 */}
+          <nav className="flex space-x-8">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
                 className={cn(
-                  "text-base font-medium transition-colors hover:text-primary", {/* Changed text-sm to text-base */}
+                  "text-base font-medium transition-colors hover:text-primary",
                   location.pathname.startsWith(link.to) && link.to !== "/"
                     ? "text-primary border-b-2 border-primary pb-1"
                     : location.pathname === "/" && link.to === "/"
