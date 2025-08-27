@@ -97,8 +97,9 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
   }, []);
 
   const fetchAllProfiles = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession(); // NEW: Add session check here
     // Only attempt to fetch all profiles if a session exists AND the current profile's role is 'admin'
-    if (!profile?.role || profile.role !== 'admin' || !profile.organizationId) { // Check profile role and organizationId
+    if (!session || !profile?.role || profile.role !== 'admin' || !profile.organizationId) { // Check profile role and organizationId
       setAllProfiles([]);
       // NEW: If not admin/no orgId and in dev, load mock all profiles
       if (import.meta.env.DEV) {
