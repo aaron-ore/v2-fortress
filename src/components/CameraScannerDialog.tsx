@@ -118,7 +118,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
               )}
               <QrScanner
                 ref={qrScannerRef}
-                key={facingMode}
+                // Removed key={facingMode} to prevent unmount/remount on facingMode change
                 onScan={handleScannerScan}
                 onError={handleScannerError}
                 onReady={handleScannerReady}
