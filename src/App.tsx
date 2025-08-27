@@ -51,12 +51,12 @@ const queryClient = new QueryClient();
 
 const AuthenticatedApp = () => {
   return (
-    <CategoryProvider>
-      <InventoryProvider>
-        <OrdersProvider>
-          <NotificationProvider>
-            <VendorProvider>
-              <StockMovementProvider>
+    <OrdersProvider> {/* OrdersProvider must wrap InventoryProvider */}
+      <VendorProvider> {/* VendorProvider must wrap InventoryProvider */}
+        <CategoryProvider> {/* CategoryProvider must wrap InventoryProvider */}
+          <NotificationProvider> {/* NotificationProvider must wrap InventoryProvider */}
+            <StockMovementProvider> {/* StockMovementProvider must wrap InventoryProvider */}
+              <InventoryProvider> {/* InventoryProvider now correctly nested */}
                 <Routes>
                   <Route path="/" element={<Layout />}>
                     <Route index element={<Dashboard />} />
@@ -82,12 +82,12 @@ const AuthenticatedApp = () => {
                     <Route path="*" element={<NotFound />} />
                   </Route>
                 </Routes>
-              </StockMovementProvider>
-            </VendorProvider>
+              </InventoryProvider>
+            </StockMovementProvider>
           </NotificationProvider>
-        </OrdersProvider>
-      </InventoryProvider>
-    </CategoryProvider>
+        </CategoryProvider>
+      </VendorProvider>
+    </OrdersProvider>
   );
 };
 
