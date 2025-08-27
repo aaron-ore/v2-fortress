@@ -36,6 +36,41 @@ const AdvancedDemandForecasting: React.FC = () => {
       historicalSales[monthKey] = 0;
     }
 
+    // If no actual orders, generate mock data for the entire period
+    if (orders.length === 0) {
+      const baseDemand = 100; // Starting point for mock demand
+      for (let i = 5; i >= 0; i--) { // Last 6 months historical
+        const month = subMonths(today, i);
+        const monthName = format(month, "MMM");
+        const historicalValue = Math.max(0, baseDemand + (Math.random() - 0.5) * 50); // Base + random fluctuation
+        dataPoints.push({
+          name: monthName,
+          "Historical Demand": parseFloat(historicalValue.toFixed(0)),
+          "Forecasted Demand": 0,
+          "Upper Confidence": 0,
+          "Lower Confidence": 0,
+          "External Factor (Trend)": Math.round(50 + Math.random() * 20 - 10),
+        });
+      }
+      for (let i = 1; i <= 3; i++) { // Next 3 months forecast
+        const futureMonth = subMonths(today, -i);
+        const futureMonthName = format(futureMonth, "MMM");
+        const baseProjectedValue = Math.max(0, baseDemand * 1.1 + (Math.random() - 0.5) * 60); // Slightly higher trend
+        const upperConfidence = baseProjectedValue * 1.1;
+        const lowerConfidence = baseProjectedValue * 0.9;
+        dataPoints.push({
+          name: futureMonthName,
+          "Historical Demand": 0,
+          "Forecasted Demand": parseFloat(baseProjectedValue.toFixed(0)),
+          "Upper Confidence": parseFloat(upperConfidence.toFixed(0)),
+          "Lower Confidence": parseFloat(lowerConfidence.toFixed(0)),
+          "External Factor (Trend)": Math.round(60 + Math.random() * 20 - 10),
+        });
+      }
+      return dataPoints; // Return mock data immediately
+    }
+
+    // Original logic for actual orders
     orders.filter(order => order.type === "Sales").forEach(order => {
       const orderDate = new Date(order.date);
       if (!isValid(orderDate)) return;
