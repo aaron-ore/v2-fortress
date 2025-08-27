@@ -9,9 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import NotificationPreferencesDialog from "@/components/settings/NotificationPreferencesDialog";
 import ManageLocationsDialog from "@/components/ManageLocationsDialog"; // New import
 import { useOnboarding } from "@/context/OnboardingContext";
+import { useProfile } from "@/context/ProfileContext"; // Import useProfile
+import { supabase } from "@/lib/supabaseClient"; // Import supabase
 
 const Settings: React.FC = () => {
   const { companyProfile, setCompanyProfile } = useOnboarding();
+  const { profile } = useProfile(); // Get current user's profile
 
   // Company Logo State
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -38,6 +41,9 @@ const Settings: React.FC = () => {
     return "default";
   });
 
+  // Organization Code State
+  const [organizationCode, setOrganizationCode] = useState<string | null>(null);
+
   // Dialog States
   const [isNotificationPreferencesDialogOpen, setIsNotificationPreferencesDialogOpen] = useState(false);
   const [isManageLocationsDialogOpen, setIsManageLocationsDialogOpen] = useState(false); // New state for locations dialog
@@ -48,7 +54,29 @@ const Settings: React.FC = () => {
     if (storedLogo) {
       setSavedLogoUrl(storedLogo);
     }
-  }, []);
+
+    // Fetch organization code if profile and organizationId exist
+    const fetchOrganizationCode = async () => {
+      if (profile?.organizationId) {
+        const { data, error } = await supabase
+          .from('organizations')
+          .select('unique_code')
+          .eq('id', profile.organizationId)
+          .single();
+
+        if (error) {
+          console.error("Error fetching organization code:", error);
+          showError("Failed to load organization code.");
+        } else if (data) {
+          setOrganizationCode(data.unique_code);
+        }
+      } else {
+        setOrganizationCode(null);
+      }
+    };
+
+    fetchOrganizationCode();
+  }, [profile?.organizationId]);
 
   // Handlers for Dialogs
   const handleIntegrationSetup = () => showSuccess("Setting up third-party integrations (placeholder).");
@@ -187,6 +215,37 @@ const Settings: React.FC = () => {
           <Button onClick={handleSaveCompanyProfile}>Save Company Profile</Button>
         </CardContent>
       </Card>
+
+      {/* Organization Code Card (New) */}
+      {profile?.role === 'admin' && profile.organizationId && (
+        <Card className="bg-card border-border rounded-lg p-4">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Your Company Code</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              Share this unique code with new users so they can join your organization when they sign up.
+            </p>
+            <div className="flex items-center space-x-2">
+              <Input
+                id="organizationCode"
+                value={organizationCode || "Loading..."}
+                readOnly
+                className="font-mono text-lg"
+              />
+              <Button onClick={() => {
+                if (organizationCode) {
+                  navigator.clipboard.writeText(organizationCode);
+                  showSuccess("Company code copied to clipboard!");
+                }
+              }}>Copy Code</Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              New users can enter this code during their sign-up process to automatically be assigned to your company.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Inventory Defaults Card */}
       <Card className="bg-card border-border rounded-lg p-4">
