@@ -51,12 +51,21 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
     setIsLoadingCamera(false); // Stop loading on error
     setCameraError(errMessage);
     onError(errMessage);
+    // Introduce a small delay before closing on error,
+    // as the error might be related to cleanup during unmount.
+    setTimeout(() => {
+      onClose(); // Close dialog on error to prevent it from hanging
+    }, 100);
   };
 
   const handleScannerScan = (decodedText: string) => {
     setIsLoadingCamera(false); // A scan means camera is active
     onScan(decodedText);
-    onClose();
+    // Introduce a small delay before closing the dialog
+    // This gives QrScanner's internal cleanup a moment to complete
+    setTimeout(() => {
+      onClose();
+    }, 100); // 100ms delay
   };
 
   const toggleFacingMode = () => {
