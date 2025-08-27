@@ -37,13 +37,13 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
       setIsLoadingCamera(true);
       setCameraError(null);
     } else {
-      // When dialog closes, ensure camera is marked inactive
       setIsCameraActive(false);
       setIsLoadingCamera(false);
     }
   }, [isOpen]);
 
   const handleScannerReady = () => {
+    console.log("[CameraScannerDialog] QrScanner reported ready. Camera stream active."); // NEW LOG
     setIsLoadingCamera(false);
     setCameraError(null);
   };
@@ -53,13 +53,12 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
     setIsLoadingCamera(false);
     setCameraError(errMessage);
     onError(errMessage);
-    // Do not automatically close dialog on error, let user decide or retry
   };
 
   const handleScannerScan = (decodedText: string) => {
     setIsLoadingCamera(false);
     onScan(decodedText);
-    onClose(); // Close dialog on successful scan
+    onClose();
   };
 
   const toggleFacingMode = () => {
@@ -69,7 +68,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}> {/* onOpenChange now directly calls onClose */}
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] flex flex-col h-[80vh] max-h-[600px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

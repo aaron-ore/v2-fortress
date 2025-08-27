@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useImperativeHandle, forwardRef, useState, useCallback } from "react";
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode"; // Import Html5Qrcode directly
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { QrReader } from 'react-qr-reader';
 
 export interface QrScannerRef {
@@ -17,8 +17,8 @@ type ScannerType = 'html5-qrcode' | 'react-qr-reader';
 
 const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
   ({ onScan, onError, onReady, facingMode }, ref) => {
-    const scannerId = "qr-code-full-region";
-    const html5QrCodeInstanceRef = useRef<Html5Qrcode | null>(null); // Now holds Html5Qrcode instance
+    const scannerDivRef = useRef<HTMLDivElement>(null); // NEW: Ref for the scanner div
+    const html5QrCodeInstanceRef = useRef<Html5Qrcode | null>(null);
     const isMounted = useRef(true);
 
     const [activeScannerType, setActiveScannerType] = useState<ScannerType>('html5-qrcode');
@@ -35,8 +35,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       if (html5QrCodeInstanceRef.current) {
         console.log("[QrScanner] Attempting to stop Html5Qrcode instance...");
         try {
-          // FIX: Changed assignment operator (=) to comparison operator (===)
-          if (typeof html5QrCodeInstanceRef.current.stop === 'function') { 
+          if (typeof html5QrCodeInstanceRef.current.stop === 'function') {
             await html5QrCodeInstanceRef.current.stop();
             console.log("[QrScanner] Html5Qrcode stopped successfully.");
           }
@@ -67,14 +66,14 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
 
     // This function attempts to start Html5Qrcode once.
     // It returns true on success, false on generic failure, or error.name for specific errors.
-    const tryStartHtml5Qrcode = useCallback(async (elementId: string, constraints: MediaTrackConstraints, strategyName: string): Promise<boolean | string> => {
+    const tryStartHtml5Qrcode = useCallback(async (element: HTMLDivElement, constraints: MediaTrackConstraints, strategyName: string): Promise<boolean | string> => { // CHANGED: element is now HTMLDivElement
       if (!isMounted.current) return false;
 
       console.log(`[QrScanner - ${strategyName}] Attempting to start Html5Qrcode with constraints:`, constraints);
       await stopAndClearHtml5Qrcode(); // Ensure previous instance is stopped before new attempt
 
       try {
-        const newScanner = new Html5Qrcode(elementId, {
+        const newScanner = new Html5Qrcode(element.id, { // Use element.id
           formatsToSupport: [
             Html5QrcodeSupportedFormats.QR_CODE,
             Html5QrcodeSupportedFormats.CODE_128,
@@ -121,14 +120,14 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
     const attemptStrategies = useCallback(async () => {
       if (!isMounted.current) return;
 
-      const element = document.getElementById(scannerId); // Get element by ID directly
+      const element = scannerDivRef.current; // NEW: Use ref.current
       if (!element) {
-        console.error("[QrScanner] Scanner target element not found in DOM. Cannot start any strategy.");
+        console.error("[QrScanner] Scanner target element (ref) not found in DOM. Cannot start any strategy.");
         onError("Scanner target element not found.");
         return;
       }
 
-      await stopAndClear(); // Ensure clean slate before attempting strategies
+      await stopAndClear();
 
       console.log("[QrScanner] Starting camera initialization strategies...");
 
@@ -142,14 +141,14 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         // Strategy 1: Default facingMode with a short delay
         {
           name: "Html5Qrcode - Default (Short Delay)",
-          exec: async () => await tryStartHtml5Qrcode(element.id, { facingMode: facingMode }, "Strategy 1")
+          exec: async () => await tryStartHtml5Qrcode(element, { facingMode: facingMode }, "Strategy 1") // CHANGED: Pass element
         },
         // Strategy 2: Default facingMode with a longer delay
         {
           name: "Html5Qrcode - Default (Longer Delay)",
           exec: async () => {
             await new Promise(resolve => setTimeout(resolve, 400));
-            return await tryStartHtml5Qrcode(element.id, { facingMode: facingMode }, "Strategy 2");
+            return await tryStartHtml5Qrcode(element, { facingMode: facingMode }, "Strategy 2"); // CHANGED: Pass element
           }
         },
         // Strategy 3: Explicit 'environment' camera by ID
@@ -158,7 +157,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
           exec: async () => {
             const environmentCamera = cameras.find(camera => camera.label.toLowerCase().includes('back') || camera.label.toLowerCase().includes('environment'));
             if (environmentCamera) {
-              return await tryStartHtml5Qrcode(element.id, { deviceId: { exact: environmentCamera.id } }, "Strategy 3");
+              return await tryStartHtml5Qrcode(element, { deviceId: { exact: environmentCamera.id } }, "Strategy 3"); // CHANGED: Pass element
             }
             console.log("[QrScanner] No explicit 'environment' camera found for Strategy 3.");
             return false;
@@ -170,7 +169,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
           exec: async () => {
             const userCamera = cameras.find(camera => camera.label.toLowerCase().includes('front') || camera.label.toLowerCase().includes('user'));
             if (userCamera) {
-              return await tryStartHtml5Qrcode(element.id, { deviceId: { exact: userCamera.id } }, "Strategy 4");
+              return await tryStartHtml5Qrcode(element, { deviceId: { exact: userCamera.id } }, "Strategy 4"); // CHANGED: Pass element
             }
             console.log("[QrScanner] No explicit 'user' camera found for Strategy 4.");
             return false;
@@ -236,14 +235,13 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       
       // Use a small delay to ensure the div is fully rendered and available in the DOM
       const timer = setTimeout(() => {
-        const element = document.getElementById(scannerId);
-        if (element) {
+        if (scannerDivRef.current) { // NEW: Check ref.current
           attemptStrategies();
         } else {
           console.warn("[QrScanner] scannerDivRef.current is null after initial timeout. Retrying strategy attempts.");
           // If ref is still null, schedule another attempt, but don't loop indefinitely
           setTimeout(() => {
-            if (document.getElementById(scannerId)) {
+            if (scannerDivRef.current) { // NEW: Check ref.current again
               attemptStrategies();
             } else {
               onError("Scanner target element not available after multiple attempts.");
@@ -286,7 +284,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       );
     }
 
-    return <div id={scannerId} className="w-full h-full" />;
+    return <div id="qr-code-full-region" ref={scannerDivRef} className="w-full h-full" />; // CHANGED: Added ref and hardcoded ID
   }
 );
 
