@@ -52,8 +52,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
           console.warn(`[QrScanner-${readerId}] Error during qrCode.clear():`, e);
         } finally {
           await new Promise(resolve => setTimeout(resolve, 100)); // Increased delay
-          // Do NOT nullify html5QrCodeRef.current here, as it's a single instance.
-          // It will be nullified only on component unmount.
+          html5QrCodeRef.current = null; // Nullify the instance after clearing
           if (isMounted.current) {
             setIsCameraInitialized(false);
           }
@@ -78,11 +77,13 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
       console.log(`[QrScanner-${readerId}] Skipping startScanner: Component not mounted.`);
       return;
     }
-    const qrCode = html5QrCodeRef.current;
-    if (!qrCode) {
-      console.error(`[QrScanner-${readerId}] Html5Qrcode instance not available to start.`);
-      return;
+
+    // Create a new Html5Qrcode instance if one doesn't exist or was cleared
+    if (!html5QrCodeRef.current) {
+      console.log(`[QrScanner-${readerId}] Creating new Html5Qrcode instance.`);
+      html5QrCodeRef.current = new Html5Qrcode(readerId, { verbose: false });
     }
+    const qrCode = html5QrCodeRef.current;
 
     console.log(`[QrScanner-${readerId}] Attempting to start scanner with facingMode: ${mode}, attempt: ${attempt + 1}`);
     setIsCameraInitialized(false); // Reset initialization state
@@ -237,10 +238,8 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
   // Effect for initial mount and unmount
   useEffect(() => {
     isMounted.current = true;
-    console.log(`[QrScanner-${readerId}] Component mounted. Creating Html5Qrcode instance.`);
-    html5QrCodeRef.current = new Html5Qrcode(readerId, { verbose: false });
-
-    // Start scanner with the initial facingMode
+    console.log(`[QrScanner-${readerId}] Component mounted.`);
+    // Initial start of the scanner
     startScanner(facingMode);
 
     // Cleanup function for when the component unmounts
@@ -253,7 +252,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
 
   // Effect for facingMode changes
   useEffect(() => {
-    if (html5QrCodeRef.current && isMounted.current) {
+    if (isMounted.current) {
       console.log(`[QrScanner-${readerId}] Facing mode changed to: ${facingMode}. Stopping current scanner and restarting.`);
       // Explicitly stop and clear before starting a new one
       stopAndClearScanner().then(() => {
