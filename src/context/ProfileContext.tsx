@@ -60,10 +60,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         .insert({
           id: session.user.id,
           full_name: session.user.email?.split('@')[0] || "New User", // Default name from email or "New User"
-          // The email field is not strictly necessary in the profiles table if it's always derived from auth.users,
-          // but including it here for consistency with the initial profile creation logic.
-          // It will be overwritten by session.user.email when setting the profile state.
-          email: session.user.email, 
+          // Removed 'email' field from insert payload as it's not in the profiles table
           role: "viewer", // Default role
           organization_id: null, // Initially null, onboarding will set this
         })
