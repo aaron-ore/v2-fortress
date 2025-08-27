@@ -3,7 +3,7 @@ import { OrderItem, POItem } from "@/context/OrdersContext";
 import { Vendor } from "@/context/VendorContext";
 import { showSuccess, showError } from "@/utils/toast";
 import { generateSequentialNumber } from "@/utils/numberGenerator";
-import { addNotification as notify } from "@/context/NotificationContext"; // Use alias to avoid conflict
+import { AppNotification } from "@/context/NotificationContext"; // Import AppNotification type
 
 // Simple debounce to prevent multiple orders for the same item in a short period
 const lastReorderAttempt: { [itemId: string]: number } = {};
@@ -13,7 +13,8 @@ export const processAutoReorder = async (
   inventoryItems: InventoryItem[],
   addOrder: (order: Omit<OrderItem, "id" | "organizationId">) => Promise<void>,
   vendors: Vendor[],
-  organizationId: string | null // Pass organizationId
+  organizationId: string | null,
+  addNotification: (message: string, type?: AppNotification['type']) => void // NEW: addNotification passed as argument
 ) => {
   // Check global auto-reorder setting
   const isAutoReorderGloballyEnabled = typeof window !== 'undefined' 
@@ -46,7 +47,7 @@ export const processAutoReorder = async (
 
     const vendor = vendors.find(v => v.id === item.vendorId);
     if (!vendor) {
-      notify(`Auto-reorder failed for ${item.name}: No vendor found.`, "error");
+      addNotification(`Auto-reorder failed for ${item.name}: No vendor found.`, "error"); // Use passed addNotification
       showError(`Auto-reorder failed for ${item.name}: No vendor found.`);
       continue;
     }
@@ -81,12 +82,12 @@ export const processAutoReorder = async (
     try {
       await addOrder(newPurchaseOrder);
       lastReorderAttempt[item.id] = now; // Mark as attempted
-      notify(`Auto-reorder placed for ${item.name} (PO: ${newPoNumber}).`, "success");
+      addNotification(`Auto-reorder placed for ${item.name} (PO: ${newPoNumber}).`, "success"); // Use passed addNotification
       showSuccess(`Auto-reorder placed for ${item.name} (PO: ${newPoNumber}). Email simulated to ${vendor.email || 'vendor'}.`);
       // Simulate email sending
       console.log(`Simulating email to ${vendor.email} for PO ${newPoNumber} with items:`, poItems);
     } catch (error: any) {
-      notify(`Failed to auto-reorder ${item.name}: ${error.message}`, "error");
+      addNotification(`Failed to auto-reorder ${item.name}: ${error.message}`, "error"); // Use passed addNotification
       showError(`Failed to auto-reorder ${item.name}: ${error.message}`);
     }
   }
