@@ -7,7 +7,9 @@ import { TrendingUp, Lightbulb, Package } from "lucide-react";
 import { useInventory } from "@/context/InventoryContext";
 import { useOrders } from "@/context/OrdersContext";
 import { format, subMonths, isValid } from "date-fns";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError } from "@/utils/toast"; // Import showError
+import { usePrint } from "@/context/PrintContext"; // NEW: Import usePrint
+import { useOnboarding } from "@/context/OnboardingContext"; // NEW: Import useOnboarding
 
 interface ForecastDataPoint {
   name: string; // Month name
@@ -22,6 +24,8 @@ const AdvancedDemandForecasting: React.FC = () => {
   const { inventoryItems } = useInventory();
   const { orders } = useOrders();
   const [selectedItemId, setSelectedItemId] = useState<string | "all">("all");
+  const { initiatePrint } = usePrint(); // NEW: Use initiatePrint
+  const { companyProfile } = useOnboarding(); // NEW: Use companyProfile
 
   const forecastData = useMemo(() => {
     const dataPoints: ForecastDataPoint[] = [];
@@ -125,7 +129,30 @@ const AdvancedDemandForecasting: React.FC = () => {
   }, [orders, inventoryItems, selectedItemId]);
 
   const handleGenerateReport = () => {
-    showSuccess("Generating detailed demand forecast report (simulated).");
+    if (!companyProfile) {
+      showError("Company profile not set up. Please complete onboarding or set company details in settings.");
+      return;
+    }
+    if (forecastData.length === 0) {
+      showError("No forecast data available to generate a report.");
+      return;
+    }
+
+    const selectedItem = selectedItemId === "all"
+      ? "All Items"
+      : inventoryItems.find(item => item.id === selectedItemId)?.name || "Unknown Item";
+
+    const reportProps = {
+      companyName: companyProfile.name,
+      companyAddress: companyProfile.address,
+      companyContact: companyProfile.currency, // Using currency as a generic contact for company
+      companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
+      reportDate: format(new Date(), "MMM dd, yyyy HH:mm"),
+      forecastData: forecastData,
+      selectedItemName: selectedItem,
+    };
+
+    initiatePrint({ type: "advanced-demand-forecast", props: reportProps }); // NEW: Initiate print
   };
 
   return (

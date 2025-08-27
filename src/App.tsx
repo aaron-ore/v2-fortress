@@ -45,6 +45,7 @@ import PrintWrapper from "./components/PrintWrapper";
 import DashboardSummaryPdfContent from "./components/DashboardSummaryPdfContent";
 import PurchaseOrderPdfContent from "./components/PurchaseOrderPdfContent";
 import InvoicePdfContent from "./components/InvoicePdfContent";
+import AdvancedDemandForecastPdfContent from "./components/AdvancedDemandForecastPdfContent"; // NEW: Import AdvancedDemandForecastPdfContent
 
 const queryClient = new QueryClient();
 
@@ -162,6 +163,9 @@ const AppContent = () => {
           )}
           {printContentData.type === "dashboard-summary" && (
             <DashboardSummaryPdfContent {...printContentData.props} />
+          )}
+          {printContentData.type === "advanced-demand-forecast" && (
+            <AdvancedDemandForecastPdfContent {...printContentData.props} />
           )}
         </PrintWrapper>
       )}
