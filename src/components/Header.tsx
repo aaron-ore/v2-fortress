@@ -52,7 +52,7 @@ const Header: React.FC = () => {
 
   return (
     <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-8"> {/* Increased space-x from 4 to 8 */}
         {isMobile && <MobileNav />} {/* Render MobileNav on mobile */}
         {/* Logo */}
         <div className="flex items-center space-x-2">
@@ -81,13 +81,13 @@ const Header: React.FC = () => {
 
         {/* Desktop Navigation Links */}
         {!isMobile && (
-          <nav className="flex space-x-6">
+          <nav className="flex space-x-8"> {/* Increased space-x from 6 to 8 */}
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
                 className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
+                  "text-base font-medium transition-colors hover:text-primary", {/* Changed text-sm to text-base */}
                   location.pathname.startsWith(link.to) && link.to !== "/"
                     ? "text-primary border-b-2 border-primary pb-1"
                     : location.pathname === "/" && link.to === "/"
