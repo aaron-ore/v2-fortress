@@ -5,12 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
 import { useOrders } from "@/context/OrdersContext";
 import { showSuccess, showError } from "@/utils/toast";
-import { Brain, PackagePlus, TrendingUp, AlertCircle } from "lucide-react";
+import { Brain, PackagePlus, TrendingUp, AlertCircle, DollarSign, Percent, Boxes } from "lucide-react"; // Added DollarSign, Percent, Boxes icons
 import { format, subMonths, isValid } from "date-fns";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"; // NEW: Import Label component
+import { Label } from "@/components/ui/label";
 
 /**
  * @interface ReorderSuggestion
@@ -217,6 +217,35 @@ const AIReorderSuggestions: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Simulated AI Impact Summary Card */}
+      <Card className="bg-card border-border rounded-lg shadow-sm p-6">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl font-semibold flex items-center gap-2">
+            <Brain className="h-6 w-6 text-primary" /> Simulated AI Impact
+          </CardTitle>
+          <p className="text-muted-foreground text-sm">
+            Projected benefits from implementing AI-driven reorder suggestions.
+          </p>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+          <div className="space-y-1">
+            <DollarSign className="h-8 w-8 text-green-500 mx-auto" />
+            <p className="text-2xl font-bold text-foreground">$15,000+</p>
+            <p className="text-sm text-muted-foreground">Potential Savings</p>
+          </div>
+          <div className="space-y-1">
+            <AlertCircle className="h-8 w-8 text-yellow-500 mx-auto" />
+            <p className="text-2xl font-bold text-foreground">25%</p>
+            <p className="text-sm text-muted-foreground">Reduced Stockouts</p>
+          </div>
+          <div className="space-y-1">
+            <Boxes className="h-8 w-8 text-blue-500 mx-auto" />
+            <p className="text-2xl font-bold text-foreground">15%</p>
+            <p className="text-sm text-muted-foreground">Optimized Inventory Value</p>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="flex flex-wrap items-center gap-4 mb-4">
         <div className="flex-grow space-y-2">
           <Label htmlFor="categoryFilter">Filter by Category</Label>
