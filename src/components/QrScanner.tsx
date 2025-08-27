@@ -35,7 +35,8 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       if (html5QrCodeInstanceRef.current) {
         console.log("[QrScanner] Attempting to stop Html5Qrcode instance...");
         try {
-          if (html5QrCodeInstanceRef.current.is = typeof html5QrCodeInstanceRef.current.stop === 'function') {
+          // FIX: Changed assignment operator (=) to comparison operator (===)
+          if (typeof html5QrCodeInstanceRef.current.stop === 'function') { 
             await html5QrCodeInstanceRef.current.stop();
             console.log("[QrScanner] Html5Qrcode stopped successfully.");
           }
