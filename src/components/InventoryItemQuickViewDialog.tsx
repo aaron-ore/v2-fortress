@@ -12,12 +12,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch"; // NEW: Import Switch
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { showSuccess, showError } from "@/utils/toast";
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
-import { useStockMovement } from "@/context/StockMovementContext"; // New import
+import { useStockMovement } from "@/context/StockMovementContext";
+import { useOrders } from "@/context/OrdersContext"; // NEW: Import useOrders
+import { useVendors } from "@/context/VendorContext"; // NEW: Import useVendors
+import { processAutoReorder } from "@/utils/autoReorderLogic"; // NEW: Import autoReorderLogic
 import { useNavigate } from "react-router-dom";
-import { Package, Tag, Scale, DollarSign, ArrowUp, ArrowDown, Trash2, History } from "lucide-react";
+import { Package, Tag, Scale, DollarSign, ArrowUp, ArrowDown, Trash2, History, Repeat } from "lucide-react"; // NEW: Import Repeat icon
 import { format } from "date-fns";
 
 interface InventoryItemQuickViewDialogProps {
@@ -41,7 +45,9 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
   item,
 }) => {
   const { inventoryItems, updateInventoryItem, deleteInventoryItem, refreshInventory } = useInventory();
-  const { stockMovements, addStockMovement, fetchStockMovements } = useStockMovement(); // Use stock movement context
+  const { stockMovements, addStockMovement, fetchStockMovements } = useStockMovement();
+  const { addOrder } = useOrders(); // NEW: Use addOrder
+  const { vendors } = useVendors(); // NEW: Use vendors
   const navigate = useNavigate();
 
   const currentItem = useMemo(() => {
@@ -51,6 +57,8 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
   const [adjustmentAmount, setAdjustmentAmount] = useState("");
   const [adjustmentType, setAdjustmentType] = useState<"add" | "subtract">("add");
   const [adjustmentReason, setAdjustmentReason] = useState("");
+  const [autoReorderEnabled, setAutoReorderEnabled] = useState(false); // NEW: State for auto-reorder
+  const [autoReorderQuantity, setAutoReorderQuantity] = useState(""); // NEW: State for auto-reorder quantity
 
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
 
@@ -67,7 +75,9 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
       setAdjustmentType("add");
       setAdjustmentReason("");
       if (currentItem) {
-        fetchStockMovements(currentItem.id); // Fetch movements for this specific item
+        fetchStockMovements(currentItem.id);
+        setAutoReorderEnabled(currentItem.autoReorderEnabled); // Set new field
+        setAutoReorderQuantity(currentItem.autoReorderQuantity.toString()); // Set new field
       }
     }
   }, [isOpen, currentItem, fetchStockMovements]);
@@ -119,6 +129,97 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
     await refreshInventory();
     showSuccess(`Stock for ${currentItem.name} adjusted by ${adjustmentType === 'add' ? '+' : '-'}${amount} due to: ${adjustmentReason}. New quantity: ${newQuantity}.`);
     onClose();
+  };
+
+  const handleToggleAutoReorder = async (checked: boolean) => {
+    if (!currentItem) return;
+    setAutoReorderEnabled(checked);
+
+    const parsedAutoReorderQuantity = parseInt(autoReorderQuantity) || 0;
+    if (checked && (isNaN(parsedAutoReorderQuantity) || parsedAutoReorderQuantity <= 0)) {
+      showError("Please set a valid positive quantity for auto-reorder before enabling.");
+      setAutoReorderEnabled(false); // Revert toggle if invalid
+      return;
+    }
+
+    const updatedItem: InventoryItem = {
+      ...currentItem,
+      autoReorderEnabled: checked,
+      autoReorderQuantity: parsedAutoReorderQuantity,
+      lastUpdated: new Date().toISOString().split('T')[0],
+    };
+    await updateInventoryItem(updatedItem);
+    showSuccess(`Auto-reorder for ${currentItem.name} ${checked ? "enabled" : "disabled"}.`);
+  };
+
+  const handleAutoReorderQuantityChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!currentItem) return;
+    const newQty = parseInt(e.target.value) || 0;
+    setAutoReorderQuantity(e.target.value);
+
+    if (newQty > 0) {
+      const updatedItem: InventoryItem = {
+        ...currentItem,
+        autoReorderQuantity: newQty,
+        lastUpdated: new Date().toISOString().split('T')[0],
+      };
+      await updateInventoryItem(updatedItem);
+      showSuccess(`Auto-reorder quantity for ${currentItem.name} updated to ${newQty}.`);
+    }
+  };
+
+  const handleManualReorder = async () => {
+    if (!currentItem || !currentItem.vendorId) {
+      showError("Cannot manually reorder: Item or vendor not specified.");
+      return;
+    }
+    if (currentItem.autoReorderQuantity <= 0) {
+      showError("Please set a positive auto-reorder quantity before manually reordering.");
+      return;
+    }
+
+    const vendor = vendors.find(v => v.id === currentItem.vendorId);
+    if (!vendor) {
+      showError(`Cannot manually reorder: Vendor for ${currentItem.name} not found.`);
+      return;
+    }
+
+    const poItems: POItem[] = [{
+      id: Date.now(),
+      itemName: currentItem.name,
+      quantity: currentItem.autoReorderQuantity,
+      unitPrice: currentItem.unitCost,
+      inventoryItemId: currentItem.id,
+    }];
+
+    const newPoNumber = `PO${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`; // Simple mock PO number
+    const totalAmount = poItems.reduce((sum, poItem) => sum + poItem.quantity * poItem.unitPrice, 0);
+
+    const newPurchaseOrder: Omit<OrderItem, "id" | "organizationId"> = {
+      id: newPoNumber,
+      type: "Purchase",
+      customerSupplier: vendor.name,
+      date: new Date().toISOString().split("T")[0],
+      status: "New Order",
+      totalAmount: totalAmount,
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      itemCount: poItems.length,
+      notes: `Manually triggered reorder for ${currentItem.name}.`,
+      orderType: "Wholesale",
+      shippingMethod: "Standard",
+      items: poItems,
+      terms: "Net 30",
+    };
+
+    try {
+      await addOrder(newPurchaseOrder);
+      showSuccess(`Manual reorder placed for ${currentItem.name} (PO: ${newPoNumber}). Email simulated to ${vendor.email || 'vendor'}.`);
+      // Simulate email sending
+      console.log(`Simulating email to ${vendor.email} for PO ${newPoNumber} with items:`, poItems);
+      onClose();
+    } catch (error: any) {
+      showError(`Failed to place manual reorder: ${error.message}`);
+    }
   };
 
   const handleDeleteItemClick = () => {
@@ -258,6 +359,46 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
               </div>
               <Button onClick={handleAdjustStock} className="w-full mt-2">
                 Apply Adjustment
+              </Button>
+            </div>
+          </div>
+
+          {/* NEW: Auto-Reorder Settings */}
+          <div className="mt-4 pt-4 border-t border-border">
+            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <Repeat className="h-5 w-5 text-primary" /> Auto-Reorder Settings
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="autoReorderEnabled">Enable Auto-Reorder</Label>
+                <Switch
+                  id="autoReorderEnabled"
+                  checked={autoReorderEnabled}
+                  onCheckedChange={handleToggleAutoReorder}
+                />
+              </div>
+              {autoReorderEnabled && (
+                <div className="space-y-2 mt-2">
+                  <Label htmlFor="autoReorderQuantity">Quantity to Auto-Reorder</Label>
+                  <Input
+                    id="autoReorderQuantity"
+                    type="number"
+                    value={autoReorderQuantity}
+                    onChange={handleAutoReorderQuantityChange}
+                    placeholder="e.g., 50"
+                    min="1"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This quantity will be ordered when stock drops to or below the reorder level.
+                  </p>
+                </div>
+              )}
+              <Button
+                onClick={handleManualReorder}
+                className="w-full mt-2"
+                disabled={!currentItem.vendorId || currentItem.autoReorderQuantity <= 0}
+              >
+                Manually Reorder Now
               </Button>
             </div>
           </div>

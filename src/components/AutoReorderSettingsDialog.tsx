@@ -32,6 +32,12 @@ const AutoReorderSettingsDialog: React.FC<AutoReorderSettingsDialogProps> = ({ i
     }
     return true;
   });
+  const [enableAutoReorder, setEnableAutoReorder] = useState<boolean>(() => { // NEW: State for global auto-reorder
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem("enableAutoReorder") === "true";
+    }
+    return false; // Default to false
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -39,6 +45,7 @@ const AutoReorderSettingsDialog: React.FC<AutoReorderSettingsDialogProps> = ({ i
       if (typeof window !== 'undefined') {
         setDefaultReorderLevel(localStorage.getItem("autoReorderDefaultLevel") || "10");
         setEnableAutoReorderNotifications(localStorage.getItem("enableAutoReorderNotifications") === "true");
+        setEnableAutoReorder(localStorage.getItem("enableAutoReorder") === "true"); // Load new setting
       }
     }
   }, [isOpen]);
@@ -53,6 +60,7 @@ const AutoReorderSettingsDialog: React.FC<AutoReorderSettingsDialogProps> = ({ i
     if (typeof window !== 'undefined') {
       localStorage.setItem("autoReorderDefaultLevel", defaultReorderLevel);
       localStorage.setItem("enableAutoReorderNotifications", String(enableAutoReorderNotifications));
+      localStorage.setItem("enableAutoReorder", String(enableAutoReorder)); // Save new setting
     }
     showSuccess("Auto-reorder settings saved successfully!");
     onClose();
@@ -84,6 +92,19 @@ const AutoReorderSettingsDialog: React.FC<AutoReorderSettingsDialogProps> = ({ i
               This value will be suggested for new items' reorder levels.
             </p>
           </div>
+          <div className="flex items-center justify-between space-x-2 pt-2">
+            <Label htmlFor="enableAutoReorder">
+              Enable Global Auto-Reorder System
+            </Label>
+            <Switch
+              id="enableAutoReorder"
+              checked={enableAutoReorder}
+              onCheckedChange={setEnableAutoReorder}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            When enabled, items with individual auto-reorder settings will trigger purchase orders.
+          </p>
           <div className="flex items-center justify-between space-x-2 pt-2">
             <Label htmlFor="enableAutoReorderNotifications">
               Enable Auto-Reorder Notifications

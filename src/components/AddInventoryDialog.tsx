@@ -12,13 +12,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch"; // NEW: Import Switch
 import { showSuccess, showError } from "@/utils/toast";
 import { useInventory } from "@/context/InventoryContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { useCategories } from "@/context/CategoryContext";
-import { useVendors } from "@/context/VendorContext"; // New import
+import { useVendors } from "@/context/VendorContext";
 import ManageLocationsDialog from "@/components/ManageLocationsDialog";
-import JsBarcode from "jsbarcode"; // New import
+import JsBarcode from "jsbarcode";
 
 interface AddInventoryDialogProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   const { addInventoryItem } = useInventory();
   const { locations } = useOnboarding();
   const { categories } = useCategories();
-  const { vendors } = useVendors(); // Use vendors from context
+  const { vendors } = useVendors();
 
   const [itemName, setItemName] = useState("");
   const [description, setDescription] = useState("");
@@ -43,11 +44,13 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   const [unitCost, setUnitCost] = useState("");
   const [retailPrice, setRetailPrice] = useState("");
   const [location, setLocation] = useState("");
-  const [selectedVendorId, setSelectedVendorId] = useState("none"); // Changed initial state to "none"
-  const [barcodeValue, setBarcodeValue] = useState(""); // Value to generate barcode from
-  const [barcodeSvg, setBarcodeSvg] = useState<string | null>(null); // Generated barcode SVG
+  const [selectedVendorId, setSelectedVendorId] = useState("none");
+  const [barcodeValue, setBarcodeValue] = useState("");
+  const [barcodeSvg, setBarcodeSvg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrlPreview, setImageUrlPreview] = useState<string | null>(null);
+  const [autoReorderEnabled, setAutoReorderEnabled] = useState(false); // NEW: State for auto-reorder
+  const [autoReorderQuantity, setAutoReorderQuantity] = useState(""); // NEW: State for auto-reorder quantity
 
   const [isManageLocationsDialogOpen, setIsManageLocationsDialogOpen] = useState(false);
 
@@ -63,11 +66,13 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       setUnitCost("");
       setRetailPrice("");
       setLocation("");
-      setSelectedVendorId("none"); // Changed reset value to "none"
+      setSelectedVendorId("none");
       setBarcodeValue("");
       setBarcodeSvg(null);
       setImageFile(null);
       setImageUrlPreview(null);
+      setAutoReorderEnabled(false); // Reset
+      setAutoReorderQuantity(""); // Reset
     }
   }, [isOpen]);
 
@@ -134,14 +139,16 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     const parsedReorderLevel = parseInt(reorderLevel);
     const parsedUnitCost = parseFloat(unitCost);
     const parsedRetailPrice = parseFloat(retailPrice);
+    const parsedAutoReorderQuantity = parseInt(autoReorderQuantity) || 0; // Parse new field
 
     if (
       isNaN(parsedQuantity) || parsedQuantity < 0 ||
       isNaN(parsedReorderLevel) || parsedReorderLevel < 0 ||
       isNaN(parsedUnitCost) || parsedUnitCost < 0 ||
-      isNaN(parsedRetailPrice) || parsedRetailPrice < 0
+      isNaN(parsedRetailPrice) || parsedRetailPrice < 0 ||
+      (autoReorderEnabled && (isNaN(parsedAutoReorderQuantity) || parsedAutoReorderQuantity <= 0)) // Validate if enabled
     ) {
-      showError("Please enter valid positive numbers for Quantity, Reorder Level, Unit Cost, and Retail Price.");
+      showError("Please enter valid positive numbers for Quantity, Reorder Level, Unit Cost, Retail Price, and Auto-Reorder Quantity (if enabled).");
       return;
     }
 
@@ -158,12 +165,14 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       retailPrice: parsedRetailPrice,
       location: location,
       imageUrl: imageUrlPreview || undefined,
-      vendorId: selectedVendorId === "none" ? undefined : selectedVendorId, // Adjusted logic
-      barcodeUrl: barcodeSvg || undefined, // Include generated barcode SVG
+      vendorId: selectedVendorId === "none" ? undefined : selectedVendorId,
+      barcodeUrl: barcodeSvg || undefined,
+      autoReorderEnabled: autoReorderEnabled, // Include new field
+      autoReorderQuantity: parsedAutoReorderQuantity, // Include new field
     };
 
     await addInventoryItem(newItem);
-    showSuccess(`Added ${parsedQuantity} of ${itemName} to inventory!`); // Added success toast here
+    showSuccess(`Added ${parsedQuantity} of ${itemName} to inventory!`);
     onClose();
   };
 
@@ -177,7 +186,8 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     !retailPrice ||
     !location ||
     locations.length === 0 ||
-    categories.length === 0;
+    categories.length === 0 ||
+    (autoReorderEnabled && (parseInt(autoReorderQuantity) <= 0 || isNaN(parseInt(autoReorderQuantity)))); // Validate auto-reorder quantity
 
   const handleOpenManageLocations = () => {
     setIsManageLocationsDialogOpen(true);
@@ -324,7 +334,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
                 <SelectValue placeholder="Select a vendor (Optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No Vendor</SelectItem> {/* Changed value to "none" */}
+                <SelectItem value="none">No Vendor</SelectItem>
                 {vendors.map((vendor) => (
                   <SelectItem key={vendor.id} value={vendor.id}>
                     {vendor.name}
@@ -363,6 +373,34 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
             {imageUrlPreview && (
               <div className="mt-2">
                 <img src={imageUrlPreview} alt="Product Preview" className="max-w-[100px] max-h-[100px] object-contain border border-border p-1 rounded-md" />
+              </div>
+            )}
+          </div>
+          {/* NEW: Auto-Reorder Section */}
+          <div className="space-y-2 md:col-span-2 border-t border-border pt-4 mt-4">
+            <h3 className="text-lg font-semibold">Auto-Reorder Settings</h3>
+            <div className="flex items-center justify-between space-x-2">
+              <Label htmlFor="autoReorderEnabled">Enable Auto-Reorder</Label>
+              <Switch
+                id="autoReorderEnabled"
+                checked={autoReorderEnabled}
+                onCheckedChange={setAutoReorderEnabled}
+              />
+            </div>
+            {autoReorderEnabled && (
+              <div className="space-y-2 mt-2">
+                <Label htmlFor="autoReorderQuantity">Quantity to Auto-Reorder</Label>
+                <Input
+                  id="autoReorderQuantity"
+                  type="number"
+                  value={autoReorderQuantity}
+                  onChange={(e) => setAutoReorderQuantity(e.target.value)}
+                  placeholder="e.g., 50"
+                  min="1"
+                />
+                <p className="text-xs text-muted-foreground">
+                  This quantity will be ordered when stock drops to or below the reorder level.
+                </p>
               </div>
             )}
           </div>

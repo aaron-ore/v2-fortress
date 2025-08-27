@@ -5,11 +5,15 @@ import React, {
   ReactNode,
   useEffect,
   useCallback,
+  useRef,
 } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
-import { useProfile } from "./ProfileContext"; // Import useProfile
-import { mockInventoryItems } from "@/utils/mockData"; // NEW: Import mock data
+import { useProfile } from "./ProfileContext";
+import { mockInventoryItems } from "@/utils/mockData";
+import { useOrders } from "./OrdersContext"; // NEW: Import useOrders
+import { useVendors } from "./VendorContext"; // NEW: Import useVendors
+import { processAutoReorder } from "@/utils/autoReorderLogic"; // NEW: Import autoReorderLogic
 
 export interface InventoryItem {
   id: string;
@@ -27,9 +31,11 @@ export interface InventoryItem {
   status: string;
   lastUpdated: string;
   imageUrl?: string;
-  vendorId?: string; // New field for linking to a vendor
-  barcodeUrl?: string; // New field for storing barcode SVG
-  organizationId: string | null; // NEW: organization_id field
+  vendorId?: string;
+  barcodeUrl?: string;
+  organizationId: string | null;
+  autoReorderEnabled: boolean; // NEW: Auto-reorder flag
+  autoReorderQuantity: number; // NEW: Quantity to reorder automatically
 }
 
 interface InventoryContextType {
@@ -44,18 +50,21 @@ const InventoryContext = createContext<InventoryContextType | undefined>(
   undefined,
 );
 
-const initialInventoryItems: InventoryItem[] = []; // Cleared initial data
+const initialInventoryItems: InventoryItem[] = [];
 
 export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(initialInventoryItems);
-  const { profile, isLoadingProfile } = useProfile(); // Use profile context
+  const { profile, isLoadingProfile } = useProfile();
+  const { addOrder } = useOrders(); // NEW: Use addOrder from OrdersContext
+  const { vendors } = useVendors(); // NEW: Use vendors from VendorContext
+  const isInitialLoad = useRef(true); // To prevent auto-reorder on first fetch
 
   const fetchInventoryItems = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
 
-    if (!session || !profile?.organizationId) { // Ensure organizationId is available
+    if (!session || !profile?.organizationId) {
       setInventoryItems([]);
       return;
     }
@@ -63,12 +72,11 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
     const { data, error } = await supabase
       .from("inventory_items")
       .select("*")
-      .eq("organization_id", profile.organizationId); // Filter by organization_id
+      .eq("organization_id", profile.organizationId);
 
     if (error) {
       console.error("Error fetching inventory items:", error);
       showError("Failed to load inventory items.");
-      // NEW: If error and in dev, load mock data
       if (import.meta.env.DEV) {
         console.warn("Loading mock inventory items due to Supabase error in development mode.");
         setInventoryItems(mockInventoryItems);
@@ -90,11 +98,12 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         status: item.status,
         lastUpdated: item.last_updated,
         imageUrl: item.image_url || undefined,
-        vendorId: item.vendor_id || undefined, // Map new field
-        barcodeUrl: item.barcode_url || undefined, // Map new field
-        organizationId: item.organization_id, // Map organization_id
+        vendorId: item.vendor_id || undefined,
+        barcodeUrl: item.barcode_url || undefined,
+        organizationId: item.organization_id,
+        autoReorderEnabled: item.auto_reorder_enabled || false, // Map new field
+        autoReorderQuantity: item.auto_reorder_quantity || 0, // Map new field
       }));
-      // NEW: If no data from Supabase and in dev, load mock data
       if (fetchedItems.length === 0 && import.meta.env.DEV) {
         console.warn("Loading mock inventory items as Supabase returned no data in development mode.");
         setInventoryItems(mockInventoryItems);
@@ -102,13 +111,19 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         setInventoryItems(fetchedItems);
       }
     }
-  }, [profile?.organizationId]); // Depend on profile.organizationId
+  }, [profile?.organizationId]);
 
   useEffect(() => {
-    if (!isLoadingProfile) { // Only fetch once profile is loaded
-      fetchInventoryItems();
+    if (!isLoadingProfile) {
+      fetchInventoryItems().then(() => {
+        // Only run auto-reorder check after initial load and if not the very first render
+        if (!isInitialLoad.current && profile?.organizationId) {
+          processAutoReorder(inventoryItems, addOrder, vendors, profile.organizationId);
+        }
+        isInitialLoad.current = false;
+      });
     }
-  }, [fetchInventoryItems, isLoadingProfile]);
+  }, [fetchInventoryItems, isLoadingProfile, profile?.organizationId, addOrder, vendors]);
 
   const addInventoryItem = async (item: Omit<InventoryItem, "id" | "status" | "lastUpdated" | "organizationId">) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -136,16 +151,18 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         status: status,
         last_updated: lastUpdated,
         image_url: item.imageUrl,
-        vendor_id: item.vendorId, // Include new field
-        barcode_url: item.barcodeUrl, // Include new field
-        user_id: session.user.id, // Associate with current user
-        organization_id: profile.organizationId, // Associate with current organization
+        vendor_id: item.vendorId,
+        barcode_url: item.barcodeUrl,
+        user_id: session.user.id,
+        organization_id: profile.organizationId,
+        auto_reorder_enabled: item.autoReorderEnabled, // Include new field
+        auto_reorder_quantity: item.autoReorderQuantity, // Include new field
       })
       .select();
 
     if (error) {
       console.error("Error adding inventory item:", error);
-      throw error; // Re-throw the original Supabase error object
+      throw error;
     } else if (data && data.length > 0) {
       const newItem: InventoryItem = {
         id: data[0].id,
@@ -163,12 +180,16 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         status: data[0].status,
         lastUpdated: data[0].last_updated,
         imageUrl: data[0].image_url || undefined,
-        vendorId: data[0].vendor_id || undefined, // Map new field
-        barcodeUrl: data[0].barcode_url || undefined, // Map new field
-        organizationId: data[0].organization_id, // Map organization_id
+        vendorId: data[0].vendor_id || undefined,
+        barcodeUrl: data[0].barcode_url || undefined,
+        organizationId: data[0].organization_id,
+        autoReorderEnabled: data[0].auto_reorder_enabled || false, // Map new field
+        autoReorderQuantity: data[0].auto_reorder_quantity || 0, // Map new field
       };
       setInventoryItems((prevItems) => [...prevItems, newItem]);
-      // Removed showSuccess from here
+      if (profile?.organizationId) {
+        processAutoReorder([...inventoryItems, newItem], addOrder, vendors, profile.organizationId);
+      }
     } else {
       throw new Error("Failed to add item: No data returned after insert.");
     }
@@ -182,26 +203,6 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
     const newStatus = updatedItem.quantity > updatedItem.reorderLevel ? "In Stock" : (updatedItem.quantity > 0 ? "Low Stock" : "Out of Stock");
     const lastUpdated = new Date().toISOString().split('T')[0];
-
-    console.log("Attempting to update item in Supabase:", updatedItem.id, {
-      name: updatedItem.name,
-      description: updatedItem.description,
-      sku: updatedItem.sku,
-      category: updatedItem.category,
-      quantity: updatedItem.quantity,
-      reorder_level: updatedItem.reorderLevel,
-      committed_stock: updatedItem.committedStock,
-      incoming_stock: updatedItem.incomingStock,
-      unit_cost: updatedItem.unitCost,
-      retail_price: updatedItem.retailPrice,
-      location: updatedItem.location,
-      status: newStatus,
-      last_updated: lastUpdated,
-      image_url: updatedItem.imageUrl,
-      vendor_id: updatedItem.vendorId, // Include new field
-      barcode_url: updatedItem.barcodeUrl, // Include new field
-      organization_id: profile.organizationId, // Ensure organization_id is included in update payload
-    });
 
     const { data, error } = await supabase
       .from("inventory_items")
@@ -220,18 +221,19 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         status: newStatus,
         last_updated: lastUpdated,
         image_url: updatedItem.imageUrl,
-        vendor_id: updatedItem.vendorId, // Include new field
-        barcode_url: updatedItem.barcodeUrl, // Include new field
+        vendor_id: updatedItem.vendorId,
+        barcode_url: updatedItem.barcodeUrl,
+        auto_reorder_enabled: updatedItem.autoReorderEnabled, // Include new field
+        auto_reorder_quantity: updatedItem.autoReorderQuantity, // Include new field
       })
       .eq("id", updatedItem.id)
-      .eq("organization_id", profile.organizationId) // Filter by organization_id for update
+      .eq("organization_id", profile.organizationId)
       .select();
 
     if (error) {
       console.error("Error updating inventory item:", error);
-      throw error; // Re-throw the original Supabase error object
+      throw error;
     } else if (data && data.length > 0) {
-      console.log("Supabase update successful, received data:", data[0]);
       const updatedItemFromDB: InventoryItem = {
         id: data[0].id,
         name: data[0].name,
@@ -248,18 +250,21 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         status: data[0].status,
         lastUpdated: data[0].last_updated,
         imageUrl: data[0].image_url || undefined,
-        vendorId: data[0].vendor_id || undefined, // Map new field
-        barcodeUrl: data[0].barcode_url || undefined, // Map new field
-        organizationId: data[0].organization_id, // Map organization_id
+        vendorId: data[0].vendor_id || undefined,
+        barcodeUrl: data[0].barcode_url || undefined,
+        organizationId: data[0].organization_id,
+        autoReorderEnabled: data[0].auto_reorder_enabled || false, // Map new field
+        autoReorderQuantity: data[0].auto_reorder_quantity || 0, // Map new field
       };
       setInventoryItems((prevItems) =>
         prevItems.map((item) =>
           item.id === updatedItemFromDB.id ? updatedItemFromDB : item,
         ),
       );
-      // Removed showSuccess from here
+      if (profile?.organizationId) {
+        processAutoReorder(inventoryItems.map(item => item.id === updatedItemFromDB.id ? updatedItemFromDB : item), addOrder, vendors, profile.organizationId);
+      }
     } else {
-      console.warn("Supabase update returned no data, but no error. Check RLS policies or constraints.");
       throw new Error("Update might not have been saved. Check database permissions.");
     }
   };
@@ -275,7 +280,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
       .from("inventory_items")
       .delete()
       .eq("id", itemId)
-      .eq("organization_id", profile.organizationId); // Filter by organization_id for delete
+      .eq("organization_id", profile.organizationId);
 
     if (error) {
       console.error("Error deleting inventory item:", error);
@@ -288,6 +293,9 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
   const refreshInventory = async () => {
     await fetchInventoryItems();
+    if (profile?.organizationId) {
+      processAutoReorder(inventoryItems, addOrder, vendors, profile.organizationId);
+    }
   };
 
   return (

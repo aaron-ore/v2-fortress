@@ -11,12 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch"; // NEW: Import Switch
 import { showSuccess, showError } from "@/utils/toast";
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { useCategories } from "@/context/CategoryContext";
-import { useVendors } from "@/context/VendorContext"; // New import
-import JsBarcode from "jsbarcode"; // New import
+import { useVendors } from "@/context/VendorContext";
+import JsBarcode from "jsbarcode";
 
 const EditInventoryItem: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,7 +25,7 @@ const EditInventoryItem: React.FC = () => {
   const { inventoryItems, updateInventoryItem } = useInventory();
   const { locations } = useOnboarding();
   const { categories } = useCategories();
-  const { vendors } = useVendors(); // Use vendors from context
+  const { vendors } = useVendors();
 
   const [item, setItem] = useState<InventoryItem | null>(null);
 
@@ -39,11 +40,13 @@ const EditInventoryItem: React.FC = () => {
   const [unitCost, setUnitCost] = useState("");
   const [retailPrice, setRetailPrice] = useState("");
   const [location, setLocation] = useState("");
-  const [selectedVendorId, setSelectedVendorId] = useState("none"); // Changed initial state to "none"
-  const [barcodeValue, setBarcodeValue] = useState(""); // Value to generate barcode from
-  const [barcodeSvg, setBarcodeSvg] = useState<string | null>(null); // Generated barcode SVG
+  const [selectedVendorId, setSelectedVendorId] = useState("none");
+  const [barcodeValue, setBarcodeValue] = useState("");
+  const [barcodeSvg, setBarcodeSvg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrlPreview, setImageUrlPreview] = useState<string | null>(null);
+  const [autoReorderEnabled, setAutoReorderEnabled] = useState(false); // NEW: State for auto-reorder
+  const [autoReorderQuantity, setAutoReorderQuantity] = useState(""); // NEW: State for auto-reorder quantity
 
   useEffect(() => {
     if (id) {
@@ -62,12 +65,13 @@ const EditInventoryItem: React.FC = () => {
         setRetailPrice(foundItem.retailPrice.toString());
         setLocation(foundItem.location);
         setImageUrlPreview(foundItem.imageUrl || null);
-        setSelectedVendorId(foundItem.vendorId || "none"); // Changed default to "none"
-        setBarcodeSvg(foundItem.barcodeUrl || null); // Set existing barcode SVG
-        // If barcode exists, set barcodeValue to its SKU or a placeholder
+        setSelectedVendorId(foundItem.vendorId || "none");
+        setBarcodeSvg(foundItem.barcodeUrl || null);
         if (foundItem.barcodeUrl) {
-          setBarcodeValue(foundItem.sku); // Assuming SKU is used for barcode
+          setBarcodeValue(foundItem.sku);
         }
+        setAutoReorderEnabled(foundItem.autoReorderEnabled); // Set new field
+        setAutoReorderQuantity(foundItem.autoReorderQuantity.toString()); // Set new field
       } else {
         showError("Inventory item not found.");
         navigate("/inventory");
@@ -136,6 +140,12 @@ const EditInventoryItem: React.FC = () => {
       return;
     }
 
+    const parsedAutoReorderQuantity = parseInt(autoReorderQuantity) || 0;
+    if (autoReorderEnabled && (isNaN(parsedAutoReorderQuantity) || parsedAutoReorderQuantity <= 0)) {
+      showError("Please enter a valid positive number for Auto-Reorder Quantity if auto-reorder is enabled.");
+      return;
+    }
+
     if (item) {
       const updatedItem: InventoryItem = {
         ...item,
@@ -151,8 +161,10 @@ const EditInventoryItem: React.FC = () => {
         retailPrice: parseFloat(retailPrice),
         location: location,
         imageUrl: imageUrlPreview || undefined,
-        vendorId: selectedVendorId === "none" ? undefined : selectedVendorId, // Adjusted logic
-        barcodeUrl: barcodeSvg || undefined, // Update barcode SVG
+        vendorId: selectedVendorId === "none" ? undefined : selectedVendorId,
+        barcodeUrl: barcodeSvg || undefined,
+        autoReorderEnabled: autoReorderEnabled, // Include new field
+        autoReorderQuantity: parsedAutoReorderQuantity, // Include new field
       };
       updateInventoryItem(updatedItem);
       showSuccess(`Updated ${itemName}!`);
@@ -237,7 +249,7 @@ const EditInventoryItem: React.FC = () => {
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="no-locations" disabled> {/* Changed value to "no-locations" */}
+                  <SelectItem value="no-locations" disabled>
                     No locations set up. Go to Onboarding.
                   </SelectItem>
                 )}
@@ -307,7 +319,7 @@ const EditInventoryItem: React.FC = () => {
                 <SelectValue placeholder="Select a vendor (Optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No Vendor</SelectItem> {/* Changed value to "none" */}
+                <SelectItem value="none">No Vendor</SelectItem>
                 {vendors.map((vendor) => (
                   <SelectItem key={vendor.id} value={vendor.id}>
                     {vendor.name}
@@ -346,6 +358,34 @@ const EditInventoryItem: React.FC = () => {
             {imageUrlPreview && (
               <div className="mt-2">
                 <img src={imageUrlPreview} alt="Product Preview" className="max-w-[150px] max-h-[100px] object-contain border border-border p-1 rounded-md" />
+              </div>
+            )}
+          </div>
+          {/* NEW: Auto-Reorder Section */}
+          <div className="space-y-2 md:col-span-2 border-t border-border pt-4 mt-4">
+            <h3 className="text-lg font-semibold">Auto-Reorder Settings</h3>
+            <div className="flex items-center justify-between space-x-2">
+              <Label htmlFor="autoReorderEnabled">Enable Auto-Reorder</Label>
+              <Switch
+                id="autoReorderEnabled"
+                checked={autoReorderEnabled}
+                onCheckedChange={setAutoReorderEnabled}
+              />
+            </div>
+            {autoReorderEnabled && (
+              <div className="space-y-2 mt-2">
+                <Label htmlFor="autoReorderQuantity">Quantity to Auto-Reorder</Label>
+                <Input
+                  id="autoReorderQuantity"
+                  type="number"
+                  value={autoReorderQuantity}
+                  onChange={(e) => setAutoReorderQuantity(e.target.value)}
+                  placeholder="e.g., 50"
+                  min="1"
+                />
+                <p className="text-xs text-muted-foreground">
+                  This quantity will be ordered when stock drops to or below the reorder level.
+                </p>
               </div>
             )}
           </div>
