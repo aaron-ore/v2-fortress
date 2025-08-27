@@ -116,9 +116,10 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
       let cameraId: string | undefined;
       if (mode === "environment") {
         // Try to find the back camera explicitly
-        const environmentCamera = devices.find(device => 
-          device.label && (device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('environment'))
-        );
+        const environmentCamera = devices.find(device => {
+          const label = String(device.label || '').toLowerCase(); // Ensure label is a string
+          return label.includes('back') || label.includes('environment');
+        });
         if (environmentCamera) {
           cameraId = environmentCamera.id;
           console.log(`[QrScanner-${readerId}] Using environment camera ID: ${cameraId}`);
@@ -128,9 +129,10 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
           console.log(`[QrScanner-${readerId}] No explicit environment camera found, using first available ID: ${cameraId}`);
         }
       } else { // user facing mode
-        const userCamera = devices.find(device => 
-          device.label && (device.label.toLowerCase().includes('front') || device.label.toLowerCase().includes('user'))
-        );
+        const userCamera = devices.find(device => {
+          const label = String(device.label || '').toLowerCase(); // Ensure label is a string
+          return label.includes('front') || label.includes('user');
+        });
         if (userCamera) {
           cameraId = userCamera.id;
           console.log(`[QrScanner-${readerId}] Using user camera ID: ${cameraId}`);
