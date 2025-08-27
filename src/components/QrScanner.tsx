@@ -14,7 +14,7 @@ interface QrScannerProps {
 
 const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
   ({ onScan, onError, onReady, facingMode }, ref) => {
-    const scannerId = "qr-code-full-region"; // Unique ID for the scanner element
+    const scannerDivRef = useRef<HTMLDivElement>(null); // Use a React ref for the div element
     const html5QrCodeRef = useRef<Html5QrcodeScanner | null>(null);
     const isMounted = useRef(true); // To track component mount status
 
@@ -52,21 +52,22 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         return;
       }
 
-      // Ensure the DOM element exists before initializing the scanner
-      const scannerElement = document.getElementById(scannerId);
+      const scannerElement = scannerDivRef.current;
       if (!scannerElement) {
-        console.error(`[QrScanner] DOM element with ID '${scannerId}' not found. Cannot start scanner.`);
-        onError(`DOM element for scanner not found: ${scannerId}`);
+        console.error(`[QrScanner] React ref for scanner div not found. Cannot start scanner.`);
+        onError(`React ref for scanner div not found.`);
         return;
       }
+      console.log(`[QrScanner] React ref for scanner div found. Proceeding with scanner initialization.`);
 
       // Stop any existing scanner instance before starting a new one
       await stopAndClearScanner();
 
       console.log(`[QrScanner] Initializing new scanner for facingMode: ${facingMode}`);
       try {
+        // Use the actual DOM element's ID directly, which is guaranteed to exist via the ref
         html5QrCodeRef.current = new Html5QrcodeScanner(
-          scannerId,
+          scannerElement.id, // Pass the ID of the div
           {
             ...config,
             videoConstraints: {
@@ -76,9 +77,11 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
           false // Verbose logging
         );
 
-        // Check if the instance was successfully created
+        console.log("[QrScanner] Html5QrcodeScanner instance created:", html5QrCodeRef.current);
+
+        // Check if the instance was successfully created and has a start method
         if (!html5QrCodeRef.current || typeof html5QrCodeRef.current.start !== 'function') {
-          console.error("[QrScanner] Failed to create Html5QrcodeScanner instance or start method is missing.");
+          console.error("[QrScanner] Failed to create Html5QrcodeScanner instance or start method is missing after constructor call.");
           onError("Failed to initialize QR scanner.");
           return;
         }
@@ -107,8 +110,8 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         }
       } catch (err: any) {
         if (isMounted.current) {
-          console.error("[QrScanner] Failed to start scanner:", err);
-          onError(err.message || "Unknown camera error.");
+          console.error("[QrScanner] Error during Html5QrcodeScanner instantiation or start:", err);
+          onError(err.message || "Unknown camera error during initialization.");
         }
       }
     };
@@ -120,9 +123,10 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
 
     useEffect(() => {
       isMounted.current = true;
-      console.log("[QrScanner] Component mounted or facingMode changed. Scheduling scanner start...");
-      // Add a small delay to ensure DOM is fully rendered and stable
-      const timer = setTimeout(startScanner, 100); // 100ms delay
+      console.log("[QrScanner] Component mounted or facingMode changed. Attempting scanner start...");
+      // Use a small delay to ensure the div is fully rendered and available in the DOM
+      // before Html5QrcodeScanner tries to attach to it.
+      const timer = setTimeout(startScanner, 50); 
 
       return () => {
         isMounted.current = false;
@@ -132,7 +136,9 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       };
     }, [facingMode]); // Restart scanner when facingMode changes
 
-    return <div id={scannerId} className="w-full h-full" />;
+    // Assign a unique ID to the div for Html5QrcodeScanner to target
+    // and also use a React ref for direct access.
+    return <div id="qr-code-full-region" ref={scannerDivRef} className="w-full h-full" />;
   }
 );
 
