@@ -1,5 +1,9 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
+
+export interface QrScannerRef {
+  stopAndClear: () => Promise<void>;
+}
 
 interface QrScannerProps {
   onScan: (decodedText: string) => void;
@@ -8,7 +12,7 @@ interface QrScannerProps {
   facingMode: "user" | "environment";
 }
 
-const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, onReady, facingMode }) => {
+const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, onReady, facingMode }, ref) => {
   const readerId = useMemo(() => `qr-reader-${Math.random().toString(36).substring(2, 9)}`, []);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const [isCameraInitialized, setIsCameraInitialized] = useState(false);
@@ -45,6 +49,11 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, onReady, facingM
       }
     }
   }, [readerId]); // Dependencies for useCallback
+
+  // Expose stopAndClearScanner via ref
+  useImperativeHandle(ref, () => ({
+    stopAndClear: stopAndClearScanner,
+  }));
 
   useEffect(() => {
     isMounted.current = true; // Component is mounted
@@ -147,6 +156,6 @@ const QrScanner: React.FC<QrScannerProps> = ({ onScan, onError, onReady, facingM
       <div id={readerId} className="w-full h-full" />
     </div>
   );
-};
+});
 
 export default QrScanner;

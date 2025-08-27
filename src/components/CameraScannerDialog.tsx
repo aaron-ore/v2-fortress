@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Scan, XCircle, Camera } from "lucide-react";
 import { showError } from "@/utils/toast";
-import QrScanner from "./QrScanner"; // Import the new scanner component
+import QrScanner, { QrScannerRef } from "./QrScanner"; // Import QrScannerRef
 
 interface CameraScannerDialogProps {
   isOpen: boolean;
@@ -25,16 +25,17 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   onScan,
   onError,
 }) => {
+  const qrScannerRef = useRef<QrScannerRef>(null); // Ref for QrScanner component
   const [isCameraActive, setIsCameraActive] = useState(false);
-  const [facingMode, setFacingMode] = useState<"user" | "environment">("user"); // Default to front camera for laptops
-  const [isLoadingCamera, setIsLoadingCamera] = useState(true); // New loading state
-  const [cameraError, setCameraError] = useState<string | null>(null); // New error state
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+  const [isLoadingCamera, setIsLoadingCamera] = useState(true);
+  const [cameraError, setCameraError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       setIsCameraActive(true);
-      setIsLoadingCamera(true); // Reset loading state when dialog opens
-      setCameraError(null); // Clear previous errors
+      setIsLoadingCamera(true);
+      setCameraError(null);
     } else {
       setIsCameraActive(false);
       setIsLoadingCamera(false);
@@ -42,40 +43,43 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   }, [isOpen]);
 
   const handleScannerReady = () => {
-    setIsLoadingCamera(false); // Camera is ready, stop loading
-    setCameraError(null); // Clear any previous errors
+    setIsLoadingCamera(false);
+    setCameraError(null);
   };
 
   const handleScannerError = (errMessage: string) => {
     console.error("QrScanner error:", errMessage);
-    setIsLoadingCamera(false); // Stop loading on error
+    setIsLoadingCamera(false);
     setCameraError(errMessage);
     onError(errMessage);
-    // Introduce a small delay before closing on error,
-    // as the error might be related to cleanup during unmount.
-    setTimeout(() => {
-      onClose(); // Close dialog on error to prevent it from hanging
-    }, 100);
+    // No setTimeout here, rely on explicit cleanup
+    handleCloseDialog();
   };
 
   const handleScannerScan = (decodedText: string) => {
-    setIsLoadingCamera(false); // A scan means camera is active
+    setIsLoadingCamera(false);
     onScan(decodedText);
-    // Introduce a small delay before closing the dialog
-    // This gives QrScanner's internal cleanup a moment to complete
-    setTimeout(() => {
-      onClose();
-    }, 100); // 100ms delay
+    // No setTimeout here, rely on explicit cleanup
+    handleCloseDialog();
   };
 
   const toggleFacingMode = () => {
     setFacingMode((prevMode) => (prevMode === "user" ? "environment" : "user"));
-    setIsLoadingCamera(true); // Show loading again when switching cameras
-    setCameraError(null); // Clear error when switching
+    setIsLoadingCamera(true);
+    setCameraError(null);
+  };
+
+  // New function to handle dialog closure, including scanner cleanup
+  const handleCloseDialog = async () => {
+    if (qrScannerRef.current) {
+      console.log("[CameraScannerDialog] Calling QrScanner's stopAndClear.");
+      await qrScannerRef.current.stopAndClear();
+    }
+    onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleCloseDialog}> {/* Use new handler here */}
       <DialogContent className="sm:max-w-[425px] flex flex-col h-[80vh] max-h-[600px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -102,10 +106,11 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
                 </div>
               )}
               <QrScanner
-                key={facingMode} // Force re-mount on camera switch
+                ref={qrScannerRef} // Pass the ref
+                key={facingMode}
                 onScan={handleScannerScan}
                 onError={handleScannerError}
-                onReady={handleScannerReady} // Pass the new onReady handler
+                onReady={handleScannerReady}
                 facingMode={facingMode}
               />
             </>
@@ -116,7 +121,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
           )}
         </div>
         <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2 pt-4">
-          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
+          <Button variant="outline" onClick={handleCloseDialog} className="w-full sm:w-auto"> {/* Use new handler here */}
             <XCircle className="h-4 w-4 mr-2" /> Cancel
           </Button>
           <Button variant="secondary" onClick={toggleFacingMode} className="w-full sm:w-auto">
