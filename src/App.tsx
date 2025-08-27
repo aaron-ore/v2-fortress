@@ -24,7 +24,7 @@ import Users from "./pages/Users";
 import CreateInvoice from "./pages/CreateInvoice";
 import SetupInstructions from "./pages/SetupInstructions";
 import WarehouseOperationsPage from "./pages/WarehouseOperationsPage";
-import ResetPassword from "./pages/ResetPassword"; // New import
+import ResetPassword from "./pages/ResetPassword";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { InventoryProvider } from "./context/InventoryContext";
 import { OrdersProvider } from "./context/OrdersContext";
@@ -137,7 +137,7 @@ const AppContent = () => {
   ) : (
     <Routes>
       <Route path="/auth" element={<Auth />} />
-      <Route path="/reset-password" element={<ResetPassword />} /> {/* New route for password reset */}
+      <Route path="/reset-password" element={<ResetPassword />} />
       {!session && <Route path="*" element={<Auth />} />}
     </Routes>
   );
@@ -183,13 +183,13 @@ const App = () => (
         }}
       />
       <BrowserRouter>
-        <OnboardingProvider>
-          <ProfileProvider>
+        <ProfileProvider> {/* ProfileProvider now wraps OnboardingProvider */}
+          <OnboardingProvider>
             <PrintProvider>
               <AppContent />
             </PrintProvider>
-          </ProfileProvider>
-        </OnboardingProvider>
+          </OnboardingProvider>
+        </ProfileProvider>
       </BrowserRouter>
     </ThemeProvider>
   </QueryClientProvider>
