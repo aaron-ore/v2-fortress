@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
       .eq('id', adminUser.id)
       .single();
 
-    if (adminProfileError || adminProfile?.role !== 'admin') {
+    if (adminProfileError || adminProfile?.role !== 'admin' || !adminProfile?.organization_id) {
       console.error('Admin profile error or not an admin:', adminProfileError);
       return new Response(JSON.stringify({ error: 'Forbidden: Only administrators can update user roles.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -13,7 +13,7 @@ export interface StockMovement {
   newQuantity: number;
   reason: string;
   timestamp: string;
-  organizationId: string; // NEW: organization_id field
+  organizationId: string | null; // NEW: organization_id field
 }
 
 interface StockMovementContextType {

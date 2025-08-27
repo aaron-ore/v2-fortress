@@ -1,5 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
-import { showSuccess } from "@/utils/toast"; // Import showSuccess
+import { showSuccess, showError } from "@/utils/toast";
+import { useProfile } from "./ProfileContext";
+import { supabase } from "@/lib/supabaseClient";
 
 interface CompanyProfile {
   name: string;
@@ -20,8 +22,15 @@ interface OnboardingContextType {
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
 export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Set isOnboardingComplete to true by default, as the wizard is now optional/removed
-  const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean>(true);
+  const { profile, isLoadingProfile, fetchProfile } = useProfile();
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      // Onboarding is considered complete if a company profile exists AND the user has an organizationId
+      const storedProfile = localStorage.getItem("companyProfile");
+      return storedProfile !== null && profile?.organizationId !== null;
+    }
+    return false;
+  });
 
   const [companyProfile, setCompanyProfileState] = useState<CompanyProfile | null>(() => {
     if (typeof window !== 'undefined') {
@@ -39,10 +48,20 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     return [];
   });
 
-  // Removed useEffect for 'onboardingComplete' as it's now always true
-  // useEffect(() => {
-  //   localStorage.setItem("onboardingComplete", String(isOnboardingComplete));
-  // }, [isOnboardingComplete]);
+  // Effect to determine if onboarding is complete based on profile and companyProfile
+  useEffect(() => {
+    if (!isLoadingProfile && profile) {
+      const storedProfile = localStorage.getItem("companyProfile");
+      const hasCompanyProfile = storedProfile !== null;
+      const hasOrganizationId = profile.organizationId !== null;
+
+      // Onboarding is complete if company profile is set AND user has an organization ID
+      setIsOnboardingComplete(hasCompanyProfile && hasOrganizationId);
+    } else if (!isLoadingProfile && !profile) {
+      // If no profile (not logged in), onboarding is not complete
+      setIsOnboardingComplete(false);
+    }
+  }, [profile, isLoadingProfile]);
 
   useEffect(() => {
     localStorage.setItem("companyProfile", JSON.stringify(companyProfile));
@@ -53,13 +72,45 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   }, [locations]);
 
   const markOnboardingComplete = () => {
-    // This function might still be called, but it won't change the state to true if it's already true
     setIsOnboardingComplete(true);
     showSuccess("Onboarding complete! Welcome to Fortress.");
   };
 
-  const setCompanyProfile = (profile: CompanyProfile) => {
-    setCompanyProfileState(profile);
+  const setCompanyProfile = async (profileData: CompanyProfile) => {
+    setCompanyProfileState(profileData);
+
+    // If the current user doesn't have an organization_id, this is the first admin.
+    // Create an organization and assign it to them.
+    if (profile && !profile.organizationId) {
+      try {
+        // 1. Create new organization
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .insert({ name: profileData.name })
+          .select()
+          .single();
+
+        if (orgError) throw orgError;
+
+        const newOrganizationId = orgData.id;
+
+        // 2. Update user's profile with organization_id and set role to admin
+        const { error: profileUpdateError } = await supabase
+          .from('profiles')
+          .update({ organization_id: newOrganizationId, role: 'admin' })
+          .eq('id', profile.id);
+
+        if (profileUpdateError) throw profileUpdateError;
+
+        // 3. Refresh the profile context to get the updated organizationId and role
+        await fetchProfile();
+        showSuccess(`Organization "${profileData.name}" created and assigned! You are now an admin.`);
+
+      } catch (error: any) {
+        console.error("Error during initial organization setup:", error);
+        showError(`Failed to set up organization: ${error.message}`);
+      }
+    }
   };
 
   const addLocation = (location: string) => {

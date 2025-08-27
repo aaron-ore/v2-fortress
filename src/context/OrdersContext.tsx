@@ -24,7 +24,8 @@ export interface OrderItem {
   orderType: "Retail" | "Wholesale";
   shippingMethod: "Standard" | "Express";
   items: POItem[]; // Added this field
-  organizationId: string; // NEW: organization_id field
+  organizationId: string | null; // NEW: organization_id field
+  terms?: string; // Added terms for PO/Invoice PDF
 }
 
 interface OrdersContextType {
@@ -76,6 +77,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         shippingMethod: order.shipping_method,
         items: order.items || [], // Ensure items are mapped
         organizationId: order.organization_id, // Map organization_id
+        terms: order.terms || undefined, // Map terms
       }));
       setOrders(fetchedOrders);
     }
@@ -108,6 +110,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         order_type: updatedOrder.orderType,
         shipping_method: updatedOrder.shippingMethod,
         items: updatedOrder.items, // Update items array
+        terms: updatedOrder.terms, // Update terms
       })
       .eq("id", updatedOrder.id)
       .eq("organization_id", profile.organizationId) // Filter by organization_id for update
@@ -150,6 +153,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         order_type: newOrder.orderType,
         shipping_method: newOrder.shippingMethod,
         items: newOrder.items, // Insert items array
+        terms: newOrder.terms, // Insert terms
         user_id: session.user.id,
         organization_id: profile.organizationId, // Include organization_id
       })

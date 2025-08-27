@@ -6,7 +6,7 @@ import { useProfile } from "./ProfileContext"; // Import useProfile
 interface Category {
   id: string;
   name: string;
-  organizationId: string; // NEW: organization_id field
+  organizationId: string | null; // NEW: organization_id field
 }
 
 interface CategoryContextType {

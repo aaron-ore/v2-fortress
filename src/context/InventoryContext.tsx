@@ -28,7 +28,7 @@ export interface InventoryItem {
   imageUrl?: string;
   vendorId?: string; // New field for linking to a vendor
   barcodeUrl?: string; // New field for storing barcode SVG
-  organizationId: string; // NEW: organization_id field
+  organizationId: string | null; // NEW: organization_id field
 }
 
 interface InventoryContextType {

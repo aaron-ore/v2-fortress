@@ -42,14 +42,14 @@ const Users: React.FC = () => {
       return;
     }
 
-    // Supabase client-side signUp will create a user with default role 'viewer'
-    // An admin can then change the role via the table.
+    // 1. Admin uses Supabase client-side signUp to create a new auth user.
+    // The handle_new_user trigger will create a profile with default role 'viewer' and organization_id = NULL.
     const { data, error } = await supabase.auth.signUp({
       email: inviteEmail,
       password: Math.random().toString(36).substring(2, 15), // Temporary password, user will reset
       options: {
-        // Removed emailRedirectTo: window.location.origin + '/auth'
-        // Supabase will now use the "Site URL" configured in your project settings.
+        // Supabase will now use the "Site URL" configured in your project settings for email redirects.
+        // No need for emailRedirectTo here.
       },
     });
 
@@ -58,8 +58,9 @@ const Users: React.FC = () => {
     } else {
       showSuccess(`Invitation sent to ${inviteEmail}! User will set their password upon first login.`);
       setInviteEmail("");
-      // After successful signup, the handle_new_user trigger will create the profile.
-      // We then immediately update their role AND organization_id.
+      
+      // 2. After successful signup, the handle_new_user trigger will create the profile.
+      // We then immediately update their role AND organization_id using the Edge Function.
       if (data.user) {
         // Give a small delay for the trigger to run and create the initial profile
         setTimeout(async () => {
@@ -67,7 +68,8 @@ const Users: React.FC = () => {
           fetchAllProfiles(); // Refresh list
         }, 1000);
       } else {
-        fetchAllProfiles(); // Refresh list to show new viewer
+        // If data.user is null (e.g., user already exists), just refresh profiles
+        fetchAllProfiles();
       }
     }
   };
@@ -87,7 +89,8 @@ const Users: React.FC = () => {
     const { error } = await supabase
       .from("profiles")
       .delete()
-      .eq("id", userToDelete.id);
+      .eq("id", userToDelete.id)
+      .eq("organization_id", profile?.organizationId); // Ensure admin can only delete within their org
 
     if (error) {
       showError(`Failed to delete profile: ${error.message}`);

@@ -10,7 +10,7 @@ export interface UserProfile {
   address?: string;
   avatarUrl?: string;
   role: string; // New: role field
-  organizationId: string; // NEW: organization_id field
+  organizationId: string | null; // NEW: organization_id field, can be null initially
   createdAt: string;
 }
 
@@ -19,7 +19,7 @@ interface ProfileContextType {
   allProfiles: UserProfile[]; // New: for admin to see all profiles
   isLoadingProfile: boolean; // NEW: Add loading state for profile
   updateProfile: (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId">>) => Promise<void>;
-  updateUserRole: (userId: string, newRole: string, organizationId: string) => Promise<void>; // New: for admin to update roles, now includes organizationId
+  updateUserRole: (userId: string, newRole: string, organizationId: string | null) => Promise<void>; // New: for admin to update roles, now includes organizationId
   fetchProfile: () => Promise<void>;
   fetchAllProfiles: () => Promise<void>; // New: for admin to fetch all profiles
 }
@@ -163,7 +163,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  const updateUserRole = async (userId: string, newRole: string, organizationId: string) => {
+  const updateUserRole = async (userId: string, newRole: string, organizationId: string | null) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session || profile?.role !== 'admin' || !profile.organizationId) {
       showError("You do not have permission to update user roles.");
