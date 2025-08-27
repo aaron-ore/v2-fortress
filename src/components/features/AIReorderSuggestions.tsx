@@ -10,6 +10,7 @@ import { format, subMonths, isValid } from "date-fns";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label"; // NEW: Import Label component
 
 /**
  * @interface ReorderSuggestion
