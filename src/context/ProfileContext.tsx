@@ -53,27 +53,9 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       .single();
 
     if (error && error.code === 'PGRST116') { // PGRST116 means "no rows found"
-      console.warn(`[ProfileContext] No profile found for user ${session.user.id}. Attempting to create one.`);
-      // If no profile exists, create a basic one
-      const { data: newProfileData, error: createError } = await supabase
-        .from("profiles")
-        .insert({
-          id: session.user.id,
-          full_name: session.user.email?.split('@')[0] || "New User", // Default name from email or "New User"
-          // Removed 'email' field from insert payload as it's not in the profiles table
-          role: "viewer", // Default role
-          organization_id: null, // Initially null, onboarding will set this
-        })
-        .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at")
-        .single();
-
-      if (createError) {
-        console.error("[ProfileContext] Error creating new profile:", createError);
-        profileFetchError = createError; // Use this error for toast
-      } else if (newProfileData) {
-        userProfileData = newProfileData;
-        showSuccess("A new profile has been created for you!");
-      }
+      console.warn(`[ProfileContext] No profile found for user ${session.user.id}. This indicates the 'on_auth_user_created' trigger might not have run, or the SELECT RLS policy is too restrictive.`);
+      // If no profile exists, we now treat this as an error, expecting the trigger to have created it.
+      profileFetchError = new Error("User profile not found after authentication. Please ensure the 'on_auth_user_created' trigger is active in Supabase.");
     } else if (error) {
       console.error("[ProfileContext] Error fetching profile:", error);
       profileFetchError = error;
