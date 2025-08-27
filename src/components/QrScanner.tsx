@@ -117,6 +117,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
       if (mode === "environment") {
         // Try to find the back camera explicitly
         const environmentCamera = devices.find(device => {
+          if (!device) return false; // Defensive check
           const label = String(device.label || '').toLowerCase(); // Ensure label is a string
           return label.includes('back') || label.includes('environment');
         });
@@ -130,6 +131,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
         }
       } else { // user facing mode
         const userCamera = devices.find(device => {
+          if (!device) return false; // Defensive check
           const label = String(device.label || '').toLowerCase(); // Ensure label is a string
           return label.includes('front') || label.includes('user');
         });
