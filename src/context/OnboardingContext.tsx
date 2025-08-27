@@ -84,27 +84,21 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     // Create an organization and assign it to them.
     if (profile && !profile.organizationId) {
       try {
-        // 1. Create new organization
+        // Generate the unique code BEFORE inserting the organization
+        const newUniqueCode = generateUniqueCode();
+
+        // 1. Create new organization with the unique code directly
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
-          .insert({ name: profileData.name })
+          .insert({ name: profileData.name, unique_code: newUniqueCode }) // Insert unique_code here
           .select()
           .single();
 
         if (orgError) throw orgError;
 
         const newOrganizationId = orgData.id;
-        const newUniqueCode = generateUniqueCode(); // Generate unique code
 
-        // 2. Update the newly created organization with the unique code
-        const { error: updateOrgError } = await supabase
-          .from('organizations')
-          .update({ unique_code: newUniqueCode })
-          .eq('id', newOrganizationId);
-
-        if (updateOrgError) throw updateOrgError;
-
-        // 3. Update user's profile with organization_id and set role to admin
+        // 2. Update user's profile with organization_id and set role to admin
         const { error: profileUpdateError } = await supabase
           .from('profiles')
           .update({ organization_id: newOrganizationId, role: 'admin' })
@@ -112,7 +106,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
 
         if (profileUpdateError) throw profileUpdateError;
 
-        // 4. Refresh the profile context to get the updated organizationId and role
+        // 3. Refresh the profile context to get the updated organizationId and role
         await fetchProfile();
         showSuccess(`Organization "${profileData.name}" created and assigned! You are now an admin. Your unique company code is: ${newUniqueCode}`);
 
