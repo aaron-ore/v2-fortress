@@ -45,15 +45,11 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       }
 
       // Create a new scanner instance
+      // The config object passed to the constructor already contains videoConstraints
       html5QrCodeRef.current = new Html5QrcodeScanner(
         scannerId,
         {
           ...config,
-          // Dynamically set camera facing mode
-          // This is crucial for switching between front/back cameras
-          // and needs to be part of the start() options.
-          // The library handles the actual camera selection based on this.
-          // If 'environment' is not available, it might fall back or error.
           videoConstraints: {
             facingMode: facingMode,
           },
@@ -62,8 +58,9 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       );
 
       try {
+        // Correct way to call start() for Html5QrcodeScanner
+        // It takes success callback and error callback directly
         await html5QrCodeRef.current.start(
-          { facingMode: facingMode }, // Pass facingMode here for camera selection
           (decodedText, decodedResult) => {
             if (isMounted.current) {
               onScan(decodedText);
