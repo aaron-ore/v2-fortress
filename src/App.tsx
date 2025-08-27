@@ -24,6 +24,7 @@ import Users from "./pages/Users";
 import CreateInvoice from "./pages/CreateInvoice";
 import SetupInstructions from "./pages/SetupInstructions";
 import WarehouseOperationsPage from "./pages/WarehouseOperationsPage";
+import FeaturesPage from "./pages/FeaturesPage"; // NEW: Import FeaturesPage
 import ResetPassword from "./pages/ResetPassword";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { InventoryProvider } from "./context/InventoryContext";
@@ -76,6 +77,7 @@ const AuthenticatedApp = () => {
                     <Route path="users" element={<Users />} />
                     <Route path="setup-instructions" element={<SetupInstructions />} />
                     <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
+                    <Route path="features" element={<FeaturesPage />} /> {/* NEW: Route for FeaturesPage */}
                     <Route path="*" element={<NotFound />} />
                   </Route>
                 </Routes>

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Search, Bell, User, LogOut, Users as UsersIcon, Settings as SettingsIcon, PackagePlus, ChevronDown, Warehouse } from "lucide-react"; // Added Warehouse icon
+import { Search, Bell, User, LogOut, Users as UsersIcon, Settings as SettingsIcon, PackagePlus, ChevronDown, Warehouse, Sparkles } from "lucide-react"; // Added Sparkles icon
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,7 +37,8 @@ const Header: React.FC = () => {
     { to: "/orders", label: "Orders" },
     { to: "/vendors", label: "Vendors" },
     { to: "/reports", label: "Reports" },
-    { to: "/warehouse-operations", label: "Warehouse Ops" }, // New link
+    { to: "/warehouse-operations", label: "Warehouse Ops" },
+    { to: "/features", label: "Features" }, // NEW: Added Features tab
   ];
 
   const handleLogout = async () => {

@@ -29,7 +29,7 @@ import {
   ChevronDown,
   HelpCircle,
   DollarSign,
-  Sparkles,
+  Sparkles, // Added Sparkles icon
   BookOpen,
   Warehouse, // Added Warehouse icon
 } from "lucide-react";
@@ -47,7 +47,8 @@ const navLinks = [
   { to: "/orders", label: "Orders" },
   { to: "/vendors", label: "Vendors" },
   { to: "/reports", label: "Reports" },
-  { to: "/warehouse-operations", label: "Warehouse Ops" }, // New link
+  { to: "/warehouse-operations", label: "Warehouse Ops" },
+  { to: "/features", label: "Features" }, // NEW: Added Features tab
 ];
 
 const MobileNav: React.FC = () => {
