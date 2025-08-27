@@ -20,6 +20,9 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
   const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMounted = useRef(true); // To track if the component is mounted
   const startCameraTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Ref for the camera start timeout
+  const retryCountRef = useRef(0);
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY_MS = 500; // 0.5 seconds
 
   // Centralized function to stop and clear the scanner
   const stopAndClearScanner = useCallback(async () => {
@@ -42,13 +45,13 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
         // Continue to clear even if stop fails
       } finally {
         try {
-          await new Promise(resolve => setTimeout(resolve, 50)); // Small delay before clearing
+          await new Promise(resolve => setTimeout(resolve, 100)); // Increased delay before clearing
           await qrCode.clear();
           console.log(`[QrScanner-${readerId}] Scanner UI cleared and resources released.`);
         } catch (e) {
           console.warn(`[QrScanner-${readerId}] Error during qrCode.clear():`, e);
         } finally {
-          await new Promise(resolve => setTimeout(resolve, 50)); // Another small delay
+          await new Promise(resolve => setTimeout(resolve, 100)); // Increased delay
           // Do NOT nullify html5QrCodeRef.current here, as it's a single instance.
           // It will be nullified only on component unmount.
           if (isMounted.current) {
@@ -59,6 +62,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
             errorTimeoutRef.current = null;
           }
           lastReportedErrorRef.current = null;
+          retryCountRef.current = 0; // Reset retry count on successful stop/clear
         }
       }
     }
@@ -69,7 +73,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
     stopAndClear: stopAndClearScanner,
   }));
 
-  const startScanner = useCallback(async (mode: "user" | "environment") => {
+  const startScanner = useCallback(async (mode: "user" | "environment", attempt = 0) => {
     if (!isMounted.current) {
       console.log(`[QrScanner-${readerId}] Skipping startScanner: Component not mounted.`);
       return;
@@ -80,14 +84,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
       return;
     }
 
-    // Ensure any previous camera stream is stopped before starting a new one
-    if (qrCode.isScanning) {
-      console.log(`[QrScanner-${readerId}] Scanner is already scanning, stopping before restart.`);
-      await stopAndClearScanner(); // Use the robust stop and clear
-      await new Promise(resolve => setTimeout(resolve, 200)); // Give extra time after stopping
-    }
-
-    console.log(`[QrScanner-${readerId}] Attempting to start scanner with facingMode: ${mode}`);
+    console.log(`[QrScanner-${readerId}] Attempting to start scanner with facingMode: ${mode}, attempt: ${attempt + 1}`);
     setIsCameraInitialized(false); // Reset initialization state
 
     if (startCameraTimeoutRef.current) {
@@ -110,8 +107,42 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
     };
 
     try {
+      const devices = await Html5Qrcode.getCameras();
+      if (!devices || devices.length === 0) {
+        throw new Error("No camera devices found on this device.");
+      }
+      console.log(`[QrScanner-${readerId}] Found ${devices.length} camera(s).`);
+
+      let cameraId: string | undefined;
+      if (mode === "environment") {
+        // Try to find the back camera explicitly
+        const environmentCamera = devices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('environment'));
+        if (environmentCamera) {
+          cameraId = environmentCamera.id;
+          console.log(`[QrScanner-${readerId}] Using environment camera ID: ${cameraId}`);
+        } else {
+          // Fallback to first available if no explicit back camera found
+          cameraId = devices[0].id;
+          console.log(`[QrScanner-${readerId}] No explicit environment camera found, using first available ID: ${cameraId}`);
+        }
+      } else { // user facing mode
+        const userCamera = devices.find(device => device.label.toLowerCase().includes('front') || device.label.toLowerCase().includes('user'));
+        if (userCamera) {
+          cameraId = userCamera.id;
+          console.log(`[QrScanner-${readerId}] Using user camera ID: ${cameraId}`);
+        } else {
+          // Fallback to first available if no explicit front camera found
+          cameraId = devices[0].id;
+          console.log(`[QrScanner-${readerId}] No explicit user camera found, using first available ID: ${cameraId}`);
+        }
+      }
+
+      if (!cameraId) {
+        throw new Error("Could not determine a camera to use.");
+      }
+
       await qrCode.start(
-        { facingMode: mode },
+        cameraId, // Use explicit camera ID
         config,
         async (decodedText) => {
           if (startCameraTimeoutRef.current) clearTimeout(startCameraTimeoutRef.current);
@@ -161,17 +192,38 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
         console.log(`[QrScanner-${readerId}] Camera initialized successfully.`);
         setIsCameraInitialized(true);
         onReady();
+        retryCountRef.current = 0; // Reset retry count on success
       }
     } catch (err: any) {
       if (startCameraTimeoutRef.current) clearTimeout(startCameraTimeoutRef.current);
       if (isMounted.current) {
         console.error(`[QrScanner-${readerId}] Failed to start camera:`, err);
-        onError(err.message || "Failed to start camera.");
         setIsCameraInitialized(false); // Explicitly set to false on start failure
-        stopAndClearScanner(); // Attempt to clean up even on start failure
+
+        let userFriendlyError = "Failed to start camera.";
+        if (err.name === "NotAllowedError") {
+          userFriendlyError = "Camera access denied. Please grant camera permissions in your browser settings.";
+        } else if (err.name === "NotFoundError") {
+          userFriendlyError = "No camera found on this device.";
+        } else if (err.name === "NotReadableError") {
+          userFriendlyError = "Camera is already in use or unavailable.";
+        } else if (err.name === "OverconstrainedError") {
+          userFriendlyError = "Camera could not be started with requested settings.";
+        } else if (err.message.includes("No camera devices found")) {
+          userFriendlyError = "No camera devices found on this device.";
+        }
+
+        if (attempt < MAX_RETRIES) {
+          console.log(`[QrScanner-${readerId}] Retrying camera start in ${RETRY_DELAY_MS}ms... (Attempt ${attempt + 1}/${MAX_RETRIES})`);
+          retryCountRef.current = attempt + 1;
+          setTimeout(() => startScanner(mode, attempt + 1), RETRY_DELAY_MS);
+        } else {
+          onError(userFriendlyError);
+          stopAndClearScanner(); // Attempt to clean up even on start failure
+        }
       }
     }
-  }, [readerId, onScan, onError, onReady, stopAndClearScanner]);
+  }, [readerId, onScan, onError, onReady, stopAndClearScanner, facingMode]);
 
 
   // Effect for initial mount and unmount
@@ -194,10 +246,14 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
   // Effect for facingMode changes
   useEffect(() => {
     if (html5QrCodeRef.current && isMounted.current) {
-      console.log(`[QrScanner-${readerId}] Facing mode changed to: ${facingMode}. Restarting scanner.`);
-      startScanner(facingMode);
+      console.log(`[QrScanner-${readerId}] Facing mode changed to: ${facingMode}. Stopping current scanner and restarting.`);
+      // Explicitly stop and clear before starting a new one
+      stopAndClearScanner().then(() => {
+        // After a clean stop, then start the scanner with the new mode
+        startScanner(facingMode);
+      });
     }
-  }, [facingMode, startScanner, readerId]);
+  }, [facingMode, startScanner, readerId, stopAndClearScanner]);
 
 
   return (
@@ -205,7 +261,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(({ onScan, onError, o
       {/* Loading overlay */}
       {!isCameraInitialized && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/70 text-white text-lg z-10">
-          Initializing camera...
+          {retryCountRef.current > 0 ? `Retrying camera... (${retryCountRef.current}/${MAX_RETRIES})` : "Initializing camera..."}
         </div>
       )}
       {/* The element where the camera stream will be rendered */}
