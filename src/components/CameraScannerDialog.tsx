@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Scan, XCircle, Camera } from "lucide-react";
 import { showError } from "@/utils/toast";
-import Html5QrCodeScanner from "./Html5QrCodeScanner"; // Import the new scanner component
+import QrScanner from "./QrScanner"; // Import the new scanner component
 
 interface CameraScannerDialogProps {
   isOpen: boolean;
@@ -47,7 +47,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   };
 
   const handleScannerError = (errMessage: string) => {
-    console.error("Html5QrCodeScanner error:", errMessage);
+    console.error("QrScanner error:", errMessage);
     setIsLoadingCamera(false); // Stop loading on error
     setCameraError(errMessage);
     onError(errMessage);
@@ -92,7 +92,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
                   <p className="text-xs mt-2">Try switching cameras or refreshing the page.</p>
                 </div>
               )}
-              <Html5QrCodeScanner
+              <QrScanner
                 key={facingMode} // Force re-mount on camera switch
                 onScan={handleScannerScan}
                 onError={handleScannerError}
