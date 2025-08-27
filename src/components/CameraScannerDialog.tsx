@@ -37,6 +37,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
       setIsLoadingCamera(true);
       setCameraError(null);
     } else {
+      // When dialog closes, ensure camera is marked inactive
       setIsCameraActive(false);
       setIsLoadingCamera(false);
     }
@@ -52,15 +53,13 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
     setIsLoadingCamera(false);
     setCameraError(errMessage);
     onError(errMessage);
-    // Ensure camera is stopped and then close the dialog after a small delay
-    handleCloseDialog(true); // Pass true to indicate error-triggered close
+    handleCloseDialog(); // Close dialog on error
   };
 
   const handleScannerScan = (decodedText: string) => {
     setIsLoadingCamera(false);
     onScan(decodedText);
-    // Ensure camera is stopped and then close the dialog after a small delay
-    handleCloseDialog(false); // Pass false to indicate scan-triggered close
+    handleCloseDialog(); // Close dialog on successful scan
   };
 
   const toggleFacingMode = () => {
@@ -69,19 +68,25 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
     setCameraError(null);
   };
 
-  // Function to handle dialog closure, including scanner cleanup and optional delay
-  const handleCloseDialog = async (isError: boolean = false) => {
+  // Function to handle dialog closure, including scanner cleanup
+  const handleCloseDialog = async () => {
+    // 1. Immediately signal that the camera should be inactive.
+    // This will cause QrScanner to unmount or re-render without the camera.
+    setIsCameraActive(false);
+
+    // 2. Give React a moment to process the state update and start unmounting QrScanner.
+    // This is crucial for the race condition.
+    await new Promise(resolve => setTimeout(resolve, 100)); // Small delay for React's render cycle
+
+    // 3. Explicitly stop and clear the scanner using the ref.
+    // This ensures html5-qrcode's internal cleanup is triggered.
     if (qrScannerRef.current) {
-      console.log("[CameraScannerDialog] Calling QrScanner's stopAndClear.");
+      console.log("[CameraScannerDialog] Calling QrScanner's stopAndClear during dialog close.");
       await qrScannerRef.current.stopAndClear();
     }
 
-    // Add a small delay *after* cleanup, especially for errors or quick scans,
-    // to give the browser a moment before the component unmounts.
-    // This is a common pattern for external media APIs.
-    setTimeout(() => {
-      onClose();
-    }, isError ? 200 : 100); // Slightly longer delay for errors
+    // 4. Finally, close the dialog.
+    onClose();
   };
 
   return (
@@ -127,7 +132,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
           )}
         </div>
         <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2 pt-4">
-          <Button variant="outline" onClick={() => handleCloseDialog(false)} className="w-full sm:w-auto">
+          <Button variant="outline" onClick={handleCloseDialog} className="w-full sm:w-auto">
             <XCircle className="h-4 w-4 mr-2" /> Cancel
           </Button>
           <Button variant="secondary" onClick={toggleFacingMode} className="w-full sm:w-auto">
