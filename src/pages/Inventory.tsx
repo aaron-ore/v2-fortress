@@ -30,13 +30,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { SlidersHorizontal, ArrowUp, ArrowDown, ChevronDown, Table2, LayoutGrid, Trash2, MapPin } from "lucide-react"; // Added MapPin icon
+import { SlidersHorizontal, ArrowUp, ArrowDown, ChevronDown, Table2, LayoutGrid, Trash2, MapPin, FileText } from "lucide-react"; // Added FileText icon for spreadsheet
 import { useCategories } from "@/context/CategoryContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import ManageLocationsDialog from "@/components/ManageLocationsDialog";
 import BulkUpdateDialog from "@/components/BulkUpdateDialog";
 import AutoReorderSettingsDialog from "@/components/AutoReorderSettingsDialog";
 import { exportToExcel } from "@/utils/exportToExcel";
+import PlainSpreadsheetView from "@/components/inventory/PlainSpreadsheetView"; // NEW: Import PlainSpreadsheetView
 
 // Define all possible columns for the table with sortable property and type
 const allColumns = [
@@ -79,7 +80,15 @@ const Inventory: React.FC = () => {
   const [locationFilter, setLocationFilter] = useState("all"); // New state for location filter
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [viewMode, setViewMode] = useState<"table" | "card">("table");
+  
+  // NEW: Initialize viewMode based on dashboard preference
+  const [viewMode, setViewMode] = useState<"table" | "card" | "spreadsheet">(() => {
+    if (typeof window !== 'undefined') {
+      const dashboardViewPreference = localStorage.getItem("dashboardViewPreference");
+      return dashboardViewPreference === "classic" ? "spreadsheet" : "table";
+    }
+    return "table";
+  });
 
   // State for delete confirmation dialog
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
@@ -298,6 +307,14 @@ const Inventory: React.FC = () => {
           >
             <LayoutGrid className="h-4 w-4" />
           </Button>
+          <Button
+            variant={viewMode === "spreadsheet" ? "secondary" : "ghost"}
+            size="icon"
+            onClick={() => setViewMode("spreadsheet")}
+            aria-label="Spreadsheet View"
+          >
+            <FileText className="h-4 w-4" />
+          </Button>
         </div>
       </div>
       <Card className="bg-card border-border rounded-lg p-4">
@@ -305,28 +322,30 @@ const Inventory: React.FC = () => {
           <CardTitle className="text-xl font-semibold">Current Stock</CardTitle>
           <div className="flex items-center gap-2"> {/* New wrapper for right-aligned buttons */}
             {/* Actions Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  Actions <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                <DropdownMenuLabel>Inventory Actions</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsImportCsvDialogOpen(true)}>Import CSV</DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExport}>Export to Excel</DropdownMenuItem>
-                <DropdownMenuItem onClick={handleBulkUpdate}>Bulk Update (CSV)</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSetAutoReorder}>Auto-Reorder Settings</DropdownMenuItem>
-                {/* Removed Multi-Location View as it's now a dedicated button */}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {viewMode !== "spreadsheet" && ( // Hide actions in spreadsheet view
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Actions <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  <DropdownMenuLabel>Inventory Actions</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setIsImportCsvDialogOpen(true)}>Import CSV</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExport}>Export to Excel</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleBulkUpdate}>Bulk Update (CSV)</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSetAutoReorder}>Auto-Reorder Settings</DropdownMenuItem>
+                  {/* Removed Multi-Location View as it's now a dedicated button */}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             <Button onClick={() => setIsScanItemDialogOpen(true)} variant="outline">Scan Item</Button>
 
-            {/* Columns Dropdown (only visible in table view) */}
-            {viewMode === "table" && (
+            {/* Columns Dropdown (only visible in table and spreadsheet view) */}
+            {(viewMode === "table" || viewMode === "spreadsheet") && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
@@ -344,6 +363,7 @@ const Inventory: React.FC = () => {
                       checked={columnVisibility[column.key]}
                       onCheckedChange={(checked) => toggleColumnVisibility(column.key, checked)}
                       onSelect={(e) => e.preventDefault()}
+                      disabled={viewMode === "spreadsheet" && column.key === "actions"} // Disable actions toggle in spreadsheet
                     >
                       {column.label}
                     </DropdownMenuCheckboxItem>
@@ -436,7 +456,7 @@ const Inventory: React.FC = () => {
                 </TableBody>
               </Table>
             </div>
-          ) : (
+          ) : viewMode === "card" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredAndSortedItems.map((item) => (
                 <InventoryCard
@@ -449,6 +469,12 @@ const Inventory: React.FC = () => {
                 />
               ))}
             </div>
+          ) : ( // NEW: Spreadsheet View
+            <PlainSpreadsheetView
+              items={filteredAndSortedItems}
+              visibleColumns={columnVisibility}
+              allColumns={allColumns}
+            />
           )}
         </CardContent>
       </Card>
