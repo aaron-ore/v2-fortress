@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Scan, XCircle, Camera } from "lucide-react";
 import { showError } from "@/utils/toast";
-import QrScanner, { QrScannerRef } from "./QrScanner"; // Import QrScannerRef
+import QrScanner, { QrScannerRef } from "./QrScanner";
 
 interface CameraScannerDialogProps {
   isOpen: boolean;
@@ -25,7 +25,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   onScan,
   onError,
 }) => {
-  const qrScannerRef = useRef<QrScannerRef>(null); // Ref for QrScanner component
+  const qrScannerRef = useRef<QrScannerRef>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [isLoadingCamera, setIsLoadingCamera] = useState(true);
@@ -49,17 +49,17 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   };
 
   const handleScannerError = (errMessage: string) => {
-    console.error("QrScanner error:", errMessage);
+    console.error("QrScanner error in dialog:", errMessage);
     setIsLoadingCamera(false);
     setCameraError(errMessage);
     onError(errMessage);
-    handleCloseDialog(); // Close dialog on error
+    // Do not automatically close dialog on error, let user decide or retry
   };
 
   const handleScannerScan = (decodedText: string) => {
     setIsLoadingCamera(false);
     onScan(decodedText);
-    handleCloseDialog(); // Close dialog on successful scan
+    onClose(); // Close dialog on successful scan
   };
 
   const toggleFacingMode = () => {
@@ -68,29 +68,8 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
     setCameraError(null);
   };
 
-  // Function to handle dialog closure, including scanner cleanup
-  const handleCloseDialog = async () => {
-    // 1. Immediately signal that the camera should be inactive.
-    // This will cause QrScanner to unmount or re-render without the camera.
-    setIsCameraActive(false);
-
-    // 2. Give React a moment to process the state update and start unmounting QrScanner.
-    // This is crucial for the race condition.
-    await new Promise(resolve => setTimeout(resolve, 100)); // Small delay for React's render cycle
-
-    // 3. Explicitly stop and clear the scanner using the ref.
-    // This ensures html5-qrcode's internal cleanup is triggered.
-    if (qrScannerRef.current) {
-      console.log("[CameraScannerDialog] Calling QrScanner's stopAndClear during dialog close.");
-      await qrScannerRef.current.stopAndClear();
-    }
-
-    // 4. Finally, close the dialog.
-    onClose();
-  };
-
   return (
-    <Dialog open={isOpen} onOpenChange={handleCloseDialog}>
+    <Dialog open={isOpen} onOpenChange={onClose}> {/* onOpenChange now directly calls onClose */}
       <DialogContent className="sm:max-w-[425px] flex flex-col h-[80vh] max-h-[600px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -118,7 +97,6 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
               )}
               <QrScanner
                 ref={qrScannerRef}
-                // Removed key={facingMode} to prevent unmount/remount on facingMode change
                 onScan={handleScannerScan}
                 onError={handleScannerError}
                 onReady={handleScannerReady}
@@ -132,7 +110,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
           )}
         </div>
         <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2 pt-4">
-          <Button variant="outline" onClick={handleCloseDialog} className="w-full sm:w-auto">
+          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
             <XCircle className="h-4 w-4 mr-2" /> Cancel
           </Button>
           <Button variant="secondary" onClick={toggleFacingMode} className="w-full sm:w-auto">
