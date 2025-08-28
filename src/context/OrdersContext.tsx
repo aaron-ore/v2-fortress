@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
 import { mockOrders } from "@/utils/mockData";
-import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
+// REMOVED: import { useActivityLogs } from "./ActivityLogContext";
 
 export interface POItem {
   id: number;
@@ -47,7 +47,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [orders, setOrders] = useState<OrderItem[]>(initialOrders);
   const { profile, isLoadingProfile } = useProfile();
-  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
+  // REMOVED: const { addActivity } = useActivityLogs();
 
   const fetchOrders = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -130,7 +130,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error updating order:", error);
-      addActivity("Order Update Failed", `Failed to update order: ${updatedOrder.id}.`, { error: error.message, orderId: updatedOrder.id }); // NEW: Log failed update
+      // REMOVED: addActivity("Order Update Failed", `Failed to update order: ${updatedOrder.id}.`, { error: error.message, orderId: updatedOrder.id });
       showError(`Failed to update order: ${error.message}`);
     } else if (data && data.length > 0) {
       setOrders((prevOrders) =>
@@ -138,7 +138,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
           order.id === updatedOrder.id ? { ...updatedOrder, organizationId: data[0].organization_id } : order,
         ),
       );
-      addActivity("Order Updated", `Updated ${updatedOrder.type} order: ${updatedOrder.id} to status "${updatedOrder.status}".`, { orderId: updatedOrder.id, newStatus: updatedOrder.status }); // NEW: Log successful update
+      // REMOVED: addActivity("Order Updated", `Updated ${updatedOrder.type} order: ${updatedOrder.id} to status "${updatedOrder.status}".`, { orderId: updatedOrder.id, newStatus: updatedOrder.status });
       showSuccess(`Order ${updatedOrder.id} updated successfully!`);
     }
   };
@@ -175,12 +175,12 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error adding order:", error);
-      addActivity("Order Add Failed", `Failed to add new ${newOrder.type} order for ${newOrder.customerSupplier}.`, { error: error.message, orderType: newOrder.type }); // NEW: Log failed add
+      // REMOVED: addActivity("Order Add Failed", `Failed to add new ${newOrder.type} order for ${newOrder.customerSupplier}.`, { error: error.message, orderType: newOrder.type });
       showError(`Failed to add order: ${error.message}`);
     } else if (data && data.length > 0) {
       const addedOrder: OrderItem = { ...newOrder, id: data[0].id, organizationId: data[0].organization_id };
       setOrders((prevOrders) => [...prevOrders, addedOrder]);
-      addActivity("Order Added", `Created new ${addedOrder.type} order: ${addedOrder.id} for ${addedOrder.customerSupplier}.`, { orderId: addedOrder.id, orderType: addedOrder.type }); // NEW: Log successful add
+      // REMOVED: addActivity("Order Added", `Created new ${addedOrder.type} order: ${addedOrder.id} for ${addedOrder.customerSupplier}.`, { orderId: addedOrder.id, orderType: addedOrder.type });
       showSuccess(`Order ${addedOrder.id} created successfully!`);
     }
   };
@@ -192,6 +192,8 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
+    const orderToArchive = orders.find(o => o.id === orderId);
+
     const { error } = await supabase
       .from("orders")
       .update({ status: "Archived" })
@@ -200,7 +202,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error archiving order:", error);
-      addActivity("Order Archive Failed", `Failed to archive order: ${orderId}.`, { error: error.message, orderId }); // NEW: Log failed archive
+      // REMOVED: addActivity("Order Archive Failed", `Failed to archive order: ${orderId}.`, { error: error.message, orderId });
       showError(`Failed to archive order: ${error.message}`);
     } else {
       setOrders((prevOrders) =>
@@ -208,7 +210,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
           order.id === orderId ? { ...order, status: "Archived" } : order,
         ),
       );
-      addActivity("Order Archived", `Archived order: ${orderId}.`, { orderId }); // NEW: Log successful archive
+      // REMOVED: addActivity("Order Archived", `Archived order: ${orderId}.`, { orderId });
       showSuccess(`Order ${orderId} has been archived.`);
     }
   };

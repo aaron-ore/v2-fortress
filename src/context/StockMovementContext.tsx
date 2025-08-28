@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect, useCa
 import { supabase } from "@/lib/supabaseClient";
 import { showError } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
-import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
+// REMOVED: import { useActivityLogs } from "./ActivityLogContext";
 
 export interface StockMovement {
   id: string;
@@ -28,7 +28,7 @@ const StockMovementContext = createContext<StockMovementContextType | undefined>
 export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [stockMovements, setStockMovements] = useState<StockMovement[]>([]);
   const { profile, isLoadingProfile } = useProfile();
-  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
+  // REMOVED: const { addActivity } = useActivityLogs();
 
   const fetchStockMovements = useCallback(async (itemId?: string) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -56,7 +56,7 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
       const fetchedMovements: StockMovement[] = data.map((movement: any) => ({
         id: movement.id,
         itemId: movement.item_id,
-        itemName: movement.item_name,
+        itemName: movement.name,
         type: movement.type,
         amount: movement.amount,
         oldQuantity: movement.old_quantity,
@@ -99,7 +99,7 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
 
     if (error) {
       console.error("Error adding stock movement:", error);
-      addActivity("Stock Movement Failed", `Failed to log stock movement for ${movement.itemName} (Item ID: ${movement.itemId}).`, { error: error.message, movement }); // NEW: Log failed movement
+      // REMOVED: addActivity("Stock Movement Failed", `Failed to log stock movement for ${movement.itemName} (Item ID: ${movement.itemId}).`, { error: error.message, movement });
       showError(`Failed to log stock movement: ${error.message}`);
     } else if (data && data.length > 0) {
       const newMovement: StockMovement = {
@@ -115,7 +115,7 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
         organizationId: data[0].organization_id,
       };
       setStockMovements((prev) => [newMovement, ...prev]);
-      addActivity("Stock Movement", `${movement.type === 'add' ? 'Added' : 'Subtracted'} ${movement.amount} units of ${movement.itemName}. Reason: ${movement.reason}.`, { itemId: movement.itemId, itemName: movement.itemName, type: movement.type, amount: movement.amount, newQuantity: movement.newQuantity }); // NEW: Log successful movement
+      // REMOVED: addActivity("Stock Movement", `${movement.type === 'add' ? 'Added' : 'Subtracted'} ${movement.amount} units of ${movement.itemName}. Reason: ${movement.reason}.`, { itemId: movement.itemId, itemName: movement.itemName, type: movement.type, amount: movement.amount, newQuantity: movement.newQuantity });
     }
   };
 

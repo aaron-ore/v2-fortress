@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
 import { mockCategories } from "@/utils/mockData";
-import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
+// REMOVED: import { useActivityLogs } from "./ActivityLogContext";
 
 interface Category {
   id: string;
@@ -23,7 +23,7 @@ const CategoryContext = createContext<CategoryContextType | undefined>(undefined
 export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const { profile, isLoadingProfile } = useProfile();
-  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
+  // REMOVED: const { addActivity } = useActivityLogs();
 
   const fetchCategories = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -76,7 +76,7 @@ export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }
     const trimmedName = name.trim();
     const existingCategory = categories.find(cat => cat.name.toLowerCase() === trimmedName.toLowerCase());
     if (existingCategory) {
-      addActivity("Category Add Skipped", `Attempted to add existing category: ${trimmedName}.`, { categoryName: trimmedName }); // NEW: Log skipped add
+      // REMOVED: addActivity("Category Add Skipped", `Attempted to add existing category: ${trimmedName}.`, { categoryName: trimmedName });
       return existingCategory;
     }
 
@@ -96,12 +96,12 @@ export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }
           .single();
         if (existingDbCategory) {
           setCategories((prev) => Array.from(new Set([...prev, existingDbCategory].map(c => JSON.stringify(c)))).map(s => JSON.parse(s)));
-          addActivity("Category Add Concurrently", `Category "${trimmedName}" already exists, added concurrently.`, { categoryName: trimmedName }); // NEW: Log concurrent add
+          // REMOVED: addActivity("Category Add Concurrently", `Category "${trimmedName}" already exists, added concurrently.`, { categoryName: trimmedName });
           return existingDbCategory as Category;
         }
       }
       console.error("Error adding category:", error);
-      addActivity("Category Add Failed", `Failed to add category: ${trimmedName}.`, { error: error.message, categoryName: trimmedName }); // NEW: Log failed add
+      // REMOVED: addActivity("Category Add Failed", `Failed to add category: ${trimmedName}.`, { error: error.message, categoryName: trimmedName });
       showError(`Failed to add category: ${error.message}`);
       return null;
     } else if (data && data.length > 0) {
@@ -111,7 +111,7 @@ export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }
         organizationId: data[0].organization_id,
       };
       setCategories((prev) => [...prev, newCategory]);
-      addActivity("Category Added", `Added new category: ${newCategory.name}.`, { categoryId: newCategory.id, categoryName: newCategory.name }); // NEW: Log successful add
+      // REMOVED: addActivity("Category Added", `Added new category: ${newCategory.name}.`, { categoryId: newCategory.id, categoryName: newCategory.name });
       showSuccess(`Category "${trimmedName}" added.`);
       return newCategory;
     }
@@ -135,11 +135,11 @@ export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     if (error) {
       console.error("Error removing category:", error);
-      addActivity("Category Remove Failed", `Failed to remove category: ${categoryToRemove?.name || id}.`, { error: error.message, categoryId: id }); // NEW: Log failed remove
+      // REMOVED: addActivity("Category Remove Failed", `Failed to remove category: ${categoryToRemove?.name || id}.`, { error: error.message, categoryId: id });
       showError(`Failed to remove category: ${error.message}`);
     } else {
       setCategories((prev) => prev.filter((cat) => cat.id !== id));
-      addActivity("Category Removed", `Removed category: ${categoryToRemove?.name || id}.`, { categoryId: id }); // NEW: Log successful remove
+      // REMOVED: addActivity("Category Removed", `Removed category: ${categoryToRemove?.name || id}.`, { categoryId: id });
       showSuccess("Category removed.");
     }
   };

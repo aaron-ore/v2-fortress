@@ -17,11 +17,11 @@ import { Users as UsersIcon, Mail, UserPlus, Trash2 } from "lucide-react";
 import { useProfile, UserProfile } from "@/context/ProfileContext";
 import { showError, showSuccess } from "@/utils/toast";
 import { supabase } from "@/lib/supabaseClient";
-import { useActivityLogs } from "@/context/ActivityLogContext"; // NEW: Import useActivityLogs
+// REMOVED: import { useActivityLogs } from "@/context/ActivityLogContext";
 
 const Users: React.FC = () => {
   const { profile, allProfiles, updateUserRole, fetchAllProfiles } = useProfile();
-  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
+  // REMOVED: const { addActivity } = useActivityLogs();
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
   // Removed inviteEmail and inviteRole states as invite functionality is removed
@@ -55,10 +55,10 @@ const Users: React.FC = () => {
 
     if (error) {
       showError(`Failed to delete profile: ${error.message}`);
-      addActivity("User Delete Failed", `Failed to delete profile for ${userToDelete.fullName || userToDelete.email}.`, { error: error.message, targetUserId: userToDelete.id }); // NEW: Log failed delete
+      // REMOVED: addActivity("User Delete Failed", `Failed to delete profile for ${userToDelete.fullName || userToDelete.email}.`, { error: error.message, targetUserId: userToDelete.id });
     } else {
       showSuccess(`Profile for ${userToDelete.fullName || userToDelete.email} deleted.`);
-      addActivity("User Deleted", `Deleted profile for ${userToDelete.fullName || userToDelete.email}.`, { targetUserId: userToDelete.id }); // NEW: Log successful delete
+      // REMOVED: addActivity("User Deleted", `Deleted profile for ${userToDelete.fullName || userToDelete.email}.`, { targetUserId: userToDelete.id });
       fetchAllProfiles(); // Refresh the list
     }
     setIsConfirmDeleteDialogOpen(false);
@@ -75,9 +75,9 @@ const Users: React.FC = () => {
 
     try {
       await updateUserRole(userId, newRole, profile.organizationId);
-      addActivity("User Role Updated", `Updated role for user ${targetUser?.fullName || userId} from "${oldRole}" to "${newRole}".`, { targetUserId: userId, oldRole, newRole }); // NEW: Log successful role update
+      // REMOVED: addActivity("User Role Updated", `Updated role for user ${targetUser?.fullName || userId} from "${oldRole}" to "${newRole}".`, { targetUserId: userId, oldRole, newRole });
     } catch (error: any) {
-      addActivity("User Role Update Failed", `Failed to update role for user ${targetUser?.fullName || userId} to "${newRole}".`, { error: error.message, targetUserId: userId, newRole }); // NEW: Log failed role update
+      // REMOVED: addActivity("User Role Update Failed", `Failed to update role for user ${targetUser?.fullName || userId} to "${newRole}".`, { error: error.message, targetUserId: userId, newRole });
     }
   };
 

@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { User, Mail, Phone, MapPin } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
-import { useProfile } from "@/context/ProfileContext"; // New import
-import { formatPhoneNumber } from "@/utils/formatters"; // Import the new formatter
-import { useActivityLogs } from "@/context/ActivityLogContext"; // NEW: Import useActivityLogs
+import { useProfile } from "@/context/ProfileContext";
+import { formatPhoneNumber } from "@/utils/formatters";
+// REMOVED: import { useActivityLogs } from "@/context/ActivityLogContext";
 
 const MyProfile: React.FC = () => {
   const { profile, updateProfile } = useProfile();
-  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
+  // REMOVED: const { addActivity } = useActivityLogs();
 
   const [fullName, setFullName] = useState(profile?.fullName || "");
   const [email, setEmail] = useState(profile?.email || ""); // Keep for display, but disabled
@@ -54,9 +54,9 @@ const MyProfile: React.FC = () => {
 
     try {
       await updateProfile(updatedProfileData);
-      addActivity("Profile Updated", `Updated own profile details.`, { oldProfile: profile, newProfile: updatedProfileData }); // NEW: Log successful update
+      // REMOVED: addActivity("Profile Updated", `Updated own profile details.`, { oldProfile: profile, newProfile: updatedProfileData });
     } catch (error: any) {
-      addActivity("Profile Update Failed", `Failed to update own profile.`, { error: error.message, userId: profile.id }); // NEW: Log failed update
+      // REMOVED: addActivity("Profile Update Failed", `Failed to update own profile.`, { error: error.message, userId: profile.id });
     }
   };
 

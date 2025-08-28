@@ -4,7 +4,7 @@ import { useProfile } from "./ProfileContext";
 import { supabase } from "@/lib/supabaseClient";
 import { generateUniqueCode } from "@/utils/numberGenerator";
 import { mockLocations, mockCompanyProfile } from "@/utils/mockData";
-import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
+// REMOVED: import { useActivityLogs } from "./ActivityLogContext";
 
 interface CompanyProfile {
   name: string;
@@ -26,7 +26,7 @@ const OnboardingContext = createContext<OnboardingContextType | undefined>(undef
 
 export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { profile, isLoadingProfile, fetchProfile } = useProfile();
-  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
+  // REMOVED: const { addActivity } = useActivityLogs();
   const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const storedProfile = localStorage.getItem("companyProfile");
@@ -81,7 +81,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
 
   const markOnboardingComplete = () => {
     setIsOnboardingComplete(true);
-    addActivity("Onboarding Complete", "User completed the onboarding wizard.", {}); // NEW: Log onboarding completion
+    // REMOVED: addActivity("Onboarding Complete", "User completed the onboarding wizard.", {});
     showSuccess("Onboarding complete! Welcome to Fortress.");
   };
 
@@ -110,16 +110,16 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
         if (profileUpdateError) throw profileUpdateError;
 
         await fetchProfile();
-        addActivity("Organization Created", `New organization "${profileData.name}" created with code: ${newUniqueCode}.`, { organizationId: newOrganizationId, companyName: profileData.name, uniqueCode: newUniqueCode }); // NEW: Log organization creation
+        // REMOVED: addActivity("Organization Created", `New organization "${profileData.name}" created with code: ${newUniqueCode}.`, { organizationId: newOrganizationId, companyName: profileData.name, uniqueCode: newUniqueCode });
         showSuccess(`Organization "${profileData.name}" created and assigned! You are now an admin. Your unique company code is: ${newUniqueCode}`);
 
       } catch (error: any) {
         console.error("Error during initial organization setup:", error);
-        addActivity("Organization Creation Failed", `Failed to create new organization "${profileData.name}".`, { error: error.message, companyName: profileData.name }); // NEW: Log failed organization creation
+        // REMOVED: addActivity("Organization Creation Failed", `Failed to create new organization "${profileData.name}".`, { error: error.message, companyName: profileData.name });
         showError(`Failed to set up organization: ${error.message}`);
       }
     } else {
-      addActivity("Company Profile Updated", `Company profile updated to: ${profileData.name}.`, { companyName: profileData.name, currency: profileData.currency, address: profileData.address }); // NEW: Log company profile update
+      // REMOVED: addActivity("Company Profile Updated", `Company profile updated to: ${profileData.name}.`, { companyName: profileData.name, currency: profileData.currency, address: profileData.address });
     }
   };
 
@@ -128,7 +128,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       const newLocations = [...prev, location];
       const uniqueLocations = Array.from(new Set(newLocations));
       if (uniqueLocations.length > prev.length) { // Only log if a new unique location was actually added
-        addActivity("Location Added", `Added new inventory location: ${location}.`, { locationName: location }); // NEW: Log location add
+        // REMOVED: addActivity("Location Added", `Added new inventory location: ${location}.`, { locationName: location });
       }
       return uniqueLocations;
     });
@@ -138,7 +138,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     setLocations((prev) => {
       const filteredLocations = prev.filter((loc) => loc !== location);
       if (filteredLocations.length < prev.length) { // Only log if a location was actually removed
-        addActivity("Location Removed", `Removed inventory location: ${location}.`, { locationName: location }); // NEW: Log location remove
+        // REMOVED: addActivity("Location Removed", `Removed inventory location: ${location}.`, { locationName: location });
       }
       return filteredLocations;
     });

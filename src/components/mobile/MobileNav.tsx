@@ -32,8 +32,7 @@ import {
   Sparkles,
   BookOpen,
   Warehouse,
-  History,
-} from "lucide-react";
+} from "lucide-react"; // REMOVED: History icon
 import { showSuccess, showError } from "@/utils/toast";
 import NotificationSheet from "@/components/NotificationSheet";
 import GlobalSearchDialog from "@/components/GlobalSearchDialog";
@@ -41,7 +40,7 @@ import CurrentDateTime from "@/components/CurrentDateTime";
 import { useNotifications } from "@/context/NotificationContext";
 import { useProfile } from "@/context/ProfileContext";
 import { supabase } from "@/lib/supabaseClient";
-import { useActivityLogs } from "@/context/ActivityLogContext";
+// REMOVED: import { useActivityLogs } from "@/context/ActivityLogContext";
 
 const navLinks = [
   { to: "/", label: "Dashboard" },
@@ -58,7 +57,7 @@ const MobileNav: React.FC = () => {
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
-  const { addActivity } = useActivityLogs();
+  // REMOVED: const { addActivity } = useActivityLogs();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
   const [isGlobalSearchDialogOpen, setIsGlobalSearchDialogOpen] = useState(false);
@@ -67,10 +66,10 @@ const MobileNav: React.FC = () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
       showError("Failed to log out: " + error.message);
-      addActivity("Logout Failed", `User ${profile?.email || 'Unknown'} failed to log out.`, { error: error.message });
+      // REMOVED: addActivity("Logout Failed", `User ${profile?.email || 'Unknown'} failed to log out.`, { error: error.message });
     } else {
       showSuccess("Logged out successfully!");
-      addActivity("Logout", `User ${profile?.email || 'Unknown'} logged out.`, {});
+      // REMOVED: addActivity("Logout", `User ${profile?.email || 'Unknown'} logged out.`, {});
       setIsSheetOpen(false);
     }
   };
@@ -201,14 +200,14 @@ const MobileNav: React.FC = () => {
             >
               <SettingsIcon className="h-4 w-4 mr-2" /> Settings
             </Button>
-            {/* NEW: Link to LogsPage */}
-            <Button
+            {/* REMOVED: Link to LogsPage */}
+            {/* <Button
               variant="ghost"
               className={cn(baseButtonClass, location.pathname === "/logs" ? activeLinkClass : inactiveLinkClass)}
               onClick={() => handleNavigation("/logs")}
             >
               <History className="h-4 w-4 mr-2" /> Activity Logs
-            </Button>
+            </Button> */}
             <DropdownMenuSeparator />
             <p className="px-4 py-2 text-sm font-semibold text-muted-foreground">Support & Resources</p>
             <Button

@@ -15,7 +15,7 @@ import { useOrders } from "./OrdersContext";
 import { useVendors } from "./VendorContext";
 import { processAutoReorder } from "@/utils/autoReorderLogic";
 import { useNotifications } from "./NotificationContext";
-import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
+// REMOVED: import { useActivityLogs } from "./ActivityLogContext";
 
 export interface InventoryItem {
   id: string;
@@ -62,7 +62,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
   const { addOrder } = useOrders();
   const { vendors } = useVendors();
   const { addNotification } = useNotifications();
-  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
+  // REMOVED: const { addActivity } = useActivityLogs();
   const isInitialLoad = useRef(true);
 
   const fetchInventoryItems = useCallback(async () => {
@@ -126,7 +126,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         isInitialLoad.current = false;
       });
     }
-  }, [fetchInventoryItems, isLoadingProfile, profile?.organizationId, addOrder, vendors, addNotification, inventoryItems]); // Added inventoryItems to dependencies
+  }, [fetchInventoryItems, isLoadingProfile, profile?.organizationId, addOrder, vendors, addNotification, inventoryItems]);
 
   const addInventoryItem = async (item: Omit<InventoryItem, "id" | "status" | "lastUpdated" | "organizationId">) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -165,7 +165,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error adding inventory item:", error);
-      addActivity("Inventory Add Failed", `Failed to add inventory item: ${item.name} (SKU: ${item.sku}).`, { error: error.message, item }); // NEW: Log failed add
+      // REMOVED: addActivity("Inventory Add Failed", `Failed to add inventory item: ${item.name} (SKU: ${item.sku}).`, { error: error.message, item });
       throw error;
     } else if (data && data.length > 0) {
       const newItem: InventoryItem = {
@@ -191,13 +191,13 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         autoReorderQuantity: data[0].auto_reorder_quantity || 0,
       };
       setInventoryItems((prevItems) => [...prevItems, newItem]);
-      addActivity("Inventory Added", `Added new inventory item: ${newItem.name} (SKU: ${newItem.sku}).`, { itemId: newItem.id, sku: newItem.sku, quantity: newItem.quantity }); // NEW: Log successful add
+      // REMOVED: addActivity("Inventory Added", `Added new inventory item: ${newItem.name} (SKU: ${newItem.sku}).`, { itemId: newItem.id, sku: newItem.sku, quantity: newItem.quantity });
       if (profile?.organizationId) {
         processAutoReorder([...inventoryItems, newItem], addOrder, vendors, profile.organizationId, addNotification);
       }
     } else {
       const errorMessage = "Failed to add item: No data returned after insert.";
-      addActivity("Inventory Add Failed", errorMessage, { item }); // NEW: Log generic add failure
+      // REMOVED: addActivity("Inventory Add Failed", errorMessage, { item });
       throw new Error(errorMessage);
     }
   };
@@ -239,7 +239,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error updating inventory item:", error);
-      addActivity("Inventory Update Failed", `Failed to update inventory item: ${updatedItem.name} (SKU: ${updatedItem.sku}).`, { error: error.message, itemId: updatedItem.id, sku: updatedItem.sku }); // NEW: Log failed update
+      // REMOVED: addActivity("Inventory Update Failed", `Failed to update inventory item: ${updatedItem.name} (SKU: ${updatedItem.sku}).`, { error: error.message, itemId: updatedItem.id, sku: updatedItem.sku });
       throw error;
     } else if (data && data.length > 0) {
       const updatedItemFromDB: InventoryItem = {
@@ -269,13 +269,13 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
           item.id === updatedItemFromDB.id ? updatedItemFromDB : item,
         ),
       );
-      addActivity("Inventory Updated", `Updated inventory item: ${updatedItemFromDB.name} (SKU: ${updatedItemFromDB.sku}).`, { itemId: updatedItemFromDB.id, sku: updatedItemFromDB.sku, newQuantity: updatedItemFromDB.quantity }); // NEW: Log successful update
+      // REMOVED: addActivity("Inventory Updated", `Updated inventory item: ${updatedItemFromDB.name} (SKU: ${updatedItemFromDB.sku}).`, { itemId: updatedItemFromDB.id, sku: updatedItemFromDB.sku, newQuantity: updatedItemFromDB.quantity });
       if (profile?.organizationId) {
         processAutoReorder(inventoryItems.map(item => item.id === updatedItemFromDB.id ? updatedItemFromDB : item), addOrder, vendors, profile.organizationId, addNotification);
       }
     } else {
       const errorMessage = "Update might not have been saved. Check database permissions.";
-      addActivity("Inventory Update Failed", errorMessage, { itemId: updatedItem.id, sku: updatedItem.sku }); // NEW: Log generic update failure
+      // REMOVED: addActivity("Inventory Update Failed", errorMessage, { itemId: updatedItem.id, sku: updatedItem.sku });
       throw new Error(errorMessage);
     }
   };
@@ -297,11 +297,11 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error deleting inventory item:", error);
-      addActivity("Inventory Delete Failed", `Failed to delete inventory item: ${itemToDelete?.name || itemId}.`, { error: error.message, itemId }); // NEW: Log failed delete
+      // REMOVED: addActivity("Inventory Delete Failed", `Failed to delete inventory item: ${itemToDelete?.name || itemId}.`, { error: error.message, itemId });
       showError(`Failed to delete item: ${error.message}`);
     } else {
       setInventoryItems((prevItems) => prevItems.filter(item => item.id !== itemId));
-      addActivity("Inventory Deleted", `Deleted inventory item: ${itemToDelete?.name || itemId}.`, { itemId }); // NEW: Log successful delete
+      // REMOVED: addActivity("Inventory Deleted", `Deleted inventory item: ${itemToDelete?.name || itemId}.`, { itemId });
       showSuccess("Item deleted successfully!");
     }
   };

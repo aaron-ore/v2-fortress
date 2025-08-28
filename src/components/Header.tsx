@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Search, Bell, User, LogOut, Users as UsersIcon, Settings as SettingsIcon, PackagePlus, ChevronDown, Warehouse, Sparkles, History } from "lucide-react"; // NEW: Import History icon
+import { Search, Bell, User, LogOut, Users as UsersIcon, Settings as SettingsIcon, PackagePlus, ChevronDown, Warehouse, Sparkles } from "lucide-react"; // REMOVED: History icon
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,7 @@ import { useProfile } from "@/context/ProfileContext";
 import { supabase } from "@/lib/supabaseClient";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileNav from "./mobile/MobileNav";
-import { useActivityLogs } from "@/context/ActivityLogContext"; // NEW: Import useActivityLogs
+// REMOVED: import { useActivityLogs } from "@/context/ActivityLogContext";
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -28,7 +28,7 @@ const Header: React.FC = () => {
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
   const isMobile = useIsMobile();
-  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
+  // REMOVED: const { addActivity } = useActivityLogs();
 
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
   const [isGlobalSearchDialogOpen, setIsGlobalSearchDialogOpen] = useState(false);
@@ -47,10 +47,10 @@ const Header: React.FC = () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
       showError("Failed to log out: " + error.message);
-      addActivity("Logout Failed", `User ${profile?.email || 'Unknown'} failed to log out.`, { error: error.message }); // NEW: Log failed logout
+      // REMOVED: addActivity("Logout Failed", `User ${profile?.email || 'Unknown'} failed to log out.`, { error: error.message });
     } else {
       showSuccess("Logged out successfully!");
-      addActivity("Logout", `User ${profile?.email || 'Unknown'} logged out.`, {}); // NEW: Log successful logout
+      // REMOVED: addActivity("Logout", `User ${profile?.email || 'Unknown'} logged out.`, {});
     }
   };
 
@@ -156,9 +156,9 @@ const Header: React.FC = () => {
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate("/settings"); }}>
                 <SettingsIcon className="h-4 w-4 mr-2" /> Settings
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate("/logs"); }}> {/* NEW: Link to LogsPage */}
+              {/* REMOVED: <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate("/logs"); }}>
                 <History className="h-4 w-4 mr-2" /> Activity Logs
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Support & Resources</DropdownMenuLabel>
               <DropdownMenuSeparator />

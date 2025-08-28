@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect, useCa
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { mockUserProfile, mockAllProfiles } from "@/utils/mockData";
-// REMOVED: import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
+// REMOVED: import { useActivityLogs } from "./ActivityLogContext";
 
 export interface UserProfile {
   id: string;
@@ -33,7 +33,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const errorToastId = useRef<string | number | null>(null);
-  // REMOVED: const { addActivity } = useActivityLogs(); // NEW: Use addActivity
+  // REMOVED: const { addActivity } = useActivityLogs();
 
   const fetchProfile = useCallback(async () => {
     setIsLoadingProfile(true);
@@ -192,7 +192,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     if (error) {
       console.error("Error updating profile:", error);
-      // REMOVED: addActivity("Profile Update Failed", `Failed to update own profile.`, { error: error.message, userId: session.user.id }); // NEW: Log failed update
+      // REMOVED: addActivity("Profile Update Failed", `Failed to update own profile.`, { error: error.message, userId: session.user.id });
       showError(`Failed to update profile: ${error.message}`);
     } else if (data) {
       setProfile({
@@ -206,7 +206,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         organizationId: data.organization_id,
         createdAt: data.created_at,
       });
-      // REMOVED: addActivity("Profile Updated", `Updated own profile details.`, { oldProfile: oldProfile, newProfile: data }); // NEW: Log successful update
+      // REMOVED: addActivity("Profile Updated", `Updated own profile details.`, { oldProfile: oldProfile, newProfile: data });
       showSuccess("Profile updated successfully!");
     }
   };
@@ -257,14 +257,14 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
           } : p
         )
       );
-      // REMOVED: addActivity("User Role Updated", `Updated role for user ${targetUser?.fullName || userId} from "${oldRole}" to "${newRole}".`, { targetUserId: userId, oldRole, newRole }); // NEW: Log successful role update
+      // REMOVED: addActivity("User Role Updated", `Updated role for user ${targetUser?.fullName || userId} from "${oldRole}" to "${newRole}".`, { targetUserId: userId, oldRole, newRole });
       showSuccess(`Role for ${updatedProfileData.full_name || updatedProfileData.id} updated to ${newRole}!`);
       if (session.user.id === updatedProfileData.id) {
         fetchProfile();
       }
     } catch (error: any) {
       console.error("Error calling Edge Function to update user role:", error);
-      // REMOVED: addActivity("User Role Update Failed", `Failed to update role for user ${targetUser?.fullName || userId} to "${newRole}".`, { error: error.message, targetUserId: userId, newRole }); // NEW: Log failed role update
+      // REMOVED: addActivity("User Role Update Failed", `Failed to update role for user ${targetUser?.fullName || userId} to "${newRole}".`, { error: error.message, targetUserId: userId, newRole });
       showError(`Failed to update role for user ${userId}: ${error.message}`);
     }
   };
