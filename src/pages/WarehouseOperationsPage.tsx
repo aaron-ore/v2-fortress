@@ -112,7 +112,7 @@ const WarehouseOperationsPage: React.FC = () => {
                 "flex flex-col items-center justify-center h-auto py-3 px-2 text-sm font-medium rounded-md transition-colors text-center",
                 activeTab === op.value
                   ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-foreground hover:bg-muted/50 hover:text-primary" // Changed to text-foreground
+                  : "text-foreground hover:bg-muted/50 hover:text-primary"
               )}
               onClick={() => setActiveTab(op.value)}
             >
@@ -123,31 +123,31 @@ const WarehouseOperationsPage: React.FC = () => {
         </div>
 
         <div className="flex-grow overflow-hidden">
-          <TabsContent value="dashboard" className="h-full">
+          <TabsContent value="dashboard" className="h-full min-h-0">
             <WarehouseDashboard />
           </TabsContent>
-          <TabsContent value="item-lookup" className="h-full">
+          <TabsContent value="item-lookup" className="h-full min-h-0">
             <ItemLookupTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
-          <TabsContent value="receive-inventory" className="h-full">
+          <TabsContent value="receive-inventory" className="h-full min-h-0">
             <ReceiveInventoryTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
-          <TabsContent value="fulfill-order" className="h-full">
+          <TabsContent value="fulfill-order" className="h-full min-h-0">
             <FulfillOrderTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
-          <TabsContent value="ship-order" className="h-full">
+          <TabsContent value="ship-order" className="h-full min-h-0">
             <ShipOrderTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
-          <TabsContent value="stock-transfer" className="h-full">
+          <TabsContent value="stock-transfer" className="h-full min-h-0">
             <StockTransferTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
-          <TabsContent value="cycle-count" className="h-full">
+          <TabsContent value="cycle-count" className="h-full min-h-0">
             <CycleCountTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
-          <TabsContent value="issue-report" className="h-full">
+          <TabsContent value="issue-report" className="h-full min-h-0">
             <IssueReportTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
-          <TabsContent value="location-label-generator" className="h-full">
+          <TabsContent value="location-label-generator" className="h-full min-h-0">
             <LocationLabelGenerator />
           </TabsContent>
         </div>

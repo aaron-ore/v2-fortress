@@ -110,8 +110,8 @@ const LocationLabelGenerator: React.FC = () => {
     <div className="flex flex-col h-full space-y-4">
       <h2 className="text-xl font-bold text-center">Generate Location Labels</h2>
 
-      <ScrollArea className="flex-grow pb-4 min-h-0 max-h-[calc(100vh-336px)]"> {/* Adjusted max-h */}
-        <div className="space-y-4 pr-2">
+      {/* This div now handles scrolling for the cards */}
+      <div className="flex-grow overflow-y-auto pb-4 pr-2 space-y-4">
           <Card className="bg-card border-border shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-semibold flex items-center gap-2">
@@ -174,7 +174,7 @@ const LocationLabelGenerator: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Label Preview */}
+          {/* Label Preview Card */}
           <Card className="bg-card border-border shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-semibold flex items-center gap-2">
@@ -201,8 +201,7 @@ const LocationLabelGenerator: React.FC = () => {
               )}
             </CardContent>
           </Card>
-        </div>
-      </ScrollArea>
+      </div> {/* End of scrollable content div */}
 
       <div className="mt-6">
         <Button onClick={handleGenerateAndPrint} className="w-full">
