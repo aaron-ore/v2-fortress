@@ -32,8 +32,9 @@ import {
   Sparkles,
   BookOpen,
   Warehouse,
-  ListOrdered, // NEW
-  Undo2, // NEW
+  ListOrdered,
+  Undo2,
+  Truck, // Added Truck icon
 } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import NotificationSheet from "@/components/NotificationSheet";
