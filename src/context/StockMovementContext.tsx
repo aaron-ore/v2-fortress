@@ -52,11 +52,12 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
     if (error) {
       console.error("Error fetching stock movements:", error);
       showError("Failed to load stock movements.");
+      // No mock data for stock movements as it's highly dynamic and item-specific
     } else {
       const fetchedMovements: StockMovement[] = data.map((movement: any) => ({
         id: movement.id,
         itemId: movement.item_id,
-        itemName: movement.name,
+        itemName: movement.item_name,
         type: movement.type,
         amount: movement.amount,
         oldQuantity: movement.old_quantity,

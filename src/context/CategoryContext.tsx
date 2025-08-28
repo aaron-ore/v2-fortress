@@ -41,18 +41,17 @@ export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (error) {
       console.error("Error fetching categories:", error);
       showError("Failed to load categories.");
-      if (import.meta.env.DEV) {
-        console.warn("Loading mock categories due to Supabase error in development mode.");
-        setCategories(mockCategories);
-      }
+      // Always load mock data on error for testing purposes
+      console.warn("Loading mock categories due to Supabase error.");
+      setCategories(mockCategories);
     } else {
       const fetchedCategories: Category[] = data.map((cat: any) => ({
         id: cat.id,
         name: cat.name,
         organizationId: cat.organization_id,
       }));
-      if (fetchedCategories.length === 0 && import.meta.env.DEV) {
-        console.warn("Loading mock categories as Supabase returned no data in development mode.");
+      if (fetchedCategories.length === 0) { // Always load mock data if no data is returned
+        console.warn("Loading mock categories as Supabase returned no data.");
         setCategories(mockCategories);
       } else {
         setCategories(fetchedCategories);

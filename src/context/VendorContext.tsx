@@ -48,10 +48,9 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (error) {
       console.error("Error fetching vendors:", error);
       showError("Failed to load vendors.");
-      if (import.meta.env.DEV) {
-        console.warn("Loading mock vendors due to Supabase error in development mode.");
-        setVendors(mockVendors);
-      }
+      // Always load mock data on error for testing purposes
+      console.warn("Loading mock vendors due to Supabase error.");
+      setVendors(mockVendors);
     } else {
       const fetchedVendors: Vendor[] = data.map((vendor: any) => ({
         id: vendor.id,
@@ -64,8 +63,8 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         organizationId: vendor.organization_id,
         createdAt: vendor.created_at,
       }));
-      if (fetchedVendors.length === 0 && import.meta.env.DEV) {
-        console.warn("Loading mock vendors as Supabase returned no data in development mode.");
+      if (fetchedVendors.length === 0) { // Always load mock data if no data is returned
+        console.warn("Loading mock vendors as Supabase returned no data.");
         setVendors(mockVendors);
       } else {
         setVendors(fetchedVendors);

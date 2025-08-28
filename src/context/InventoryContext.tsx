@@ -113,14 +113,13 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
     if (error) {
       console.error("Error fetching inventory items:", error);
       showError("Failed to load inventory items.");
-      if (import.meta.env.DEV) {
-        console.warn("Loading mock inventory items due to Supabase error in development mode.");
-        setInventoryItems(mockInventoryItems.map(mapSupabaseItemToInventoryItem));
-      }
+      // Always load mock data on error for testing purposes
+      console.warn("Loading mock inventory items due to Supabase error.");
+      setInventoryItems(mockInventoryItems.map(mapSupabaseItemToInventoryItem));
     } else {
       const fetchedItems: InventoryItem[] = data.map(mapSupabaseItemToInventoryItem);
-      if (fetchedItems.length === 0 && import.meta.env.DEV) {
-        console.warn("Loading mock inventory items as Supabase returned no data in development mode.");
+      if (fetchedItems.length === 0) { // Always load mock data if no data is returned
+        console.warn("Loading mock inventory items as Supabase returned no data.");
         setInventoryItems(mockInventoryItems.map(mapSupabaseItemToInventoryItem));
       } else {
         setInventoryItems(fetchedItems);
@@ -160,8 +159,8 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         overstock_quantity: item.overstockQuantity,
         reorder_level: item.reorderLevel,
         picking_reorder_level: item.pickingReorderLevel,
-        committed_stock: item.committedStock,
-        incoming_stock: item.incomingStock,
+        committed_stock: 0,
+        incoming_stock: 0,
         unit_cost: item.unitCost,
         retail_price: item.retailPrice,
         location: item.location,

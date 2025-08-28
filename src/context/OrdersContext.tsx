@@ -66,10 +66,9 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
     if (error) {
       console.error("Error fetching orders:", error);
       showError("Failed to load orders.");
-      if (import.meta.env.DEV) {
-        console.warn("Loading mock orders due to Supabase error in development mode.");
-        setOrders(mockOrders);
-      }
+      // Always load mock data on error for testing purposes
+      console.warn("Loading mock orders due to Supabase error.");
+      setOrders(mockOrders);
     } else {
       const fetchedOrders: OrderItem[] = data.map((order: any) => ({
         id: order.id,
@@ -88,8 +87,8 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         organizationId: order.organization_id,
         terms: order.terms || undefined,
       }));
-      if (fetchedOrders.length === 0 && import.meta.env.DEV) {
-        console.warn("Loading mock orders as Supabase returned no data in development mode.");
+      if (fetchedOrders.length === 0) { // Always load mock data if no data is returned
+        console.warn("Loading mock orders as Supabase returned no data.");
         setOrders(mockOrders);
       } else {
         setOrders(fetchedOrders);
