@@ -22,7 +22,7 @@ import { generateSequentialNumber } from "@/utils/numberGenerator";
 import { formatPhoneNumber } from "@/utils/formatters";
 import InventorySelectionDialog from "@/components/InventorySelectionDialog";
 import { InventoryItem } from "@/context/InventoryContext";
-import { usePrint } from "@/context/PrintContext"; // Import usePrint
+import { usePrint } from "@/context/PrintContext";
 
 import {
   DndContext,
@@ -78,6 +78,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
             handleItemChange(item.id, "itemName", e.target.value)
           }
           placeholder="Product Name"
+          className="min-w-[120px]" // Ensure input is not too small
         />
       </TableCell>
       <TableCell className="text-right w-[100px]">
@@ -92,6 +93,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
             )
           }
           min="0"
+          className="min-w-[60px]" // Ensure input is not too small
         />
       </TableCell>
       <TableCell className="text-right w-[120px]">
@@ -107,6 +109,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
           }
           step="0.01"
           min="0"
+          className="min-w-[80px]" // Ensure input is not too small
         />
       </TableCell>
       <TableCell className="text-right font-semibold w-[120px]">
@@ -129,7 +132,7 @@ const CreateInvoice: React.FC = () => {
   const navigate = useNavigate();
   const { companyProfile } = useOnboarding();
   const { addOrder } = useOrders();
-  const { initiatePrint } = usePrint(); // Use initiatePrint from context
+  const { initiatePrint } = usePrint();
 
   const [invoiceNumber, setInvoiceNumber] = useState(generateSequentialNumber("INV"));
   const [customerName, setCustomerName] = useState("");
@@ -138,9 +141,9 @@ const CreateInvoice: React.FC = () => {
   const [customerContact, setCustomerContact] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
   const [terms, setTerms] = useState("Due on Receipt");
-  const [dueDate, setDueDate] = useState(new Date().toISOString().split("T")[0]); // Initialize with today's date
+  const [dueDate, setDueDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
-  const [items, setItems] = useState<POItem[]>([]); // Changed initial state to empty array
+  const [items, setItems] = useState<POItem[]>([]);
 
   const taxRate = 0.05;
 
@@ -186,14 +189,13 @@ const CreateInvoice: React.FC = () => {
 
   const handleAddSelectedInventoryItems = (selectedInventoryItems: InventoryItem[]) => {
     const newInvoiceItems: POItem[] = selectedInventoryItems.map((invItem) => ({
-      id: items.length > 0 ? Math.max(...items.map(i => i.id)) + 1 + Math.random() : 1 + Math.random(), // Ensure unique ID
+      id: items.length > 0 ? Math.max(...items.map(i => i.id)) + 1 + Math.random() : 1 + Math.random(),
       itemName: invItem.name,
-      quantity: 1, // Default to 1 for sales, user can adjust
-      unitPrice: invItem.retailPrice, // For Sales Invoices, use retailPrice
+      quantity: 1,
+      unitPrice: invItem.retailPrice,
       inventoryItemId: invItem.id,
     }));
     setItems((prevItems) => {
-      // Filter out items that are already in the list by inventoryItemId
       const existingInventoryItemIds = new Set(prevItems.map(item => item.inventoryItemId).filter(Boolean));
       const uniqueNewItems = newInvoiceItems.filter(newItem => !existingInventoryItemIds.has(newItem.inventoryItemId));
       return [...prevItems, ...uniqueNewItems];
@@ -242,10 +244,10 @@ const CreateInvoice: React.FC = () => {
       customerName,
       customerEmail,
       customerAddress,
-      customerContact: customerContact.replace(/[^\d]/g, ''), // Clean phone number for PDF
+      customerContact: customerContact.replace(/[^\d]/g, ''),
       sellerName: companyProfile.name,
       sellerAddress: companyProfile.address,
-      sellerContact: companyProfile.currency, // Assuming currency is used as a generic contact for company
+      sellerContact: companyProfile.currency,
       terms,
       dueDate,
       items,
@@ -254,7 +256,7 @@ const CreateInvoice: React.FC = () => {
       companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
     };
 
-    initiatePrint({ type: "invoice", props: pdfProps }); // Use initiatePrint
+    initiatePrint({ type: "invoice", props: pdfProps });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -273,7 +275,7 @@ const CreateInvoice: React.FC = () => {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Create New Invoice</h1>
 
-      <div className="flex justify-end space-x-2">
+      <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2"> {/* Adjusted for mobile stacking */}
         <Button variant="outline" onClick={() => navigate("/orders")}>
           Cancel
         </Button>
@@ -370,7 +372,7 @@ const CreateInvoice: React.FC = () => {
           </Card>
 
           <Card className="bg-card border-border rounded-lg shadow-sm p-6">
-            <CardHeader className="pb-4 flex flex-row items-center justify-between">
+            <CardHeader className="pb-4 flex flex-row items-center justify-between flex-wrap gap-2"> {/* Added flex-wrap and gap */}
               <CardTitle className="text-xl font-semibold">Items</CardTitle>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => setIsInventorySelectionDialogOpen(true)}>
@@ -387,30 +389,32 @@ const CreateInvoice: React.FC = () => {
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
               >
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[20px]"></TableHead> {/* For drag handle */}
-                      <TableHead>Item Name</TableHead>
-                      <TableHead className="w-[100px] text-right">Quantity</TableHead>
-                      <TableHead className="w-[120px] text-right">Unit Price</TableHead>
-                      <TableHead className="w-[120px] text-right">Total</TableHead>
-                      <TableHead className="w-[50px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
-                      {items.map((item) => (
-                        <SortableItemRow
-                          key={item.id}
-                          item={item}
-                          handleItemChange={handleItemChange}
-                          handleRemoveItem={handleRemoveItem}
-                        />
-                      ))}
-                    </SortableContext>
-                  </TableBody>
-                </Table>
+                <div className="overflow-x-auto"> {/* Added overflow-x-auto for table */}
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[20px]"></TableHead>
+                        <TableHead>Item Name</TableHead>
+                        <TableHead className="w-[100px] text-right">Quantity</TableHead>
+                        <TableHead className="w-[120px] text-right">Unit Price</TableHead>
+                        <TableHead className="w-[120px] text-right">Total</TableHead>
+                        <TableHead className="w-[50px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
+                        {items.map((item) => (
+                          <SortableItemRow
+                            key={item.id}
+                            item={item}
+                            handleItemChange={handleItemChange}
+                            handleRemoveItem={handleRemoveItem}
+                          />
+                        ))}
+                      </SortableContext>
+                    </TableBody>
+                  </Table>
+                </div>
               </DndContext>
               <div className="flex justify-end items-center mt-4 text-lg font-bold">
                 Total Amount: ${calculateTotalAmount().toFixed(2)}

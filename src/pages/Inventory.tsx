@@ -30,17 +30,17 @@ import {
   DropdownMenuTrigger,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { SlidersHorizontal, ArrowUp, ArrowDown, ChevronDown, Table2, LayoutGrid, Trash2, MapPin, FileText } from "lucide-react"; // Added FileText icon for spreadsheet
+import { SlidersHorizontal, ArrowUp, ArrowDown, ChevronDown, Table2, LayoutGrid, Trash2, MapPin, FileText } from "lucide-react";
 import { useCategories } from "@/context/CategoryContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import ManageLocationsDialog from "@/components/ManageLocationsDialog";
 import BulkUpdateDialog from "@/components/BulkUpdateDialog";
 import AutoReorderSettingsDialog from "@/components/AutoReorderSettingsDialog";
 import { exportToExcel } from "@/utils/exportToExcel";
-import PlainSpreadsheetView from "@/components/inventory/PlainSpreadsheetView"; // NEW: Import PlainSpreadsheetView
-import { useOrders } from "@/context/OrdersContext"; // NEW: Import useOrders
-import { useVendors } from "@/context/VendorContext"; // NEW: Import useVendors
-import { format, isValid } from "date-fns"; // Import date-fns for date formatting
+import PlainSpreadsheetView from "@/components/inventory/PlainSpreadsheetView";
+import { useOrders } from "@/context/OrdersContext";
+import { useVendors } from "@/context/VendorContext";
+import { format, isValid } from "date-fns";
 
 // Define all possible columns for the table with sortable property and type
 const allColumns = [
@@ -65,8 +65,8 @@ const Inventory: React.FC = () => {
   const { inventoryItems, deleteInventoryItem } = useInventory();
   const { categories } = useCategories();
   const { locations } = useOnboarding();
-  const { orders } = useOrders(); // NEW: Use orders context
-  const { vendors } = useVendors(); // NEW: Use vendors context
+  const { orders } = useOrders();
+  const { vendors } = useVendors();
   const navigate = useNavigate();
   const [isAddInventoryDialogOpen, setIsAddInventoryDialogOpen] = useState(false);
   const [isImportCsvDialogOpen, setIsImportCsvDialogOpen] = useState(false);
@@ -304,7 +304,7 @@ const Inventory: React.FC = () => {
           <MapPin className="h-4 w-4 mr-2" /> Manage Locations
         </Button>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] flex-shrink-0"> {/* Added flex-shrink-0 */}
             <SelectValue placeholder="Filter by Category" />
           </SelectTrigger>
           <SelectContent>
@@ -316,7 +316,7 @@ const Inventory: React.FC = () => {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] flex-shrink-0"> {/* Added flex-shrink-0 */}
             <SelectValue placeholder="Filter by Status" />
           </SelectTrigger>
           <SelectContent>
@@ -328,7 +328,7 @@ const Inventory: React.FC = () => {
           </SelectContent>
         </Select>
         <Select value={locationFilter} onValueChange={setLocationFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] flex-shrink-0"> {/* Added flex-shrink-0 */}
             <SelectValue placeholder="Filter by Location" />
           </SelectTrigger>
           <SelectContent>
@@ -341,7 +341,7 @@ const Inventory: React.FC = () => {
         </Select>
         
         {/* View Mode Toggle */}
-        <div className="flex items-center space-x-1 border border-border rounded-md p-1">
+        <div className="flex items-center space-x-1 border border-border rounded-md p-1 flex-shrink-0"> {/* Added flex-shrink-0 */}
           <Button
             variant={viewMode === "table" ? "secondary" : "ghost"}
             size="icon"
@@ -369,9 +369,9 @@ const Inventory: React.FC = () => {
         </div>
       </div>
       <Card className="bg-card border-border rounded-lg p-4">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 flex-wrap gap-2"> {/* Added flex-wrap and gap */}
           <CardTitle className="text-xl font-semibold">Current Stock</CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end"> {/* Added flex-wrap and justify-end */}
             {/* Actions Dropdown */}
             {viewMode !== "spreadsheet" && (
               <DropdownMenu>
@@ -503,12 +503,12 @@ const Inventory: React.FC = () => {
                 />
               ))}
             </div>
-          ) : ( // NEW: Spreadsheet View
+          ) : (
             <PlainSpreadsheetView
               items={filteredAndSortedItems}
               visibleColumns={columnVisibility}
               allColumns={allColumns}
-              vendorNameMap={vendorNameMap} // Pass vendorNameMap
+              vendorNameMap={vendorNameMap}
             />
           )}
         </CardContent>

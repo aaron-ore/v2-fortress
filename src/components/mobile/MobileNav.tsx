@@ -32,7 +32,7 @@ import {
   Sparkles,
   BookOpen,
   Warehouse,
-} from "lucide-react"; // REMOVED: History icon
+} from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import NotificationSheet from "@/components/NotificationSheet";
 import GlobalSearchDialog from "@/components/GlobalSearchDialog";
@@ -40,7 +40,6 @@ import CurrentDateTime from "@/components/CurrentDateTime";
 import { useNotifications } from "@/context/NotificationContext";
 import { useProfile } from "@/context/ProfileContext";
 import { supabase } from "@/lib/supabaseClient";
-// REMOVED: import { useActivityLogs } from "@/context/ActivityLogContext";
 
 const navLinks = [
   { to: "/", label: "Dashboard" },
@@ -49,7 +48,7 @@ const navLinks = [
   { to: "/vendors", label: "Vendors" },
   { to: "/reports", label: "Reports" },
   { to: "/warehouse-operations", label: "Warehouse Ops" },
-  { to: "/features", label: "Features" },
+  { to: "/features1", label: "Features1" }, // Changed from Features to Features1
 ];
 
 const MobileNav: React.FC = () => {
@@ -57,7 +56,6 @@ const MobileNav: React.FC = () => {
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
-  // REMOVED: const { addActivity } = useActivityLogs();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
   const [isGlobalSearchDialogOpen, setIsGlobalSearchDialogOpen] = useState(false);
@@ -66,10 +64,8 @@ const MobileNav: React.FC = () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
       showError("Failed to log out: " + error.message);
-      // REMOVED: addActivity("Logout Failed", `User ${profile?.email || 'Unknown'} failed to log out.`, { error: error.message });
     } else {
       showSuccess("Logged out successfully!");
-      // REMOVED: addActivity("Logout", `User ${profile?.email || 'Unknown'} logged out.`, {});
       setIsSheetOpen(false);
     }
   };
@@ -200,14 +196,6 @@ const MobileNav: React.FC = () => {
             >
               <SettingsIcon className="h-4 w-4 mr-2" /> Settings
             </Button>
-            {/* REMOVED: Link to LogsPage */}
-            {/* <Button
-              variant="ghost"
-              className={cn(baseButtonClass, location.pathname === "/logs" ? activeLinkClass : inactiveLinkClass)}
-              onClick={() => handleNavigation("/logs")}
-            >
-              <History className="h-4 w-4 mr-2" /> Activity Logs
-            </Button> */}
             <DropdownMenuSeparator />
             <p className="px-4 py-2 text-sm font-semibold text-muted-foreground">Support & Resources</p>
             <Button

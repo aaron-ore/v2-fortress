@@ -8,7 +8,7 @@ import { useOrders, OrderItem } from "@/context/OrdersContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarDays, Package, TrendingUp, Clock, AlertCircle, ChevronDown, Table2, LayoutGrid, PlusCircle } from "lucide-react";
 import KanbanBoard from "@/components/orders/KanbanBoard";
-import OrderListTable from "@/components/orders/OrderListTable"; // New import for list view
+import OrderListTable from "@/components/orders/OrderListTable";
 import ReceiveShipmentDialog from "@/components/orders/ReceiveShipmentDialog";
 import FulfillOrderDialog from "@/components/orders/FulfillOrderDialog";
 import TransferStockDialog from "@/components/orders/TransferStockDialog";
@@ -20,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"; // New import for toggle group
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const Orders: React.FC = () => {
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ const Orders: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [orderTypeFilter, setOrderTypeFilter] = useState("all");
   const [shippingMethodFilter, setShippingMethodFilter] = useState("all");
-  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban"); // New state for view mode
+  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
 
   const [isReceiveShipmentDialogOpen, setIsReceiveShipmentDialogOpen] = useState(false);
   const [isFulfillOrderDialogOpen, setIsFulfillOrderDialogOpen] = useState(false);
@@ -98,7 +98,7 @@ const Orders: React.FC = () => {
       new Date(order.dueDate).toDateString() === today.toDateString() &&
       order.status !== "Shipped" &&
       order.status !== "Packed" &&
-      order.status !== "Archived" // Exclude archived from due today
+      order.status !== "Archived"
   ).length;
 
   const totalNewOrders = filteredOrders.filter(order => order.status === "New Order").length;
@@ -110,11 +110,11 @@ const Orders: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4"> {/* Adjusted for mobile stacking */}
         <h1 className="text-3xl font-bold">Orders Management</h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto"> {/* Full width on small screens */}
               <PlusCircle className="h-4 w-4 mr-2" /> Create Order <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -127,7 +127,7 @@ const Orders: React.FC = () => {
         </DropdownMenu>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4"> {/* Adjusted grid for better mobile */}
         <Card className="bg-card border-border rounded-lg shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">New Orders</CardTitle>
@@ -184,7 +184,7 @@ const Orders: React.FC = () => {
       <div className="flex flex-wrap items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline">
+            <Button variant="outline" className="flex-shrink-0"> {/* Added flex-shrink-0 */}
               Inventory Actions <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -204,7 +204,7 @@ const Orders: React.FC = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-[150px] flex-shrink-0"> {/* Added flex-shrink-0 */}
             <SelectValue placeholder="Filter by Type" />
           </SelectTrigger>
           <SelectContent>
@@ -214,21 +214,21 @@ const Orders: React.FC = () => {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-[150px] flex-shrink-0"> {/* Added flex-shrink-0 */}
             <SelectValue placeholder="Filter by Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Active</SelectItem> {/* Changed label */}
+            <SelectItem value="all">All Active</SelectItem>
             <SelectItem value="New Order">New Order</SelectItem>
             <SelectItem value="Processing">Processing</SelectItem>
             <SelectItem value="Packed">Packed</SelectItem>
             <SelectItem value="Shipped">Shipped</SelectItem>
             <SelectItem value="On Hold / Problem">On Hold / Problem</SelectItem>
-            <SelectItem value="Archived">Archived</SelectItem> {/* New filter option */}
+            <SelectItem value="Archived">Archived</SelectItem>
           </SelectContent>
         </Select>
         <Select value={orderTypeFilter} onValueChange={setOrderTypeFilter}>
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-[150px] flex-shrink-0"> {/* Added flex-shrink-0 */}
             <SelectValue placeholder="Filter by Order Type" />
           </SelectTrigger>
           <SelectContent>
@@ -240,7 +240,7 @@ const Orders: React.FC = () => {
           </SelectContent>
         </Select>
         <Select value={shippingMethodFilter} onValueChange={setShippingMethodFilter}>
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-[150px] flex-shrink-0"> {/* Added flex-shrink-0 */}
             <SelectValue placeholder="Filter by Shipping" />
           </SelectTrigger>
           <SelectContent>
@@ -253,7 +253,7 @@ const Orders: React.FC = () => {
         </Select>
 
         {/* View Mode Toggle */}
-        <ToggleGroup type="single" value={viewMode} onValueChange={(value: "kanban" | "list") => value && setViewMode(value)} aria-label="View mode toggle">
+        <ToggleGroup type="single" value={viewMode} onValueChange={(value: "kanban" | "list") => value && setViewMode(value)} aria-label="View mode toggle" className="flex-shrink-0"> {/* Added flex-shrink-0 */}
           <ToggleGroupItem value="kanban" aria-label="Toggle Kanban view">
             <LayoutGrid className="h-4 w-4" />
           </ToggleGroupItem>

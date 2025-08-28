@@ -11,8 +11,8 @@ import StockTransferTool from "@/components/warehouse-operations/StockTransferTo
 import CycleCountTool from "@/components/warehouse-operations/CycleCountTool";
 import IssueReportTool from "@/components/warehouse-operations/IssueReportTool";
 import WarehouseDashboard from "@/components/warehouse-operations/WarehouseDashboard";
-import FulfillOrderTool from "@/components/warehouse-operations/FulfillOrderTool"; // New import
-import CameraScannerDialog from "@/components/CameraScannerDialog"; // New import
+import FulfillOrderTool from "@/components/warehouse-operations/FulfillOrderTool";
+import CameraScannerDialog from "@/components/CameraScannerDialog";
 import { cn } from "@/lib/utils";
 import { showError } from "@/utils/toast";
 
@@ -27,7 +27,7 @@ const WarehouseOperationsPage: React.FC = () => {
     { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { value: "item-lookup", label: "Lookup", icon: SearchIcon },
     { value: "receive-inventory", label: "Receive", icon: Package },
-    { value: "fulfill-order", label: "Fulfill", icon: ShoppingCart }, // New Fulfill Order button
+    { value: "fulfill-order", label: "Fulfill", icon: ShoppingCart },
     { value: "ship-order", label: "Ship", icon: Truck },
     { value: "stock-transfer", label: "Transfer", icon: Scan },
     { value: "cycle-count", label: "Count", icon: CheckCircle },
@@ -101,13 +101,13 @@ const WarehouseOperationsPage: React.FC = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-grow flex flex-col">
         {/* Grid of buttons for navigation */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4 p-1 bg-muted rounded-lg">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-4 p-1 bg-muted rounded-lg"> {/* Adjusted grid for better mobile */}
           {operationButtons.map((op) => (
             <Button
               key={op.value}
               variant="ghost"
               className={cn(
-                "flex flex-col items-center justify-center h-auto py-3 px-2 text-sm font-medium rounded-md transition-colors",
+                "flex flex-col items-center justify-center h-auto py-3 px-2 text-sm font-medium rounded-md transition-colors text-center", // Added text-center
                 activeTab === op.value
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-gray-300 hover:bg-muted/50 hover:text-primary"
@@ -115,7 +115,7 @@ const WarehouseOperationsPage: React.FC = () => {
               onClick={() => setActiveTab(op.value)}
             >
               <op.icon className="h-4 w-4 sm:h-5 sm:w-5 mb-1" />
-              {op.label}
+              <span className="text-xs sm:text-sm">{op.label}</span> {/* Smaller text for buttons */}
             </Button>
           ))}
         </div>
@@ -130,7 +130,7 @@ const WarehouseOperationsPage: React.FC = () => {
           <TabsContent value="receive-inventory" className="h-full">
             <ReceiveInventoryTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
-          <TabsContent value="fulfill-order" className="h-full"> {/* New TabContent */}
+          <TabsContent value="fulfill-order" className="h-full">
             <FulfillOrderTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="ship-order" className="h-full">

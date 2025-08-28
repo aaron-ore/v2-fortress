@@ -43,7 +43,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   }, [isOpen]);
 
   const handleScannerReady = () => {
-    console.log("[CameraScannerDialog] QrScanner reported ready. Camera stream active."); // NEW LOG
+    console.log("[CameraScannerDialog] QrScanner reported ready. Camera stream active.");
     setIsLoadingCamera(false);
     setCameraError(null);
   };
@@ -69,8 +69,8 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] flex flex-col h-[80vh] max-h-[600px]">
-        <DialogHeader>
+      <DialogContent className="w-full h-full max-w-full max-h-full flex flex-col p-4 sm:max-w-[425px] sm:h-[80vh] sm:max-h-[600px]"> {/* Adjusted for full screen on small, constrained on larger */}
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Scan className="h-6 w-6 text-primary" /> Scan Barcode
           </DialogTitle>
@@ -78,7 +78,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
             Point your camera at a barcode or QR code.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-grow flex flex-col items-center justify-center bg-black rounded-md overflow-hidden relative">
+        <div className="flex-grow flex flex-col items-center justify-center bg-black rounded-md overflow-hidden relative my-4"> {/* Added vertical margin */}
           {isCameraActive ? (
             <>
               {isLoadingCamera && (
@@ -108,7 +108,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
             </div>
           )}
         </div>
-        <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2 pt-4">
+        <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2 pt-4 flex-shrink-0">
           <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
             <XCircle className="h-4 w-4 mr-2" /> Cancel
           </Button>

@@ -26,7 +26,6 @@ import SetupInstructions from "./pages/SetupInstructions";
 import WarehouseOperationsPage from "./pages/WarehouseOperationsPage";
 import FeaturesPage from "./pages/FeaturesPage";
 import ResetPassword from "./pages/ResetPassword";
-// REMOVED: import LogsPage from "./pages/LogsPage";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { InventoryProvider } from "./context/InventoryContext";
 import { OrdersProvider } from "./context/OrdersContext";
@@ -36,7 +35,6 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { VendorProvider } from "./context/VendorContext";
 import { ProfileProvider, useProfile } from "./context/ProfileContext";
 import { StockMovementProvider } from "./context/StockMovementContext";
-// REMOVED: import { ActivityLogProvider } from "./context/ActivityLogContext";
 import OnboardingWizard from "./components/onboarding/OnboardingWizard";
 import { supabase } from "./lib/supabaseClient";
 import React, { useState, useEffect, useRef } from "react";
@@ -80,8 +78,7 @@ const AuthenticatedApp = () => {
                     <Route path="users" element={<Users />} />
                     <Route path="setup-instructions" element={<SetupInstructions />} />
                     <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
-                    <Route path="features" element={<FeaturesPage />} />
-                    {/* REMOVED: <Route path="logs" element={<LogsPage />} /> */}
+                    <Route path="features1" element={<FeaturesPage />} /> {/* Changed path to features1 */}
                     <Route path="*" element={<NotFound />} />
                   </Route>
                 </Routes>
@@ -193,13 +190,11 @@ const App = () => (
       />
       <BrowserRouter>
         <ProfileProvider>
-          {/* REMOVED: <ActivityLogProvider> */}
             <OnboardingProvider>
               <PrintProvider>
                 <AppContent />
               </PrintProvider>
             </OnboardingProvider>
-          {/* REMOVED: </ActivityLogProvider> */}
         </ProfileProvider>
       </BrowserRouter>
     </ThemeProvider>
