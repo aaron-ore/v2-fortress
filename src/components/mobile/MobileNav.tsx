@@ -10,7 +10,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import {
-  DropdownMenu, // Keep DropdownMenu for the Bell icon's notification sheet
+  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -29,9 +29,10 @@ import {
   ChevronDown,
   HelpCircle,
   DollarSign,
-  Sparkles, // Added Sparkles icon
+  Sparkles,
   BookOpen,
-  Warehouse, // Added Warehouse icon
+  Warehouse,
+  History, // NEW: Import History icon
 } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import NotificationSheet from "@/components/NotificationSheet";
@@ -40,6 +41,7 @@ import CurrentDateTime from "@/components/CurrentDateTime";
 import { useNotifications } from "@/context/NotificationContext";
 import { useProfile } from "@/context/ProfileContext";
 import { supabase } from "@/lib/supabaseClient";
+import { useActivityLogs } from "@/context/ActivityLogContext"; // NEW: Import useActivityLogs
 
 const navLinks = [
   { to: "/", label: "Dashboard" },
@@ -48,7 +50,7 @@ const navLinks = [
   { to: "/vendors", label: "Vendors" },
   { to: "/reports", label: "Reports" },
   { to: "/warehouse-operations", label: "Warehouse Ops" },
-  { to: "/features", label: "Features" }, // NEW: Added Features tab
+  { to: "/features", label: "Features" },
 ];
 
 const MobileNav: React.FC = () => {
@@ -56,6 +58,7 @@ const MobileNav: React.FC = () => {
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
+  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
   const [isGlobalSearchDialogOpen, setIsGlobalSearchDialogOpen] = useState(false);
@@ -64,25 +67,27 @@ const MobileNav: React.FC = () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
       showError("Failed to log out: " + error.message);
+      addActivity("Logout Failed", `User ${profile?.email || 'Unknown'} failed to log out.`, { error: error.message }); // NEW: Log failed logout
     } else {
       showSuccess("Logged out successfully!");
-      setIsSheetOpen(false); // Close sheet on logout
+      addActivity("Logout", `User ${profile?.email || 'Unknown'} logged out.`, {}); // NEW: Log successful logout
+      setIsSheetOpen(false);
     }
   };
 
   const handleNavigation = (path: string) => {
     navigate(path);
-    setIsSheetOpen(false); // Close sheet after navigation
+    setIsSheetOpen(false);
   };
 
   const handleOpenNotificationSheet = () => {
     setIsNotificationSheetOpen(true);
-    setIsSheetOpen(false); // Close main sheet
+    setIsSheetOpen(false);
   };
 
   const handleOpenGlobalSearchDialog = () => {
     setIsGlobalSearchDialogOpen(true);
-    setIsSheetOpen(false); // Close main sheet
+    setIsSheetOpen(false);
   };
 
   const baseButtonClass = "justify-start text-base font-medium transition-colors hover:text-primary w-full";
@@ -195,6 +200,13 @@ const MobileNav: React.FC = () => {
               onClick={() => handleNavigation("/settings")}
             >
               <SettingsIcon className="h-4 w-4 mr-2" /> Settings
+            </Button>
+            <Button
+              variant="ghost"
+              className={cn(baseButtonClass, location.pathname === "/logs" ? activeLinkClass : inactiveLinkClass)} {/* NEW: Link to LogsPage */}
+              onClick={() => handleNavigation("/logs")}
+            >
+              <History className="h-4 w-4 mr-2" /> Activity Logs
             </Button>
             <DropdownMenuSeparator />
             <p className="px-4 py-2 text-sm font-semibold text-muted-foreground">Support & Resources</p>

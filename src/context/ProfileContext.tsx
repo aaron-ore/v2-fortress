@@ -1,28 +1,29 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
-import { mockUserProfile, mockAllProfiles } from "@/utils/mockData"; // NEW: Import mock data
+import { mockUserProfile, mockAllProfiles } from "@/utils/mockData";
+import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
 
 export interface UserProfile {
-  id: string; // This will be the user's UUID from auth.users
+  id: string;
   fullName: string;
-  email: string; // Now stored in profiles table
+  email: string;
   phone?: string;
   address?: string;
   avatarUrl?: string;
-  role: string; // New: role field
-  organizationId: string | null; // NEW: organization_id field, can be null initially
+  role: string;
+  organizationId: string | null;
   createdAt: string;
 }
 
 interface ProfileContextType {
   profile: UserProfile | null;
-  allProfiles: UserProfile[]; // New: for admin to see all profiles
-  isLoadingProfile: boolean; // NEW: Add loading state for profile
+  allProfiles: UserProfile[];
+  isLoadingProfile: boolean;
   updateProfile: (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId">>) => Promise<void>;
-  updateUserRole: (userId: string, newRole: string, organizationId: string | null) => Promise<void>; // New: for admin to update roles, now includes organizationId
+  updateUserRole: (userId: string, newRole: string, organizationId: string | null) => Promise<void>;
   fetchProfile: () => Promise<void>;
-  fetchAllProfiles: () => Promise<void>; // New: for admin to fetch all profiles
+  fetchAllProfiles: () => Promise<void>;
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
@@ -30,17 +31,17 @@ const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true); // Initialize as true
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const errorToastId = useRef<string | number | null>(null);
+  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
 
   const fetchProfile = useCallback(async () => {
-    setIsLoadingProfile(true); // Set loading true at start
+    setIsLoadingProfile(true);
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
       setProfile(null);
-      setIsLoadingProfile(false); // Set loading false if no session
-      // NEW: If no session and in dev, load mock user profile
+      setIsLoadingProfile(false);
       if (import.meta.env.DEV) {
         console.warn("Loading mock user profile as no session found in development mode.");
         setProfile(mockUserProfile);
@@ -51,16 +52,14 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     let userProfileData = null;
     let profileFetchError = null;
 
-    // Attempt to fetch the profile
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email") // Explicitly list columns, including email
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email")
       .eq("id", session.user.id)
       .single();
 
-    if (error && error.code === 'PGRST116') { // PGRST116 means "no rows found"
+    if (error && error.code === 'PGRST116') {
       console.warn(`[ProfileContext] No profile found for user ${session.user.id}. This indicates the 'on_auth_user_created' trigger might not have run, or the SELECT RLS policy is too restrictive.`);
-      // If no profile exists, we now treat this as an error, expecting the trigger to have created it.
       profileFetchError = new Error("User profile not found after authentication. Please ensure the 'on_auth_user_created' trigger is active in Supabase.");
     } else if (error) {
       console.error("[ProfileContext] Error fetching profile:", error);
@@ -75,7 +74,6 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         setTimeout(() => { errorToastId.current = null; }, 3000);
       }
       setProfile(null);
-      // NEW: If error and in dev, load mock user profile
       if (import.meta.env.DEV) {
         console.warn("Loading mock user profile due to Supabase error in development mode.");
         setProfile(mockUserProfile);
@@ -84,24 +82,22 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       setProfile({
         id: userProfileData.id,
         fullName: userProfileData.full_name,
-        email: userProfileData.email || session.user.email || "", // Use email from profile, fallback to session
+        email: userProfileData.email || session.user.email || "",
         phone: userProfileData.phone || undefined,
         address: userProfileData.address || undefined,
         avatarUrl: userProfileData.avatar_url || undefined,
         role: userProfileData.role,
-        organizationId: userProfileData.organization_id, // Map organization_id
+        organizationId: userProfileData.organization_id,
         createdAt: userProfileData.created_at,
       });
     }
-    setIsLoadingProfile(false); // Set loading false at end
+    setIsLoadingProfile(false);
   }, []);
 
   const fetchAllProfiles = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession(); // NEW: Add session check here
-    // Only attempt to fetch all profiles if a session exists AND the current profile's role is 'admin'
-    if (!session || !profile?.role || profile.role !== 'admin' || !profile.organizationId) { // Check profile role and organizationId
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session || !profile?.role || profile.role !== 'admin' || !profile.organizationId) {
       setAllProfiles([]);
-      // NEW: If not admin/no orgId and in dev, load mock all profiles
       if (import.meta.env.DEV) {
         console.warn("Loading mock all profiles as current user is not admin or has no organization in development mode.");
         setAllProfiles(mockAllProfiles);
@@ -111,13 +107,12 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email") // Explicitly list columns, including email
-      .eq("organization_id", profile.organizationId); // Filter by organization_id
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email")
+      .eq("organization_id", profile.organizationId);
 
     if (error) {
       console.error("Error fetching all profiles:", error);
       showError("Failed to load all user profiles.");
-      // NEW: If error and in dev, load mock all profiles
       if (import.meta.env.DEV) {
         console.warn("Loading mock all profiles due to Supabase error in development mode.");
         setAllProfiles(mockAllProfiles);
@@ -126,15 +121,14 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       const fetchedProfiles: UserProfile[] = data.map((p: any) => ({
         id: p.id,
         fullName: p.full_name,
-        email: p.email || "Email N/A", // Use email from profile
+        email: p.email || "Email N/A",
         phone: p.phone || undefined,
         address: p.address || undefined,
         avatarUrl: p.avatar_url || undefined,
         role: p.role,
-        organizationId: p.organization_id, // Map organization_id
+        organizationId: p.organization_id,
         createdAt: p.created_at,
       }));
-      // NEW: If no data from Supabase and in dev, load mock all profiles
       if (fetchedProfiles.length === 0 && import.meta.env.DEV) {
         console.warn("Loading mock all profiles as Supabase returned no data in development mode.");
         setAllProfiles(mockAllProfiles);
@@ -142,7 +136,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         setAllProfiles(fetchedProfiles);
       }
     }
-  }, [profile?.role, profile?.organizationId]); // Depend on profile.role and organizationId
+  }, [profile?.role, profile?.organizationId]);
 
   useEffect(() => {
     fetchProfile();
@@ -152,8 +146,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       } else {
         setProfile(null);
         setAllProfiles([]);
-        setIsLoadingProfile(false); // Also set loading false if session is null
-        // NEW: If no session and in dev, load mock user profile and all profiles
+        setIsLoadingProfile(false);
         if (import.meta.env.DEV) {
           console.warn("Loading mock user profile and all profiles as no session found in development mode.");
           setProfile(mockUserProfile);
@@ -169,7 +162,6 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       fetchAllProfiles();
     } else {
       setAllProfiles([]);
-      // NEW: If not admin/no orgId and in dev, load mock all profiles
       if (import.meta.env.DEV) {
         console.warn("Loading mock all profiles as current user is not admin or has no organization in development mode.");
         setAllProfiles(mockAllProfiles);
@@ -184,7 +176,8 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       return;
     }
 
-    // Only allow updating non-sensitive fields for the current user
+    const oldProfile = profile;
+
     const { data, error } = await supabase
       .from("profiles")
       .update({
@@ -199,19 +192,21 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     if (error) {
       console.error("Error updating profile:", error);
+      addActivity("Profile Update Failed", `Failed to update own profile.`, { error: error.message, userId: session.user.id }); // NEW: Log failed update
       showError(`Failed to update profile: ${error.message}`);
     } else if (data) {
       setProfile({
         id: data.id,
         fullName: data.full_name,
-        email: data.email || session.user.email || "", // Use email from profile, fallback to session
+        email: data.email || session.user.email || "",
         phone: data.phone || undefined,
         address: data.address || undefined,
         avatarUrl: data.avatar_url || undefined,
         role: data.role,
-        organizationId: data.organization_id, // Map organization_id
+        organizationId: data.organization_id,
         createdAt: data.created_at,
       });
+      addActivity("Profile Updated", `Updated own profile details.`, { oldProfile: oldProfile, newProfile: data }); // NEW: Log successful update
       showSuccess("Profile updated successfully!");
     }
   };
@@ -223,8 +218,10 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       return;
     }
 
+    const targetUser = allProfiles.find(p => p.id === userId);
+    const oldRole = targetUser?.role;
+
     try {
-      // Call the Edge Function to update the user's role and organization_id
       const { data, error } = await supabase.functions.invoke('update-user-profile', {
         body: JSON.stringify({
           targetUserId: userId,
@@ -244,7 +241,6 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         throw new Error(data.error);
       }
 
-      // Assuming the Edge Function returns the updated profile data
       const updatedProfileData = data.profile;
 
       setAllProfiles((prevProfiles) =>
@@ -253,20 +249,22 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
             ...p,
             role: updatedProfileData.role,
             organizationId: updatedProfileData.organization_id,
-            fullName: updatedProfileData.full_name, // Update other fields if returned
+            fullName: updatedProfileData.full_name,
             phone: updatedProfileData.phone,
             address: updatedProfileData.address,
             avatarUrl: updatedProfileData.avatar_url,
-            email: updatedProfileData.email, // Update email if returned
+            email: updatedProfileData.email,
           } : p
         )
       );
+      addActivity("User Role Updated", `Updated role for user ${targetUser?.fullName || userId} from "${oldRole}" to "${newRole}".`, { targetUserId: userId, oldRole, newRole }); // NEW: Log successful role update
       showSuccess(`Role for ${updatedProfileData.full_name || updatedProfileData.id} updated to ${newRole}!`);
       if (session.user.id === updatedProfileData.id) {
-        fetchProfile(); // Refresh current user's profile if their role was changed
+        fetchProfile();
       }
     } catch (error: any) {
       console.error("Error calling Edge Function to update user role:", error);
+      addActivity("User Role Update Failed", `Failed to update role for user ${targetUser?.fullName || userId} to "${newRole}".`, { error: error.message, targetUserId: userId, newRole }); // NEW: Log failed role update
       showError(`Failed to update role for user ${userId}: ${error.message}`);
     }
   };

@@ -11,10 +11,11 @@ import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
 import { mockInventoryItems } from "@/utils/mockData";
-import { useOrders } from "./OrdersContext"; // NEW: Import useOrders
-import { useVendors } from "./VendorContext"; // NEW: Import useVendors
-import { processAutoReorder } from "@/utils/autoReorderLogic"; // NEW: Import autoReorderLogic
-import { useNotifications } from "./NotificationContext"; // NEW: Import useNotifications
+import { useOrders } from "./OrdersContext";
+import { useVendors } from "./VendorContext";
+import { processAutoReorder } from "@/utils/autoReorderLogic";
+import { useNotifications } from "./NotificationContext";
+import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
 
 export interface InventoryItem {
   id: string;
@@ -35,8 +36,8 @@ export interface InventoryItem {
   vendorId?: string;
   barcodeUrl?: string;
   organizationId: string | null;
-  autoReorderEnabled: boolean; // NEW: Auto-reorder flag
-  autoReorderQuantity: number; // NEW: Quantity to reorder automatically
+  autoReorderEnabled: boolean;
+  autoReorderQuantity: number;
 }
 
 interface InventoryContextType {
@@ -58,10 +59,11 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(initialInventoryItems);
   const { profile, isLoadingProfile } = useProfile();
-  const { addOrder } = useOrders(); // NEW: Use addOrder from OrdersContext
-  const { vendors } = useVendors(); // NEW: Use vendors from VendorContext
-  const { addNotification } = useNotifications(); // NEW: Use addNotification from NotificationContext
-  const isInitialLoad = useRef(true); // To prevent auto-reorder on first fetch
+  const { addOrder } = useOrders();
+  const { vendors } = useVendors();
+  const { addNotification } = useNotifications();
+  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
+  const isInitialLoad = useRef(true);
 
   const fetchInventoryItems = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -103,8 +105,8 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         vendorId: item.vendor_id || undefined,
         barcodeUrl: item.barcode_url || undefined,
         organizationId: item.organization_id,
-        autoReorderEnabled: item.auto_reorder_enabled || false, // Map new field
-        autoReorderQuantity: item.auto_reorder_quantity || 0, // Map new field
+        autoReorderEnabled: item.auto_reorder_enabled || false,
+        autoReorderQuantity: item.auto_reorder_quantity || 0,
       }));
       if (fetchedItems.length === 0 && import.meta.env.DEV) {
         console.warn("Loading mock inventory items as Supabase returned no data in development mode.");
@@ -118,14 +120,13 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     if (!isLoadingProfile) {
       fetchInventoryItems().then(() => {
-        // Only run auto-reorder check after initial load and if not the very first render
         if (!isInitialLoad.current && profile?.organizationId) {
           processAutoReorder(inventoryItems, addOrder, vendors, profile.organizationId, addNotification);
         }
         isInitialLoad.current = false;
       });
     }
-  }, [fetchInventoryItems, isLoadingProfile, profile?.organizationId, addOrder, vendors, addNotification]);
+  }, [fetchInventoryItems, isLoadingProfile, profile?.organizationId, addOrder, vendors, addNotification, inventoryItems]); // Added inventoryItems to dependencies
 
   const addInventoryItem = async (item: Omit<InventoryItem, "id" | "status" | "lastUpdated" | "organizationId">) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -157,13 +158,14 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         barcode_url: item.barcodeUrl,
         user_id: session.user.id,
         organization_id: profile.organizationId,
-        auto_reorder_enabled: item.autoReorderEnabled, // Include new field
-        auto_reorder_quantity: item.autoReorderQuantity, // Include new field
+        auto_reorder_enabled: item.autoReorderEnabled,
+        auto_reorder_quantity: item.autoReorderQuantity,
       })
       .select();
 
     if (error) {
       console.error("Error adding inventory item:", error);
+      addActivity("Inventory Add Failed", `Failed to add inventory item: ${item.name} (SKU: ${item.sku}).`, { error: error.message, item }); // NEW: Log failed add
       throw error;
     } else if (data && data.length > 0) {
       const newItem: InventoryItem = {
@@ -185,15 +187,18 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         vendorId: data[0].vendor_id || undefined,
         barcodeUrl: data[0].barcode_url || undefined,
         organizationId: data[0].organization_id,
-        autoReorderEnabled: data[0].auto_reorder_enabled || false, // Map new field
-        autoReorderQuantity: data[0].auto_reorder_quantity || 0, // Map new field
+        autoReorderEnabled: data[0].auto_reorder_enabled || false,
+        autoReorderQuantity: data[0].auto_reorder_quantity || 0,
       };
       setInventoryItems((prevItems) => [...prevItems, newItem]);
+      addActivity("Inventory Added", `Added new inventory item: ${newItem.name} (SKU: ${newItem.sku}).`, { itemId: newItem.id, sku: newItem.sku, quantity: newItem.quantity }); // NEW: Log successful add
       if (profile?.organizationId) {
         processAutoReorder([...inventoryItems, newItem], addOrder, vendors, profile.organizationId, addNotification);
       }
     } else {
-      throw new Error("Failed to add item: No data returned after insert.");
+      const errorMessage = "Failed to add item: No data returned after insert.";
+      addActivity("Inventory Add Failed", errorMessage, { item }); // NEW: Log generic add failure
+      throw new Error(errorMessage);
     }
   };
 
@@ -225,8 +230,8 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         image_url: updatedItem.imageUrl,
         vendor_id: updatedItem.vendorId,
         barcode_url: updatedItem.barcodeUrl,
-        auto_reorder_enabled: updatedItem.autoReorderEnabled, // Include new field
-        auto_reorder_quantity: updatedItem.autoReorderQuantity, // Include new field
+        auto_reorder_enabled: updatedItem.autoReorderEnabled,
+        auto_reorder_quantity: updatedItem.autoReorderQuantity,
       })
       .eq("id", updatedItem.id)
       .eq("organization_id", profile.organizationId)
@@ -234,6 +239,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error updating inventory item:", error);
+      addActivity("Inventory Update Failed", `Failed to update inventory item: ${updatedItem.name} (SKU: ${updatedItem.sku}).`, { error: error.message, itemId: updatedItem.id, sku: updatedItem.sku }); // NEW: Log failed update
       throw error;
     } else if (data && data.length > 0) {
       const updatedItemFromDB: InventoryItem = {
@@ -255,19 +261,22 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         vendorId: data[0].vendor_id || undefined,
         barcodeUrl: data[0].barcode_url || undefined,
         organizationId: data[0].organization_id,
-        autoReorderEnabled: data[0].auto_reorder_enabled || false, // Map new field
-        autoReorderQuantity: data[0].auto_reorder_quantity || 0, // Map new field
+        autoReorderEnabled: data[0].auto_reorder_enabled || false,
+        autoReorderQuantity: data[0].auto_reorder_quantity || 0,
       };
       setInventoryItems((prevItems) =>
         prevItems.map((item) =>
           item.id === updatedItemFromDB.id ? updatedItemFromDB : item,
         ),
       );
+      addActivity("Inventory Updated", `Updated inventory item: ${updatedItemFromDB.name} (SKU: ${updatedItemFromDB.sku}).`, { itemId: updatedItemFromDB.id, sku: updatedItemFromDB.sku, newQuantity: updatedItemFromDB.quantity }); // NEW: Log successful update
       if (profile?.organizationId) {
         processAutoReorder(inventoryItems.map(item => item.id === updatedItemFromDB.id ? updatedItemFromDB : item), addOrder, vendors, profile.organizationId, addNotification);
       }
     } else {
-      throw new Error("Update might not have been saved. Check database permissions.");
+      const errorMessage = "Update might not have been saved. Check database permissions.";
+      addActivity("Inventory Update Failed", errorMessage, { itemId: updatedItem.id, sku: updatedItem.sku }); // NEW: Log generic update failure
+      throw new Error(errorMessage);
     }
   };
 
@@ -278,6 +287,8 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
+    const itemToDelete = inventoryItems.find(item => item.id === itemId);
+
     const { error } = await supabase
       .from("inventory_items")
       .delete()
@@ -286,9 +297,11 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error deleting inventory item:", error);
+      addActivity("Inventory Delete Failed", `Failed to delete inventory item: ${itemToDelete?.name || itemId}.`, { error: error.message, itemId }); // NEW: Log failed delete
       showError(`Failed to delete item: ${error.message}`);
     } else {
       setInventoryItems((prevItems) => prevItems.filter(item => item.id !== itemId));
+      addActivity("Inventory Deleted", `Deleted inventory item: ${itemToDelete?.name || itemId}.`, { itemId }); // NEW: Log successful delete
       showSuccess("Item deleted successfully!");
     }
   };

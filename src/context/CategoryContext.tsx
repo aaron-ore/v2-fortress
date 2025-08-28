@@ -1,18 +1,19 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
-import { useProfile } from "./ProfileContext"; // Import useProfile
-import { mockCategories } from "@/utils/mockData"; // NEW: Import mock data
+import { useProfile } from "./ProfileContext";
+import { mockCategories } from "@/utils/mockData";
+import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
 
 interface Category {
   id: string;
   name: string;
-  organizationId: string | null; // NEW: organization_id field
+  organizationId: string | null;
 }
 
 interface CategoryContextType {
   categories: Category[];
-  addCategory: (name: string) => Promise<Category | null>; // Modified return type
+  addCategory: (name: string) => Promise<Category | null>;
   removeCategory: (id: string) => Promise<void>;
   refreshCategories: () => Promise<void>;
 }
@@ -21,11 +22,12 @@ const CategoryContext = createContext<CategoryContextType | undefined>(undefined
 
 export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [categories, setCategories] = useState<Category[]>([]);
-  const { profile, isLoadingProfile } = useProfile(); // Use profile context
+  const { profile, isLoadingProfile } = useProfile();
+  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
 
   const fetchCategories = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session || !profile?.organizationId) { // Ensure organizationId is available
+    if (!session || !profile?.organizationId) {
       setCategories([]);
       return;
     }
@@ -33,13 +35,12 @@ export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }
     const { data, error } = await supabase
       .from("categories")
       .select("id, name, organization_id")
-      .eq("organization_id", profile.organizationId) // Filter by organization_id
+      .eq("organization_id", profile.organizationId)
       .order("name", { ascending: true });
 
     if (error) {
       console.error("Error fetching categories:", error);
       showError("Failed to load categories.");
-      // NEW: If error and in dev, load mock data
       if (import.meta.env.DEV) {
         console.warn("Loading mock categories due to Supabase error in development mode.");
         setCategories(mockCategories);
@@ -48,9 +49,8 @@ export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }
       const fetchedCategories: Category[] = data.map((cat: any) => ({
         id: cat.id,
         name: cat.name,
-        organizationId: cat.organization_id, // Map organization_id
+        organizationId: cat.organization_id,
       }));
-      // NEW: If no data from Supabase and in dev, load mock data
       if (fetchedCategories.length === 0 && import.meta.env.DEV) {
         console.warn("Loading mock categories as Supabase returned no data in development mode.");
         setCategories(mockCategories);
@@ -58,15 +58,15 @@ export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }
         setCategories(fetchedCategories);
       }
     }
-  }, [profile?.organizationId]); // Depend on profile.organizationId
+  }, [profile?.organizationId]);
 
   useEffect(() => {
-    if (!isLoadingProfile) { // Only fetch once profile is loaded
+    if (!isLoadingProfile) {
       fetchCategories();
     }
   }, [fetchCategories, isLoadingProfile]);
 
-  const addCategory = async (name: string): Promise<Category | null> => { // Modified function signature
+  const addCategory = async (name: string): Promise<Category | null> => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session || !profile?.organizationId) {
       showError("You must be logged in and have an organization ID to add categories.");
@@ -74,44 +74,44 @@ export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
 
     const trimmedName = name.trim();
-    // Check if category already exists locally (case-insensitive)
     const existingCategory = categories.find(cat => cat.name.toLowerCase() === trimmedName.toLowerCase());
     if (existingCategory) {
+      addActivity("Category Add Skipped", `Attempted to add existing category: ${trimmedName}.`, { categoryName: trimmedName }); // NEW: Log skipped add
       return existingCategory;
     }
 
-    // Attempt to insert into Supabase
     const { data, error } = await supabase
       .from("categories")
-      .insert({ name: trimmedName, user_id: session.user.id, organization_id: profile.organizationId }) // Include organization_id
+      .insert({ name: trimmedName, user_id: session.user.id, organization_id: profile.organizationId })
       .select();
 
     if (error) {
-      // Handle potential unique constraint error if another user added it concurrently
-      if (error.code === '23505') { // Unique violation error code
+      if (error.code === '23505') {
         console.warn(`Category "${trimmedName}" already exists in DB, likely added concurrently.`);
-        // Try to fetch it to return the existing one
         const { data: existingDbCategory, error: fetchError } = await supabase
           .from("categories")
           .select("id, name, organization_id")
           .eq("name", trimmedName)
-          .eq("organization_id", profile.organizationId) // Filter by organization_id
+          .eq("organization_id", profile.organizationId)
           .single();
         if (existingDbCategory) {
           setCategories((prev) => Array.from(new Set([...prev, existingDbCategory].map(c => JSON.stringify(c)))).map(s => JSON.parse(s)));
+          addActivity("Category Add Concurrently", `Category "${trimmedName}" already exists, added concurrently.`, { categoryName: trimmedName }); // NEW: Log concurrent add
           return existingDbCategory as Category;
         }
       }
       console.error("Error adding category:", error);
+      addActivity("Category Add Failed", `Failed to add category: ${trimmedName}.`, { error: error.message, categoryName: trimmedName }); // NEW: Log failed add
       showError(`Failed to add category: ${error.message}`);
       return null;
     } else if (data && data.length > 0) {
       const newCategory: Category = {
         id: data[0].id,
         name: data[0].name,
-        organizationId: data[0].organization_id, // Map organization_id
+        organizationId: data[0].organization_id,
       };
       setCategories((prev) => [...prev, newCategory]);
+      addActivity("Category Added", `Added new category: ${newCategory.name}.`, { categoryId: newCategory.id, categoryName: newCategory.name }); // NEW: Log successful add
       showSuccess(`Category "${trimmedName}" added.`);
       return newCategory;
     }
@@ -125,17 +125,21 @@ export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }
       return;
     }
 
+    const categoryToRemove = categories.find(cat => cat.id === id);
+
     const { error } = await supabase
       .from("categories")
       .delete()
       .eq("id", id)
-      .eq("organization_id", profile.organizationId); // Filter by organization_id for delete
+      .eq("organization_id", profile.organizationId);
 
     if (error) {
       console.error("Error removing category:", error);
+      addActivity("Category Remove Failed", `Failed to remove category: ${categoryToRemove?.name || id}.`, { error: error.message, categoryId: id }); // NEW: Log failed remove
       showError(`Failed to remove category: ${error.message}`);
     } else {
       setCategories((prev) => prev.filter((cat) => cat.id !== id));
+      addActivity("Category Removed", `Removed category: ${categoryToRemove?.name || id}.`, { categoryId: id }); // NEW: Log successful remove
       showSuccess("Category removed.");
     }
   };

@@ -1,8 +1,9 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
-import { useProfile } from "./ProfileContext"; // Import useProfile
-import { mockVendors } from "@/utils/mockData"; // NEW: Import mock data
+import { useProfile } from "./ProfileContext";
+import { mockVendors } from "@/utils/mockData";
+import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
 
 export interface Vendor {
   id: string;
@@ -12,7 +13,7 @@ export interface Vendor {
   phone?: string;
   address?: string;
   notes?: string;
-  organizationId: string | null; // NEW: organization_id field
+  organizationId: string | null;
   createdAt: string;
 }
 
@@ -28,11 +29,12 @@ const VendorContext = createContext<VendorContextType | undefined>(undefined);
 
 export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
-  const { profile, isLoadingProfile } = useProfile(); // Use profile context
+  const { profile, isLoadingProfile } = useProfile();
+  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
 
   const fetchVendors = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session || !profile?.organizationId) { // Ensure organizationId is available
+    if (!session || !profile?.organizationId) {
       setVendors([]);
       return;
     }
@@ -40,13 +42,12 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const { data, error } = await supabase
       .from("vendors")
       .select("*")
-      .eq("organization_id", profile.organizationId) // Filter by organization_id
+      .eq("organization_id", profile.organizationId)
       .order("name", { ascending: true });
 
     if (error) {
       console.error("Error fetching vendors:", error);
       showError("Failed to load vendors.");
-      // NEW: If error and in dev, load mock data
       if (import.meta.env.DEV) {
         console.warn("Loading mock vendors due to Supabase error in development mode.");
         setVendors(mockVendors);
@@ -60,10 +61,9 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         phone: vendor.phone || undefined,
         address: vendor.address || undefined,
         notes: vendor.notes || undefined,
-        organizationId: vendor.organization_id, // Map organization_id
+        organizationId: vendor.organization_id,
         createdAt: vendor.created_at,
       }));
-      // NEW: If no data from Supabase and in dev, load mock data
       if (fetchedVendors.length === 0 && import.meta.env.DEV) {
         console.warn("Loading mock vendors as Supabase returned no data in development mode.");
         setVendors(mockVendors);
@@ -71,10 +71,10 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setVendors(fetchedVendors);
       }
     }
-  }, [profile?.organizationId]); // Depend on profile.organizationId
+  }, [profile?.organizationId]);
 
   useEffect(() => {
-    if (!isLoadingProfile) { // Only fetch once profile is loaded
+    if (!isLoadingProfile) {
       fetchVendors();
     }
   }, [fetchVendors, isLoadingProfile]);
@@ -96,12 +96,13 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         address: vendor.address,
         notes: vendor.notes,
         user_id: session.user.id,
-        organization_id: profile.organizationId, // Include organization_id
+        organization_id: profile.organizationId,
       })
       .select();
 
     if (error) {
       console.error("Error adding vendor:", error);
+      addActivity("Vendor Add Failed", `Failed to add new vendor: ${vendor.name}.`, { error: error.message, vendorName: vendor.name }); // NEW: Log failed add
       showError(`Failed to add vendor: ${error.message}`);
     } else if (data && data.length > 0) {
       const newVendor: Vendor = {
@@ -112,10 +113,11 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         phone: data[0].phone || undefined,
         address: data[0].address || undefined,
         notes: data[0].notes || undefined,
-        organizationId: data[0].organization_id, // Map organization_id
+        organizationId: data[0].organization_id,
         createdAt: data[0].created_at,
       };
       setVendors((prevVendors) => [...prevVendors, newVendor]);
+      addActivity("Vendor Added", `Added new vendor: ${newVendor.name}.`, { vendorId: newVendor.id, vendorName: newVendor.name }); // NEW: Log successful add
       showSuccess(`Vendor "${vendor.name}" added successfully!`);
     }
   };
@@ -138,11 +140,12 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         notes: updatedVendor.notes,
       })
       .eq("id", updatedVendor.id)
-      .eq("organization_id", profile.organizationId) // Filter by organization_id for update
+      .eq("organization_id", profile.organizationId)
       .select();
 
     if (error) {
       console.error("Error updating vendor:", error);
+      addActivity("Vendor Update Failed", `Failed to update vendor: ${updatedVendor.name}.`, { error: error.message, vendorId: updatedVendor.id, vendorName: updatedVendor.name }); // NEW: Log failed update
       showError(`Failed to update vendor: ${error.message}`);
     } else if (data && data.length > 0) {
       const updatedVendorFromDB: Vendor = {
@@ -153,7 +156,7 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         phone: data[0].phone || undefined,
         address: data[0].address || undefined,
         notes: data[0].notes || undefined,
-        organizationId: data[0].organization_id, // Map organization_id
+        organizationId: data[0].organization_id,
         createdAt: data[0].created_at,
       };
       setVendors((prevVendors) =>
@@ -161,6 +164,7 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           vendor.id === updatedVendorFromDB.id ? updatedVendorFromDB : vendor,
         ),
       );
+      addActivity("Vendor Updated", `Updated vendor: ${updatedVendorFromDB.name}.`, { vendorId: updatedVendorFromDB.id, vendorName: updatedVendorFromDB.name }); // NEW: Log successful update
       showSuccess(`Vendor "${updatedVendor.name}" updated successfully!`);
     }
   };
@@ -172,17 +176,21 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       return;
     }
 
+    const vendorToDelete = vendors.find(v => v.id === vendorId);
+
     const { error } = await supabase
       .from("vendors")
       .delete()
       .eq("id", vendorId)
-      .eq("organization_id", profile.organizationId); // Filter by organization_id for delete
+      .eq("organization_id", profile.organizationId);
 
     if (error) {
       console.error("Error deleting vendor:", error);
+      addActivity("Vendor Delete Failed", `Failed to delete vendor: ${vendorToDelete?.name || vendorId}.`, { error: error.message, vendorId }); // NEW: Log failed delete
       showError(`Failed to delete vendor: ${error.message}`);
     } else {
       setVendors((prevVendors) => prevVendors.filter(vendor => vendor.id !== vendorId));
+      addActivity("Vendor Deleted", `Deleted vendor: ${vendorToDelete?.name || vendorId}.`, { vendorId }); // NEW: Log successful delete
       showSuccess("Vendor deleted successfully!");
     }
   };

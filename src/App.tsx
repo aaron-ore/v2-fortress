@@ -24,8 +24,9 @@ import Users from "./pages/Users";
 import CreateInvoice from "./pages/CreateInvoice";
 import SetupInstructions from "./pages/SetupInstructions";
 import WarehouseOperationsPage from "./pages/WarehouseOperationsPage";
-import FeaturesPage from "./pages/FeaturesPage"; // NEW: Import FeaturesPage
+import FeaturesPage from "./pages/FeaturesPage";
 import ResetPassword from "./pages/ResetPassword";
+import LogsPage from "./pages/LogsPage"; // NEW: Import LogsPage
 import { ThemeProvider } from "./components/ThemeProvider";
 import { InventoryProvider } from "./context/InventoryContext";
 import { OrdersProvider } from "./context/OrdersContext";
@@ -35,6 +36,7 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { VendorProvider } from "./context/VendorContext";
 import { ProfileProvider, useProfile } from "./context/ProfileContext";
 import { StockMovementProvider } from "./context/StockMovementContext";
+import { ActivityLogProvider } from "./context/ActivityLogContext"; // NEW: Import ActivityLogProvider
 import OnboardingWizard from "./components/onboarding/OnboardingWizard";
 import { supabase } from "./lib/supabaseClient";
 import React, { useState, useEffect, useRef } from "react";
@@ -45,18 +47,18 @@ import PrintWrapper from "./components/PrintWrapper";
 import DashboardSummaryPdfContent from "./components/DashboardSummaryPdfContent";
 import PurchaseOrderPdfContent from "./components/PurchaseOrderPdfContent";
 import InvoicePdfContent from "./components/InvoicePdfContent";
-import AdvancedDemandForecastPdfContent from "./components/AdvancedDemandForecastPdfContent"; // NEW: Import AdvancedDemandForecastPdfContent
+import AdvancedDemandForecastPdfContent from "./components/AdvancedDemandForecastPdfContent";
 
 const queryClient = new QueryClient();
 
 const AuthenticatedApp = () => {
   return (
-    <OrdersProvider> {/* OrdersProvider must wrap InventoryProvider */}
-      <VendorProvider> {/* VendorProvider must wrap InventoryProvider */}
-        <CategoryProvider> {/* CategoryProvider must wrap InventoryProvider */}
-          <NotificationProvider> {/* NotificationProvider must wrap InventoryProvider */}
-            <StockMovementProvider> {/* StockMovementProvider must wrap InventoryProvider */}
-              <InventoryProvider> {/* InventoryProvider now correctly nested */}
+    <OrdersProvider>
+      <VendorProvider>
+        <CategoryProvider>
+          <NotificationProvider>
+            <StockMovementProvider>
+              <InventoryProvider>
                 <Routes>
                   <Route path="/" element={<Layout />}>
                     <Route index element={<Dashboard />} />
@@ -78,7 +80,8 @@ const AuthenticatedApp = () => {
                     <Route path="users" element={<Users />} />
                     <Route path="setup-instructions" element={<SetupInstructions />} />
                     <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
-                    <Route path="features" element={<FeaturesPage />} /> {/* NEW: Route for FeaturesPage */}
+                    <Route path="features" element={<FeaturesPage />} />
+                    <Route path="logs" element={<LogsPage />} /> {/* NEW: Route for LogsPage */}
                     <Route path="*" element={<NotFound />} />
                   </Route>
                 </Routes>
@@ -189,11 +192,13 @@ const App = () => (
         }}
       />
       <BrowserRouter>
-        <ProfileProvider> {/* ProfileProvider now wraps OnboardingProvider */}
+        <ProfileProvider>
           <OnboardingProvider>
-            <PrintProvider>
-              <AppContent />
-            </PrintProvider>
+            <ActivityLogProvider> {/* NEW: Wrap with ActivityLogProvider */}
+              <PrintProvider>
+                <AppContent />
+              </PrintProvider>
+            </ActivityLogProvider>
           </OnboardingProvider>
         </ProfileProvider>
       </BrowserRouter>

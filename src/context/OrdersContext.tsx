@@ -1,22 +1,23 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
-import { useProfile } from "./ProfileContext"; // Import useProfile
-import { mockOrders } from "@/utils/mockData"; // NEW: Import mock data
+import { useProfile } from "./ProfileContext";
+import { mockOrders } from "@/utils/mockData";
+import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
 
 export interface POItem {
   id: number;
   itemName: string;
   quantity: number;
   unitPrice: number;
-  inventoryItemId?: string; // New: Link to the actual inventory item
+  inventoryItemId?: string;
 }
 
 export interface OrderItem {
   id: string;
   type: "Sales" | "Purchase";
   customerSupplier: string;
-  date: string; // This is the application-level date field
+  date: string;
   status: "New Order" | "Processing" | "Packed" | "Shipped" | "On Hold / Problem" | "Archived";
   totalAmount: number;
   dueDate: string;
@@ -24,32 +25,33 @@ export interface OrderItem {
   notes: string;
   orderType: "Retail" | "Wholesale";
   shippingMethod: "Standard" | "Express";
-  items: POItem[]; // Added this field
-  organizationId: string | null; // NEW: organization_id field
-  terms?: string; // Added terms for PO/Invoice PDF
+  items: POItem[];
+  organizationId: string | null;
+  terms?: string;
 }
 
 interface OrdersContextType {
   orders: OrderItem[];
   updateOrder: (updatedOrder: OrderItem) => void;
   addOrder: (newOrder: Omit<OrderItem, "id" | "organizationId">) => void;
-  archiveOrder: (orderId: string) => void; // New: Function to archive an order
-  fetchOrders: () => Promise<void>; // Add fetchOrders to context type
+  archiveOrder: (orderId: string) => void;
+  fetchOrders: () => Promise<void>;
 }
 
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
 
-const initialOrders: OrderItem[] = []; // Cleared initial data
+const initialOrders: OrderItem[] = [];
 
 export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [orders, setOrders] = useState<OrderItem[]>(initialOrders);
-  const { profile, isLoadingProfile } = useProfile(); // Use profile context
+  const { profile, isLoadingProfile } = useProfile();
+  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
 
   const fetchOrders = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session || !profile?.organizationId) { // Ensure organizationId is available
+    if (!session || !profile?.organizationId) {
       setOrders([]);
       return;
     }
@@ -57,13 +59,12 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
     const { data, error } = await supabase
       .from("orders")
       .select("*")
-      .eq("organization_id", profile.organizationId) // Filter by organization_id
-      .order("created_at", { ascending: false }); // CHANGED: Order by 'created_at' instead of 'date'
+      .eq("organization_id", profile.organizationId)
+      .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Error fetching orders:", error);
       showError("Failed to load orders.");
-      // NEW: If error and in dev, load mock data
       if (import.meta.env.DEV) {
         console.warn("Loading mock orders due to Supabase error in development mode.");
         setOrders(mockOrders);
@@ -73,7 +74,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         id: order.id,
         type: order.type,
         customerSupplier: order.customer_supplier,
-        date: order.created_at, // CHANGED: Map 'created_at' from DB to 'date' in app
+        date: order.created_at,
         status: order.status,
         totalAmount: parseFloat(order.total_amount),
         dueDate: order.due_date,
@@ -81,11 +82,10 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         notes: order.notes || "",
         orderType: order.order_type,
         shippingMethod: order.shipping_method,
-        items: order.items || [], // Ensure items are mapped
-        organizationId: order.organization_id, // Map organization_id
-        terms: order.terms || undefined, // Map terms
+        items: order.items || [],
+        organizationId: order.organization_id,
+        terms: order.terms || undefined,
       }));
-      // NEW: If no data from Supabase and in dev, load mock data
       if (fetchedOrders.length === 0 && import.meta.env.DEV) {
         console.warn("Loading mock orders as Supabase returned no data in development mode.");
         setOrders(mockOrders);
@@ -93,10 +93,10 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         setOrders(fetchedOrders);
       }
     }
-  }, [profile?.organizationId]); // Depend on profile.organizationId
+  }, [profile?.organizationId]);
 
   useEffect(() => {
-    if (!isLoadingProfile) { // Only fetch once profile is loaded
+    if (!isLoadingProfile) {
       fetchOrders();
     }
   }, [fetchOrders, isLoadingProfile]);
@@ -113,7 +113,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
       .update({
         type: updatedOrder.type,
         customer_supplier: updatedOrder.customerSupplier,
-        created_at: updatedOrder.date, // CHANGED: Update 'created_at' in DB from 'date' in app
+        created_at: updatedOrder.date,
         status: updatedOrder.status,
         total_amount: updatedOrder.totalAmount,
         due_date: updatedOrder.dueDate,
@@ -121,15 +121,16 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         notes: updatedOrder.notes,
         order_type: updatedOrder.orderType,
         shipping_method: updatedOrder.shippingMethod,
-        items: updatedOrder.items, // Update items array
-        terms: updatedOrder.terms, // Update terms
+        items: updatedOrder.items,
+        terms: updatedOrder.terms,
       })
       .eq("id", updatedOrder.id)
-      .eq("organization_id", profile.organizationId) // Filter by organization_id for update
+      .eq("organization_id", profile.organizationId)
       .select();
 
     if (error) {
       console.error("Error updating order:", error);
+      addActivity("Order Update Failed", `Failed to update order: ${updatedOrder.id}.`, { error: error.message, orderId: updatedOrder.id }); // NEW: Log failed update
       showError(`Failed to update order: ${error.message}`);
     } else if (data && data.length > 0) {
       setOrders((prevOrders) =>
@@ -137,6 +138,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
           order.id === updatedOrder.id ? { ...updatedOrder, organizationId: data[0].organization_id } : order,
         ),
       );
+      addActivity("Order Updated", `Updated ${updatedOrder.type} order: ${updatedOrder.id} to status "${updatedOrder.status}".`, { orderId: updatedOrder.id, newStatus: updatedOrder.status }); // NEW: Log successful update
       showSuccess(`Order ${updatedOrder.id} updated successfully!`);
     }
   };
@@ -156,7 +158,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         id: newId,
         type: newOrder.type,
         customer_supplier: newOrder.customerSupplier,
-        created_at: newOrder.date, // CHANGED: Insert 'created_at' in DB from 'date' in app
+        created_at: newOrder.date,
         status: newOrder.status,
         total_amount: newOrder.totalAmount,
         due_date: newOrder.dueDate,
@@ -164,19 +166,21 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         notes: newOrder.notes,
         order_type: newOrder.orderType,
         shipping_method: newOrder.shippingMethod,
-        items: newOrder.items, // Insert items array
-        terms: newOrder.terms, // Insert terms
+        items: newOrder.items,
+        terms: newOrder.terms,
         user_id: session.user.id,
-        organization_id: profile.organizationId, // Include organization_id
+        organization_id: profile.organizationId,
       })
       .select();
 
     if (error) {
       console.error("Error adding order:", error);
+      addActivity("Order Add Failed", `Failed to add new ${newOrder.type} order for ${newOrder.customerSupplier}.`, { error: error.message, orderType: newOrder.type }); // NEW: Log failed add
       showError(`Failed to add order: ${error.message}`);
     } else if (data && data.length > 0) {
       const addedOrder: OrderItem = { ...newOrder, id: data[0].id, organizationId: data[0].organization_id };
       setOrders((prevOrders) => [...prevOrders, addedOrder]);
+      addActivity("Order Added", `Created new ${addedOrder.type} order: ${addedOrder.id} for ${addedOrder.customerSupplier}.`, { orderId: addedOrder.id, orderType: addedOrder.type }); // NEW: Log successful add
       showSuccess(`Order ${addedOrder.id} created successfully!`);
     }
   };
@@ -192,10 +196,11 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
       .from("orders")
       .update({ status: "Archived" })
       .eq("id", orderId)
-      .eq("organization_id", profile.organizationId); // Filter by organization_id for update
+      .eq("organization_id", profile.organizationId);
 
     if (error) {
       console.error("Error archiving order:", error);
+      addActivity("Order Archive Failed", `Failed to archive order: ${orderId}.`, { error: error.message, orderId }); // NEW: Log failed archive
       showError(`Failed to archive order: ${error.message}`);
     } else {
       setOrders((prevOrders) =>
@@ -203,6 +208,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
           order.id === orderId ? { ...order, status: "Archived" } : order,
         ),
       );
+      addActivity("Order Archived", `Archived order: ${orderId}.`, { orderId }); // NEW: Log successful archive
       showSuccess(`Order ${orderId} has been archived.`);
     }
   };

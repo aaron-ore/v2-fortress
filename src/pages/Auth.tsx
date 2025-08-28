@@ -6,14 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { supabase } from "@/lib/supabaseClient";
 import { showSuccess, showError } from "@/utils/toast";
 import { useNavigate } from "react-router-dom";
+import { useActivityLogs } from "@/context/ActivityLogContext"; // NEW: Import useActivityLogs
 
 const Auth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [companyCode, setCompanyCode] = useState(""); // New state for company code
+  const [companyCode, setCompanyCode] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,24 +25,27 @@ const Auth: React.FC = () => {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         showError(error.message);
+        addActivity("Login Failed", `User ${email} failed to log in.`, { error: error.message }); // NEW: Log failed login
       } else {
         showSuccess("Logged in successfully!");
+        addActivity("Login", `User ${email} logged in.`, {}); // NEW: Log successful login
         navigate("/");
       }
     } else {
-      // Sign Up logic
       const options = {
         data: {
-          company_code: companyCode.trim() || null, // Pass company code to meta data
+          company_code: companyCode.trim() || null,
         },
       };
       const { error } = await supabase.auth.signUp({ email, password, options });
       if (error) {
         showError(error.message);
+        addActivity("Signup Failed", `User ${email} failed to sign up.`, { error: error.message }); // NEW: Log failed signup
       } else {
         showSuccess("Account created! Please check your email to confirm.");
-        setIsLogin(true); // Switch to login after successful signup
-        setCompanyCode(""); // Clear company code after signup attempt
+        addActivity("Signup", `User ${email} signed up.`, { companyCode: companyCode.trim() || "N/A" }); // NEW: Log successful signup
+        setIsLogin(true);
+        setCompanyCode("");
       }
     }
     setLoading(false);
@@ -53,12 +58,14 @@ const Auth: React.FC = () => {
     }
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/reset-password', // Redirect to our new reset password page
+      redirectTo: window.location.origin + '/reset-password',
     });
     if (error) {
       showError(error.message);
+      addActivity("Forgot Password Failed", `Password reset request failed for ${email}.`, { error: error.message }); // NEW: Log failed forgot password
     } else {
       showSuccess("Password reset email sent! Check your inbox.");
+      addActivity("Forgot Password", `Password reset email sent to ${email}.`, {}); // NEW: Log successful forgot password
     }
     setLoading(false);
   };
@@ -122,7 +129,7 @@ const Auth: React.FC = () => {
                 required
               />
             </div>
-            {!isLogin && ( // Only show company code input on signup form
+            {!isLogin && (
               <div className="space-y-2">
                 <Label htmlFor="companyCode">Company Code (Optional)</Label>
                 <Input

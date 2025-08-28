@@ -1,7 +1,8 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { showError } from "@/utils/toast";
-import { useProfile } from "./ProfileContext"; // Import useProfile
+import { useProfile } from "./ProfileContext";
+import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
 
 export interface StockMovement {
   id: string;
@@ -13,24 +14,25 @@ export interface StockMovement {
   newQuantity: number;
   reason: string;
   timestamp: string;
-  organizationId: string | null; // NEW: organization_id field
+  organizationId: string | null;
 }
 
 interface StockMovementContextType {
   stockMovements: StockMovement[];
   addStockMovement: (movement: Omit<StockMovement, "id" | "timestamp" | "organizationId">) => Promise<void>;
-  fetchStockMovements: (itemId?: string) => Promise<void>; // Optional itemId to fetch specific item's movements
+  fetchStockMovements: (itemId?: string) => Promise<void>;
 }
 
 const StockMovementContext = createContext<StockMovementContextType | undefined>(undefined);
 
 export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [stockMovements, setStockMovements] = useState<StockMovement[]>([]);
-  const { profile, isLoadingProfile } = useProfile(); // Use profile context
+  const { profile, isLoadingProfile } = useProfile();
+  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
 
   const fetchStockMovements = useCallback(async (itemId?: string) => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session || !profile?.organizationId) { // Ensure organizationId is available
+    if (!session || !profile?.organizationId) {
       setStockMovements([]);
       return;
     }
@@ -38,7 +40,7 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
     let query = supabase
       .from("stock_movements")
       .select("*")
-      .eq("organization_id", profile.organizationId) // Filter by organization_id
+      .eq("organization_id", profile.organizationId)
       .order("timestamp", { ascending: false });
 
     if (itemId) {
@@ -61,14 +63,14 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
         newQuantity: movement.new_quantity,
         reason: movement.reason,
         timestamp: movement.timestamp,
-        organizationId: movement.organization_id, // Map organization_id
+        organizationId: movement.organization_id,
       }));
       setStockMovements(fetchedMovements);
     }
-  }, [profile?.organizationId]); // Depend on profile.organizationId
+  }, [profile?.organizationId]);
 
   useEffect(() => {
-    if (!isLoadingProfile) { // Only fetch once profile is loaded
+    if (!isLoadingProfile) {
       fetchStockMovements();
     }
   }, [fetchStockMovements, isLoadingProfile]);
@@ -91,12 +93,13 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
         new_quantity: movement.newQuantity,
         reason: movement.reason,
         user_id: session.user.id,
-        organization_id: profile.organizationId, // Include organization_id
+        organization_id: profile.organizationId,
       })
       .select();
 
     if (error) {
       console.error("Error adding stock movement:", error);
+      addActivity("Stock Movement Failed", `Failed to log stock movement for ${movement.itemName} (Item ID: ${movement.itemId}).`, { error: error.message, movement }); // NEW: Log failed movement
       showError(`Failed to log stock movement: ${error.message}`);
     } else if (data && data.length > 0) {
       const newMovement: StockMovement = {
@@ -109,9 +112,10 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
         newQuantity: data[0].new_quantity,
         reason: data[0].reason,
         timestamp: data[0].timestamp,
-        organizationId: data[0].organization_id, // Map organization_id
+        organizationId: data[0].organization_id,
       };
-      setStockMovements((prev) => [newMovement, ...prev]); // Add to top of list
+      setStockMovements((prev) => [newMovement, ...prev]);
+      addActivity("Stock Movement", `${movement.type === 'add' ? 'Added' : 'Subtracted'} ${movement.amount} units of ${movement.itemName}. Reason: ${movement.reason}.`, { itemId: movement.itemId, itemName: movement.itemName, type: movement.type, amount: movement.amount, newQuantity: movement.newQuantity }); // NEW: Log successful movement
     }
   };
 

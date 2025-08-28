@@ -2,8 +2,9 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 import { showSuccess, showError } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
 import { supabase } from "@/lib/supabaseClient";
-import { generateUniqueCode } from "@/utils/numberGenerator"; // Import the new utility
-import { mockLocations, mockCompanyProfile } from "@/utils/mockData"; // NEW: Import mock data
+import { generateUniqueCode } from "@/utils/numberGenerator";
+import { mockLocations, mockCompanyProfile } from "@/utils/mockData";
+import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
 
 interface CompanyProfile {
   name: string;
@@ -25,9 +26,9 @@ const OnboardingContext = createContext<OnboardingContextType | undefined>(undef
 
 export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { profile, isLoadingProfile, fetchProfile } = useProfile();
+  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
   const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      // Onboarding is considered complete if a company profile exists AND the user has an organizationId
       const storedProfile = localStorage.getItem("companyProfile");
       return storedProfile !== null && profile?.organizationId !== null;
     }
@@ -37,7 +38,6 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   const [companyProfile, setCompanyProfileState] = useState<CompanyProfile | null>(() => {
     if (typeof window !== 'undefined') {
       const storedProfile = localStorage.getItem("companyProfile");
-      // NEW: If no stored profile and in dev, load mock company profile
       if (!storedProfile && import.meta.env.DEV) {
         console.warn("Loading mock company profile as local storage is empty in development mode.");
         return mockCompanyProfile;
@@ -50,7 +50,6 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   const [locations, setLocations] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const storedLocations = localStorage.getItem("inventoryLocations");
-      // NEW: If no stored locations and in dev, load mock locations
       if (!storedLocations && import.meta.env.DEV) {
         console.warn("Loading mock locations as local storage is empty in development mode.");
         return mockLocations;
@@ -60,17 +59,14 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     return [];
   });
 
-  // Effect to determine if onboarding is complete based on profile and companyProfile
   useEffect(() => {
     if (!isLoadingProfile && profile) {
       const storedProfile = localStorage.getItem("companyProfile");
       const hasCompanyProfile = storedProfile !== null;
       const hasOrganizationId = profile.organizationId !== null;
 
-      // Onboarding is complete if company profile is set AND user has an organization ID
       setIsOnboardingComplete(hasCompanyProfile && hasOrganizationId);
     } else if (!isLoadingProfile && !profile) {
-      // If no profile (not logged in), onboarding is not complete
       setIsOnboardingComplete(false);
     }
   }, [profile, isLoadingProfile]);
@@ -85,23 +81,20 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
 
   const markOnboardingComplete = () => {
     setIsOnboardingComplete(true);
+    addActivity("Onboarding Complete", "User completed the onboarding wizard.", {}); // NEW: Log onboarding completion
     showSuccess("Onboarding complete! Welcome to Fortress.");
   };
 
   const setCompanyProfile = async (profileData: CompanyProfile) => {
     setCompanyProfileState(profileData);
 
-    // If the current user doesn't have an organization_id, this is the first admin.
-    // Create an organization and assign it to them.
     if (profile && !profile.organizationId) {
       try {
-        // Generate the unique code BEFORE inserting the organization
         const newUniqueCode = generateUniqueCode();
 
-        // 1. Create new organization with the unique code directly
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
-          .insert({ name: profileData.name, unique_code: newUniqueCode }) // Insert unique_code here
+          .insert({ name: profileData.name, unique_code: newUniqueCode })
           .select()
           .single();
 
@@ -109,7 +102,6 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
 
         const newOrganizationId = orgData.id;
 
-        // 2. Update user's profile with organization_id and set role to admin
         const { error: profileUpdateError } = await supabase
           .from('profiles')
           .update({ organization_id: newOrganizationId, role: 'admin' })
@@ -117,26 +109,39 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
 
         if (profileUpdateError) throw profileUpdateError;
 
-        // 3. Refresh the profile context to get the updated organizationId and role
         await fetchProfile();
+        addActivity("Organization Created", `New organization "${profileData.name}" created with code: ${newUniqueCode}.`, { organizationId: newOrganizationId, companyName: profileData.name, uniqueCode: newUniqueCode }); // NEW: Log organization creation
         showSuccess(`Organization "${profileData.name}" created and assigned! You are now an admin. Your unique company code is: ${newUniqueCode}`);
 
       } catch (error: any) {
         console.error("Error during initial organization setup:", error);
+        addActivity("Organization Creation Failed", `Failed to create new organization "${profileData.name}".`, { error: error.message, companyName: profileData.name }); // NEW: Log failed organization creation
         showError(`Failed to set up organization: ${error.message}`);
       }
+    } else {
+      addActivity("Company Profile Updated", `Company profile updated to: ${profileData.name}.`, { companyName: profileData.name, currency: profileData.currency, address: profileData.address }); // NEW: Log company profile update
     }
   };
 
   const addLocation = (location: string) => {
     setLocations((prev) => {
       const newLocations = [...prev, location];
-      return Array.from(new Set(newLocations)); // Ensure uniqueness
+      const uniqueLocations = Array.from(new Set(newLocations));
+      if (uniqueLocations.length > prev.length) { // Only log if a new unique location was actually added
+        addActivity("Location Added", `Added new inventory location: ${location}.`, { locationName: location }); // NEW: Log location add
+      }
+      return uniqueLocations;
     });
   };
 
   const removeLocation = (location: string) => {
-    setLocations((prev) => prev.filter((loc) => loc !== location));
+    setLocations((prev) => {
+      const filteredLocations = prev.filter((loc) => loc !== location);
+      if (filteredLocations.length < prev.length) { // Only log if a location was actually removed
+        addActivity("Location Removed", `Removed inventory location: ${location}.`, { locationName: location }); // NEW: Log location remove
+      }
+      return filteredLocations;
+    });
   };
 
   return (
