@@ -22,44 +22,41 @@ const PutawayLabelPdfContent: React.FC<PutawayLabelPdfContentProps> = ({
   printDate,
 }) => {
   return (
-    <div className="bg-white text-gray-900 font-sans text-xs p-4 w-[100mm] h-[50mm] border border-black flex flex-col justify-between">
-      {/* Header */}
-      <div className="flex justify-between items-start mb-2">
-        <div className="font-bold text-sm">PUTAWAY LABEL</div>
-        <div className="text-right text-[0.6rem]">Printed: {printDate}</div>
+    <div className="bg-white text-gray-900 font-sans text-xs p-2 w-[100mm] h-[50mm] border border-black flex flex-col">
+      {/* QR Code at the top */}
+      <div className="flex justify-center mb-1">
+        <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-[30mm] h-[30mm] object-contain" />
       </div>
 
-      {/* Item Details */}
-      <div className="flex-grow grid grid-cols-2 gap-x-2 gap-y-1">
-        <div className="col-span-2">
-          <p className="font-bold text-sm truncate">{itemName}</p>
-          <p className="text-xs">SKU: {itemSku}</p>
+      {/* Item Name */}
+      <p className="font-bold text-sm text-center mb-1 leading-tight">{itemName}</p>
+
+      {/* Details Grid */}
+      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[0.6rem] flex-grow">
+        <div>
+          <span className="font-bold">Code:</span> {itemSku}
         </div>
         <div>
-          <p className="font-bold">QTY:</p>
-          <p className="text-lg font-extrabold">{receivedQuantity}</p>
-        </div>
-        <div>
-          <p className="font-bold">LOCATION:</p>
-          <p className="text-lg font-extrabold text-blue-700">{suggestedLocation}</p>
+          <span className="font-bold">Qty:</span> {receivedQuantity}
         </div>
         {lotNumber && (
           <div>
-            <p className="font-bold">LOT:</p>
-            <p>{lotNumber}</p>
+            <span className="font-bold">Lot:</span> {lotNumber}
           </div>
         )}
         {expirationDate && (
           <div>
-            <p className="font-bold">EXP:</p>
-            <p>{expirationDate}</p>
+            <span className="font-bold">Exp:</span> {expirationDate}
           </div>
         )}
+        <div className="col-span-2">
+          <span className="font-bold">Location:</span> <span className="text-blue-700 font-extrabold">{suggestedLocation}</span>
+        </div>
       </div>
 
-      {/* QR Code */}
-      <div className="flex justify-center mt-2">
-        <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-[40mm] h-[40mm] object-contain" />
+      {/* Footer Date */}
+      <div className="text-right text-[0.6rem] mt-1">
+        Date: {printDate}
       </div>
     </div>
   );
