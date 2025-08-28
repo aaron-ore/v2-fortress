@@ -1,5 +1,6 @@
 import React from "react";
 import AISummaryTool from "@/components/AISummaryTool"; // Import the AI Summary Tool
+import { Brain } from "lucide-react"; // Import Brain icon
 
 const AISummaryPage: React.FC = () => {
   return (
