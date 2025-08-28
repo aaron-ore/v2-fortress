@@ -375,7 +375,7 @@ const CreatePurchaseOrder: React.FC = () => {
           <Card className="bg-card border-border rounded-lg shadow-sm p-6">
             <CardHeader className="pb-4 flex flex-row items-center justify-between flex-wrap gap-2"> {/* Added flex-wrap and gap */}
               <CardTitle className="text-xl font-semibold">Items</CardTitle>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap"> {/* Added flex-wrap for mobile */}
                 <Button variant="outline" size="sm" onClick={() => setIsInventorySelectionDialogOpen(true)}>
                   <PackageOpen className="h-4 w-4 mr-2" /> Add from Inventory
                 </Button>
@@ -391,11 +391,11 @@ const CreatePurchaseOrder: React.FC = () => {
                 onDragEnd={handleDragEnd}
               >
                 <div className="overflow-x-auto"> {/* Added overflow-x-auto for table */}
-                  <Table>
+                  <Table className="min-w-[600px]"> {/* Added min-w to ensure horizontal scroll */}
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[20px]"></TableHead>
-                        <TableHead>Item Name</TableHead>
+                        <TableHead>Item Name</TableHead> {/* Removed fixed width */}
                         <TableHead className="w-[100px] text-right">Quantity</TableHead>
                         <TableHead className="w-[120px] text-right">Unit Price</TableHead>
                         <TableHead className="w-[120px] text-right">Total</TableHead>

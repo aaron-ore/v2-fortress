@@ -192,7 +192,7 @@ const EditPurchaseOrder: React.FC = () => {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Edit Purchase Order: {order.id}</h1>
 
-      <div className="flex justify-end space-x-2">
+      <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2"> {/* Adjusted for mobile stacking */}
         <Button variant="outline" onClick={() => navigate("/orders")}>
           Cancel
         </Button>
@@ -209,197 +209,206 @@ const EditPurchaseOrder: React.FC = () => {
 
       {/* Main content of the page */}
       <div className="main-page-content">
-        <Card className="bg-card border-border rounded-lg shadow-sm p-6">
-          <CardHeader className="pb-4 flex flex-row items-center justify-between">
-            <CardTitle className="text-xl font-semibold">Order Details</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="poNumber">Order ID</Label>
-              <Input
-                id="poNumber"
-                value={poNumber}
-                onChange={(e) => setPoNumber(e.target.value)}
-                disabled // Order ID usually not editable
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="supplier">Customer/Supplier</Label>
-              <Input
-                id="supplier"
-                value={supplier}
-                onChange={(e) => setSupplier(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="poDate">Order Date</Label>
-              <Input
-                id="poDate"
-                type="date"
-                value={poDate}
-                onChange={(e) => setPoDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dueDate">Due Date</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select value={status} onValueChange={(value) => setStatus(value as OrderItem['status'])}>
-                <SelectTrigger id="status">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="New Order">New Order</SelectItem>
-                  <SelectItem value="Processing">Processing</SelectItem>
-                  <SelectItem value="Packed">Packed</SelectItem>
-                  <SelectItem value="Shipped">Shipped</SelectItem>
-                  <SelectItem value="On Hold / Problem">On Hold / Problem</SelectItem>
-                  <SelectItem value="Archived">Archived</SelectItem> {/* New status option */}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="orderType">Order Type</Label>
-              <Select value={orderType} onValueChange={(value) => setOrderType(value as OrderItem['orderType'])}>
-                <SelectTrigger id="orderType">
-                  <SelectValue placeholder="Select order type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Retail">Retail</SelectItem>
-                  <SelectItem value="Wholesale">Wholesale</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="shippingMethod">Shipping Method</Label>
-              <Select value={shippingMethod} onValueChange={(value) => setShippingMethod(value as OrderItem['shippingMethod'])}>
-                <SelectTrigger id="shippingMethod">
-                  <SelectValue placeholder="Select shipping method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Standard">Standard</SelectItem>
-                  <SelectItem value="Express">Express</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="terms">Terms</Label>
-              <Input
-                id="terms"
-                value={terms}
-                onChange={(e) => setTerms(e.target.value)}
-                placeholder="e.g., Net 30"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="totalAmount">Total Amount</Label>
-              <Input
-                id="totalAmount"
-                type="number"
-                value={calculateTotalAmount().toFixed(2)}
-                disabled // Derived from items
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add any special instructions or notes..."
-                rows={3}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="space-y-6 p-6 bg-background rounded-lg">
+          <Card className="bg-card border-border rounded-lg shadow-sm p-6">
+            <CardHeader className="pb-4 flex flex-row items-center justify-between">
+              <CardTitle className="text-xl font-semibold">Order Details</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="poNumber">Order ID</Label>
+                <Input
+                  id="poNumber"
+                  value={poNumber}
+                  onChange={(e) => setPoNumber(e.target.value)}
+                  disabled // Order ID usually not editable
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="supplier">Customer/Supplier</Label>
+                <Input
+                  id="supplier"
+                  value={supplier}
+                  onChange={(e) => setSupplier(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="poDate">Order Date</Label>
+                <Input
+                  id="poDate"
+                  type="date"
+                  value={poDate}
+                  onChange={(e) => setPoDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dueDate">Due Date</Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select value={status} onValueChange={(value) => setStatus(value as OrderItem['status'])}>
+                  <SelectTrigger id="status">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="New Order">New Order</SelectItem>
+                    <SelectItem value="Processing">Processing</SelectItem>
+                    <SelectItem value="Packed">Packed</SelectItem>
+                    <SelectItem value="Shipped">Shipped</SelectItem>
+                    <SelectItem value="On Hold / Problem">On Hold / Problem</SelectItem>
+                    <SelectItem value="Archived">Archived</SelectItem> {/* New status option */}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="orderType">Order Type</Label>
+                <Select value={orderType} onValueChange={(value) => setOrderType(value as OrderItem['orderType'])}>
+                  <SelectTrigger id="orderType">
+                    <SelectValue placeholder="Select order type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Retail">Retail</SelectItem>
+                    <SelectItem value="Wholesale">Wholesale</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="shippingMethod">Shipping Method</Label>
+                <Select value={shippingMethod} onValueChange={(value) => setShippingMethod(value as OrderItem['shippingMethod'])}>
+                  <SelectTrigger id="shippingMethod">
+                    <SelectValue placeholder="Select shipping method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Standard">Standard</SelectItem>
+                    <SelectItem value="Express">Express</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="terms">Terms</Label>
+                <Input
+                  id="terms"
+                  value={terms}
+                  onChange={(e) => setTerms(e.target.value)}
+                  placeholder="e.g., Net 30"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="totalAmount">Total Amount</Label>
+                <Input
+                  id="totalAmount"
+                  type="number"
+                  value={calculateTotalAmount().toFixed(2)}
+                  disabled // Derived from items
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Add any special instructions or notes..."
+                  rows={3}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-card border-border rounded-lg shadow-sm p-6">
-          <CardHeader className="pb-4 flex flex-row items-center justify-between">
-            <CardTitle className="text-xl font-semibold">Items</CardTitle>
-            <Button variant="outline" size="sm" onClick={handleAddItem}> {/* Added size="sm" */}
-              <PlusCircle className="h-4 w-4 mr-2" /> Add Item
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Item Name</TableHead>
-                  <TableHead className="w-[100px] text-right">Quantity</TableHead>
-                  <TableHead className="w-[120px] text-right">Unit Price</TableHead>
-                  <TableHead className="w-[120px] text-right">Total</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <Input
-                        value={item.itemName}
-                        onChange={(e) =>
-                          handleItemChange(item.id, "itemName", e.target.value)
-                        }
-                        placeholder="Product Name"
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Input
-                        type="number"
-                        value={item.quantity === 0 ? "" : item.quantity}
-                        onChange={(e) =>
-                          handleItemChange(
-                            item.id,
-                            "quantity",
-                            parseInt(e.target.value) || 0,
-                          )
-                        }
-                        min="0"
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Input
-                        type="number"
-                        value={item.unitPrice === 0 ? "" : item.unitPrice}
-                        onChange={(e) =>
-                          handleItemChange(
-                            item.id,
-                            "unitPrice",
-                            parseFloat(e.target.value) || 0,
-                          )
-                        }
-                        step="0.01"
-                        min="0"
-                      />
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      ${(item.quantity * item.unitPrice).toFixed(2)}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveItem(item.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <div className="flex justify-end items-center mt-4 text-lg font-bold">
-              Total Amount: ${calculateTotalAmount().toFixed(2)}
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="bg-card border-border rounded-lg shadow-sm p-6">
+            <CardHeader className="pb-4 flex flex-row items-center justify-between flex-wrap gap-2"> {/* Added flex-wrap and gap */}
+              <CardTitle className="text-xl font-semibold">Items</CardTitle>
+              <Button variant="outline" size="sm" onClick={handleAddItem}> {/* Added size="sm" */}
+                <PlusCircle className="h-4 w-4 mr-2" /> Add Item
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto"> {/* Added overflow-x-auto for table */}
+                <Table className="min-w-[600px]"> {/* Added min-w to ensure horizontal scroll */}
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[20px]"></TableHead>
+                      <TableHead>Item Name</TableHead> {/* Removed fixed width */}
+                      <TableHead className="w-[100px] text-right">Quantity</TableHead>
+                      <TableHead className="w-[120px] text-right">Unit Price</TableHead>
+                      <TableHead className="w-[120px] text-right">Total</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="w-[20px]"></TableCell>
+                        <TableCell>
+                          <Input
+                            value={item.itemName}
+                            onChange={(e) =>
+                              handleItemChange(item.id, "itemName", e.target.value)
+                            }
+                            placeholder="Product Name"
+                            className="min-w-[120px]"
+                          />
+                        </TableCell>
+                        <TableCell className="text-right w-[100px]">
+                          <Input
+                            type="number"
+                            value={item.quantity === 0 ? "" : item.quantity}
+                            onChange={(e) =>
+                              handleItemChange(
+                                item.id,
+                                "quantity",
+                                parseInt(e.target.value) || 0,
+                              )
+                            }
+                            min="0"
+                            className="min-w-[60px]"
+                          />
+                        </TableCell>
+                        <TableCell className="text-right w-[120px]">
+                          <Input
+                            type="number"
+                            value={item.unitPrice === 0 ? "" : item.unitPrice}
+                            onChange={(e) =>
+                              handleItemChange(
+                                item.id,
+                                "unitPrice",
+                                parseFloat(e.target.value) || 0,
+                              )
+                            }
+                            step="0.01"
+                            min="0"
+                            className="min-w-[80px]"
+                          />
+                        </TableCell>
+                        <TableCell className="text-right font-semibold w-[120px]">
+                          ${(item.quantity * item.unitPrice).toFixed(2)}
+                        </TableCell>
+                        <TableCell className="w-[50px]">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveItem(item.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="flex justify-end items-center mt-4 text-lg font-bold">
+                Total Amount: ${calculateTotalAmount().toFixed(2)}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {order && (
