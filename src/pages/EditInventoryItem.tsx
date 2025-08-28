@@ -90,10 +90,8 @@ const EditInventoryItem: React.FC = () => {
 
   // Autopopulate barcodeValue with SKU if SKU changes
   useEffect(() => {
-    if (sku.trim() && barcodeValue !== sku.trim()) { // Only update if different
-      setBarcodeValue(sku.trim());
-    }
-  }, [sku, barcodeValue]);
+    setBarcodeValue(sku.trim());
+  }, [sku]);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {

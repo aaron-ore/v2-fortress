@@ -81,10 +81,8 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
 
   // Autopopulate barcodeValue with SKU
   useEffect(() => {
-    if (sku.trim() && !barcodeValue.trim()) { // Only autopopulate if barcodeValue is empty
-      setBarcodeValue(sku.trim());
-    }
-  }, [sku, barcodeValue]);
+    setBarcodeValue(sku.trim());
+  }, [sku]);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
