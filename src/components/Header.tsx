@@ -42,11 +42,20 @@ const Header: React.FC = () => {
   ];
 
   const handleLogout = async () => {
+    // Check if there's an active session before attempting to sign out
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      showSuccess("You are already logged out.");
+      navigate("/auth"); // Ensure navigation to auth page
+      return;
+    }
+
     const { error } = await supabase.auth.signOut();
     if (error) {
       showError("Failed to log out: " + error.message);
     } else {
       showSuccess("Logged out successfully!");
+      // The onAuthStateChange listener in App.tsx will handle navigation to /auth
     }
   };
 

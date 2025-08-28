@@ -61,12 +61,22 @@ const MobileNav: React.FC = () => {
   const [isGlobalSearchDialogOpen, setIsGlobalSearchDialogOpen] = useState(false);
 
   const handleLogout = async () => {
+    // Check if there's an active session before attempting to sign out
+    const { data: { session } = { session: null } } = await supabase.auth.getSession(); // Default to null if data is undefined
+    if (!session) {
+      showSuccess("You are already logged out.");
+      navigate("/auth"); // Ensure navigation to auth page
+      setIsSheetOpen(false); // Close the sheet
+      return;
+    }
+
     const { error } = await supabase.auth.signOut();
     if (error) {
       showError("Failed to log out: " + error.message);
     } else {
       showSuccess("Logged out successfully!");
-      setIsSheetOpen(false);
+      setIsSheetOpen(false); // Close the sheet
+      // The onAuthStateChange listener in App.tsx will handle navigation to /auth
     }
   };
 
