@@ -36,10 +36,10 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { VendorProvider } from "./context/VendorContext";
 import { ProfileProvider, useProfile } from "./context/ProfileContext";
 import { StockMovementProvider } from "./context/StockMovementContext";
-import { ActivityLogProvider, useActivityLogs } from "./context/ActivityLogContext"; // Import useActivityLogs
+import { ActivityLogProvider } from "./context/ActivityLogContext";
 import OnboardingWizard from "./components/onboarding/OnboardingWizard";
 import { supabase } from "./lib/supabaseClient";
-import React, { useState, useEffect, useRef, ReactNode } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import AnnouncementBar from "./components/AnnouncementBar";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { PrintProvider, usePrint } from "./context/PrintContext";
@@ -94,25 +94,12 @@ const AuthenticatedApp = () => {
   );
 };
 
-// New wrapper component to handle ProfileContext and ActivityLogContext dependencies
-const ProfileAndActivityWrapper = ({ children }: { children: ReactNode }) => {
-  const { profile, allProfiles, isLoadingProfile } = useProfile(); // Consume ProfileContext
-
-  // Render ActivityLogProvider, passing profile data as props
-  return (
-    <ActivityLogProvider profile={profile} allProfiles={allProfiles}>
-      {children}
-    </ActivityLogProvider>
-  );
-};
-
 const AppContent = () => {
   const [session, setSession] = useState<any>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const navigate = useNavigate();
   const { isLoadingProfile } = useProfile();
   const { isPrinting, printContentData, resetPrintState } = usePrint();
-  const { addActivity } = useActivityLogs(); // This will now work correctly
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -205,14 +192,14 @@ const App = () => (
         }}
       />
       <BrowserRouter>
-        <ProfileProvider> {/* ProfileProvider is outermost */}
-          <ProfileAndActivityWrapper> {/* New wrapper component */}
+        <ProfileProvider>
+          <ActivityLogProvider> {/* Removed profile and allProfiles props */}
             <OnboardingProvider>
               <PrintProvider>
                 <AppContent />
               </PrintProvider>
             </OnboardingProvider>
-          </ProfileAndActivityWrapper>
+          </ActivityLogProvider>
         </ProfileProvider>
       </BrowserRouter>
     </ThemeProvider>
