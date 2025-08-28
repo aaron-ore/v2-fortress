@@ -181,7 +181,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
         lot: item.lotNumber,
         exp: item.expirationDate,
       });
-      const qrCodeSvg = generateQrCodeSvg(qrCodeValue, 128); // Generate QR code SVG
+      const qrCodeSvg = await generateQrCodeSvg(qrCodeValue, 128); // Generate QR code SVG
 
       const labelProps = {
         itemName: item.itemName,

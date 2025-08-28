@@ -79,6 +79,13 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     }
   }, [isOpen]);
 
+  // Autopopulate barcodeValue with SKU
+  useEffect(() => {
+    if (sku.trim() && !barcodeValue.trim()) { // Only autopopulate if barcodeValue is empty
+      setBarcodeValue(sku.trim());
+    }
+  }, [sku, barcodeValue]);
+
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
@@ -118,7 +125,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
         });
         setBarcodeSvg(svgElement.outerHTML);
       } else { // QR code
-        const qrSvg = generateQrCodeSvg(barcodeValue.trim(), 100); // Use QR code generator
+        const qrSvg = await generateQrCodeSvg(barcodeValue.trim(), 100); // Use QR code generator
         setBarcodeSvg(qrSvg);
       }
       showSuccess(`${barcodeType === "CODE128" ? "Barcode" : "QR Code"} generated!`);

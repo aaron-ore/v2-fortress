@@ -88,6 +88,13 @@ const EditInventoryItem: React.FC = () => {
     }
   }, [id, inventoryItems, navigate]);
 
+  // Autopopulate barcodeValue with SKU if SKU changes
+  useEffect(() => {
+    if (sku.trim() && barcodeValue !== sku.trim()) { // Only update if different
+      setBarcodeValue(sku.trim());
+    }
+  }, [sku, barcodeValue]);
+
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
@@ -127,7 +134,7 @@ const EditInventoryItem: React.FC = () => {
         });
         setBarcodeSvg(svgElement.outerHTML);
       } else { // QR code
-        const qrSvg = generateQrCodeSvg(barcodeValue.trim(), 100); // Use QR code generator
+        const qrSvg = await generateQrCodeSvg(barcodeValue.trim(), 100); // Use QR code generator
         setBarcodeSvg(qrSvg);
       }
       showSuccess(`${barcodeType === "CODE128" ? "Barcode" : "QR Code"} generated!`);
