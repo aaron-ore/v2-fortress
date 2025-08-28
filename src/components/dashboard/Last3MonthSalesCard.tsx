@@ -37,8 +37,8 @@ const Last3MonthSalesCard: React.FC = () => {
       if (!isValid(itemDate)) return;
       const monthName = format(itemDate, "MMM");
       if (monthlyData[monthName]) {
-        // Simulate new inventory added, perhaps a fraction of current quantity
-        monthlyData[monthName].newInventory += Math.floor(item.quantity * (0.1 + Math.random() * 0.2));
+        // Simulate new inventory added with a fixed factor to prevent animation loop
+        monthlyData[monthName].newInventory += Math.floor(item.quantity * 0.2); // Using a fixed 20% as simulation
       }
     });
 
