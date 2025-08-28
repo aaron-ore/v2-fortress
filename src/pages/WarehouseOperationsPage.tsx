@@ -112,7 +112,7 @@ const WarehouseOperationsPage: React.FC = () => {
                 "flex flex-col items-center justify-center h-auto py-3 px-2 text-sm font-medium rounded-md transition-colors text-center", // Added text-center
                 activeTab === op.value
                   ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-gray-300 hover:bg-muted/50 hover:text-primary"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-primary" // Changed text-gray-300 to text-muted-foreground
               )}
               onClick={() => setActiveTab(op.value)}
             >
