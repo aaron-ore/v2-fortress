@@ -1,4 +1,4 @@
-import { QRCode } from 'qrcode.react'; // Reverting to named import
+import * as QRCodeModule from 'qrcode.react'; // Importing as a namespace
 import ReactDOMServer from 'react-dom/server';
 import React from 'react';
 
@@ -13,9 +13,9 @@ export const generateQrCodeSvg = (value: string, size: number = 128): string => 
     throw new Error("Value for QR code cannot be empty.");
   }
 
-  // Render the QRCode component to a static SVG string
+  // Render the QRCode component from the namespace
   const svgString = ReactDOMServer.renderToStaticMarkup(
-    <QRCode value={value} size={size} renderAs="svg" level="L" />
+    <QRCodeModule.QRCode value={value} size={size} renderAs="svg" level="L" />
   );
 
   return svgString;
