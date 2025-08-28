@@ -32,7 +32,7 @@ import {
   Sparkles,
   BookOpen,
   Warehouse,
-  History, // NEW: Import History icon
+  History,
 } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import NotificationSheet from "@/components/NotificationSheet";
@@ -41,7 +41,7 @@ import CurrentDateTime from "@/components/CurrentDateTime";
 import { useNotifications } from "@/context/NotificationContext";
 import { useProfile } from "@/context/ProfileContext";
 import { supabase } from "@/lib/supabaseClient";
-import { useActivityLogs } from "@/context/ActivityLogContext"; // NEW: Import useActivityLogs
+import { useActivityLogs } from "@/context/ActivityLogContext";
 
 const navLinks = [
   { to: "/", label: "Dashboard" },
@@ -58,7 +58,7 @@ const MobileNav: React.FC = () => {
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
-  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
+  const { addActivity } = useActivityLogs();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
   const [isGlobalSearchDialogOpen, setIsGlobalSearchDialogOpen] = useState(false);
@@ -67,10 +67,10 @@ const MobileNav: React.FC = () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
       showError("Failed to log out: " + error.message);
-      addActivity("Logout Failed", `User ${profile?.email || 'Unknown'} failed to log out.`, { error: error.message }); // NEW: Log failed logout
+      addActivity("Logout Failed", `User ${profile?.email || 'Unknown'} failed to log out.`, { error: error.message });
     } else {
       showSuccess("Logged out successfully!");
-      addActivity("Logout", `User ${profile?.email || 'Unknown'} logged out.`, {}); // NEW: Log successful logout
+      addActivity("Logout", `User ${profile?.email || 'Unknown'} logged out.`, {});
       setIsSheetOpen(false);
     }
   };
@@ -201,9 +201,10 @@ const MobileNav: React.FC = () => {
             >
               <SettingsIcon className="h-4 w-4 mr-2" /> Settings
             </Button>
+            {/* NEW: Link to LogsPage */}
             <Button
               variant="ghost"
-              className={cn(baseButtonClass, location.pathname === "/logs" ? activeLinkClass : inactiveLinkClass)} {/* NEW: Link to LogsPage */}
+              className={cn(baseButtonClass, location.pathname === "/logs" ? activeLinkClass : inactiveLinkClass)}
               onClick={() => handleNavigation("/logs")}
             >
               <History className="h-4 w-4 mr-2" /> Activity Logs
