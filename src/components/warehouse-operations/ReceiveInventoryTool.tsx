@@ -293,7 +293,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
         {selectedPO ? (
           <>
             <h3 className="text-lg font-semibold">Items for PO: {selectedPO.id}</h3>
-            <ScrollArea className="h-full max-h-[calc(100vh-400px)]">
+            <ScrollArea className="h-full"> {/* Removed max-h to allow flex-grow to manage height */}
               <div className="space-y-3 pr-2">
                 {receivedItems.map((item) => (
                   <Card key={item.id} className="bg-card border-border shadow-sm">
