@@ -56,9 +56,10 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
 
   const [adjustmentAmount, setAdjustmentAmount] = useState("");
   const [adjustmentType, setAdjustmentType] = useState<"add" | "subtract">("add");
+  const [adjustmentTarget, setAdjustmentTarget] = useState<"pickingBin" | "overstock">("pickingBin"); // NEW
   const [adjustmentReason, setAdjustmentReason] = useState("");
-  const [autoReorderEnabled, setAutoReorderEnabled] = useState(false); // NEW: State for auto-reorder
-  const [autoReorderQuantity, setAutoReorderQuantity] = useState(""); // NEW: State for auto-reorder quantity
+  const [autoReorderEnabled, setAutoReorderEnabled] = useState(false);
+  const [autoReorderQuantity, setAutoReorderQuantity] = useState("");
 
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
 
@@ -73,11 +74,12 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
     if (isOpen) {
       setAdjustmentAmount("");
       setAdjustmentType("add");
+      setAdjustmentTarget("pickingBin"); // Reset to default
       setAdjustmentReason("");
       if (currentItem) {
         fetchStockMovements(currentItem.id);
-        setAutoReorderEnabled(currentItem.autoReorderEnabled); // Set new field
-        setAutoReorderQuantity(currentItem.autoReorderQuantity.toString()); // Set new field
+        setAutoReorderEnabled(currentItem.autoReorderEnabled);
+        setAutoReorderQuantity(currentItem.autoReorderQuantity.toString());
       }
     }
   }, [isOpen, currentItem, fetchStockMovements]);
@@ -95,21 +97,36 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
       return;
     }
 
-    let newQuantity = currentItem.quantity;
-    const oldQuantity = currentItem.quantity;
-    if (adjustmentType === "add") {
-      newQuantity += amount;
-    } else {
-      if (newQuantity < amount) {
-        showError("Cannot subtract more than available stock.");
-        return;
+    let newPickingBinQuantity = currentItem.pickingBinQuantity;
+    let newOverstockQuantity = currentItem.overstockQuantity;
+    const oldQuantity = currentItem.quantity; // Total old quantity
+
+    if (adjustmentTarget === "pickingBin") {
+      if (adjustmentType === "add") {
+        newPickingBinQuantity += amount;
+      } else {
+        if (newPickingBinQuantity < amount) {
+          showError("Cannot subtract more than available stock in picking bin.");
+          return;
+        }
+        newPickingBinQuantity -= amount;
       }
-      newQuantity -= amount;
+    } else { // overstock
+      if (adjustmentType === "add") {
+        newOverstockQuantity += amount;
+      } else {
+        if (newOverstockQuantity < amount) {
+          showError("Cannot subtract more than available stock in overstock.");
+          return;
+        }
+        newOverstockQuantity -= amount;
+      }
     }
 
-    const updatedItem: InventoryItem = {
+    const updatedItem: Omit<InventoryItem, "quantity"> & { id: string } = {
       ...currentItem,
-      quantity: newQuantity,
+      pickingBinQuantity: newPickingBinQuantity,
+      overstockQuantity: newOverstockQuantity,
       lastUpdated: new Date().toISOString().split('T')[0],
     };
 
@@ -121,13 +138,13 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
       itemName: currentItem.name,
       type: adjustmentType,
       amount: amount,
-      oldQuantity: oldQuantity,
-      newQuantity: newQuantity,
-      reason: adjustmentReason,
+      oldQuantity: oldQuantity, // Log total old quantity
+      newQuantity: newPickingBinQuantity + newOverstockQuantity, // Log total new quantity
+      reason: `${adjustmentReason} (${adjustmentTarget === "pickingBin" ? "Picking Bin" : "Overstock"})`,
     });
 
     await refreshInventory();
-    showSuccess(`Stock for ${currentItem.name} adjusted by ${adjustmentType === 'add' ? '+' : '-'}${amount} due to: ${adjustmentReason}. New quantity: ${newQuantity}.`);
+    showSuccess(`Stock for ${currentItem.name} adjusted by ${adjustmentType === 'add' ? '+' : '-'}${amount} in ${adjustmentTarget === "pickingBin" ? "Picking Bin" : "Overstock"} due to: ${adjustmentReason}. New total quantity: ${newPickingBinQuantity + newOverstockQuantity}.`);
     onClose();
   };
 
@@ -142,7 +159,7 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
       return;
     }
 
-    const updatedItem: InventoryItem = {
+    const updatedItem: Omit<InventoryItem, "quantity"> & { id: string } = {
       ...currentItem,
       autoReorderEnabled: checked,
       autoReorderQuantity: parsedAutoReorderQuantity,
@@ -158,7 +175,7 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
     setAutoReorderQuantity(e.target.value);
 
     if (newQty > 0) {
-      const updatedItem: InventoryItem = {
+      const updatedItem: Omit<InventoryItem, "quantity"> & { id: string } = {
         ...currentItem,
         autoReorderQuantity: newQty,
         lastUpdated: new Date().toISOString().split('T')[0],
@@ -286,7 +303,7 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
               <span className="font-semibold">Retail Price:</span> ${currentItem.retailPrice.toFixed(2)}
             </div>
             <div className="flex items-center gap-2 col-span-2">
-              <span className="font-semibold text-lg text-foreground">Current Stock: {currentItem.quantity} units</span>
+              <span className="font-semibold text-lg text-foreground">Total Stock: {currentItem.quantity} units</span>
               <span
                 className={`px-2 py-1 rounded-full text-xs font-semibold ml-2 ${
                   currentItem.status === "In Stock"
@@ -298,6 +315,10 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
               >
                 {currentItem.status}
               </span>
+            </div>
+            <div className="flex items-center gap-2 col-span-2">
+              <span className="font-semibold text-base text-foreground">Picking Bin: {currentItem.pickingBinQuantity} units</span>
+              <span className="font-semibold text-base text-foreground ml-4">Overstock: {currentItem.overstockQuantity} units</span>
             </div>
             {currentItem.barcodeUrl && (
               <div className="col-span-2 mt-2 p-2 border border-border rounded-md bg-muted/20 flex justify-center">
@@ -339,6 +360,23 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
                     <Label htmlFor="subtract-stock" className="flex items-center gap-1">
                       <ArrowDown className="h-4 w-4 text-red-500" /> Remove Stock
                     </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              <div className="space-y-2">
+                <Label>Adjustment Target</Label> {/* NEW */}
+                <RadioGroup
+                  value={adjustmentTarget}
+                  onValueChange={(value: "pickingBin" | "overstock") => setAdjustmentTarget(value)}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="pickingBin" id="target-picking-bin" />
+                    <Label htmlFor="target-picking-bin">Picking Bin</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="overstock" id="target-overstock" />
+                    <Label htmlFor="target-overstock">Overstock</Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -389,7 +427,7 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
                     min="1"
                   />
                   <p className="text-xs text-muted-foreground">
-                    This quantity will be ordered when stock drops to or below the reorder level.
+                    This quantity will be ordered when stock drops to or below the overall reorder level.
                   </p>
                 </div>
               )}

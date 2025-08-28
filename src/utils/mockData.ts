@@ -46,19 +46,25 @@ export const mockInventoryItems: InventoryItem[] = [
     description: "Ergonomic wireless mouse with long battery life.",
     sku: "WM-001",
     category: "Electronics",
-    quantity: 15,
+    pickingBinQuantity: 10, // NEW
+    overstockQuantity: 5, // NEW
+    quantity: 15, // Derived
     reorderLevel: 20,
+    pickingReorderLevel: 15, // NEW
     committedStock: 5,
     incomingStock: 0,
     unitCost: 15.00,
     retailPrice: 29.99,
     location: "Main Warehouse",
+    pickingBinLocation: "MW-A-01-1-A", // NEW
     status: "Low Stock",
     lastUpdated: "2024-08-01",
     imageUrl: "https://via.placeholder.com/150/0000FF/FFFFFF?text=Mouse",
     vendorId: "vendor-1",
     barcodeUrl: "<svg xmlns='http://www.w3.org/2000/svg' width='150' height='50'><rect x='0' y='0' width='150' height='50' fill='white'/><text x='75' y='25' font-family='monospace' font-size='16' text-anchor='middle' fill='black'>WM-001</text></svg>",
     organizationId: "mock-org-1",
+    autoReorderEnabled: false,
+    autoReorderQuantity: 0,
   },
   {
     id: "item-2",
@@ -66,19 +72,25 @@ export const mockInventoryItems: InventoryItem[] = [
     description: "RGB mechanical keyboard with tactile switches.",
     sku: "MK-002",
     category: "Electronics",
-    quantity: 5,
+    pickingBinQuantity: 3, // NEW
+    overstockQuantity: 2, // NEW
+    quantity: 5, // Derived
     reorderLevel: 10,
+    pickingReorderLevel: 5, // NEW
     committedStock: 0,
     incomingStock: 20,
     unitCost: 60.00,
     retailPrice: 119.99,
     location: "Main Warehouse",
+    pickingBinLocation: "MW-A-02-1-B", // NEW
     status: "Low Stock",
     lastUpdated: "2024-08-05",
     imageUrl: "https://via.placeholder.com/150/FF0000/FFFFFF?text=Keyboard",
     vendorId: "vendor-1",
     barcodeUrl: "<svg xmlns='http://www.w3.org/2000/svg' width='150' height='50'><rect x='0' y='0' width='150' height='50' fill='white'/><text x='75' y='25' font-family='monospace' font-size='16' text-anchor='middle' fill='black'>MK-002</text></svg>",
     organizationId: "mock-org-1",
+    autoReorderEnabled: true,
+    autoReorderQuantity: 10,
   },
   {
     id: "item-3",
@@ -86,19 +98,25 @@ export const mockInventoryItems: InventoryItem[] = [
     description: "Premium A4 notebook, 100 pages.",
     sku: "NB-003",
     category: "Office Supplies",
-    quantity: 120,
+    pickingBinQuantity: 100, // NEW
+    overstockQuantity: 20, // NEW
+    quantity: 120, // Derived
     reorderLevel: 50,
+    pickingReorderLevel: 80, // NEW
     committedStock: 10,
     incomingStock: 0,
     unitCost: 2.50,
     retailPrice: 4.99,
     location: "Store Front",
+    pickingBinLocation: "SF-B-01-2-C", // NEW
     status: "In Stock",
     lastUpdated: "2024-07-20",
     imageUrl: "https://via.placeholder.com/150/00FF00/FFFFFF?text=Notebook",
     vendorId: "vendor-2",
     barcodeUrl: "<svg xmlns='http://www.w3.org/2000/svg' width='150' height='50'><rect x='0' y='0' width='150' height='50' fill='white'/><text x='75' y='25' font-family='monospace' font-size='16' text-anchor='middle' fill='black'>NB-003</text></svg>",
     organizationId: "mock-org-1",
+    autoReorderEnabled: false,
+    autoReorderQuantity: 0,
   },
   {
     id: "item-4",
@@ -106,19 +124,25 @@ export const mockInventoryItems: InventoryItem[] = [
     description: "Smooth writing blue gel pen.",
     sku: "GP-004",
     category: "Office Supplies",
-    quantity: 0,
+    pickingBinQuantity: 0, // NEW
+    overstockQuantity: 0, // NEW
+    quantity: 0, // Derived
     reorderLevel: 30,
+    pickingReorderLevel: 20, // NEW
     committedStock: 0,
     incomingStock: 0,
     unitCost: 0.75,
     retailPrice: 1.50,
     location: "Store Front",
+    pickingBinLocation: "SF-B-02-1-A", // NEW
     status: "Out of Stock",
     lastUpdated: "2024-08-10",
     imageUrl: "https://via.placeholder.com/150/FFFF00/000000?text=Pen",
     vendorId: "vendor-2",
     barcodeUrl: "<svg xmlns='http://www.w3.org/2000/svg' width='150' height='50'><rect x='0' y='0' width='150' height='50' fill='white'/><text x='75' y='25' font-family='monospace' font-size='16' text-anchor='middle' fill='black'>GP-004</text></svg>",
     organizationId: "mock-org-1",
+    autoReorderEnabled: true,
+    autoReorderQuantity: 50,
   },
   {
     id: "item-5",
@@ -126,19 +150,25 @@ export const mockInventoryItems: InventoryItem[] = [
     description: "Heavy-duty adjustable wrench, 10-inch.",
     sku: "AW-005",
     category: "Tools",
-    quantity: 30,
+    pickingBinQuantity: 25, // NEW
+    overstockQuantity: 5, // NEW
+    quantity: 30, // Derived
     reorderLevel: 10,
+    pickingReorderLevel: 10, // NEW
     committedStock: 0,
     incomingStock: 0,
     unitCost: 12.00,
     retailPrice: 24.00,
     location: "Tool Shed",
+    pickingBinLocation: "TS-C-01-1-A", // NEW
     status: "In Stock",
     lastUpdated: "2024-07-15",
     imageUrl: "https://via.placeholder.com/150/FF00FF/FFFFFF?text=Wrench",
     vendorId: "vendor-1",
     barcodeUrl: "<svg xmlns='http://www.w3.org/2000/svg' width='150' height='50'><rect x='0' y='0' width='150' height='50' fill='white'/><text x='75' y='25' font-family='monospace' font-size='16' text-anchor='middle' fill='black'>AW-005</text></svg>",
     organizationId: "mock-org-1",
+    autoReorderEnabled: false,
+    autoReorderQuantity: 0,
   },
   {
     id: "item-6",
@@ -146,17 +176,23 @@ export const mockInventoryItems: InventoryItem[] = [
     description: "Comfortable cotton t-shirt, large size, blue color.",
     sku: "TS-LB-006",
     category: "Apparel",
-    quantity: 8,
+    pickingBinQuantity: 5, // NEW
+    overstockQuantity: 3, // NEW
+    quantity: 8, // Derived
     reorderLevel: 15,
+    pickingReorderLevel: 10, // NEW
     committedStock: 2,
     incomingStock: 0,
     unitCost: 8.00,
     retailPrice: 18.00,
     location: "Main Warehouse",
+    pickingBinLocation: "MW-B-03-2-D", // NEW
     status: "Low Stock",
     lastUpdated: "2024-08-03",
     imageUrl: "https://via.placeholder.com/150/00FFFF/000000?text=T-Shirt",
     organizationId: "mock-org-1",
+    autoReorderEnabled: true,
+    autoReorderQuantity: 20,
   },
 ];
 
@@ -174,6 +210,7 @@ export const mockOrders: OrderItem[] = [
     notes: "Customer requested express shipping.",
     orderType: "Retail",
     shippingMethod: "Express",
+    deliveryRoute: "Route 1", // NEW
     items: [
       { id: 1, itemName: "Wireless Mouse", quantity: 3, unitPrice: 29.99, inventoryItemId: "item-1" },
       { id: 2, itemName: "Notebook (A4)", quantity: 10, unitPrice: 4.99, inventoryItemId: "item-3" },
@@ -193,6 +230,7 @@ export const mockOrders: OrderItem[] = [
     notes: "Urgent restock for keyboards.",
     orderType: "Wholesale",
     shippingMethod: "Standard",
+    deliveryRoute: "N/A", // NEW
     items: [
       { id: 1, itemName: "Mechanical Keyboard", quantity: 20, unitPrice: 60.00, inventoryItemId: "item-2" },
     ],
@@ -211,6 +249,7 @@ export const mockOrders: OrderItem[] = [
     notes: "Standard delivery.",
     orderType: "Retail",
     shippingMethod: "Standard",
+    deliveryRoute: "Route 2", // NEW
     items: [
       { id: 1, itemName: "Wireless Mouse", quantity: 2, unitPrice: 29.99, inventoryItemId: "item-1" },
     ],
@@ -229,6 +268,7 @@ export const mockOrders: OrderItem[] = [
     notes: "Received 100 gel pens.",
     orderType: "Wholesale",
     shippingMethod: "Standard",
+    deliveryRoute: "N/A", // NEW
     items: [
       { id: 1, itemName: "Gel Pen (Blue)", quantity: 100, unitPrice: 0.75, inventoryItemId: "item-4" },
     ],
@@ -247,6 +287,7 @@ export const mockOrders: OrderItem[] = [
     notes: "Delivered.",
     orderType: "Retail",
     shippingMethod: "Standard",
+    deliveryRoute: "Route 1", // NEW
     items: [
       { id: 1, itemName: "T-Shirt (Large, Blue)", quantity: 1, unitPrice: 18.00, inventoryItemId: "item-6" },
     ],
@@ -265,6 +306,7 @@ export const mockOrders: OrderItem[] = [
     notes: "Received 30 wrenches.",
     orderType: "Wholesale",
     shippingMethod: "Standard",
+    deliveryRoute: "N/A", // NEW
     items: [
       { id: 1, itemName: "Adjustable Wrench", quantity: 30, unitPrice: 12.00, inventoryItemId: "item-5" },
     ],
@@ -283,6 +325,7 @@ export const mockOrders: OrderItem[] = [
     notes: "Payment issue.",
     orderType: "Retail",
     shippingMethod: "Standard",
+    deliveryRoute: "Route 3", // NEW
     items: [
       { id: 1, itemName: "T-Shirt (Large, Blue)", quantity: 2, unitPrice: 18.00, inventoryItemId: "item-6" },
     ],
@@ -297,6 +340,7 @@ export const mockLocations: string[] = [
   "Store Front",
   "Tool Shed",
   "Returns Area",
+  "Cold Storage", // NEW
 ];
 
 // --- Mock Company Profile (for OnboardingContext) ---

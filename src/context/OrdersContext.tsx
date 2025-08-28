@@ -25,6 +25,7 @@ export interface OrderItem {
   notes: string;
   orderType: "Retail" | "Wholesale";
   shippingMethod: "Standard" | "Express";
+  deliveryRoute?: string; // NEW: Added for picking wave creation
   items: POItem[];
   organizationId: string | null;
   terms?: string;
@@ -82,6 +83,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         notes: order.notes || "",
         orderType: order.order_type,
         shippingMethod: order.shipping_method,
+        deliveryRoute: order.delivery_route || undefined, // NEW
         items: order.items || [],
         organizationId: order.organization_id,
         terms: order.terms || undefined,
@@ -121,6 +123,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         notes: updatedOrder.notes,
         order_type: updatedOrder.orderType,
         shipping_method: updatedOrder.shippingMethod,
+        delivery_route: updatedOrder.deliveryRoute, // NEW
         items: updatedOrder.items,
         terms: updatedOrder.terms,
       })
@@ -166,6 +169,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         notes: newOrder.notes,
         order_type: newOrder.orderType,
         shipping_method: newOrder.shippingMethod,
+        delivery_route: newOrder.deliveryRoute, // NEW
         items: newOrder.items,
         terms: newOrder.terms,
         user_id: session.user.id,

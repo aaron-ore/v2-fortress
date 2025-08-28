@@ -40,14 +40,17 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   const [description, setDescription] = useState("");
   const [sku, setSku] = useState("");
   const [category, setCategory] = useState("");
-  const [quantity, setQuantity] = useState("");
+  const [pickingBinQuantity, setPickingBinQuantity] = useState(""); // NEW
+  const [overstockQuantity, setOverstockQuantity] = useState(""); // NEW
   const [reorderLevel, setReorderLevel] = useState("");
+  const [pickingReorderLevel, setPickingReorderLevel] = useState(""); // NEW
   const [unitCost, setUnitCost] = useState("");
   const [retailPrice, setRetailPrice] = useState("");
   const [location, setLocation] = useState("");
+  const [pickingBinLocation, setPickingBinLocation] = useState(""); // NEW
   const [selectedVendorId, setSelectedVendorId] = useState("none");
   const [barcodeValue, setBarcodeValue] = useState("");
-  const [barcodeType, setBarcodeType] = useState<"CODE128" | "QR">("CODE128"); // NEW: Barcode type state
+  const [barcodeType, setBarcodeType] = useState<"CODE128" | "QR">("CODE128");
   const [barcodeSvg, setBarcodeSvg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrlPreview, setImageUrlPreview] = useState<string | null>(null);
@@ -63,14 +66,17 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       setDescription("");
       setSku("");
       setCategory("");
-      setQuantity("");
+      setPickingBinQuantity(""); // NEW
+      setOverstockQuantity(""); // NEW
       setReorderLevel("");
+      setPickingReorderLevel(""); // NEW
       setUnitCost("");
       setRetailPrice("");
       setLocation("");
+      setPickingBinLocation(""); // NEW
       setSelectedVendorId("none");
       setBarcodeValue("");
-      setBarcodeType("CODE128"); // Reset to default
+      setBarcodeType("CODE128");
       setBarcodeSvg(null);
       setImageFile(null);
       setImageUrlPreview(null);
@@ -105,7 +111,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     }
   };
 
-  const handleGenerateBarcode = async () => { // Made async for QR code
+  const handleGenerateBarcode = async () => {
     if (!barcodeValue.trim()) {
       showError("Please enter a value to generate the barcode/QR code (e.g., SKU).");
       setBarcodeSvg(null);
@@ -122,8 +128,8 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
           margin: 0,
         });
         setBarcodeSvg(svgElement.outerHTML);
-      } else { // QR code
-        const qrSvg = await generateQrCodeSvg(barcodeValue.trim(), 100); // Use QR code generator
+      } else {
+        const qrSvg = await generateQrCodeSvg(barcodeValue.trim(), 100);
         setBarcodeSvg(qrSvg);
       }
       showSuccess(`${barcodeType === "CODE128" ? "Barcode" : "QR Code"} generated!`);
@@ -138,30 +144,37 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       !itemName.trim() ||
       !sku.trim() ||
       !category.trim() ||
-      !quantity ||
+      !pickingBinQuantity || // NEW
+      !overstockQuantity || // NEW
       !reorderLevel ||
+      !pickingReorderLevel || // NEW
       !unitCost ||
       !retailPrice ||
-      !location
+      !location ||
+      !pickingBinLocation // NEW
     ) {
       showError("Please fill in all required fields.");
       return;
     }
 
-    const parsedQuantity = parseInt(quantity);
+    const parsedPickingBinQuantity = parseInt(pickingBinQuantity); // NEW
+    const parsedOverstockQuantity = parseInt(overstockQuantity); // NEW
     const parsedReorderLevel = parseInt(reorderLevel);
+    const parsedPickingReorderLevel = parseInt(pickingReorderLevel); // NEW
     const parsedUnitCost = parseFloat(unitCost);
     const parsedRetailPrice = parseFloat(retailPrice);
     const parsedAutoReorderQuantity = parseInt(autoReorderQuantity) || 0;
 
     if (
-      isNaN(parsedQuantity) || parsedQuantity < 0 ||
+      isNaN(parsedPickingBinQuantity) || parsedPickingBinQuantity < 0 || // NEW
+      isNaN(parsedOverstockQuantity) || parsedOverstockQuantity < 0 || // NEW
       isNaN(parsedReorderLevel) || parsedReorderLevel < 0 ||
+      isNaN(parsedPickingReorderLevel) || parsedPickingReorderLevel < 0 || // NEW
       isNaN(parsedUnitCost) || parsedUnitCost < 0 ||
       isNaN(parsedRetailPrice) || parsedRetailPrice < 0 ||
       (autoReorderEnabled && (isNaN(parsedAutoReorderQuantity) || parsedAutoReorderQuantity <= 0))
     ) {
-      showError("Please enter valid positive numbers for Quantity, Reorder Level, Unit Cost, Retail Price, and Auto-Reorder Quantity (if enabled).");
+      showError("Please enter valid positive numbers for all quantity and price fields, and Auto-Reorder Quantity (if enabled).");
       return;
     }
 
@@ -170,13 +183,16 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       description: description.trim(),
       sku: sku.trim(),
       category: category.trim(),
-      quantity: parsedQuantity,
+      pickingBinQuantity: parsedPickingBinQuantity, // NEW
+      overstockQuantity: parsedOverstockQuantity, // NEW
       reorderLevel: parsedReorderLevel,
+      pickingReorderLevel: parsedPickingReorderLevel, // NEW
       committedStock: 0,
       incomingStock: 0,
       unitCost: parsedUnitCost,
       retailPrice: parsedRetailPrice,
       location: location,
+      pickingBinLocation: pickingBinLocation, // NEW
       imageUrl: imageUrlPreview || undefined,
       vendorId: selectedVendorId === "none" ? undefined : selectedVendorId,
       barcodeUrl: barcodeSvg || undefined,
@@ -185,7 +201,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     };
 
     await addInventoryItem(newItem);
-    showSuccess(`Added ${parsedQuantity} of ${itemName} to inventory!`);
+    showSuccess(`Added ${parsedPickingBinQuantity + parsedOverstockQuantity} of ${itemName} to inventory!`);
     onClose();
   };
 
@@ -193,11 +209,14 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     !itemName.trim() ||
     !sku.trim() ||
     !category.trim() ||
-    !quantity ||
+    !pickingBinQuantity || // NEW
+    !overstockQuantity || // NEW
     !reorderLevel ||
+    !pickingReorderLevel || // NEW
     !unitCost ||
     !retailPrice ||
     !location ||
+    !pickingBinLocation || // NEW
     locations.length === 0 ||
     categories.length === 0 ||
     (autoReorderEnabled && (parseInt(autoReorderQuantity) <= 0 || isNaN(parseInt(autoReorderQuantity))));
@@ -266,7 +285,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="location">Location <span className="text-red-500">*</span></Label>
+            <Label htmlFor="location">Main Storage Location <span className="text-red-500">*</span></Label>
             <Select value={location} onValueChange={setLocation} disabled={locations.length === 0}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a location" />
@@ -295,24 +314,67 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="quantity">Quantity <span className="text-red-500">*</span></Label>
+            <Label htmlFor="pickingBinLocation">Picking Bin Location <span className="text-red-500">*</span></Label>
+            <Select value={pickingBinLocation} onValueChange={setPickingBinLocation} disabled={locations.length === 0}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a picking bin location" />
+              </SelectTrigger>
+              <SelectContent>
+                {locations.length > 0 ? (
+                  locations.map((loc) => (
+                    <SelectItem key={loc} value={loc}>
+                      {loc}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-locations" disabled>
+                    No locations set up.
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="pickingBinQuantity">Picking Bin Quantity <span className="text-red-500">*</span></Label>
             <Input
-              id="quantity"
+              id="pickingBinQuantity"
               type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
+              value={pickingBinQuantity}
+              onChange={(e) => setPickingBinQuantity(e.target.value)}
+              placeholder="e.g., 50"
+              min="0"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="overstockQuantity">Overstock Quantity <span className="text-red-500">*</span></Label>
+            <Input
+              id="overstockQuantity"
+              type="number"
+              value={overstockQuantity}
+              onChange={(e) => setOverstockQuantity(e.target.value)}
               placeholder="e.g., 100"
               min="0"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="reorderLevel">Reorder Level <span className="text-red-500">*</span></Label>
+            <Label htmlFor="reorderLevel">Overall Reorder Level <span className="text-red-500">*</span></Label>
             <Input
               id="reorderLevel"
               type="number"
               value={reorderLevel}
               onChange={(e) => setReorderLevel(e.target.value)}
               placeholder="e.g., 20"
+              min="0"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="pickingReorderLevel">Picking Bin Reorder Level <span className="text-red-500">*</span></Label>
+            <Input
+              id="pickingReorderLevel"
+              type="number"
+              value={pickingReorderLevel}
+              onChange={(e) => setPickingReorderLevel(e.target.value)}
+              placeholder="e.g., 10"
               min="0"
             />
           </div>
@@ -420,7 +482,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
                   min="1"
                 />
                 <p className="text-xs text-muted-foreground">
-                  This quantity will be ordered when stock drops to or below the reorder level.
+                  This quantity will be ordered when stock drops to or below the overall reorder level.
                 </p>
               </div>
             )}

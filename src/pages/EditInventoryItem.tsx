@@ -34,16 +34,19 @@ const EditInventoryItem: React.FC = () => {
   const [description, setDescription] = useState("");
   const [sku, setSku] = useState("");
   const [category, setCategory] = useState("");
-  const [quantity, setQuantity] = useState("");
+  const [pickingBinQuantity, setPickingBinQuantity] = useState(""); // NEW
+  const [overstockQuantity, setOverstockQuantity] = useState(""); // NEW
   const [reorderLevel, setReorderLevel] = useState("");
+  const [pickingReorderLevel, setPickingReorderLevel] = useState(""); // NEW
   const [committedStock, setCommittedStock] = useState("");
   const [incomingStock, setIncomingStock] = useState("");
   const [unitCost, setUnitCost] = useState("");
   const [retailPrice, setRetailPrice] = useState("");
   const [location, setLocation] = useState("");
+  const [pickingBinLocation, setPickingBinLocation] = useState(""); // NEW
   const [selectedVendorId, setSelectedVendorId] = useState("none");
   const [barcodeValue, setBarcodeValue] = useState("");
-  const [barcodeType, setBarcodeType] = useState<"CODE128" | "QR">("CODE128"); // NEW: Barcode type state
+  const [barcodeType, setBarcodeType] = useState<"CODE128" | "QR">("CODE128");
   const [barcodeSvg, setBarcodeSvg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrlPreview, setImageUrlPreview] = useState<string | null>(null);
@@ -59,21 +62,23 @@ const EditInventoryItem: React.FC = () => {
         setDescription(foundItem.description);
         setSku(foundItem.sku);
         setCategory(foundItem.category);
-        setQuantity(foundItem.quantity.toString());
+        setPickingBinQuantity(foundItem.pickingBinQuantity.toString()); // NEW
+        setOverstockQuantity(foundItem.overstockQuantity.toString()); // NEW
         setReorderLevel(foundItem.reorderLevel.toString());
+        setPickingReorderLevel(foundItem.pickingReorderLevel.toString()); // NEW
         setCommittedStock(foundItem.committedStock.toString());
         setIncomingStock(foundItem.incomingStock.toString());
         setUnitCost(foundItem.unitCost.toString());
         setRetailPrice(foundItem.retailPrice.toString());
         setLocation(foundItem.location);
+        setPickingBinLocation(foundItem.pickingBinLocation); // NEW
         setImageUrlPreview(foundItem.imageUrl || null);
         setSelectedVendorId(foundItem.vendorId || "none");
         setBarcodeSvg(foundItem.barcodeUrl || null);
         if (foundItem.barcodeUrl) {
-          // Attempt to infer barcode type if SVG contains 'qrcode' or 'CODE128'
           if (foundItem.barcodeUrl.includes('qrcode')) {
             setBarcodeType("QR");
-            setBarcodeValue(foundItem.sku); // Assume SKU is the encoded value
+            setBarcodeValue(foundItem.sku);
           } else {
             setBarcodeType("CODE128");
             setBarcodeValue(foundItem.sku);
@@ -114,7 +119,7 @@ const EditInventoryItem: React.FC = () => {
     }
   };
 
-  const handleGenerateBarcode = async () => { // Made async for QR code
+  const handleGenerateBarcode = async () => {
     if (!barcodeValue.trim()) {
       showError("Please enter a value to generate the barcode/QR code (e.g., SKU).");
       setBarcodeSvg(null);
@@ -131,8 +136,8 @@ const EditInventoryItem: React.FC = () => {
           margin: 0,
         });
         setBarcodeSvg(svgElement.outerHTML);
-      } else { // QR code
-        const qrSvg = await generateQrCodeSvg(barcodeValue.trim(), 100); // Use QR code generator
+      } else {
+        const qrSvg = await generateQrCodeSvg(barcodeValue.trim(), 100);
         setBarcodeSvg(qrSvg);
       }
       showSuccess(`${barcodeType === "CODE128" ? "Barcode" : "QR Code"} generated!`);
@@ -147,13 +152,16 @@ const EditInventoryItem: React.FC = () => {
       !itemName ||
       !sku ||
       !category ||
-      !quantity ||
+      !pickingBinQuantity || // NEW
+      !overstockQuantity || // NEW
       !reorderLevel ||
+      !pickingReorderLevel || // NEW
       !committedStock ||
       !incomingStock ||
       !unitCost ||
       !retailPrice ||
-      !location
+      !location ||
+      !pickingBinLocation // NEW
     ) {
       showError("Please fill in all required fields.");
       return;
@@ -166,19 +174,22 @@ const EditInventoryItem: React.FC = () => {
     }
 
     if (item) {
-      const updatedItem: InventoryItem = {
+      const updatedItem: Omit<InventoryItem, "quantity"> & { id: string } = {
         ...item,
         name: itemName,
         description: description,
         sku: sku,
         category: category,
-        quantity: parseInt(quantity),
+        pickingBinQuantity: parseInt(pickingBinQuantity), // NEW
+        overstockQuantity: parseInt(overstockQuantity), // NEW
         reorderLevel: parseInt(reorderLevel),
+        pickingReorderLevel: parseInt(pickingReorderLevel), // NEW
         committedStock: parseInt(committedStock),
         incomingStock: parseInt(incomingStock),
         unitCost: parseFloat(unitCost),
         retailPrice: parseFloat(retailPrice),
         location: location,
+        pickingBinLocation: pickingBinLocation, // NEW
         imageUrl: imageUrlPreview || undefined,
         vendorId: selectedVendorId === "none" ? undefined : selectedVendorId,
         barcodeUrl: barcodeSvg || undefined,
@@ -255,7 +266,7 @@ const EditInventoryItem: React.FC = () => {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
+            <Label htmlFor="location">Main Storage Location</Label>
             <Select value={location} onValueChange={setLocation}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a location" />
@@ -276,21 +287,60 @@ const EditInventoryItem: React.FC = () => {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="quantity">Quantity</Label>
+            <Label htmlFor="pickingBinLocation">Picking Bin Location</Label>
+            <Select value={pickingBinLocation} onValueChange={setPickingBinLocation}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a picking bin location" />
+              </SelectTrigger>
+              <SelectContent>
+                {locations.length > 0 ? (
+                  locations.map((loc) => (
+                    <SelectItem key={loc} value={loc}>
+                      {loc}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-locations" disabled>
+                    No locations set up. Go to Onboarding.
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="pickingBinQuantity">Picking Bin Quantity</Label>
             <Input
-              id="quantity"
+              id="pickingBinQuantity"
               type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
+              value={pickingBinQuantity}
+              onChange={(e) => setPickingBinQuantity(e.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="reorderLevel">Reorder Level</Label>
+            <Label htmlFor="overstockQuantity">Overstock Quantity</Label>
+            <Input
+              id="overstockQuantity"
+              type="number"
+              value={overstockQuantity}
+              onChange={(e) => setOverstockQuantity(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="reorderLevel">Overall Reorder Level</Label>
             <Input
               id="reorderLevel"
               type="number"
               value={reorderLevel}
               onChange={(e) => setReorderLevel(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="pickingReorderLevel">Picking Bin Reorder Level</Label>
+            <Input
+              id="pickingReorderLevel"
+              type="number"
+              value={pickingReorderLevel}
+              onChange={(e) => setPickingReorderLevel(e.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -411,7 +461,7 @@ const EditInventoryItem: React.FC = () => {
                   min="1"
                 />
                 <p className="text-xs text-muted-foreground">
-                  This quantity will be ordered when stock drops to or below the reorder level.
+                  This quantity will be ordered when stock drops to or below the overall reorder level.
                 </p>
               </div>
             )}

@@ -23,13 +23,19 @@ export interface InventoryItem {
   description: string;
   sku: string;
   category: string;
-  quantity: number;
-  reorderLevel: number;
+  // NEW: Split quantity into pickingBinQuantity and overstockQuantity
+  pickingBinQuantity: number;
+  overstockQuantity: number;
+  // Derived total quantity
+  quantity: number; 
+  reorderLevel: number; // This will now be the overall reorder level
+  pickingReorderLevel: number; // NEW: Reorder level specifically for picking bins
   committedStock: number;
   incomingStock: number;
   unitCost: number;
   retailPrice: number;
-  location: string;
+  location: string; // Overall primary storage location
+  pickingBinLocation: string; // NEW: Specific location for picking bin
   status: string;
   lastUpdated: string;
   imageUrl?: string;
@@ -42,8 +48,8 @@ export interface InventoryItem {
 
 interface InventoryContextType {
   inventoryItems: InventoryItem[];
-  addInventoryItem: (item: Omit<InventoryItem, "id" | "status" | "lastUpdated" | "organizationId">) => Promise<void>;
-  updateInventoryItem: (updatedItem: InventoryItem) => Promise<void>;
+  addInventoryItem: (item: Omit<InventoryItem, "id" | "status" | "lastUpdated" | "organizationId" | "quantity">) => Promise<void>;
+  updateInventoryItem: (updatedItem: Omit<InventoryItem, "quantity"> & { id: string }) => Promise<void>;
   deleteInventoryItem: (itemId: string) => Promise<void>;
   refreshInventory: () => Promise<void>;
 }
@@ -65,6 +71,32 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
   // REMOVED: const { addActivity } = useActivityLogs();
   const isInitialLoad = useRef(true);
 
+  const mapSupabaseItemToInventoryItem = (item: any): InventoryItem => ({
+    id: item.id,
+    name: item.name,
+    description: item.description || "",
+    sku: item.sku,
+    pickingBinQuantity: item.picking_bin_quantity,
+    overstockQuantity: item.overstock_quantity,
+    quantity: item.picking_bin_quantity + item.overstock_quantity, // Derived
+    reorderLevel: item.reorder_level,
+    pickingReorderLevel: item.picking_reorder_level || 0, // Default to 0 if null
+    committedStock: item.committed_stock,
+    incomingStock: item.incoming_stock,
+    unitCost: parseFloat(item.unit_cost),
+    retailPrice: parseFloat(item.retail_price),
+    location: item.location,
+    pickingBinLocation: item.picking_bin_location || item.location, // Default to main location if not set
+    status: item.status,
+    lastUpdated: item.last_updated,
+    imageUrl: item.image_url || undefined,
+    vendorId: item.vendor_id || undefined,
+    barcodeUrl: item.barcode_url || undefined,
+    organizationId: item.organization_id,
+    autoReorderEnabled: item.auto_reorder_enabled || false,
+    autoReorderQuantity: item.auto_reorder_quantity || 0,
+  });
+
   const fetchInventoryItems = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
 
@@ -83,34 +115,13 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
       showError("Failed to load inventory items.");
       if (import.meta.env.DEV) {
         console.warn("Loading mock inventory items due to Supabase error in development mode.");
-        setInventoryItems(mockInventoryItems);
+        setInventoryItems(mockInventoryItems.map(mapSupabaseItemToInventoryItem));
       }
     } else {
-      const fetchedItems: InventoryItem[] = data.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        description: item.description || "",
-        sku: item.sku,
-        category: item.category,
-        quantity: item.quantity,
-        reorderLevel: item.reorder_level,
-        committedStock: item.committed_stock,
-        incomingStock: item.incoming_stock,
-        unitCost: parseFloat(item.unit_cost),
-        retailPrice: parseFloat(item.retail_price),
-        location: item.location,
-        status: item.status,
-        lastUpdated: item.last_updated,
-        imageUrl: item.image_url || undefined,
-        vendorId: item.vendor_id || undefined,
-        barcodeUrl: item.barcode_url || undefined,
-        organizationId: item.organization_id,
-        autoReorderEnabled: item.auto_reorder_enabled || false,
-        autoReorderQuantity: item.auto_reorder_quantity || 0,
-      }));
+      const fetchedItems: InventoryItem[] = data.map(mapSupabaseItemToInventoryItem);
       if (fetchedItems.length === 0 && import.meta.env.DEV) {
         console.warn("Loading mock inventory items as Supabase returned no data in development mode.");
-        setInventoryItems(mockInventoryItems);
+        setInventoryItems(mockInventoryItems.map(mapSupabaseItemToInventoryItem));
       } else {
         setInventoryItems(fetchedItems);
       }
@@ -128,13 +139,14 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [fetchInventoryItems, isLoadingProfile, profile?.organizationId, addOrder, vendors, addNotification, inventoryItems]);
 
-  const addInventoryItem = async (item: Omit<InventoryItem, "id" | "status" | "lastUpdated" | "organizationId">) => {
+  const addInventoryItem = async (item: Omit<InventoryItem, "id" | "status" | "lastUpdated" | "organizationId" | "quantity">) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session || !profile?.organizationId) {
       throw new Error("You must be logged in and have an organization ID to add inventory items.");
     }
 
-    const status = item.quantity > item.reorderLevel ? "In Stock" : (item.quantity > 0 ? "Low Stock" : "Out of Stock");
+    const totalQuantity = item.pickingBinQuantity + item.overstockQuantity;
+    const status = totalQuantity > item.reorderLevel ? "In Stock" : (totalQuantity > 0 ? "Low Stock" : "Out of Stock");
     const lastUpdated = new Date().toISOString().split('T')[0];
 
     const { data, error } = await supabase
@@ -144,13 +156,16 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         description: item.description,
         sku: item.sku,
         category: item.category,
-        quantity: item.quantity,
+        picking_bin_quantity: item.pickingBinQuantity,
+        overstock_quantity: item.overstockQuantity,
         reorder_level: item.reorderLevel,
+        picking_reorder_level: item.pickingReorderLevel,
         committed_stock: item.committedStock,
         incoming_stock: item.incomingStock,
         unit_cost: item.unitCost,
         retail_price: item.retailPrice,
         location: item.location,
+        picking_bin_location: item.pickingBinLocation,
         status: status,
         last_updated: lastUpdated,
         image_url: item.imageUrl,
@@ -168,28 +183,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
       // REMOVED: addActivity("Inventory Add Failed", `Failed to add inventory item: ${item.name} (SKU: ${item.sku}).`, { error: error.message, item });
       throw error;
     } else if (data && data.length > 0) {
-      const newItem: InventoryItem = {
-        id: data[0].id,
-        name: data[0].name,
-        description: data[0].description || "",
-        sku: data[0].sku,
-        category: data[0].category,
-        quantity: data[0].quantity,
-        reorderLevel: data[0].reorder_level,
-        committedStock: data[0].committed_stock,
-        incomingStock: data[0].incoming_stock,
-        unitCost: parseFloat(data[0].unit_cost),
-        retailPrice: parseFloat(data[0].retail_price),
-        location: data[0].location,
-        status: data[0].status,
-        lastUpdated: data[0].last_updated,
-        imageUrl: data[0].image_url || undefined,
-        vendorId: data[0].vendor_id || undefined,
-        barcodeUrl: data[0].barcode_url || undefined,
-        organizationId: data[0].organization_id,
-        autoReorderEnabled: data[0].auto_reorder_enabled || false,
-        autoReorderQuantity: data[0].auto_reorder_quantity || 0,
-      };
+      const newItem: InventoryItem = mapSupabaseItemToInventoryItem(data[0]);
       setInventoryItems((prevItems) => [...prevItems, newItem]);
       // REMOVED: addActivity("Inventory Added", `Added new inventory item: ${newItem.name} (SKU: ${newItem.sku}).`, { itemId: newItem.id, sku: newItem.sku, quantity: newItem.quantity });
       if (profile?.organizationId) {
@@ -202,13 +196,14 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const updateInventoryItem = async (updatedItem: InventoryItem) => {
+  const updateInventoryItem = async (updatedItem: Omit<InventoryItem, "quantity"> & { id: string }) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session || !profile?.organizationId) {
       throw new Error("You must be logged in and have an organization ID to update inventory items.");
     }
 
-    const newStatus = updatedItem.quantity > updatedItem.reorderLevel ? "In Stock" : (updatedItem.quantity > 0 ? "Low Stock" : "Out of Stock");
+    const totalQuantity = updatedItem.pickingBinQuantity + updatedItem.overstockQuantity;
+    const newStatus = totalQuantity > updatedItem.reorderLevel ? "In Stock" : (totalQuantity > 0 ? "Low Stock" : "Out of Stock");
     const lastUpdated = new Date().toISOString().split('T')[0];
 
     const { data, error } = await supabase
@@ -218,13 +213,16 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         description: updatedItem.description,
         sku: updatedItem.sku,
         category: updatedItem.category,
-        quantity: updatedItem.quantity,
+        picking_bin_quantity: updatedItem.pickingBinQuantity,
+        overstock_quantity: updatedItem.overstockQuantity,
         reorder_level: updatedItem.reorderLevel,
+        picking_reorder_level: updatedItem.pickingReorderLevel,
         committed_stock: updatedItem.committedStock,
         incoming_stock: updatedItem.incomingStock,
         unit_cost: updatedItem.unitCost,
         retail_price: updatedItem.retailPrice,
         location: updatedItem.location,
+        picking_bin_location: updatedItem.pickingBinLocation,
         status: newStatus,
         last_updated: lastUpdated,
         image_url: updatedItem.imageUrl,
@@ -242,28 +240,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
       // REMOVED: addActivity("Inventory Update Failed", `Failed to update inventory item: ${updatedItem.name} (SKU: ${updatedItem.sku}).`, { error: error.message, itemId: updatedItem.id, sku: updatedItem.sku });
       throw error;
     } else if (data && data.length > 0) {
-      const updatedItemFromDB: InventoryItem = {
-        id: data[0].id,
-        name: data[0].name,
-        description: data[0].description || "",
-        sku: data[0].sku,
-        category: data[0].category,
-        quantity: data[0].quantity,
-        reorderLevel: data[0].reorder_level,
-        committedStock: data[0].committed_stock,
-        incomingStock: data[0].incoming_stock,
-        unitCost: parseFloat(data[0].unit_cost),
-        retailPrice: parseFloat(data[0].retail_price),
-        location: data[0].location,
-        status: data[0].status,
-        lastUpdated: data[0].last_updated,
-        imageUrl: data[0].image_url || undefined,
-        vendorId: data[0].vendor_id || undefined,
-        barcodeUrl: data[0].barcode_url || undefined,
-        organizationId: data[0].organization_id,
-        autoReorderEnabled: data[0].auto_reorder_enabled || false,
-        autoReorderQuantity: data[0].auto_reorder_quantity || 0,
-      };
+      const updatedItemFromDB: InventoryItem = mapSupabaseItemToInventoryItem(data[0]);
       setInventoryItems((prevItems) =>
         prevItems.map((item) =>
           item.id === updatedItemFromDB.id ? updatedItemFromDB : item,
