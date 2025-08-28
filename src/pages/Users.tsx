@@ -17,9 +17,11 @@ import { Users as UsersIcon, Mail, UserPlus, Trash2 } from "lucide-react";
 import { useProfile, UserProfile } from "@/context/ProfileContext";
 import { showError, showSuccess } from "@/utils/toast";
 import { supabase } from "@/lib/supabaseClient";
+import { useActivityLogs } from "@/context/ActivityLogContext"; // NEW: Import useActivityLogs
 
 const Users: React.FC = () => {
   const { profile, allProfiles, updateUserRole, fetchAllProfiles } = useProfile();
+  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
   // Removed inviteEmail and inviteRole states as invite functionality is removed
@@ -39,7 +41,7 @@ const Users: React.FC = () => {
   };
 
   const confirmDeleteUser = async () => {
-    if (!userToDelete) return;
+    if (!userToDelete || !profile?.organizationId) return;
 
     // Note: Deleting a user from `auth.users` requires admin privileges
     // and is typically done via a server-side function or Supabase dashboard.
@@ -49,16 +51,34 @@ const Users: React.FC = () => {
       .from("profiles")
       .delete()
       .eq("id", userToDelete.id)
-      .eq("organization_id", profile?.organizationId); // Ensure admin can only delete within their org
+      .eq("organization_id", profile.organizationId); // Ensure admin can only delete within their org
 
     if (error) {
       showError(`Failed to delete profile: ${error.message}`);
+      addActivity("User Delete Failed", `Failed to delete profile for ${userToDelete.fullName || userToDelete.email}.`, { error: error.message, targetUserId: userToDelete.id }); // NEW: Log failed delete
     } else {
       showSuccess(`Profile for ${userToDelete.fullName || userToDelete.email} deleted.`);
+      addActivity("User Deleted", `Deleted profile for ${userToDelete.fullName || userToDelete.email}.`, { targetUserId: userToDelete.id }); // NEW: Log successful delete
       fetchAllProfiles(); // Refresh the list
     }
     setIsConfirmDeleteDialogOpen(false);
     setUserToDelete(null);
+  };
+
+  const handleUpdateUserRole = async (userId: string, newRole: string) => {
+    if (!profile?.organizationId) {
+      showError("Organization ID not found for role update.");
+      return;
+    }
+    const targetUser = allProfiles.find(p => p.id === userId);
+    const oldRole = targetUser?.role;
+
+    try {
+      await updateUserRole(userId, newRole, profile.organizationId);
+      addActivity("User Role Updated", `Updated role for user ${targetUser?.fullName || userId} from "${oldRole}" to "${newRole}".`, { targetUserId: userId, oldRole, newRole }); // NEW: Log successful role update
+    } catch (error: any) {
+      addActivity("User Role Update Failed", `Failed to update role for user ${targetUser?.fullName || userId} to "${newRole}".`, { error: error.message, targetUserId: userId, newRole }); // NEW: Log failed role update
+    }
   };
 
   if (profile?.role !== 'admin') {
@@ -112,7 +132,7 @@ const Users: React.FC = () => {
                         ) : (
                           <Select
                             value={user.role}
-                            onValueChange={(newRole) => updateUserRole(user.id, newRole, profile.organizationId)}
+                            onValueChange={(newRole) => handleUpdateUserRole(user.id, newRole)}
                           >
                             <SelectTrigger className="w-[250px]"> {/* Increased width for longer labels */}
                               <SelectValue placeholder="Select role" />

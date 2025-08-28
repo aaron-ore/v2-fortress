@@ -94,8 +94,8 @@ const Auth: React.FC = () => {
                 d="M12 2L2 12L12 22L22 12L12 2Z"
                 fill="currentColor"
                 fillOpacity="0.2"
-              />
-            </svg>
+            />
+          </svg>
             <span className="text-3xl font-bold text-foreground">Fortress</span>
           </div>
           <CardTitle className="text-3xl font-bold">

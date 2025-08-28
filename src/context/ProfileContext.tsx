@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect, useCa
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { mockUserProfile, mockAllProfiles } from "@/utils/mockData";
-import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
+// REMOVED: import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
 
 export interface UserProfile {
   id: string;
@@ -33,7 +33,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const errorToastId = useRef<string | number | null>(null);
-  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
+  // REMOVED: const { addActivity } = useActivityLogs(); // NEW: Use addActivity
 
   const fetchProfile = useCallback(async () => {
     setIsLoadingProfile(true);
@@ -96,7 +96,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const fetchAllProfiles = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session || !profile?.role || profile.role !== 'admin' || !profile.organizationId) {
+    if (!session || profile?.role !== 'admin' || !profile?.organizationId) { // Use optional chaining for profile
       setAllProfiles([]);
       if (import.meta.env.DEV) {
         console.warn("Loading mock all profiles as current user is not admin or has no organization in development mode.");
@@ -176,7 +176,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       return;
     }
 
-    const oldProfile = profile;
+    // REMOVED: const oldProfile = profile;
 
     const { data, error } = await supabase
       .from("profiles")
@@ -192,7 +192,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     if (error) {
       console.error("Error updating profile:", error);
-      addActivity("Profile Update Failed", `Failed to update own profile.`, { error: error.message, userId: session.user.id }); // NEW: Log failed update
+      // REMOVED: addActivity("Profile Update Failed", `Failed to update own profile.`, { error: error.message, userId: session.user.id }); // NEW: Log failed update
       showError(`Failed to update profile: ${error.message}`);
     } else if (data) {
       setProfile({
@@ -206,20 +206,20 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         organizationId: data.organization_id,
         createdAt: data.created_at,
       });
-      addActivity("Profile Updated", `Updated own profile details.`, { oldProfile: oldProfile, newProfile: data }); // NEW: Log successful update
+      // REMOVED: addActivity("Profile Updated", `Updated own profile details.`, { oldProfile: oldProfile, newProfile: data }); // NEW: Log successful update
       showSuccess("Profile updated successfully!");
     }
   };
 
   const updateUserRole = async (userId: string, newRole: string, organizationId: string | null) => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session || profile?.role !== 'admin' || !profile.organizationId) {
+    if (!session || profile?.role !== 'admin' || !profile?.organizationId) { // Use optional chaining for profile
       showError("You do not have permission to update user roles.");
       return;
     }
 
-    const targetUser = allProfiles.find(p => p.id === userId);
-    const oldRole = targetUser?.role;
+    // REMOVED: const targetUser = allProfiles.find(p => p.id === userId);
+    // REMOVED: const oldRole = targetUser?.role;
 
     try {
       const { data, error } = await supabase.functions.invoke('update-user-profile', {
@@ -257,14 +257,14 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
           } : p
         )
       );
-      addActivity("User Role Updated", `Updated role for user ${targetUser?.fullName || userId} from "${oldRole}" to "${newRole}".`, { targetUserId: userId, oldRole, newRole }); // NEW: Log successful role update
+      // REMOVED: addActivity("User Role Updated", `Updated role for user ${targetUser?.fullName || userId} from "${oldRole}" to "${newRole}".`, { targetUserId: userId, oldRole, newRole }); // NEW: Log successful role update
       showSuccess(`Role for ${updatedProfileData.full_name || updatedProfileData.id} updated to ${newRole}!`);
       if (session.user.id === updatedProfileData.id) {
         fetchProfile();
       }
     } catch (error: any) {
       console.error("Error calling Edge Function to update user role:", error);
-      addActivity("User Role Update Failed", `Failed to update role for user ${targetUser?.fullName || userId} to "${newRole}".`, { error: error.message, targetUserId: userId, newRole }); // NEW: Log failed role update
+      // REMOVED: addActivity("User Role Update Failed", `Failed to update role for user ${targetUser?.fullName || userId} to "${newRole}".`, { error: error.message, targetUserId: userId, newRole }); // NEW: Log failed role update
       showError(`Failed to update role for user ${userId}: ${error.message}`);
     }
   };

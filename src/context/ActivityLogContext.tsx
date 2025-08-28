@@ -1,7 +1,8 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { showError } from "@/utils/toast";
-import { useProfile } from "./ProfileContext";
+// REMOVED: import { useProfile } from "./ProfileContext"; // NEW: Import useProfile
+import { UserProfile } from "./ProfileContext"; // Import type
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
 
@@ -25,16 +26,24 @@ interface ActivityLogContextType {
 
 const ActivityLogContext = createContext<ActivityLogContextType | undefined>(undefined);
 
-export const ActivityLogProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+// NEW: Define props for ActivityLogProvider
+interface ActivityLogProviderProps {
+  children: ReactNode;
+  profile: UserProfile | null;
+  allProfiles: UserProfile[];
+}
+
+// CHANGE: ActivityLogProvider now accepts profile and allProfiles as props
+export const ActivityLogProvider: React.FC<ActivityLogProviderProps> = ({ children, profile, allProfiles }) => {
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
-  const { profile, isLoadingProfile, allProfiles } = useProfile();
+  // REMOVED: const { profile, isLoadingProfile, allProfiles } = useProfile(); // REMOVED
 
   const fetchActivityLogs = useCallback(async (dateRange?: DateRange | undefined) => {
     setIsLoadingLogs(true);
     const { data: { session } } = await supabase.auth.getSession();
 
-    if (!session || !profile?.organizationId) {
+    if (!session || !profile?.organizationId) { // Uses prop 'profile'
       setActivityLogs([]);
       setIsLoadingLogs(false);
       return;
@@ -43,7 +52,7 @@ export const ActivityLogProvider: React.FC<{ children: ReactNode }> = ({ childre
     let query = supabase
       .from("activity_logs")
       .select("*")
-      .eq("organization_id", profile.organizationId)
+      .eq("organization_id", profile.organizationId) // Uses prop 'profile'
       .order("timestamp", { ascending: false });
 
     if (dateRange?.from) {
@@ -61,7 +70,7 @@ export const ActivityLogProvider: React.FC<{ children: ReactNode }> = ({ childre
       setActivityLogs([]);
     } else {
       const logsWithUserNames: ActivityLog[] = data.map((log: any) => {
-        const userProfile = allProfiles.find(p => p.id === log.user_id);
+        const userProfile = allProfiles.find(p => p.id === log.user_id); // Uses prop 'allProfiles'
         return {
           id: log.id,
           timestamp: log.timestamp,
@@ -76,20 +85,23 @@ export const ActivityLogProvider: React.FC<{ children: ReactNode }> = ({ childre
       setActivityLogs(logsWithUserNames);
     }
     setIsLoadingLogs(false);
-  }, [profile?.organizationId, allProfiles, profile]);
+  }, [profile?.organizationId, allProfiles, profile]); // Dependencies now refer to props
 
   useEffect(() => {
-    if (!isLoadingProfile && profile?.organizationId) {
-      fetchActivityLogs();
-    } else if (!isLoadingProfile && !profile?.organizationId) {
+    // No longer depends on isLoadingProfile from hook, but on prop 'profile'
+    // Only fetch if profile is loaded and has an organizationId
+    if (profile && !profile.organizationId) {
+      // If profile is loaded but no organization, clear logs
       setActivityLogs([]);
       setIsLoadingLogs(false);
+    } else if (profile?.organizationId) {
+      fetchActivityLogs();
     }
-  }, [fetchActivityLogs, isLoadingProfile, profile?.organizationId]);
+  }, [fetchActivityLogs, profile?.organizationId, profile]); // Dependencies now refer to props
 
   const addActivity = useCallback(async (type: string, description: string, details?: Record<string, any>) => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session || !profile?.organizationId) {
+    if (!session || !profile?.organizationId) { // Uses prop 'profile'
       console.warn("Cannot log activity: User not logged in or no organization ID.");
       return;
     }
@@ -98,7 +110,7 @@ export const ActivityLogProvider: React.FC<{ children: ReactNode }> = ({ childre
       .from("activity_logs")
       .insert({
         user_id: session.user.id,
-        organization_id: profile.organizationId,
+        organization_id: profile.organizationId, // Uses prop 'profile'
         activity_type: type,
         description: description,
         details: details || {},
@@ -107,7 +119,6 @@ export const ActivityLogProvider: React.FC<{ children: ReactNode }> = ({ childre
 
     if (error) {
       console.error("Error adding activity log:", error);
-      // Do not show error toast for logging, as it can create a loop or be annoying
     } else if (data && data.length > 0) {
       const newLog: ActivityLog = {
         id: data[0].id,
@@ -117,11 +128,11 @@ export const ActivityLogProvider: React.FC<{ children: ReactNode }> = ({ childre
         activityType: data[0].activity_type,
         description: data[0].description,
         details: data[0].details,
-        userName: profile.fullName || profile.email, // Use current user's name
+        userName: profile.fullName || profile.email, // Uses prop 'profile'
       };
-      setActivityLogs((prev) => [newLog, ...prev]); // Add to top of list
+      setActivityLogs((prev) => [newLog, ...prev]);
     }
-  }, [profile?.organizationId, profile?.fullName, profile?.email]);
+  }, [profile?.organizationId, profile?.fullName, profile?.email]); // Dependencies now refer to props
 
   return (
     <ActivityLogContext.Provider value={{ activityLogs, addActivity, fetchActivityLogs, isLoadingLogs }}>
