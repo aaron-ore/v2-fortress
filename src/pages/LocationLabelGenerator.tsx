@@ -107,10 +107,10 @@ const LocationLabelGenerator: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full space-y-4"> {/* Removed redundant h-full from here */}
+    <div className="flex flex-col h-full space-y-4">
       <h2 className="text-xl font-bold text-center">Generate Location Labels</h2>
 
-      <ScrollArea className="flex-grow pb-4 min-h-0"> {/* Added min-h-0 to ScrollArea */}
+      <ScrollArea className="flex-grow pb-4 min-h-0 max-h-[calc(100vh-336px)]"> {/* Adjusted max-h */}
         <div className="space-y-4 pr-2">
           <Card className="bg-card border-border shadow-sm">
             <CardHeader className="pb-2">

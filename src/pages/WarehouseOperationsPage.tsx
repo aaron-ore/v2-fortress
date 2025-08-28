@@ -103,21 +103,21 @@ const WarehouseOperationsPage: React.FC = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-grow flex flex-col">
         {/* Grid of buttons for navigation */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-4 p-1 bg-muted rounded-lg"> {/* Adjusted grid for better mobile */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-4 p-1 bg-muted rounded-lg">
           {operationButtons.map((op) => (
             <Button
               key={op.value}
               variant="ghost"
               className={cn(
-                "flex flex-col items-center justify-center h-auto py-3 px-2 text-sm font-medium rounded-md transition-colors text-center", // Added text-center
+                "flex flex-col items-center justify-center h-auto py-3 px-2 text-sm font-medium rounded-md transition-colors text-center",
                 activeTab === op.value
                   ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-primary" // Changed text-gray-300 to text-muted-foreground
+                  : "text-foreground hover:bg-muted/50 hover:text-primary" // Changed to text-foreground
               )}
               onClick={() => setActiveTab(op.value)}
             >
               <op.icon className="h-4 w-4 sm:h-5 sm:w-5 mb-1" />
-              <span className="text-xs sm:text-sm">{op.label}</span> {/* Smaller text for buttons */}
+              <span className="text-xs sm:text-sm">{op.label}</span>
             </Button>
           ))}
         </div>
@@ -147,7 +147,7 @@ const WarehouseOperationsPage: React.FC = () => {
           <TabsContent value="issue-report" className="h-full">
             <IssueReportTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
-          <TabsContent value="location-label-generator" className="h-full"> {/* NEW: Tab content for LocationLabelGenerator */}
+          <TabsContent value="location-label-generator" className="h-full">
             <LocationLabelGenerator />
           </TabsContent>
         </div>
