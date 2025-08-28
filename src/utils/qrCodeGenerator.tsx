@@ -1,4 +1,4 @@
-import QRCode from 'qrcode.react'; // Reverted to default import
+import { QRCode } from 'qrcode.react'; // Reverting to named import
 import ReactDOMServer from 'react-dom/server';
 import React from 'react';
 
