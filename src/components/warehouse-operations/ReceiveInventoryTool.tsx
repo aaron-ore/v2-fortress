@@ -293,19 +293,19 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
         {selectedPO ? (
           <>
             <h3 className="text-lg font-semibold">Items for PO: {selectedPO.id}</h3>
-            <ScrollArea className="h-full"> {/* Removed max-h to allow flex-grow to manage height */}
+            <ScrollArea className="h-full">
               <div className="space-y-3 pr-2">
                 {receivedItems.map((item) => (
                   <Card key={item.id} className="bg-card border-border shadow-sm">
                     <CardContent className="p-4">
-                      <div className="flex justify-between items-center mb-2">
+                      <div className="flex justify-between items-center mb-2 flex-wrap gap-y-1">
                         <h4 className="font-semibold text-lg">{item.itemName}</h4>
                         <span className="text-sm text-muted-foreground">SKU: {item.inventoryItemDetails?.sku}</span>
                       </div>
                       <p className="text-muted-foreground text-sm mb-2 flex items-center gap-1">
                         <Package className="h-4 w-4" /> Expected: {item.quantity}
                       </p>
-                      <div className="flex justify-between items-center mb-2">
+                      <div className="flex justify-between items-center mb-2 flex-wrap gap-y-1">
                         <Label htmlFor={`received-qty-${item.id}`} className="font-semibold">Received Qty:</Label>
                         <Input
                           id={`received-qty-${item.id}`}
@@ -314,7 +314,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
                           onChange={(e) => handleReceivedQuantityChange(item.id, e.target.value)}
                           className="w-24 text-right"
                           min="0"
-                          max={item.quantity} // Max received quantity is expected quantity
+                          max={item.quantity}
                         />
                       </div>
                       <div className="space-y-2 mb-2">
@@ -335,12 +335,12 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
                           onChange={(e) => handleExpirationDateChange(item.id, e.target.value)}
                         />
                       </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <p className="text-muted-foreground text-sm flex items-center gap-1">
-                          <MapPin className="h-4 w-4" /> Putaway: <span className="font-semibold text-primary">{item.suggestedPutawayLocation}</span>
+                      <div className="flex items-center justify-between mt-2 flex-wrap gap-y-1">
+                        <p className="text-muted-foreground text-sm flex items-center gap-1 flex-grow min-w-0 truncate">
+                          <MapPin className="h-4 w-4 flex-shrink-0" /> Putaway: <span className="font-semibold text-primary flex-shrink-0">{item.suggestedPutawayLocation}</span>
                         </p>
                         {item.receivedQuantity > 0 && (
-                          <Button variant="outline" size="sm" onClick={() => handlePrintPutawayLabel(item)}>
+                          <Button variant="outline" size="sm" onClick={() => handlePrintPutawayLabel(item)} className="flex-shrink-0">
                             <Printer className="h-4 w-4 mr-2" /> Print Label
                           </Button>
                         )}
