@@ -1,18 +1,26 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError } from "@/utils/toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PackageMinus, TrendingUp, DollarSign, LineChart, Download } from "lucide-react";
+import { PackageMinus, TrendingUp, DollarSign, LineChart, Download, Brain, Loader2 } from "lucide-react";
 import { useInventory } from "@/context/InventoryContext";
 import { exportToExcel } from "@/utils/exportToExcel";
+import { supabase } from "@/lib/supabaseClient"; // Import supabase
 
 import SalesByCategoryPieChart from "@/components/reports/SalesByCategoryPieChart";
 import InventoryValueByLocationBarChart from "@/components/reports/InventoryValueByLocationBarChart";
 import StockLevelTrendLineChart from "@/components/reports/StockLevelTrendLineChart";
+import { useOrders } from "@/context/OrdersContext"; // Import useOrders for sales data
+import { useCategories } from "@/context/CategoryContext"; // Import useCategories for category names
 
 const Reports: React.FC = () => {
   const { inventoryItems } = useInventory();
+  const { orders } = useOrders(); // Use orders context
+  const { categories } = useCategories(); // Use categories context
+
+  const [aiSummary, setAiSummary] = useState("");
+  const [isSummarizing, setIsSummarizing] = useState(false);
 
   const lowStockItems = useMemo(() => {
     return inventoryItems.filter(item => item.quantity <= item.reorderLevel);
@@ -32,6 +40,114 @@ const Reports: React.FC = () => {
   const totalInventoryValue = useMemo(() => {
     return inventoryItems.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
   }, [inventoryItems]);
+
+  const generateReportText = (): string => {
+    let reportText = "Inventory and Sales Report Summary:\n\n";
+
+    // 1. Low Stock Items
+    reportText += `Low Stock Items: ${lowStockItems.length} items are currently below their reorder level.\n`;
+    if (lowStockItems.length > 0) {
+      reportText += "Details:\n";
+      lowStockItems.slice(0, 5).forEach(item => {
+        reportText += `- ${item.name} (SKU: ${item.sku}): ${item.quantity} on hand, Reorder Level: ${item.reorderLevel}\n`;
+      });
+      if (lowStockItems.length > 5) reportText += `...and ${lowStockItems.length - 5} more.\n`;
+      reportText += "Insight: Consider placing new purchase orders soon to avoid stockouts and lost sales.\n\n";
+    }
+
+    // 2. Sales by Product Category
+    const categorySalesMap: { [key: string]: number } = {};
+    orders.filter(order => order.type === "Sales").forEach(order => {
+      order.items.forEach(orderItem => {
+        const inventoryItem = inventoryItems.find(inv => inv.id === orderItem.inventoryItemId);
+        if (inventoryItem) {
+          categorySalesMap[inventoryItem.category] = (categorySalesMap[inventoryItem.category] || 0) + (orderItem.quantity * orderItem.unitPrice);
+        }
+      });
+    });
+    const salesByCategory = Object.entries(categorySalesMap).map(([categoryName, revenue]) => ({
+      name: categoryName,
+      value: revenue,
+    })).sort((a, b) => b.value - a.value);
+
+    reportText += "Sales by Product Category:\n";
+    if (salesByCategory.length > 0) {
+      salesByCategory.slice(0, 3).forEach(cat => {
+        reportText += `- ${cat.name}: $${cat.value.toFixed(2)}\n`;
+      });
+      if (salesByCategory.length > 3) reportText += `...and ${salesByCategory.length - 3} more categories.\n`;
+      reportText += "Insight: This shows revenue distribution. Focus marketing on top-performing categories and analyze underperforming ones.\n\n";
+    } else {
+      reportText += "No sales data by category available.\n\n";
+    }
+
+    // 3. Inventory Value by Location
+    const locationValueMap: { [key: string]: number } = {};
+    inventoryItems.forEach(item => {
+      locationValueMap[item.location] = (locationValueMap[item.location] || 0) + (item.quantity * item.unitCost);
+    });
+    const inventoryValueByLocation = Object.entries(locationValueMap).map(([locationName, value]) => ({
+      name: locationName,
+      value: value,
+    })).sort((a, b) => b.value - a.value);
+
+    reportText += "Inventory Value by Location:\n";
+    if (inventoryValueByLocation.length > 0) {
+      inventoryValueByLocation.slice(0, 3).forEach(loc => {
+        reportText += `- ${loc.name}: $${loc.value.toFixed(2)}\n`;
+      });
+      if (inventoryValueByLocation.length > 3) reportText += `...and ${inventoryValueByLocation.length - 3} more locations.\n`;
+      reportText += "Insight: Understand where capital is tied up. High-value locations might require enhanced security or optimized space utilization.\n\n";
+    } else {
+      reportText += "No inventory value data by location available.\n\n";
+    }
+
+    // 4. Overall Stock Level Trend (simplified textual representation)
+    reportText += `Overall Stock Level: Total units on hand is ${totalInventoryValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}. (Trend data is visual).\n`;
+    reportText += "Insight: A consistent decline might indicate a need for more frequent reordering or increased supplier capacity.\n\n";
+
+    return reportText;
+  };
+
+  const handleSummarizeReport = async () => {
+    setIsSummarizing(true);
+    setAiSummary(""); // Clear previous summary
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        showError("You must be logged in to use the AI Summary tool.");
+        setIsSummarizing(false);
+        return;
+      }
+
+      const textToSummarize = generateReportText();
+
+      const response = await supabase.functions.invoke('summarize-report', {
+        body: JSON.stringify({ textToSummarize }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      if (response.data && response.data.summary) {
+        setAiSummary(response.data.summary);
+        showSuccess("Report summarized successfully!");
+      } else {
+        showError("Failed to get a summary from the AI. Please try again.");
+      }
+    } catch (error: any) {
+      console.error("Error calling Edge Function:", error);
+      showError(`Error generating summary: ${error.message}`);
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
 
   const handleExportLowStock = () => {
     if (lowStockItems.length === 0) {
@@ -106,6 +222,33 @@ const Reports: React.FC = () => {
       <p className="text-muted-foreground">
         Gain actionable insights into your inventory and sales performance with these pre-built reports.
       </p>
+
+      <Button onClick={handleSummarizeReport} disabled={isSummarizing} className="w-full md:w-auto">
+        {isSummarizing ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating AI Summary...
+          </>
+        ) : (
+          <>
+            <Brain className="h-4 w-4 mr-2" /> Summarize All Reports with AI
+          </>
+        )}
+      </Button>
+
+      {aiSummary && (
+        <Card className="bg-card border-border rounded-lg shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl font-semibold flex items-center gap-2">
+              <Brain className="h-6 w-6 text-accent" /> AI Summary of Reports
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-muted/20 p-4 rounded-md border border-border">
+              <p className="text-foreground whitespace-pre-wrap">{aiSummary}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
         <Card className="bg-card border-border rounded-lg shadow-sm" id="low-stock-report-content">
