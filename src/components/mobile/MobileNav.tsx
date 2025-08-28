@@ -32,6 +32,8 @@ import {
   Sparkles,
   BookOpen,
   Warehouse,
+  ListOrdered, // NEW
+  Undo2, // NEW
 } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import NotificationSheet from "@/components/NotificationSheet";
@@ -155,6 +157,37 @@ const MobileNav: React.FC = () => {
             ))}
 
             <DropdownMenuSeparator />
+            <p className="px-4 py-2 text-sm font-semibold text-muted-foreground">Warehouse Operations Tools</p> {/* NEW */}
+            <Button
+              variant="ghost"
+              className={cn(baseButtonClass, location.pathname === "/warehouse-operations?tab=picking-wave" ? activeLinkClass : inactiveLinkClass)}
+              onClick={() => handleNavigation("/warehouse-operations?tab=picking-wave")}
+            >
+              <ListOrdered className="h-4 w-4 mr-2" /> Picking Wave
+            </Button>
+            <Button
+              variant="ghost"
+              className={cn(baseButtonClass, location.pathname === "/warehouse-operations?tab=replenishment" ? activeLinkClass : inactiveLinkClass)}
+              onClick={() => handleNavigation("/warehouse-operations?tab=replenishment")}
+            >
+              <PackagePlus className="h-4 w-4 mr-2" /> Replenishment
+            </Button>
+            <Button
+              variant="ghost"
+              className={cn(baseButtonClass, location.pathname === "/warehouse-operations?tab=shipping-verify" ? activeLinkClass : inactiveLinkClass)}
+              onClick={() => handleNavigation("/warehouse-operations?tab=shipping-verify")}
+            >
+              <Truck className="h-4 w-4 mr-2" /> Shipping Verify
+            </Button>
+            <Button
+              variant="ghost"
+              className={cn(baseButtonClass, location.pathname === "/warehouse-operations?tab=returns-process" ? activeLinkClass : inactiveLinkClass)}
+              onClick={() => handleNavigation("/warehouse-operations?tab=returns-process")}
+            >
+              <Undo2 className="h-4 w-4 mr-2" /> Returns Process
+            </Button>
+            <DropdownMenuSeparator />
+
             <p className="px-4 py-2 text-sm font-semibold text-muted-foreground">User & Account</p>
             <Button
               variant="ghost"

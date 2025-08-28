@@ -35,6 +35,7 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { VendorProvider } from "./context/VendorContext";
 import { ProfileProvider, useProfile } from "./context/ProfileContext";
 import { StockMovementProvider } from "./context/StockMovementContext";
+import { ReplenishmentProvider } from "./context/ReplenishmentContext"; // NEW: Import ReplenishmentProvider
 import OnboardingWizard from "./components/onboarding/OnboardingWizard";
 import { supabase } from "./lib/supabaseClient";
 import React, { useState, useEffect, useRef } from "react";
@@ -47,7 +48,8 @@ import PurchaseOrderPdfContent from "./components/PurchaseOrderPdfContent";
 import InvoicePdfContent from "./components/InvoicePdfContent";
 import AdvancedDemandForecastPdfContent from "./components/AdvancedDemandForecastPdfContent";
 import PutawayLabelPdfContent from "./components/PutawayLabelPdfContent";
-import LocationLabelPdfContent from "./components/LocationLabelPdfContent"; // NEW: Import LocationLabelPdfContent
+import LocationLabelPdfContent from "./components/LocationLabelPdfContent";
+import PickingWavePdfContent from "./components/PickingWavePdfContent"; // NEW: Import PickingWavePdfContent
 
 const queryClient = new QueryClient();
 
@@ -58,33 +60,35 @@ const AuthenticatedApp = () => {
         <CategoryProvider>
           <NotificationProvider>
             <StockMovementProvider>
-              <InventoryProvider>
-                <Routes>
-                  <Route path="/" element={<Layout />}>
-                    <Route index element={<Dashboard />} />
-                    <Route path="inventory" element={<Inventory />} />
-                    <Route path="inventory/:id" element={<EditInventoryItem />} />
-                    <Route path="orders" element={<Orders />} />
-                    <Route path="orders/:id" element={<EditPurchaseOrder />} />
-                    <Route path="reports" element={<Reports />} />
-                    <Route path="settings" element={<Settings />} />
-                    <Route path="create-po" element={<CreatePurchaseOrder />} />
-                    <Route path="create-invoice" element={<CreateInvoice />} />
-                    <Route path="profile" element={<MyProfile />} />
-                    <Route path="account-settings" element={<AccountSettings />} />
-                    <Route path="notifications-page" element={<NotificationsPage />} />
-                    <Route path="billing" element={<BillingSubscriptions />} />
-                    <Route path="help" element={<HelpCenter />} />
-                    <Route path="whats-new" element={<WhatsNew />} />
-                    <Route path="vendors" element={<Vendors />} />
-                    <Route path="users" element={<Users />} />
-                    <Route path="setup-instructions" element={<SetupInstructions />} />
-                    <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
-                    <Route path="features1" element={<FeaturesPage />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Route>
-                </Routes>
-              </InventoryProvider>
+              <ReplenishmentProvider> {/* NEW: Wrap with ReplenishmentProvider */}
+                <InventoryProvider>
+                  <Routes>
+                    <Route path="/" element={<Layout />}>
+                      <Route index element={<Dashboard />} />
+                      <Route path="inventory" element={<Inventory />} />
+                      <Route path="inventory/:id" element={<EditInventoryItem />} />
+                      <Route path="orders" element={<Orders />} />
+                      <Route path="orders/:id" element={<EditPurchaseOrder />} />
+                      <Route path="reports" element={<Reports />} />
+                      <Route path="settings" element={<Settings />} />
+                      <Route path="create-po" element={<CreatePurchaseOrder />} />
+                      <Route path="create-invoice" element={<CreateInvoice />} />
+                      <Route path="profile" element={<MyProfile />} />
+                      <Route path="account-settings" element={<AccountSettings />} />
+                      <Route path="notifications-page" element={<NotificationsPage />} />
+                      <Route path="billing" element={<BillingSubscriptions />} />
+                      <Route path="help" element={<HelpCenter />} />
+                      <Route path="whats-new" element={<WhatsNew />} />
+                      <Route path="vendors" element={<Vendors />} />
+                      <Route path="users" element={<Users />} />
+                      <Route path="setup-instructions" element={<SetupInstructions />} />
+                      <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
+                      <Route path="features1" element={<FeaturesPage />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Route>
+                  </Routes>
+                </InventoryProvider>
+              </ReplenishmentProvider> {/* NEW: Close ReplenishmentProvider */}
             </StockMovementProvider>
           </NotificationProvider>
         </CategoryProvider>
@@ -172,8 +176,11 @@ const AppContent = () => {
           {printContentData.type === "putaway-label" && (
             <PutawayLabelPdfContent {...printContentData.props} />
           )}
-          {printContentData.type === "location-label" && ( // NEW: Render LocationLabelPdfContent
+          {printContentData.type === "location-label" && (
             <LocationLabelPdfContent {...printContentData.props} />
+          )}
+          {printContentData.type === "picking-wave" && ( // NEW: Render PickingWavePdfContent
+            <PickingWavePdfContent {...printContentData.props} />
           )}
         </PrintWrapper>
       )}

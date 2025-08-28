@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Package, Scan, Truck, CheckCircle, AlertTriangle, LayoutDashboard, Search as SearchIcon, ShoppingCart, QrCode } from "lucide-react";
+import { Package, Scan, Truck, CheckCircle, AlertTriangle, LayoutDashboard, Search as SearchIcon, ShoppingCart, QrCode, ListOrdered, Undo2 } from "lucide-react"; // NEW: Import ListOrdered and Undo2
 import { useIsMobile } from "@/hooks/use-mobile";
 import ItemLookupTool from "@/components/warehouse-operations/ItemLookupTool";
 import ReceiveInventoryTool from "@/components/warehouse-operations/ReceiveInventoryTool";
@@ -13,7 +13,11 @@ import IssueReportTool from "@/components/warehouse-operations/IssueReportTool";
 import WarehouseDashboard from "@/components/warehouse-operations/WarehouseDashboard";
 import FulfillOrderTool from "@/components/warehouse-operations/FulfillOrderTool";
 import CameraScannerDialog from "@/components/CameraScannerDialog";
-import LocationLabelGenerator from "@/pages/LocationLabelGenerator"; // NEW: Import LocationLabelGenerator
+import LocationLabelGenerator from "@/pages/LocationLabelGenerator";
+import PickingWaveManagementTool from "@/components/warehouse-operations/PickingWaveManagementTool"; // NEW: Import PickingWaveManagementTool
+import ReplenishmentManagementTool from "@/components/warehouse-operations/ReplenishmentManagementTool"; // NEW: Import ReplenishmentManagementTool
+import ShippingVerificationTool from "@/components/warehouse-operations/ShippingVerificationTool"; // NEW: Import ShippingVerificationTool
+import ReturnsProcessingTool from "@/components/warehouse-operations/ReturnsProcessingTool"; // NEW: Import ReturnsProcessingTool
 import { cn } from "@/lib/utils";
 import { showError } from "@/utils/toast";
 
@@ -30,10 +34,14 @@ const WarehouseOperationsPage: React.FC = () => {
     { value: "receive-inventory", label: "Receive", icon: Package },
     { value: "fulfill-order", label: "Fulfill", icon: ShoppingCart },
     { value: "ship-order", label: "Ship", icon: Truck },
+    { value: "picking-wave", label: "Pick Wave", icon: ListOrdered }, // NEW
+    { value: "replenishment", label: "Replenish", icon: CheckCircle }, // NEW
+    { value: "shipping-verify", label: "Verify Ship", icon: Truck }, // NEW
+    { value: "returns-process", label: "Returns", icon: Undo2 }, // NEW
     { value: "stock-transfer", label: "Transfer", icon: Scan },
     { value: "cycle-count", label: "Count", icon: CheckCircle },
     { value: "issue-report", label: "Report Issue", icon: AlertTriangle },
-    { value: "location-label-generator", label: "Labels", icon: QrCode }, // NEW: Button for Location Label Generator
+    { value: "location-label-generator", label: "Labels", icon: QrCode },
   ];
 
   const handleScanRequest = (callback: (scannedData: string) => void) => {
@@ -137,6 +145,18 @@ const WarehouseOperationsPage: React.FC = () => {
           </TabsContent>
           <TabsContent value="ship-order" className="h-full min-h-0">
             <ShipOrderTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+          </TabsContent>
+          <TabsContent value="picking-wave" className="h-full min-h-0"> {/* NEW */}
+            <PickingWaveManagementTool />
+          </TabsContent>
+          <TabsContent value="replenishment" className="h-full min-h-0"> {/* NEW */}
+            <ReplenishmentManagementTool />
+          </TabsContent>
+          <TabsContent value="shipping-verify" className="h-full min-h-0"> {/* NEW */}
+            <ShippingVerificationTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+          </TabsContent>
+          <TabsContent value="returns-process" className="h-full min-h-0"> {/* NEW */}
+            <ReturnsProcessingTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="stock-transfer" className="h-full min-h-0">
             <StockTransferTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />

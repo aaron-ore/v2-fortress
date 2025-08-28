@@ -2,6 +2,7 @@ import { InventoryItem } from "@/context/InventoryContext";
 import { OrderItem, POItem } from "@/context/OrdersContext";
 import { Vendor } from "@/context/VendorContext";
 import { Category } from "@/context/CategoryContext";
+import { ReplenishmentTask } from "@/context/ReplenishmentContext"; // NEW: Import ReplenishmentTask
 
 // --- Mock Categories ---
 export const mockCategories: Category[] = [
@@ -339,8 +340,8 @@ export const mockLocations: string[] = [
   "Main Warehouse",
   "Store Front",
   "Tool Shed",
-  "Returns Area",
-  "Cold Storage", // NEW
+  "Returns Area", // NEW
+  "Cold Storage",
 ];
 
 // --- Mock Company Profile (for OnboardingContext) ---
@@ -387,5 +388,32 @@ export const mockAllProfiles = [
     role: "viewer",
     organizationId: "mock-org-1",
     createdAt: new Date().toISOString(),
+  },
+];
+
+// --- Mock Replenishment Tasks (NEW) ---
+export const mockReplenishmentTasks: ReplenishmentTask[] = [
+  {
+    id: "REPL-001",
+    itemId: "item-1",
+    itemName: "Wireless Mouse",
+    fromLocation: "Main Warehouse",
+    toLocation: "MW-A-01-1-A",
+    quantity: 10,
+    status: "Pending",
+    createdAt: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+    organizationId: "mock-org-1",
+  },
+  {
+    id: "REPL-002",
+    itemId: "item-2",
+    itemName: "Mechanical Keyboard",
+    fromLocation: "Main Warehouse",
+    toLocation: "MW-A-02-1-B",
+    quantity: 5,
+    status: "Assigned",
+    assignedTo: "mock-user-id-456",
+    createdAt: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+    organizationId: "mock-org-1",
   },
 ];
