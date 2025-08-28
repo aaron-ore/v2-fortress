@@ -13,9 +13,17 @@ export const generateQrCodeSvg = (value: string, size: number = 128): string => 
     throw new Error("Value for QR code cannot be empty.");
   }
 
-  // Render the QRCode component from the namespace
+  // Render the QRCode component from the default property of the namespace
+  // This handles cases where the component is exported as a default export
+  const QRCodeComponent = (QRCodeModule as any).default || QRCodeModule;
+
+  if (typeof QRCodeComponent !== 'function' && typeof QRCodeComponent !== 'string') {
+    console.error("QRCodeComponent is not a valid React component type:", QRCodeComponent);
+    throw new Error("Failed to resolve QRCode component from 'qrcode.react'. It might be an import issue or the package structure is unexpected.");
+  }
+
   const svgString = ReactDOMServer.renderToStaticMarkup(
-    <QRCodeModule.QRCode value={value} size={size} renderAs="svg" level="L" />
+    <QRCodeComponent value={value} size={size} renderAs="svg" level="L" />
   );
 
   return svgString;
