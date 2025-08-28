@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Package, Scan, Truck, CheckCircle, AlertTriangle, LayoutDashboard, Search as SearchIcon, ShoppingCart } from "lucide-react";
+import { Package, Scan, Truck, CheckCircle, AlertTriangle, LayoutDashboard, Search as SearchIcon, ShoppingCart, QrCode } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ItemLookupTool from "@/components/warehouse-operations/ItemLookupTool";
 import ReceiveInventoryTool from "@/components/warehouse-operations/ReceiveInventoryTool";
@@ -13,6 +13,7 @@ import IssueReportTool from "@/components/warehouse-operations/IssueReportTool";
 import WarehouseDashboard from "@/components/warehouse-operations/WarehouseDashboard";
 import FulfillOrderTool from "@/components/warehouse-operations/FulfillOrderTool";
 import CameraScannerDialog from "@/components/CameraScannerDialog";
+import LocationLabelGenerator from "@/pages/LocationLabelGenerator"; // NEW: Import LocationLabelGenerator
 import { cn } from "@/lib/utils";
 import { showError } from "@/utils/toast";
 
@@ -32,6 +33,7 @@ const WarehouseOperationsPage: React.FC = () => {
     { value: "stock-transfer", label: "Transfer", icon: Scan },
     { value: "cycle-count", label: "Count", icon: CheckCircle },
     { value: "issue-report", label: "Report Issue", icon: AlertTriangle },
+    { value: "location-label-generator", label: "Labels", icon: QrCode }, // NEW: Button for Location Label Generator
   ];
 
   const handleScanRequest = (callback: (scannedData: string) => void) => {
@@ -144,6 +146,9 @@ const WarehouseOperationsPage: React.FC = () => {
           </TabsContent>
           <TabsContent value="issue-report" className="h-full">
             <IssueReportTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+          </TabsContent>
+          <TabsContent value="location-label-generator" className="h-full"> {/* NEW: Tab content for LocationLabelGenerator */}
+            <LocationLabelGenerator />
           </TabsContent>
         </div>
       </Tabs>

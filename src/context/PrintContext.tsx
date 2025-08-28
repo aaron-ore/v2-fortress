@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback } from "react";
 
 interface PrintContentData {
-  type: "purchase-order" | "invoice" | "dashboard-summary" | "advanced-demand-forecast" | "putaway-label"; // NEW: Added putaway-label
+  type: "purchase-order" | "invoice" | "dashboard-summary" | "advanced-demand-forecast" | "putaway-label" | "location-label"; // NEW: Added location-label
   props: any; // The actual props for the respective PDF content component
 }
 

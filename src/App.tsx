@@ -46,7 +46,8 @@ import DashboardSummaryPdfContent from "./components/DashboardSummaryPdfContent"
 import PurchaseOrderPdfContent from "./components/PurchaseOrderPdfContent";
 import InvoicePdfContent from "./components/InvoicePdfContent";
 import AdvancedDemandForecastPdfContent from "./components/AdvancedDemandForecastPdfContent";
-import PutawayLabelPdfContent from "./components/PutawayLabelPdfContent"; // NEW: Import PutawayLabelPdfContent
+import PutawayLabelPdfContent from "./components/PutawayLabelPdfContent";
+import LocationLabelPdfContent from "./components/LocationLabelPdfContent"; // NEW: Import LocationLabelPdfContent
 
 const queryClient = new QueryClient();
 
@@ -168,8 +169,11 @@ const AppContent = () => {
           {printContentData.type === "advanced-demand-forecast" && (
             <AdvancedDemandForecastPdfContent {...printContentData.props} />
           )}
-          {printContentData.type === "putaway-label" && ( // NEW: Render PutawayLabelPdfContent
+          {printContentData.type === "putaway-label" && (
             <PutawayLabelPdfContent {...printContentData.props} />
+          )}
+          {printContentData.type === "location-label" && ( // NEW: Render LocationLabelPdfContent
+            <LocationLabelPdfContent {...printContentData.props} />
           )}
         </PrintWrapper>
       )}
