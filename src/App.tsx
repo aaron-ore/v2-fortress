@@ -193,13 +193,13 @@ const App = () => (
       />
       <BrowserRouter>
         <ProfileProvider>
-          <OnboardingProvider>
-            <ActivityLogProvider> {/* ActivityLogProvider now wraps AppContent */}
+          <ActivityLogProvider> {/* Moved ActivityLogProvider here */}
+            <OnboardingProvider>
               <PrintProvider>
                 <AppContent />
               </PrintProvider>
-            </ActivityLogProvider>
-          </OnboardingProvider>
+            </OnboardingProvider>
+          </ActivityLogProvider>
         </ProfileProvider>
       </BrowserRouter>
     </ThemeProvider>
