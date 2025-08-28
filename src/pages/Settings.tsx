@@ -7,14 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import NotificationPreferencesDialog from "@/components/settings/NotificationPreferencesDialog";
-import ManageLocationsDialog from "@/components/ManageLocationsDialog"; // New import
+import ManageLocationsDialog from "@/components/ManageLocationsDialog";
 import { useOnboarding } from "@/context/OnboardingContext";
-import { useProfile } from "@/context/ProfileContext"; // Import useProfile
-import { supabase } from "@/lib/supabaseClient"; // Import supabase
+import { useProfile } from "@/context/ProfileContext";
+import { supabase } from "@/lib/supabaseClient";
 
 const Settings: React.FC = () => {
   const { companyProfile, setCompanyProfile } = useOnboarding();
-  const { profile } = useProfile(); // Get current user's profile
+  const { profile } = useProfile();
 
   // Company Logo State
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -46,7 +46,7 @@ const Settings: React.FC = () => {
 
   // Dialog States
   const [isNotificationPreferencesDialogOpen, setIsNotificationPreferencesDialogOpen] = useState(false);
-  const [isManageLocationsDialogOpen, setIsManageLocationsDialogOpen] = useState(false); // New state for locations dialog
+  const [isManageLocationsDialogOpen, setIsManageLocationsDialogOpen] = useState(false);
 
   useEffect(() => {
     // Load saved logo from local storage on component mount
@@ -81,7 +81,7 @@ const Settings: React.FC = () => {
   // Handlers for Dialogs
   const handleIntegrationSetup = () => showSuccess("Setting up third-party integrations (placeholder).");
   const handleNotificationPreferences = () => setIsNotificationPreferencesDialogOpen(true);
-  const handleManageLocations = () => setIsManageLocationsDialogOpen(true); // New handler
+  const handleManageLocations = () => setIsManageLocationsDialogOpen(true);
 
   // Handlers for Company Logo
   const handleLogoFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -163,10 +163,10 @@ const Settings: React.FC = () => {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Settings</h1>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2"> {/* Added flex-wrap for mobile */}
         <Button variant="outline" onClick={handleIntegrationSetup}>Integration Setup</Button>
         <Button variant="outline" onClick={handleNotificationPreferences}>Notification Preferences</Button>
-        <Button variant="outline" onClick={handleManageLocations}>Manage Locations</Button> {/* New button */}
+        <Button variant="outline" onClick={handleManageLocations}>Manage Locations</Button>
       </div>
 
       {/* Company Profile Card */}
@@ -208,7 +208,7 @@ const Settings: React.FC = () => {
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="123 Business Rd, Suite 100, City, State, Zip"
-                rows={3}
+                rows={2}
               />
             </div>
           </div>
@@ -216,36 +216,37 @@ const Settings: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Organization Code Card (New) */}
-      {profile?.role === 'admin' && profile.organizationId && (
-        <Card className="bg-card border-border rounded-lg p-4">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Your Company Code</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              Share this unique code with new users so they can join your organization when they sign up.
-            </p>
-            <div className="flex items-center space-x-2">
-              <Input
-                id="organizationCode"
-                value={organizationCode || "Loading..."}
-                readOnly
-                className="font-mono text-lg"
-              />
-              <Button onClick={() => {
-                if (organizationCode) {
-                  navigator.clipboard.writeText(organizationCode);
-                  showSuccess("Company code copied to clipboard!");
-                }
-              }}>Copy Code</Button>
+      {/* Company Logo Card */}
+      <Card className="bg-card border-border rounded-lg p-4">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold">Company Logo</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground">Upload your company logo for documents and branding.</p>
+          <div className="flex flex-col sm:flex-row items-center gap-4"> {/* Adjusted for mobile stacking */}
+            <div className="flex-shrink-0 w-24 h-24 border border-dashed border-border rounded-md flex items-center justify-center overflow-hidden">
+              {savedLogoUrl ? (
+                <img src={savedLogoUrl} alt="Company Logo" className="max-w-full max-h-full object-contain" />
+              ) : (
+                <span className="text-muted-foreground text-sm text-center">No Logo</span>
+              )}
             </div>
-            <p className="text-sm text-muted-foreground">
-              New users can enter this code during their sign-up process to automatically be assigned to your company.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+            <div className="flex-grow space-y-2 w-full sm:w-auto"> {/* Full width on small screens */}
+              <Input
+                id="companyLogo"
+                type="file"
+                accept="image/*"
+                onChange={handleLogoFileChange}
+                className="file:text-primary file:bg-primary/10 file:border-primary"
+              />
+              <div className="flex gap-2 flex-wrap"> {/* Added flex-wrap for mobile */}
+                <Button onClick={handleSaveLogo} disabled={!logoFile && !savedLogoUrl}>Save Logo</Button>
+                <Button variant="outline" onClick={handleRemoveLogo} disabled={!savedLogoUrl}>Remove Logo</Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Inventory Defaults Card */}
       <Card className="bg-card border-border rounded-lg p-4">
@@ -253,7 +254,7 @@ const Settings: React.FC = () => {
           <CardTitle className="text-xl font-semibold">Inventory Defaults</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-muted-foreground">Set default values for new inventory items and general inventory behavior.</p>
+          <p className="text-muted-foreground">Set default values for new inventory items.</p>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="defaultReorderLevel">Default Reorder Level</Label>
@@ -268,18 +269,12 @@ const Settings: React.FC = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="defaultUnitOfMeasure">Default Unit of Measure</Label>
-              <Select value={defaultUnitOfMeasure} onValueChange={setDefaultUnitOfMeasure}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select unit" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Units">Units</SelectItem>
-                  <SelectItem value="Pieces">Pieces</SelectItem>
-                  <SelectItem value="KG">KG (Kilograms)</SelectItem>
-                  <SelectItem value="LBS">LBS (Pounds)</SelectItem>
-                  <SelectItem value="Boxes">Boxes</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                id="defaultUnitOfMeasure"
+                value={defaultUnitOfMeasure}
+                onChange={(e) => setDefaultUnitOfMeasure(e.target.value)}
+                placeholder="e.g., Units, Pieces, Boxes"
+              />
             </div>
           </div>
           <Button onClick={handleSaveInventoryDefaults}>Save Inventory Defaults</Button>
@@ -292,7 +287,7 @@ const Settings: React.FC = () => {
           <CardTitle className="text-xl font-semibold">Order Defaults</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-muted-foreground">Configure default settings for new sales and purchase orders.</p>
+          <p className="text-muted-foreground">Set default values for new purchase orders and invoices.</p>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="defaultPaymentTerms">Default Payment Terms</Label>
@@ -305,16 +300,12 @@ const Settings: React.FC = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="defaultShippingMethod">Default Shipping Method</Label>
-              <Select value={defaultShippingMethod} onValueChange={setDefaultShippingMethod}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Standard">Standard Shipping</SelectItem>
-                  <SelectItem value="Express">Express Shipping</SelectItem>
-                  <SelectItem value="Pickup">Local Pickup</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                id="defaultShippingMethod"
+                value={defaultShippingMethod}
+                onChange={(e) => setDefaultShippingMethod(e.target.value)}
+                placeholder="e.g., Standard, Express, Freight"
+              />
             </div>
           </div>
           <Button onClick={handleSaveOrderDefaults}>Save Order Defaults</Button>
@@ -324,53 +315,58 @@ const Settings: React.FC = () => {
       {/* Dashboard View Preference Card */}
       <Card className="bg-card border-border rounded-lg p-4">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold">Dashboard View</CardTitle>
+          <CardTitle className="text-xl font-semibold">Dashboard View Preference</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">Choose your preferred dashboard layout.</p>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="dashboardView">Dashboard Layout</Label>
-              <Select value={dashboardViewPreference} onValueChange={(value: "default" | "classic") => setDashboardViewPreference(value)}>
-                <SelectTrigger id="dashboardView">
-                  <SelectValue placeholder="Select view" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="default">Default View</SelectItem>
-                  <SelectItem value="classic">Classic View</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="dashboardViewPreference">Dashboard Layout</Label>
+            <Select value={dashboardViewPreference} onValueChange={(value: "default" | "classic") => setDashboardViewPreference(value)}>
+              <SelectTrigger className="w-full md:w-[200px]">
+                <SelectValue placeholder="Select view preference" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Default (Modern Cards)</SelectItem>
+                <SelectItem value="classic">Classic (Spreadsheet-like)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <Button onClick={handleSaveDashboardViewPreference}>Save Dashboard View</Button>
+          <Button onClick={handleSaveDashboardViewPreference}>Save Preference</Button>
         </CardContent>
       </Card>
 
-      {/* Company Logo Card (already existing) */}
+      {/* Organization Code Card */}
       <Card className="bg-card border-border rounded-lg p-4">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold">Company Logo</CardTitle>
+          <CardTitle className="text-xl font-semibold">Organization Code</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-muted-foreground">Upload your company logo to appear on documents like Purchase Orders.</p>
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="companyLogo">Upload Logo (PNG, JPG, SVG)</Label>
-            <Input id="companyLogo" type="file" accept="image/*" onChange={handleLogoFileChange} />
+          <p className="text-muted-foreground">
+            Your organization's unique code. Share this with new users to invite them to your organization.
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="organizationCode">Unique Organization Code</Label>
+            <Input
+              id="organizationCode"
+              value={organizationCode || "Loading..."}
+              readOnly
+              className="font-mono bg-muted"
+            />
           </div>
-          {savedLogoUrl && (
-            <div className="mt-4">
-              <p className="text-sm font-medium mb-2">Current Logo Preview:</p>
-              <img src={savedLogoUrl} alt="Company Logo Preview" className="max-w-[150px] max-h-[100px] object-contain border border-border p-2 rounded-md" />
-            </div>
+          {organizationCode && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                navigator.clipboard.writeText(organizationCode);
+                showSuccess("Organization code copied to clipboard!");
+              }}
+            >
+              Copy Code
+            </Button>
           )}
-          <div className="flex space-x-2 mt-4">
-            <Button onClick={handleSaveLogo} disabled={!logoFile && !savedLogoUrl}>Save Logo</Button>
-            <Button variant="outline" onClick={handleRemoveLogo} disabled={!savedLogoUrl}>Remove Logo</Button>
-          </div>
         </CardContent>
       </Card>
 
-      {/* Dialogs */}
       <NotificationPreferencesDialog
         isOpen={isNotificationPreferencesDialogOpen}
         onClose={() => setIsNotificationPreferencesDialogOpen(false)}
