@@ -119,7 +119,7 @@ const LocationLabelGenerator: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="area">Area (e.g., A, B, C)</Label>
                   <Input id="area" value={area} onChange={(e) => setArea(e.target.value.toUpperCase())} placeholder="A" maxLength={2} />

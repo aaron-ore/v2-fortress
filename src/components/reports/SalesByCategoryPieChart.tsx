@@ -39,7 +39,8 @@ const SalesByCategoryPieChart: React.FC = () => {
               cx="50%"
               cy="50%"
               labelLine={false}
-              outerRadius={100}
+              outerRadius={80}
+              innerRadius={40}
               fill="#8884d8"
               dataKey="value"
               nameKey="name"
@@ -58,10 +59,10 @@ const SalesByCategoryPieChart: React.FC = () => {
               formatter={(value: number, name: string) => [`$${value.toFixed(2)}`, name]}
             />
             <Legend
-              wrapperStyle={{ color: "hsl(var(--muted-foreground))" }}
-              layout="vertical"
-              align="right"
-              verticalAlign="middle"
+              wrapperStyle={{ color: "hsl(var(--muted-foreground))", paddingTop: '10px' }}
+              layout="horizontal"
+              align="center"
+              verticalAlign="bottom"
             />
           </PieChart>
         </ResponsiveContainer>
