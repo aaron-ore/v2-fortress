@@ -53,46 +53,44 @@ const queryClient = new QueryClient();
 
 const AuthenticatedApp = () => {
   return (
-    <ActivityLogProvider> {/* NEW: ActivityLogProvider wraps all other providers */}
-      <OrdersProvider>
-        <VendorProvider>
-          <CategoryProvider>
-            <NotificationProvider>
-              <StockMovementProvider>
-                <InventoryProvider>
-                  <Routes>
-                    <Route path="/" element={<Layout />}>
-                      <Route index element={<Dashboard />} />
-                      <Route path="inventory" element={<Inventory />} />
-                      <Route path="inventory/:id" element={<EditInventoryItem />} />
-                      <Route path="orders" element={<Orders />} />
-                      <Route path="orders/:id" element={<EditPurchaseOrder />} />
-                      <Route path="reports" element={<Reports />} />
-                      <Route path="settings" element={<Settings />} />
-                      <Route path="create-po" element={<CreatePurchaseOrder />} />
-                      <Route path="create-invoice" element={<CreateInvoice />} />
-                      <Route path="profile" element={<MyProfile />} />
-                      <Route path="account-settings" element={<AccountSettings />} />
-                      <Route path="notifications-page" element={<NotificationsPage />} />
-                      <Route path="billing" element={<BillingSubscriptions />} />
-                      <Route path="help" element={<HelpCenter />} />
-                      <Route path="whats-new" element={<WhatsNew />} />
-                      <Route path="vendors" element={<Vendors />} />
-                      <Route path="users" element={<Users />} />
-                      <Route path="setup-instructions" element={<SetupInstructions />} />
-                      <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
-                      <Route path="features" element={<FeaturesPage />} />
-                      <Route path="logs" element={<LogsPage />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Route>
-                  </Routes>
-                </InventoryProvider>
-              </StockMovementProvider>
-            </NotificationProvider>
-          </CategoryProvider>
-        </VendorProvider>
-      </OrdersProvider>
-    </ActivityLogProvider>
+    <OrdersProvider>
+      <VendorProvider>
+        <CategoryProvider>
+          <NotificationProvider>
+            <StockMovementProvider>
+              <InventoryProvider>
+                <Routes>
+                  <Route path="/" element={<Layout />}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="inventory" element={<Inventory />} />
+                    <Route path="inventory/:id" element={<EditInventoryItem />} />
+                    <Route path="orders" element={<Orders />} />
+                    <Route path="orders/:id" element={<EditPurchaseOrder />} />
+                    <Route path="reports" element={<Reports />} />
+                    <Route path="settings" element={<Settings />} />
+                    <Route path="create-po" element={<CreatePurchaseOrder />} />
+                    <Route path="create-invoice" element={<CreateInvoice />} />
+                    <Route path="profile" element={<MyProfile />} />
+                    <Route path="account-settings" element={<AccountSettings />} />
+                    <Route path="notifications-page" element={<NotificationsPage />} />
+                    <Route path="billing" element={<BillingSubscriptions />} />
+                    <Route path="help" element={<HelpCenter />} />
+                    <Route path="whats-new" element={<WhatsNew />} />
+                    <Route path="vendors" element={<Vendors />} />
+                    <Route path="users" element={<Users />} />
+                    <Route path="setup-instructions" element={<SetupInstructions />} />
+                    <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
+                    <Route path="features" element={<FeaturesPage />} />
+                    <Route path="logs" element={<LogsPage />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Route>
+                </Routes>
+              </InventoryProvider>
+            </StockMovementProvider>
+          </NotificationProvider>
+        </CategoryProvider>
+      </VendorProvider>
+    </OrdersProvider>
   );
 };
 
@@ -196,10 +194,11 @@ const App = () => (
       <BrowserRouter>
         <ProfileProvider>
           <OnboardingProvider>
-            {/* ActivityLogProvider moved to AuthenticatedApp */}
-            <PrintProvider>
-              <AppContent />
-            </PrintProvider>
+            <ActivityLogProvider> {/* ActivityLogProvider now wraps AppContent */}
+              <PrintProvider>
+                <AppContent />
+              </PrintProvider>
+            </ActivityLogProvider>
           </OnboardingProvider>
         </ProfileProvider>
       </BrowserRouter>
