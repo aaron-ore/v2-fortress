@@ -50,7 +50,7 @@ const navLinks = [
   { to: "/vendors", label: "Vendors" },
   { to: "/reports", label: "Reports" },
   { to: "/warehouse-operations", label: "Warehouse Ops" },
-  { to: "/features1", label: "Features1" }, // Changed from Features to Features1
+  { to: "/ai-summary", label: "AI Summary" },
 ];
 
 const MobileNav: React.FC = () => {

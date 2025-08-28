@@ -24,7 +24,7 @@ import Users from "./pages/Users";
 import CreateInvoice from "./pages/CreateInvoice";
 import SetupInstructions from "./pages/SetupInstructions";
 import WarehouseOperationsPage from "./pages/WarehouseOperationsPage";
-import FeaturesPage from "./pages/FeaturesPage";
+import AISummaryPage from "./pages/AISummaryPage"; // NEW: Import AISummaryPage
 import ResetPassword from "./pages/ResetPassword";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { InventoryProvider } from "./context/InventoryContext";
@@ -35,7 +35,7 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { VendorProvider } from "./context/VendorContext";
 import { ProfileProvider, useProfile } from "./context/ProfileContext";
 import { StockMovementProvider } from "./context/StockMovementContext";
-import { ReplenishmentProvider } from "./context/ReplenishmentContext"; // NEW: Import ReplenishmentProvider
+import { ReplenishmentProvider } from "./context/ReplenishmentContext";
 import OnboardingWizard from "./components/onboarding/OnboardingWizard";
 import { supabase } from "./lib/supabaseClient";
 import React, { useState, useEffect, useRef } from "react";
@@ -49,7 +49,7 @@ import InvoicePdfContent from "./components/InvoicePdfContent";
 import AdvancedDemandForecastPdfContent from "./components/AdvancedDemandForecastPdfContent";
 import PutawayLabelPdfContent from "./components/PutawayLabelPdfContent";
 import LocationLabelPdfContent from "./components/LocationLabelPdfContent";
-import PickingWavePdfContent from "./components/PickingWavePdfContent"; // NEW: Import PickingWavePdfContent
+import PickingWavePdfContent from "./components/PickingWavePdfContent";
 
 const queryClient = new QueryClient();
 
@@ -60,7 +60,7 @@ const AuthenticatedApp = () => {
         <CategoryProvider>
           <NotificationProvider>
             <StockMovementProvider>
-              <ReplenishmentProvider> {/* NEW: Wrap with ReplenishmentProvider */}
+              <ReplenishmentProvider>
                 <InventoryProvider>
                   <Routes>
                     <Route path="/" element={<Layout />}>
@@ -83,12 +83,12 @@ const AuthenticatedApp = () => {
                       <Route path="users" element={<Users />} />
                       <Route path="setup-instructions" element={<SetupInstructions />} />
                       <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
-                      <Route path="features1" element={<FeaturesPage />} />
+                      <Route path="ai-summary" element={<AISummaryPage />} /> {/* NEW: Add AISummaryPage route */}
                       <Route path="*" element={<NotFound />} />
                     </Route>
                   </Routes>
                 </InventoryProvider>
-              </ReplenishmentProvider> {/* NEW: Close ReplenishmentProvider */}
+              </ReplenishmentProvider>
             </StockMovementProvider>
           </NotificationProvider>
         </CategoryProvider>
@@ -179,7 +179,7 @@ const AppContent = () => {
           {printContentData.type === "location-label" && (
             <LocationLabelPdfContent {...printContentData.props} />
           )}
-          {printContentData.type === "picking-wave" && ( // NEW: Render PickingWavePdfContent
+          {printContentData.type === "picking-wave" && (
             <PickingWavePdfContent {...printContentData.props} />
           )}
         </PrintWrapper>
