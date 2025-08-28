@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
 import { mockVendors } from "@/utils/mockData";
-import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
+// REMOVED: import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
 
 export interface Vendor {
   id: string;
@@ -30,7 +30,7 @@ const VendorContext = createContext<VendorContextType | undefined>(undefined);
 export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const { profile, isLoadingProfile } = useProfile();
-  const { addActivity } = useActivityLogs(); // NEW: Use addActivity
+  // REMOVED: const { addActivity } = useActivityLogs(); // NEW: Use addActivity
 
   const fetchVendors = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -102,7 +102,7 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     if (error) {
       console.error("Error adding vendor:", error);
-      addActivity("Vendor Add Failed", `Failed to add new vendor: ${vendor.name}.`, { error: error.message, vendorName: vendor.name }); // NEW: Log failed add
+      // REMOVED: addActivity("Vendor Add Failed", `Failed to add new vendor: ${vendor.name}.`, { error: error.message, vendorName: vendor.name }); // NEW: Log failed add
       showError(`Failed to add vendor: ${error.message}`);
     } else if (data && data.length > 0) {
       const newVendor: Vendor = {
@@ -117,7 +117,7 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         createdAt: data[0].created_at,
       };
       setVendors((prevVendors) => [...prevVendors, newVendor]);
-      addActivity("Vendor Added", `Added new vendor: ${newVendor.name}.`, { vendorId: newVendor.id, vendorName: newVendor.name }); // NEW: Log successful add
+      // REMOVED: addActivity("Vendor Added", `Added new vendor: ${newVendor.name}.`, { vendorId: newVendor.id, vendorName: newVendor.name }); // NEW: Log successful add
       showSuccess(`Vendor "${vendor.name}" added successfully!`);
     }
   };
@@ -145,7 +145,7 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     if (error) {
       console.error("Error updating vendor:", error);
-      addActivity("Vendor Update Failed", `Failed to update vendor: ${updatedVendor.name}.`, { error: error.message, vendorId: updatedVendor.id, vendorName: updatedVendor.name }); // NEW: Log failed update
+      // REMOVED: addActivity("Vendor Update Failed", `Failed to update vendor: ${updatedVendor.name}.`, { error: error.message, vendorId: updatedVendor.id, vendorName: updatedVendor.name }); // NEW: Log failed update
       showError(`Failed to update vendor: ${error.message}`);
     } else if (data && data.length > 0) {
       const updatedVendorFromDB: Vendor = {
@@ -164,7 +164,7 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           vendor.id === updatedVendorFromDB.id ? updatedVendorFromDB : vendor,
         ),
       );
-      addActivity("Vendor Updated", `Updated vendor: ${updatedVendorFromDB.name}.`, { vendorId: updatedVendorFromDB.id, vendorName: updatedVendorFromDB.name }); // NEW: Log successful update
+      // REMOVED: addActivity("Vendor Updated", `Updated vendor: ${updatedVendorFromDB.name}.`, { vendorId: updatedVendorFromDB.id, vendorName: updatedVendorFromDB.name }); // NEW: Log successful update
       showSuccess(`Vendor "${updatedVendor.name}" updated successfully!`);
     }
   };
@@ -186,11 +186,11 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     if (error) {
       console.error("Error deleting vendor:", error);
-      addActivity("Vendor Delete Failed", `Failed to delete vendor: ${vendorToDelete?.name || vendorId}.`, { error: error.message, vendorId }); // NEW: Log failed delete
+      // REMOVED: addActivity("Vendor Delete Failed", `Failed to delete vendor: ${vendorToDelete?.name || vendorId}.`, { error: error.message, vendorId }); // NEW: Log failed delete
       showError(`Failed to delete vendor: ${error.message}`);
     } else {
       setVendors((prevVendors) => prevVendors.filter(vendor => vendor.id !== vendorId));
-      addActivity("Vendor Deleted", `Deleted vendor: ${vendorToDelete?.name || vendorId}.`, { vendorId }); // NEW: Log successful delete
+      // REMOVED: addActivity("Vendor Deleted", `Deleted vendor: ${vendorToDelete?.name || vendorId}.`, { vendorId }); // NEW: Log successful delete
       showSuccess("Vendor deleted successfully!");
     }
   };
