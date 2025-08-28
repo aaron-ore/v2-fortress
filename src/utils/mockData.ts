@@ -11,6 +11,8 @@ export const mockCategories: Category[] = [
   { id: "cat-3", name: "Perishables", organizationId: "mock-org-1" },
   { id: "cat-4", name: "Tools", organizationId: "mock-org-1" },
   { id: "cat-5", name: "Apparel", organizationId: "mock-org-1" },
+  { id: "cat-6", name: "Books", organizationId: "mock-org-1" }, // Added
+  { id: "cat-7", name: "Home Goods", organizationId: "mock-org-1" }, // Added
 ];
 
 // --- Mock Vendors ---
@@ -34,6 +36,17 @@ export const mockVendors: Vendor[] = [
     phone: "555-333-4444",
     address: "200 Supply Rd, Business City, NY 10001",
     notes: "Reliable supplier for office goods.",
+    organizationId: "mock-org-1",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "vendor-3", // Added
+    name: "Bookworm Distributors",
+    contactPerson: "Charlie Brown",
+    email: "charlie@bookworm.com",
+    phone: "555-555-6666",
+    address: "300 Literary Lane, Storyville, MA 02138",
+    notes: "Supplier for all book categories.",
     organizationId: "mock-org-1",
     createdAt: new Date().toISOString(),
   },
@@ -195,6 +208,56 @@ export const mockInventoryItems: InventoryItem[] = [
     autoReorderEnabled: true,
     autoReorderQuantity: 20,
   },
+  { // Added item
+    id: "item-7",
+    name: "The Great Novel",
+    description: "A captivating fiction novel.",
+    sku: "BOOK-001",
+    category: "Books",
+    pickingBinQuantity: 20,
+    overstockQuantity: 10,
+    quantity: 30,
+    reorderLevel: 10,
+    pickingReorderLevel: 15,
+    committedStock: 0,
+    incomingStock: 0,
+    unitCost: 10.00,
+    retailPrice: 19.99,
+    location: "Book Storage",
+    pickingBinLocation: "BS-A-01-1-A",
+    status: "In Stock",
+    lastUpdated: "2024-08-12",
+    imageUrl: "https://via.placeholder.com/150/FFD700/000000?text=Book",
+    vendorId: "vendor-3",
+    barcodeUrl: "<svg xmlns='http://www.w3.org/2000/svg' width='150' height='50'><rect x='0' y='0' width='150' height='50' fill='white'/><text x='75' y='25' font-family='monospace' font-size='16' text-anchor='middle' fill='black'>BOOK-001</text></svg>",
+    organizationId: "mock-org-1",
+    autoReorderEnabled: false,
+    autoReorderQuantity: 0,
+  },
+  { // Added item
+    id: "item-8",
+    name: "Ceramic Mug",
+    description: "Stylish ceramic mug for coffee or tea.",
+    sku: "MUG-001",
+    category: "Home Goods",
+    pickingBinQuantity: 15,
+    overstockQuantity: 5,
+    quantity: 20,
+    reorderLevel: 10,
+    pickingReorderLevel: 10,
+    committedStock: 0,
+    incomingStock: 0,
+    unitCost: 5.00,
+    retailPrice: 9.99,
+    location: "Main Warehouse",
+    pickingBinLocation: "MW-C-05-1-B",
+    status: "In Stock",
+    lastUpdated: "2024-08-14",
+    imageUrl: "https://via.placeholder.com/150/808080/FFFFFF?text=Mug",
+    organizationId: "mock-org-1",
+    autoReorderEnabled: false,
+    autoReorderQuantity: 0,
+  },
 ];
 
 // --- Mock Orders ---
@@ -333,6 +396,44 @@ export const mockOrders: OrderItem[] = [
     organizationId: "mock-org-1",
     terms: "Due on Receipt",
   },
+  { // Added order
+    id: "SO-20240817005",
+    type: "Sales",
+    customerSupplier: "Book Nook Store",
+    date: "2024-08-17",
+    status: "New Order",
+    totalAmount: 199.90,
+    dueDate: "2024-08-24",
+    itemCount: 10,
+    notes: "Bulk order for new release.",
+    orderType: "Wholesale",
+    shippingMethod: "Standard",
+    deliveryRoute: "Route 4",
+    items: [
+      { id: 1, itemName: "The Great Novel", quantity: 10, unitPrice: 19.99, inventoryItemId: "item-7" },
+    ],
+    organizationId: "mock-org-1",
+    terms: "Net 30",
+  },
+  { // Added order
+    id: "PO-20240818004",
+    type: "Purchase",
+    customerSupplier: "Home Goods Supplier",
+    date: "2024-08-18",
+    status: "New Order",
+    totalAmount: 250.00,
+    dueDate: "2024-09-01",
+    itemCount: 50,
+    notes: "Monthly restock of ceramic mugs.",
+    orderType: "Wholesale",
+    shippingMethod: "Standard",
+    deliveryRoute: "N/A",
+    items: [
+      { id: 1, itemName: "Ceramic Mug", quantity: 50, unitPrice: 5.00, inventoryItemId: "item-8" },
+    ],
+    organizationId: "mock-org-1",
+    terms: "Net 30",
+  },
 ];
 
 // --- Mock Locations (for OnboardingContext) ---
@@ -342,6 +443,7 @@ export const mockLocations: string[] = [
   "Tool Shed",
   "Returns Area", // NEW
   "Cold Storage",
+  "Book Storage", // Added
 ];
 
 // --- Mock Company Profile (for OnboardingContext) ---
@@ -414,6 +516,17 @@ export const mockReplenishmentTasks: ReplenishmentTask[] = [
     status: "Assigned",
     assignedTo: "mock-user-id-456",
     createdAt: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+    organizationId: "mock-org-1",
+  },
+  { // Added task
+    id: "REPL-003",
+    itemId: "item-3",
+    itemName: "Notebook (A4)",
+    fromLocation: "Main Warehouse",
+    toLocation: "SF-B-01-2-C",
+    quantity: 30,
+    status: "Pending",
+    createdAt: new Date(Date.now() - 10800000).toISOString(), // 3 hours ago
     organizationId: "mock-org-1",
   },
 ];
