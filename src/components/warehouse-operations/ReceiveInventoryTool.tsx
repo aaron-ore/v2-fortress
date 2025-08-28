@@ -1,18 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Barcode, CheckCircle, Package } from "lucide-react";
+import { Barcode, CheckCircle, Package, MapPin, Printer } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { showSuccess, showError } from "@/utils/toast";
 import { useOrders, OrderItem, POItem } from "@/context/OrdersContext";
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
 import { useStockMovement } from "@/context/StockMovementContext";
+import { useOnboarding } from "@/context/OnboardingContext"; // NEW: For locations
+import { usePrint } from "@/context/PrintContext"; // NEW: For printing labels
+import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // NEW: For QR code on labels
+import { format } from "date-fns";
 
 interface ReceivedItemDisplay extends POItem {
   receivedQuantity: number;
   inventoryItemDetails?: InventoryItem; // To store full item details
+  suggestedPutawayLocation?: string; // NEW: Suggested location
+  lotNumber?: string; // NEW: Lot number for received item
+  expirationDate?: string; // NEW: Expiration date for received item
 }
 
 interface ReceiveInventoryToolProps {
@@ -25,11 +32,16 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
   const { orders, fetchOrders, updateOrder } = useOrders();
   const { inventoryItems, refreshInventory, updateInventoryItem } = useInventory();
   const { addStockMovement } = useStockMovement();
+  const { locations } = useOnboarding(); // NEW: Get available locations
+  const { initiatePrint } = usePrint(); // NEW: For printing
 
   const [poNumberInput, setPoNumberInput] = useState("");
   const [selectedPO, setSelectedPO] = useState<OrderItem | null>(null);
   const [receivedItems, setReceivedItems] = useState<ReceivedItemDisplay[]>([]);
   const [isScanning, setIsScanning] = useState(false);
+
+  // Memoize available locations for putaway suggestions
+  const availableLocations = useMemo(() => locations.filter(loc => loc !== "Returns Area"), [locations]);
 
   useEffect(() => {
     // Reset state when component mounts or PO input changes
@@ -38,29 +50,43 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
   }, [poNumberInput]);
 
   useEffect(() => {
-    if (scannedDataFromGlobal && !isScanning) {
-      // If global scan is used, it should typically go to Item Lookup.
-      // For Receive, we expect a PO to be loaded first.
-      // So, we'll ignore global scan here unless a PO is already loaded.
-      // If a PO is loaded, we can try to scan against its items.
-      if (selectedPO) {
+    if (scannedDataFromGlobal) {
+      if (!selectedPO) {
+        // If no PO is loaded, assume the scan is for a PO number
+        setPoNumberInput(scannedDataFromGlobal);
+        handlePoNumberSubmit(scannedDataFromGlobal);
+      } else {
+        // If a PO is loaded, assume the scan is for an item
         handleScannedBarcode(scannedDataFromGlobal);
       }
       onScannedDataProcessed(); // Acknowledge that the scanned data has been processed
     }
-  }, [scannedDataFromGlobal, isScanning, onScannedDataProcessed, selectedPO]);
+  }, [scannedDataFromGlobal, selectedPO, onScannedDataProcessed]);
 
-  const handlePoNumberSubmit = async () => {
-    if (!poNumberInput.trim()) {
+  const getSuggestedPutawayLocation = (itemCategory: string): string => {
+    // Simple simulation for putaway guidance
+    if (availableLocations.length === 0) return "Unassigned";
+
+    // Example: Prioritize 'Main Warehouse' for electronics, 'Store Front' for office supplies
+    if (itemCategory === "Electronics" && availableLocations.includes("Main Warehouse")) return "Main Warehouse";
+    if (itemCategory === "Office Supplies" && availableLocations.includes("Store Front")) return "Store Front";
+    if (itemCategory === "Perishables" && availableLocations.includes("Cold Storage")) return "Cold Storage"; // Assuming 'Cold Storage' exists
+
+    // Otherwise, pick a random available location
+    return availableLocations[Math.floor(Math.random() * availableLocations.length)];
+  };
+
+  const handlePoNumberSubmit = async (poNum?: string) => {
+    const currentPoNum = poNum || poNumberInput.trim();
+    if (!currentPoNum) {
       showError("Please enter a Purchase Order Number.");
       return;
     }
 
-    // Ensure orders are fetched
     await fetchOrders();
 
     const foundPO = orders.find(
-      (order) => order.id.toLowerCase() === poNumberInput.trim().toLowerCase() && order.type === "Purchase"
+      (order) => order.id.toLowerCase() === currentPoNum.toLowerCase() && order.type === "Purchase"
     );
 
     if (foundPO) {
@@ -71,12 +97,15 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
           ...poItem,
           receivedQuantity: 0, // Initialize received quantity to 0
           inventoryItemDetails: inventoryItem,
+          suggestedPutawayLocation: inventoryItem ? getSuggestedPutawayLocation(inventoryItem.category) : "Unassigned",
+          lotNumber: undefined, // Initialize lot number
+          expirationDate: undefined, // Initialize expiration date
         };
       });
       setReceivedItems(itemsWithDetails);
       showSuccess(`Purchase Order ${foundPO.id} loaded.`);
     } else {
-      showError(`Purchase Order "${poNumberInput.trim()}" not found or is not a Purchase Order.`);
+      showError(`Purchase Order "${currentPoNum}" not found or is not a Purchase Order.`);
       setSelectedPO(null);
       setReceivedItems([]);
     }
@@ -86,6 +115,22 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
     setReceivedItems((prev) =>
       prev.map((item) =>
         item.id === itemId ? { ...item, receivedQuantity: parseInt(quantity) || 0 } : item
+      )
+    );
+  };
+
+  const handleLotNumberChange = (itemId: number, lot: string) => {
+    setReceivedItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId ? { ...item, lotNumber: lot } : item
+      )
+    );
+  };
+
+  const handleExpirationDateChange = (itemId: number, date: string) => {
+    setReceivedItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId ? { ...item, expirationDate: date } : item
       )
     );
   };
@@ -120,6 +165,40 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
   const handleScanItem = () => {
     setIsScanning(true);
     onScanRequest(handleScannedBarcode);
+  };
+
+  const handlePrintPutawayLabel = async (item: ReceivedItemDisplay) => {
+    if (!item.inventoryItemDetails || !item.suggestedPutawayLocation) {
+      showError("Cannot print label: Missing item details or putaway location.");
+      return;
+    }
+
+    try {
+      const qrCodeValue = JSON.stringify({
+        sku: item.inventoryItemDetails.sku,
+        qty: item.receivedQuantity,
+        loc: item.suggestedPutawayLocation,
+        lot: item.lotNumber,
+        exp: item.expirationDate,
+      });
+      const qrCodeSvg = generateQrCodeSvg(qrCodeValue, 128); // Generate QR code SVG
+
+      const labelProps = {
+        itemName: item.itemName,
+        itemSku: item.inventoryItemDetails.sku,
+        receivedQuantity: item.receivedQuantity,
+        suggestedLocation: item.suggestedPutawayLocation,
+        lotNumber: item.lotNumber,
+        expirationDate: item.expirationDate,
+        qrCodeSvg: qrCodeSvg,
+        printDate: format(new Date(), "MMM dd, yyyy HH:mm"),
+      };
+
+      initiatePrint({ type: "putaway-label", props: labelProps });
+      showSuccess(`Putaway label for ${item.itemName} sent to printer.`);
+    } catch (error: any) {
+      showError(`Failed to generate/print label: ${error.message}`);
+    }
   };
 
   const handleCompleteReceive = async () => {
@@ -198,7 +277,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
               }
             }}
           />
-          <Button onClick={handlePoNumberSubmit} disabled={!poNumberInput.trim()}>Load PO</Button>
+          <Button onClick={() => handlePoNumberSubmit()} disabled={!poNumberInput.trim()}>Load PO</Button>
         </div>
         <Button
           className="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg py-3 flex items-center justify-center gap-2"
@@ -206,7 +285,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
           disabled={isScanning || !selectedPO}
         >
           <Barcode className="h-6 w-6" />
-          {isScanning ? "Scanning..." : "Scan Item"}
+          {isScanning ? "Scanning..." : "Scan Item Barcode"}
         </Button>
       </div>
 
@@ -214,7 +293,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
         {selectedPO ? (
           <>
             <h3 className="text-lg font-semibold">Items for PO: {selectedPO.id}</h3>
-            <ScrollArea className="h-full max-h-[calc(100vh-400px)]"> {/* Adjust max-height dynamically */}
+            <ScrollArea className="h-full max-h-[calc(100vh-400px)]">
               <div className="space-y-3 pr-2">
                 {receivedItems.map((item) => (
                   <Card key={item.id} className="bg-card border-border shadow-sm">
@@ -226,7 +305,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
                       <p className="text-muted-foreground text-sm mb-2 flex items-center gap-1">
                         <Package className="h-4 w-4" /> Expected: {item.quantity}
                       </p>
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-center mb-2">
                         <Label htmlFor={`received-qty-${item.id}`} className="font-semibold">Received Qty:</Label>
                         <Input
                           id={`received-qty-${item.id}`}
@@ -237,6 +316,34 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
                           min="0"
                           max={item.quantity} // Max received quantity is expected quantity
                         />
+                      </div>
+                      <div className="space-y-2 mb-2">
+                        <Label htmlFor={`lot-number-${item.id}`} className="font-semibold">Lot Number (Optional)</Label>
+                        <Input
+                          id={`lot-number-${item.id}`}
+                          value={item.lotNumber || ""}
+                          onChange={(e) => handleLotNumberChange(item.id, e.target.value)}
+                          placeholder="e.g., L12345"
+                        />
+                      </div>
+                      <div className="space-y-2 mb-2">
+                        <Label htmlFor={`exp-date-${item.id}`} className="font-semibold">Expiration Date (Optional)</Label>
+                        <Input
+                          id={`exp-date-${item.id}`}
+                          type="date"
+                          value={item.expirationDate || ""}
+                          onChange={(e) => handleExpirationDateChange(item.id, e.target.value)}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-muted-foreground text-sm flex items-center gap-1">
+                          <MapPin className="h-4 w-4" /> Putaway: <span className="font-semibold text-primary">{item.suggestedPutawayLocation}</span>
+                        </p>
+                        {item.receivedQuantity > 0 && (
+                          <Button variant="outline" size="sm" onClick={() => handlePrintPutawayLabel(item)}>
+                            <Printer className="h-4 w-4 mr-2" /> Print Label
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

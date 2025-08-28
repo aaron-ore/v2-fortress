@@ -46,6 +46,7 @@ import DashboardSummaryPdfContent from "./components/DashboardSummaryPdfContent"
 import PurchaseOrderPdfContent from "./components/PurchaseOrderPdfContent";
 import InvoicePdfContent from "./components/InvoicePdfContent";
 import AdvancedDemandForecastPdfContent from "./components/AdvancedDemandForecastPdfContent";
+import PutawayLabelPdfContent from "./components/PutawayLabelPdfContent"; // NEW: Import PutawayLabelPdfContent
 
 const queryClient = new QueryClient();
 
@@ -78,7 +79,7 @@ const AuthenticatedApp = () => {
                     <Route path="users" element={<Users />} />
                     <Route path="setup-instructions" element={<SetupInstructions />} />
                     <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
-                    <Route path="features1" element={<FeaturesPage />} /> {/* Changed path to features1 */}
+                    <Route path="features1" element={<FeaturesPage />} />
                     <Route path="*" element={<NotFound />} />
                   </Route>
                 </Routes>
@@ -166,6 +167,9 @@ const AppContent = () => {
           )}
           {printContentData.type === "advanced-demand-forecast" && (
             <AdvancedDemandForecastPdfContent {...printContentData.props} />
+          )}
+          {printContentData.type === "putaway-label" && ( // NEW: Render PutawayLabelPdfContent
+            <PutawayLabelPdfContent {...printContentData.props} />
           )}
         </PrintWrapper>
       )}

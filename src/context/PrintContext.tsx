@@ -1,15 +1,15 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback } from "react";
 
 interface PrintContentData {
-  type: "purchase-order" | "invoice";
-  props: any; // The actual props for PurchaseOrderPdfContent or InvoicePdfContent
+  type: "purchase-order" | "invoice" | "dashboard-summary" | "advanced-demand-forecast" | "putaway-label"; // NEW: Added putaway-label
+  props: any; // The actual props for the respective PDF content component
 }
 
 interface PrintContextType {
   isPrinting: boolean;
   printContentData: PrintContentData | null;
-  initiatePrint: (data: PrintContentData) => void; // Renamed and simplified
-  resetPrintState: () => void; // New function to reset both states
+  initiatePrint: (data: PrintContentData) => void;
+  resetPrintState: () => void;
 }
 
 const PrintContext = createContext<PrintContextType | undefined>(undefined);
@@ -20,7 +20,7 @@ export const PrintProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const initiatePrint = useCallback((data: PrintContentData) => {
     setPrintContentData(data);
-    setIsPrinting(true); // Set isPrinting to true when data is provided
+    setIsPrinting(true);
   }, []);
 
   const resetPrintState = useCallback(() => {

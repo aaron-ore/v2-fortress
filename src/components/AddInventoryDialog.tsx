@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch"; // NEW: Import Switch
+import { Switch } from "@/components/ui/switch";
 import { showSuccess, showError } from "@/utils/toast";
 import { useInventory } from "@/context/InventoryContext";
 import { useOnboarding } from "@/context/OnboardingContext";
@@ -20,6 +20,7 @@ import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
 import ManageLocationsDialog from "@/components/ManageLocationsDialog";
 import JsBarcode from "jsbarcode";
+import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // NEW: Import QR code generator
 
 interface AddInventoryDialogProps {
   isOpen: boolean;
@@ -46,11 +47,12 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   const [location, setLocation] = useState("");
   const [selectedVendorId, setSelectedVendorId] = useState("none");
   const [barcodeValue, setBarcodeValue] = useState("");
+  const [barcodeType, setBarcodeType] = useState<"CODE128" | "QR">("CODE128"); // NEW: Barcode type state
   const [barcodeSvg, setBarcodeSvg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrlPreview, setImageUrlPreview] = useState<string | null>(null);
-  const [autoReorderEnabled, setAutoReorderEnabled] = useState(false); // NEW: State for auto-reorder
-  const [autoReorderQuantity, setAutoReorderQuantity] = useState(""); // NEW: State for auto-reorder quantity
+  const [autoReorderEnabled, setAutoReorderEnabled] = useState(false);
+  const [autoReorderQuantity, setAutoReorderQuantity] = useState("");
 
   const [isManageLocationsDialogOpen, setIsManageLocationsDialogOpen] = useState(false);
 
@@ -68,11 +70,12 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       setLocation("");
       setSelectedVendorId("none");
       setBarcodeValue("");
+      setBarcodeType("CODE128"); // Reset to default
       setBarcodeSvg(null);
       setImageFile(null);
       setImageUrlPreview(null);
-      setAutoReorderEnabled(false); // Reset
-      setAutoReorderQuantity(""); // Reset
+      setAutoReorderEnabled(false);
+      setAutoReorderQuantity("");
     }
   }, [isOpen]);
 
@@ -97,25 +100,30 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     }
   };
 
-  const handleGenerateBarcode = () => {
+  const handleGenerateBarcode = async () => { // Made async for QR code
     if (!barcodeValue.trim()) {
-      showError("Please enter a value to generate the barcode (e.g., SKU).");
+      showError("Please enter a value to generate the barcode/QR code (e.g., SKU).");
       setBarcodeSvg(null);
       return;
     }
     try {
-      const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      JsBarcode(svgElement, barcodeValue.trim(), {
-        format: "CODE128",
-        displayValue: true,
-        height: 50,
-        width: 2,
-        margin: 0,
-      });
-      setBarcodeSvg(svgElement.outerHTML);
-      showSuccess("Barcode generated!");
+      if (barcodeType === "CODE128") {
+        const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        JsBarcode(svgElement, barcodeValue.trim(), {
+          format: "CODE128",
+          displayValue: true,
+          height: 50,
+          width: 2,
+          margin: 0,
+        });
+        setBarcodeSvg(svgElement.outerHTML);
+      } else { // QR code
+        const qrSvg = generateQrCodeSvg(barcodeValue.trim(), 100); // Use QR code generator
+        setBarcodeSvg(qrSvg);
+      }
+      showSuccess(`${barcodeType === "CODE128" ? "Barcode" : "QR Code"} generated!`);
     } catch (error: any) {
-      showError(`Failed to generate barcode: ${error.message}`);
+      showError(`Failed to generate ${barcodeType === "CODE128" ? "barcode" : "QR code"}: ${error.message}`);
       setBarcodeSvg(null);
     }
   };
@@ -139,14 +147,14 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     const parsedReorderLevel = parseInt(reorderLevel);
     const parsedUnitCost = parseFloat(unitCost);
     const parsedRetailPrice = parseFloat(retailPrice);
-    const parsedAutoReorderQuantity = parseInt(autoReorderQuantity) || 0; // Parse new field
+    const parsedAutoReorderQuantity = parseInt(autoReorderQuantity) || 0;
 
     if (
       isNaN(parsedQuantity) || parsedQuantity < 0 ||
       isNaN(parsedReorderLevel) || parsedReorderLevel < 0 ||
       isNaN(parsedUnitCost) || parsedUnitCost < 0 ||
       isNaN(parsedRetailPrice) || parsedRetailPrice < 0 ||
-      (autoReorderEnabled && (isNaN(parsedAutoReorderQuantity) || parsedAutoReorderQuantity <= 0)) // Validate if enabled
+      (autoReorderEnabled && (isNaN(parsedAutoReorderQuantity) || parsedAutoReorderQuantity <= 0))
     ) {
       showError("Please enter valid positive numbers for Quantity, Reorder Level, Unit Cost, Retail Price, and Auto-Reorder Quantity (if enabled).");
       return;
@@ -167,8 +175,8 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       imageUrl: imageUrlPreview || undefined,
       vendorId: selectedVendorId === "none" ? undefined : selectedVendorId,
       barcodeUrl: barcodeSvg || undefined,
-      autoReorderEnabled: autoReorderEnabled, // Include new field
-      autoReorderQuantity: parsedAutoReorderQuantity, // Include new field
+      autoReorderEnabled: autoReorderEnabled,
+      autoReorderQuantity: parsedAutoReorderQuantity,
     };
 
     await addInventoryItem(newItem);
@@ -187,7 +195,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     !location ||
     locations.length === 0 ||
     categories.length === 0 ||
-    (autoReorderEnabled && (parseInt(autoReorderQuantity) <= 0 || isNaN(parseInt(autoReorderQuantity)))); // Validate auto-reorder quantity
+    (autoReorderEnabled && (parseInt(autoReorderQuantity) <= 0 || isNaN(parseInt(autoReorderQuantity))));
 
   const handleOpenManageLocations = () => {
     setIsManageLocationsDialogOpen(true);
@@ -352,6 +360,15 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
                 onChange={(e) => setBarcodeValue(e.target.value)}
                 placeholder="Enter SKU or custom value"
               />
+              <Select value={barcodeType} onValueChange={(value: "CODE128" | "QR") => setBarcodeType(value)}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CODE128">Barcode</SelectItem>
+                  <SelectItem value="QR">QR Code</SelectItem>
+                </SelectContent>
+              </Select>
               <Button type="button" onClick={handleGenerateBarcode} variant="outline">
                 Generate
               </Button>
@@ -376,7 +393,6 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
               </div>
             )}
           </div>
-          {/* NEW: Auto-Reorder Section */}
           <div className="space-y-2 md:col-span-2 border-t border-border pt-4 mt-4">
             <h3 className="text-lg font-semibold">Auto-Reorder Settings</h3>
             <div className="flex items-center justify-between space-x-2">

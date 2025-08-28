@@ -11,13 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch"; // NEW: Import Switch
+import { Switch } from "@/components/ui/switch";
 import { showSuccess, showError } from "@/utils/toast";
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
 import JsBarcode from "jsbarcode";
+import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // NEW: Import QR code generator
 
 const EditInventoryItem: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -42,11 +43,12 @@ const EditInventoryItem: React.FC = () => {
   const [location, setLocation] = useState("");
   const [selectedVendorId, setSelectedVendorId] = useState("none");
   const [barcodeValue, setBarcodeValue] = useState("");
+  const [barcodeType, setBarcodeType] = useState<"CODE128" | "QR">("CODE128"); // NEW: Barcode type state
   const [barcodeSvg, setBarcodeSvg] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrlPreview, setImageUrlPreview] = useState<string | null>(null);
-  const [autoReorderEnabled, setAutoReorderEnabled] = useState(false); // NEW: State for auto-reorder
-  const [autoReorderQuantity, setAutoReorderQuantity] = useState(""); // NEW: State for auto-reorder quantity
+  const [autoReorderEnabled, setAutoReorderEnabled] = useState(false);
+  const [autoReorderQuantity, setAutoReorderQuantity] = useState("");
 
   useEffect(() => {
     if (id) {
@@ -68,10 +70,17 @@ const EditInventoryItem: React.FC = () => {
         setSelectedVendorId(foundItem.vendorId || "none");
         setBarcodeSvg(foundItem.barcodeUrl || null);
         if (foundItem.barcodeUrl) {
-          setBarcodeValue(foundItem.sku);
+          // Attempt to infer barcode type if SVG contains 'qrcode' or 'CODE128'
+          if (foundItem.barcodeUrl.includes('qrcode')) {
+            setBarcodeType("QR");
+            setBarcodeValue(foundItem.sku); // Assume SKU is the encoded value
+          } else {
+            setBarcodeType("CODE128");
+            setBarcodeValue(foundItem.sku);
+          }
         }
-        setAutoReorderEnabled(foundItem.autoReorderEnabled); // Set new field
-        setAutoReorderQuantity(foundItem.autoReorderQuantity.toString()); // Set new field
+        setAutoReorderEnabled(foundItem.autoReorderEnabled);
+        setAutoReorderQuantity(foundItem.autoReorderQuantity.toString());
       } else {
         showError("Inventory item not found.");
         navigate("/inventory");
@@ -100,25 +109,30 @@ const EditInventoryItem: React.FC = () => {
     }
   };
 
-  const handleGenerateBarcode = () => {
+  const handleGenerateBarcode = async () => { // Made async for QR code
     if (!barcodeValue.trim()) {
-      showError("Please enter a value to generate the barcode (e.g., SKU).");
+      showError("Please enter a value to generate the barcode/QR code (e.g., SKU).");
       setBarcodeSvg(null);
       return;
     }
     try {
-      const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      JsBarcode(svgElement, barcodeValue.trim(), {
-        format: "CODE128",
-        displayValue: true,
-        height: 50,
-        width: 2,
-        margin: 0,
-      });
-      setBarcodeSvg(svgElement.outerHTML);
-      showSuccess("Barcode generated!");
+      if (barcodeType === "CODE128") {
+        const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        JsBarcode(svgElement, barcodeValue.trim(), {
+          format: "CODE128",
+          displayValue: true,
+          height: 50,
+          width: 2,
+          margin: 0,
+        });
+        setBarcodeSvg(svgElement.outerHTML);
+      } else { // QR code
+        const qrSvg = generateQrCodeSvg(barcodeValue.trim(), 100); // Use QR code generator
+        setBarcodeSvg(qrSvg);
+      }
+      showSuccess(`${barcodeType === "CODE128" ? "Barcode" : "QR Code"} generated!`);
     } catch (error: any) {
-      showError(`Failed to generate barcode: ${error.message}`);
+      showError(`Failed to generate ${barcodeType === "CODE128" ? "barcode" : "QR code"}: ${error.message}`);
       setBarcodeSvg(null);
     }
   };
@@ -163,8 +177,8 @@ const EditInventoryItem: React.FC = () => {
         imageUrl: imageUrlPreview || undefined,
         vendorId: selectedVendorId === "none" ? undefined : selectedVendorId,
         barcodeUrl: barcodeSvg || undefined,
-        autoReorderEnabled: autoReorderEnabled, // Include new field
-        autoReorderQuantity: parsedAutoReorderQuantity, // Include new field
+        autoReorderEnabled: autoReorderEnabled,
+        autoReorderQuantity: parsedAutoReorderQuantity,
       };
       updateInventoryItem(updatedItem);
       showSuccess(`Updated ${itemName}!`);
@@ -337,6 +351,15 @@ const EditInventoryItem: React.FC = () => {
                 onChange={(e) => setBarcodeValue(e.target.value)}
                 placeholder="Enter SKU or custom value"
               />
+              <Select value={barcodeType} onValueChange={(value: "CODE128" | "QR") => setBarcodeType(value)}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CODE128">Barcode</SelectItem>
+                  <SelectItem value="QR">QR Code</SelectItem>
+                </SelectContent>
+              </Select>
               <Button type="button" onClick={handleGenerateBarcode} variant="outline">
                 Generate
               </Button>
@@ -361,7 +384,6 @@ const EditInventoryItem: React.FC = () => {
               </div>
             )}
           </div>
-          {/* NEW: Auto-Reorder Section */}
           <div className="space-y-2 md:col-span-2 border-t border-border pt-4 mt-4">
             <h3 className="text-lg font-semibold">Auto-Reorder Settings</h3>
             <div className="flex items-center justify-between space-x-2">
