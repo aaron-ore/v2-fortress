@@ -25,6 +25,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormDescription, // Added FormDescription
   FormMessage,
 } from "@/components/ui/form";
 import {
@@ -497,7 +498,6 @@ export const createInventoryColumns = (vendors: { id: string; name: string }[], 
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuItem onClick={() => navigator.clipboard.writeText(row.original.id)}>
             Copy item ID
           </DropdownMenuItem>
