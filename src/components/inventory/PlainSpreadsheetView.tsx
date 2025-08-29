@@ -9,7 +9,15 @@ import {
 } from "@/components/ui/table";
 import { InventoryItem } from "@/context/InventoryContext";
 import { cn } from "@/lib/utils";
-import { ChevronDown } from "lucide-react"; // Import ChevronDown icon
+import { ChevronDown, MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react"; // Import necessary icons
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"; // Import DropdownMenu components
+import { Button } from "@/components/ui/button"; // Import Button
 
 interface PlainSpreadsheetViewProps {
   items: (InventoryItem & {
@@ -23,6 +31,9 @@ interface PlainSpreadsheetViewProps {
   visibleColumns: Record<string, boolean>;
   allColumns: { key: string; label: string; className?: string; type?: string }[];
   vendorNameMap: Map<string, string>; // Pass vendorNameMap
+  onViewDetails: (item: InventoryItem) => void;
+  onEditItem: (item: InventoryItem) => void;
+  onDeleteItem: (itemId: string, itemName: string) => void;
 }
 
 const PlainSpreadsheetView: React.FC<PlainSpreadsheetViewProps> = ({
@@ -30,21 +41,25 @@ const PlainSpreadsheetView: React.FC<PlainSpreadsheetViewProps> = ({
   visibleColumns,
   allColumns,
   vendorNameMap,
+  onViewDetails,
+  onEditItem,
+  onDeleteItem,
 }) => {
   const columnsToRender = allColumns.filter(
-    (col) => visibleColumns[col.key] && col.key !== "actions" // Exclude actions column
+    (col) => visibleColumns[col.key]
   );
 
   return (
     <div className="overflow-x-auto border border-border rounded-lg">
       <Table className="min-w-full">
-        <TableHeader className="bg-gray-800 text-white">
+        <TableHeader className="bg-muted text-muted-foreground"> {/* Changed header background */}
           <TableRow>
             {columnsToRender.map((column) => (
-              <TableHead key={column.key} className={cn(column.className, "text-white font-bold text-sm px-4 py-2 border-r border-gray-700 last:border-r-0")}>
+              <TableHead key={column.key} className={cn(column.className, "font-bold text-sm px-4 py-2 border-r border-border last:border-r-0")}>
                 <div className="flex items-center justify-between">
                   {column.label}
-                  <ChevronDown className="h-3 w-3 text-gray-400 ml-1" />
+                  {/* Only show chevron for sortable columns, not actions */}
+                  {column.key !== "actions" && <ChevronDown className="h-3 w-3 text-muted-foreground ml-1" />}
                 </div>
               </TableHead>
             ))}
@@ -74,10 +89,10 @@ const PlainSpreadsheetView: React.FC<PlainSpreadsheetViewProps> = ({
                       </span>
                     ) : column.key === "lastSoldDate" ? (
                       item.lastSoldDate
-                    ) : column.key === "sku" ? (
-                      item.sku
                     ) : column.key === "dateOfLastOrder" ? (
                       item.dateOfLastOrder
+                    ) : column.key === "sku" ? (
+                      item.sku
                     ) : column.key === "name" ? (
                       item.name
                     ) : column.key === "vendorName" ? (
@@ -98,6 +113,30 @@ const PlainSpreadsheetView: React.FC<PlainSpreadsheetViewProps> = ({
                       item.daysForReorder
                     ) : column.key === "nextReorderQuantity" ? (
                       item.nextReorderQuantity
+                    ) : column.key === "actions" ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => onViewDetails(item)}>
+                            <Eye className="h-4 w-4 mr-2" /> View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onEditItem(item)}>
+                            <Edit className="h-4 w-4 mr-2" /> Edit Item
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => navigator.clipboard.writeText(item.id)}>
+                            Copy item ID
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onDeleteItem(item.id, item.name)} className="text-red-600">
+                            <Trash2 className="h-4 w-4 mr-2" /> Delete Item
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     ) : (
                       (item as any)[column.key]
                     )}
