@@ -551,22 +551,22 @@ const Orders: React.FC = () => {
           <TabsTrigger value="archived">Archived Orders</TabsTrigger>
         </TabsList>
         <TabsContent value="all">
-          <div className="rounded-md border">
+          <div className=""> {/* Removed rounded-md border */}
             <DataTable columns={columns} data={filteredOrders} />
           </div>
         </TabsContent>
         <TabsContent value="sales">
-          <div className="rounded-md border">
+          <div className=""> {/* Removed rounded-md border */}
             <DataTable columns={columns} data={filteredOrders} />
           </div>
         </TabsContent>
         <TabsContent value="purchase">
-          <div className="rounded-md border">
+          <div className=""> {/* Removed rounded-md border */}
             <DataTable columns={columns} data={filteredOrders} />
           </div>
         </TabsContent>
         <TabsContent value="archived">
-          <div className="rounded-md border">
+          <div className=""> {/* Removed rounded-md border */}
             <DataTable columns={columns} data={filteredOrders} />
           </div>
         </TabsContent>

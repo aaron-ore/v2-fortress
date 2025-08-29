@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { PlusCircle, Search, Info, MoreHorizontal } from "lucide-react";
+import { PlusCircle, Search, Info, MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react"; // Added Eye, Edit, Trash2
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,7 +25,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormDescription, // Added FormDescription
+  FormDescription,
   FormMessage,
 } from "@/components/ui/form";
 import {
@@ -490,23 +490,35 @@ export const createInventoryColumns = (vendors: { id: string; name: string }[], 
   {
     id: "actions",
     cell: ({ row }) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
+      <div className="flex space-x-2">
+        <Link to={`/inventory/${row.original.id}`}>
+          <Button variant="outline" size="sm">
+            <Eye className="h-4 w-4 mr-1" /> View
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => navigator.clipboard.writeText(row.original.id)}>
-            Copy item ID
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => deleteInventoryItem(row.original.id)} className="text-red-600">
-            Delete Item
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </Link>
+        <Link to={`/inventory/${row.original.id}`}>
+          <Button variant="outline" size="sm">
+            <Edit className="h-4 w-4 mr-1" /> Edit
+          </Button>
+        </Link>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(row.original.id)}>
+              Copy item ID
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => deleteInventoryItem(row.original.id)} className="text-red-600">
+              <Trash2 className="h-4 w-4 mr-2" /> Delete Item
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     ),
   },
 ];
