@@ -68,10 +68,10 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
 
     if (profileFetchError) {
-      if (errorToastId.current === null) {
-        errorToastId.current = showError("Failed to load user profile. Please try again.");
-        setTimeout(() => { errorToastId.current = null; }, 3000);
-      }
+      // REMOVED: if (errorToastId.current === null) {
+      // REMOVED:   errorToastId.current = showError("Failed to load user profile. Please try again.");
+      // REMOVED:   setTimeout(() => { errorToastId.current = null; }, 3000);
+      // REMOVED: }
       setProfile(null);
       // Always load mock user profile due to Supabase error for testing purposes
       console.warn("Loading mock user profile due to Supabase error.");
@@ -109,8 +109,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     if (error) {
       console.error("Error fetching all profiles:", error);
-      showError("Failed to load all user profiles.");
-      // Always load mock all profiles due to Supabase error for testing purposes
+      // REMOVED: showError("Failed to load all user profiles."); // Removed this toast
       console.warn("Loading mock all profiles due to Supabase error.");
       setAllProfiles(mockAllProfiles);
     } else if (data) {

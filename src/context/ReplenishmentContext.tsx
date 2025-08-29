@@ -46,8 +46,7 @@ export const ReplenishmentProvider: React.FC<{ children: ReactNode }> = ({ child
 
     if (error) {
       console.error("Error fetching replenishment tasks:", error);
-      showError("Failed to load replenishment tasks.");
-      // Always load mock data on error for testing purposes
+      // REMOVED: showError("Failed to load replenishment tasks."); // Removed this toast
       console.warn("Loading mock replenishment tasks due to Supabase error.");
       setReplenishmentTasks(mockReplenishmentTasks);
     } else {

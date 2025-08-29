@@ -40,8 +40,7 @@ export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     if (error) {
       console.error("Error fetching categories:", error);
-      showError("Failed to load categories.");
-      // Always load mock data on error for testing purposes
+      // REMOVED: showError("Failed to load categories."); // Removed this toast
       console.warn("Loading mock categories due to Supabase error.");
       setCategories(mockCategories);
     } else {

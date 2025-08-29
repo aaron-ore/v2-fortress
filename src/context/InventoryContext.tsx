@@ -112,8 +112,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error fetching inventory items:", error);
-      showError("Failed to load inventory items.");
-      // Always load mock data on error for testing purposes
+      // REMOVED: showError("Failed to load inventory items."); // Removed this toast
       console.warn("Loading mock inventory items due to Supabase error.");
       setInventoryItems(mockInventoryItems.map(mapSupabaseItemToInventoryItem));
     } else {

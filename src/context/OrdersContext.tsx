@@ -65,8 +65,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error fetching orders:", error);
-      showError("Failed to load orders.");
-      // Always load mock data on error for testing purposes
+      // REMOVED: showError("Failed to load orders."); // Removed this toast
       console.warn("Loading mock orders due to Supabase error.");
       setOrders(mockOrders);
     } else {
