@@ -83,8 +83,8 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
     pickingReorderLevel: item.picking_reorder_level || 0, // Default to 0 if null
     committedStock: item.committed_stock,
     incomingStock: item.incoming_stock,
-    unitCost: parseFloat(item.unit_cost),
-    retailPrice: parseFloat(item.retail_price),
+    unitCost: parseFloat(item.unit_cost || '0'), // Ensure it's a number, default to 0
+    retailPrice: parseFloat(item.retail_price || '0'), // Ensure it's a number, default to 0
     location: item.location,
     pickingBinLocation: item.picking_bin_location || item.location, // Default to main location if not set
     status: item.status,
@@ -184,11 +184,13 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
       const newItem: InventoryItem = mapSupabaseItemToInventoryItem(data[0]);
       setInventoryItems((prevItems) => [...prevItems, newItem]);
       // REMOVED: addActivity("Inventory Added", `Added new inventory item: ${newItem.name} (SKU: ${newItem.sku}).`, { itemId: newItem.id, sku: newItem.sku, quantity: newItem.quantity });
+      showSuccess(`Added new inventory item: ${newItem.name} (SKU: ${newItem.sku}).`);
       if (profile?.organizationId) {
         processAutoReorder([...inventoryItems, newItem], addOrder, vendors, profile.organizationId, addNotification);
       }
     } else {
       const errorMessage = "Failed to add item: No data returned after insert.";
+      console.error(errorMessage);
       // REMOVED: addActivity("Inventory Add Failed", errorMessage, { item });
       throw new Error(errorMessage);
     }
@@ -245,11 +247,13 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         ),
       );
       // REMOVED: addActivity("Inventory Updated", `Updated inventory item: ${updatedItemFromDB.name} (SKU: ${updatedItemFromDB.sku}).`, { itemId: updatedItemFromDB.id, sku: updatedItemFromDB.sku, newQuantity: updatedItemFromDB.quantity });
+      showSuccess(`Updated inventory item: ${updatedItemFromDB.name} (SKU: ${updatedItemFromDB.sku}).`);
       if (profile?.organizationId) {
         processAutoReorder(inventoryItems.map(item => item.id === updatedItemFromDB.id ? updatedItemFromDB : item), addOrder, vendors, profile.organizationId, addNotification);
       }
     } else {
       const errorMessage = "Update might not have been saved. Check database permissions.";
+      console.error(errorMessage);
       // REMOVED: addActivity("Inventory Update Failed", errorMessage, { itemId: updatedItem.id, sku: updatedItem.sku });
       throw new Error(errorMessage);
     }

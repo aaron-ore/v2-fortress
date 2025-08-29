@@ -75,7 +75,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         customerSupplier: order.customer_supplier,
         date: order.created_at,
         status: order.status,
-        totalAmount: parseFloat(order.total_amount),
+        totalAmount: parseFloat(order.total_amount || '0'), // Ensure it's a number, default to 0
         dueDate: order.due_date,
         itemCount: order.item_count,
         notes: order.notes || "",

@@ -1,480 +1,540 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { showSuccess, showError } from "@/utils/toast";
-import { useInventory, InventoryItem } from "@/context/InventoryContext";
-import { useOnboarding } from "@/context/OnboardingContext";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useInventory } from "@/context/InventoryContext";
 import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
-import JsBarcode from "jsbarcode";
-import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // NEW: Import QR code generator
+import { PlusCircle, Loader2 } from "lucide-react";
+import { DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { showError, showSuccess } from "@/utils/toast";
+import { generateBarcodeSvgDataUri } from "@/utils/barcode"; // Import barcode utility
+
+const formSchema = z.object({
+  name: z.string().min(1, "Item name is required"),
+  description: z.string().optional(),
+  sku: z.string().min(1, "SKU is required"),
+  category: z.string().min(1, "Category is required"),
+  pickingBinQuantity: z.number().min(0, "Must be non-negative"),
+  overstockQuantity: z.number().min(0, "Must be non-negative"),
+  reorderLevel: z.number().min(0, "Must be non-negative"),
+  pickingReorderLevel: z.number().min(0, "Must be non-negative"),
+  committedStock: z.number().min(0, "Must be non-negative"),
+  incomingStock: z.number().min(0, "Must be non-negative"),
+  unitCost: z.number().min(0, "Must be non-negative"),
+  retailPrice: z.number().min(0, "Must be non-negative"),
+  location: z.string().min(1, "Location is required"),
+  pickingBinLocation: z.string().min(1, "Picking bin location is required"),
+  imageUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  vendorId: z.string().optional().or(z.literal("")),
+  autoReorderEnabled: z.boolean().default(false),
+  autoReorderQuantity: z.number().min(0, "Must be non-negative").optional(),
+});
 
 const EditInventoryItem: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { inventoryItems, updateInventoryItem } = useInventory();
-  const { locations } = useOnboarding();
-  const { categories } = useCategories();
+  const { categories, addCategory } = useCategories();
   const { vendors } = useVendors();
+  const [itemNotFound, setItemNotFound] = useState(false);
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [barcodeUrl, setBarcodeUrl] = useState<string | undefined>(undefined);
 
-  const [item, setItem] = useState<InventoryItem | null>(null);
+  const item = useMemo(() => inventoryItems.find((i) => i.id === id), [inventoryItems, id]);
 
-  const [itemName, setItemName] = useState("");
-  const [description, setDescription] = useState("");
-  const [sku, setSku] = useState("");
-  const [category, setCategory] = useState("");
-  const [pickingBinQuantity, setPickingBinQuantity] = useState(""); // NEW
-  const [overstockQuantity, setOverstockQuantity] = useState(""); // NEW
-  const [reorderLevel, setReorderLevel] = useState("");
-  const [pickingReorderLevel, setPickingReorderLevel] = useState(""); // NEW
-  const [committedStock, setCommittedStock] = useState("");
-  const [incomingStock, setIncomingStock] = useState("");
-  const [unitCost, setUnitCost] = useState("");
-  const [retailPrice, setRetailPrice] = useState("");
-  const [location, setLocation] = useState("");
-  const [pickingBinLocation, setPickingBinLocation] = useState(""); // NEW
-  const [selectedVendorId, setSelectedVendorId] = useState("none");
-  const [barcodeValue, setBarcodeValue] = useState("");
-  const [barcodeType, setBarcodeType] = useState<"CODE128" | "QR">("CODE128");
-  const [barcodeSvg, setBarcodeSvg] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imageUrlPreview, setImageUrlPreview] = useState<string | null>(null);
-  const [autoReorderEnabled, setAutoReorderEnabled] = useState(false);
-  const [autoReorderQuantity, setAutoReorderQuantity] = useState("");
-
-  useEffect(() => {
-    if (id) {
-      const foundItem = inventoryItems.find((invItem) => invItem.id === id);
-      if (foundItem) {
-        setItem(foundItem);
-        setItemName(foundItem.name);
-        setDescription(foundItem.description);
-        setSku(foundItem.sku);
-        setCategory(foundItem.category);
-        setPickingBinQuantity(foundItem.pickingBinQuantity.toString()); // NEW
-        setOverstockQuantity(foundItem.overstockQuantity.toString()); // NEW
-        setReorderLevel(foundItem.reorderLevel.toString());
-        setPickingReorderLevel(foundItem.pickingReorderLevel.toString()); // NEW
-        setCommittedStock(foundItem.committedStock.toString());
-        setIncomingStock(foundItem.incomingStock.toString());
-        setUnitCost(foundItem.unitCost.toString());
-        setRetailPrice(foundItem.retailPrice.toString());
-        setLocation(foundItem.location);
-        setPickingBinLocation(foundItem.pickingBinLocation); // NEW
-        setImageUrlPreview(foundItem.imageUrl || null);
-        setSelectedVendorId(foundItem.vendorId || "none");
-        setBarcodeSvg(foundItem.barcodeUrl || null);
-        if (foundItem.barcodeUrl) {
-          if (foundItem.barcodeUrl.includes('qrcode')) {
-            setBarcodeType("QR");
-            setBarcodeValue(foundItem.sku);
-          } else {
-            setBarcodeType("CODE128");
-            setBarcodeValue(foundItem.sku);
-          }
-        }
-        setAutoReorderEnabled(foundItem.autoReorderEnabled);
-        setAutoReorderQuantity(foundItem.autoReorderQuantity.toString());
-      } else {
-        showError("Inventory item not found.");
-        navigate("/inventory");
-      }
-    }
-  }, [id, inventoryItems, navigate]);
-
-  // Autopopulate barcodeValue with SKU if SKU changes
-  useEffect(() => {
-    setBarcodeValue(sku.trim());
-  }, [sku]);
-
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const file = event.target.files[0];
-      if (file.type.startsWith("image/")) {
-        setImageFile(file);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setImageUrlPreview(reader.result as string);
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: useMemo(() => {
+      if (item) {
+        return {
+          name: item.name,
+          description: item.description || "",
+          sku: item.sku,
+          category: item.category,
+          pickingBinQuantity: item.pickingBinQuantity,
+          overstockQuantity: item.overstockQuantity,
+          reorderLevel: item.reorderLevel,
+          pickingReorderLevel: item.pickingReorderLevel,
+          committedStock: item.committedStock,
+          incomingStock: item.incomingStock,
+          unitCost: item.unitCost,
+          retailPrice: item.retailPrice,
+          location: item.location,
+          pickingBinLocation: item.pickingBinLocation,
+          imageUrl: item.imageUrl || "",
+          vendorId: item.vendorId || "",
+          autoReorderEnabled: item.autoReorderEnabled,
+          autoReorderQuantity: item.autoReorderQuantity,
         };
-        reader.readAsDataURL(file);
-      } else {
-        showError("Please select an image file (PNG, JPG, GIF, SVG).");
-        setImageFile(null);
-        setImageUrlPreview(null);
       }
-    } else {
-      setImageFile(null);
-      setImageUrlPreview(null);
-    }
-  };
-
-  const handleGenerateBarcode = async () => {
-    if (!barcodeValue.trim()) {
-      showError("Please enter a value to generate the barcode/QR code (e.g., SKU).");
-      setBarcodeSvg(null);
-      return;
-    }
-    try {
-      if (barcodeType === "CODE128") {
-        const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        JsBarcode(svgElement, barcodeValue.trim(), {
-          format: "CODE128",
-          displayValue: true,
-          height: 50,
-          width: 2,
-          margin: 0,
-        });
-        setBarcodeSvg(svgElement.outerHTML);
-      } else {
-        const qrSvg = await generateQrCodeSvg(barcodeValue.trim(), 100);
-        setBarcodeSvg(qrSvg);
-      }
-      showSuccess(`${barcodeType === "CODE128" ? "Barcode" : "QR Code"} generated!`);
-    } catch (error: any) {
-      showError(`Failed to generate ${barcodeType === "CODE128" ? "barcode" : "QR code"}: ${error.message}`);
-      setBarcodeSvg(null);
-    }
-  };
-
-  const handleSubmit = () => {
-    if (
-      !itemName ||
-      !sku ||
-      !category ||
-      !pickingBinQuantity || // NEW
-      !overstockQuantity || // NEW
-      !reorderLevel ||
-      !pickingReorderLevel || // NEW
-      !committedStock ||
-      !incomingStock ||
-      !unitCost ||
-      !retailPrice ||
-      !location ||
-      !pickingBinLocation // NEW
-    ) {
-      showError("Please fill in all required fields.");
-      return;
-    }
-
-    const parsedAutoReorderQuantity = parseInt(autoReorderQuantity) || 0;
-    if (autoReorderEnabled && (isNaN(parsedAutoReorderQuantity) || parsedAutoReorderQuantity <= 0)) {
-      showError("Please enter a valid positive number for Auto-Reorder Quantity if auto-reorder is enabled.");
-      return;
-    }
-
-    if (item) {
-      const updatedItem: Omit<InventoryItem, "quantity"> & { id: string } = {
-        ...item,
-        name: itemName,
-        description: description,
-        sku: sku,
-        category: category,
-        pickingBinQuantity: parseInt(pickingBinQuantity), // NEW
-        overstockQuantity: parseInt(overstockQuantity), // NEW
-        reorderLevel: parseInt(reorderLevel),
-        pickingReorderLevel: parseInt(pickingReorderLevel), // NEW
-        committedStock: parseInt(committedStock),
-        incomingStock: parseInt(incomingStock),
-        unitCost: parseFloat(unitCost),
-        retailPrice: parseFloat(retailPrice),
-        location: location,
-        pickingBinLocation: pickingBinLocation, // NEW
-        imageUrl: imageUrlPreview || undefined,
-        vendorId: selectedVendorId === "none" ? undefined : selectedVendorId,
-        barcodeUrl: barcodeSvg || undefined,
-        autoReorderEnabled: autoReorderEnabled,
-        autoReorderQuantity: parsedAutoReorderQuantity,
+      return {
+        name: "",
+        description: "",
+        sku: "",
+        category: "",
+        pickingBinQuantity: 0,
+        overstockQuantity: 0,
+        reorderLevel: 0,
+        pickingReorderLevel: 0,
+        committedStock: 0,
+        incomingStock: 0,
+        unitCost: 0,
+        retailPrice: 0,
+        location: "",
+        pickingBinLocation: "",
+        imageUrl: "",
+        vendorId: "",
+        autoReorderEnabled: false,
+        autoReorderQuantity: 0,
       };
-      updateInventoryItem(updatedItem);
-      showSuccess(`Updated ${itemName}!`);
+    }, [item]),
+  });
+
+  useEffect(() => {
+    if (!item && id) {
+      setItemNotFound(true);
+    } else if (item) {
+      setItemNotFound(false);
+      form.reset(form.defaultValues); // Reset form with default values when item changes
+      if (item.sku) {
+        setBarcodeUrl(generateBarcodeSvgDataUri(item.sku));
+      } else {
+        setBarcodeUrl(undefined);
+      }
+    }
+  }, [item, id, form]);
+
+  // Update barcode when SKU changes in the form
+  const watchSku = form.watch("sku");
+  useEffect(() => {
+    if (watchSku) {
+      setBarcodeUrl(generateBarcodeSvgDataUri(watchSku));
+    } else {
+      setBarcodeUrl(undefined);
+    }
+  }, [watchSku]);
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!item) {
+      showError("Item not found for update.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      let finalBarcodeUrl = barcodeUrl;
+      if (values.sku && !barcodeUrl) { // Generate if SKU exists but barcodeUrl is missing
+        finalBarcodeUrl = generateBarcodeSvgDataUri(values.sku);
+      } else if (!values.sku) { // Clear if SKU is removed
+        finalBarcodeUrl = undefined;
+      }
+
+      await updateInventoryItem({
+        id: item.id,
+        ...values,
+        barcodeUrl: finalBarcodeUrl,
+      });
+      showSuccess("Inventory item updated successfully!");
       navigate("/inventory");
+    } catch (error: any) {
+      console.error("Failed to update inventory item:", error);
+      showError(`Failed to update item: ${error.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  const handleAddCategory = async () => {
+    if (newCategoryName.trim()) {
+      const newCat = await addCategory(newCategoryName.trim());
+      if (newCat) {
+        form.setValue("category", newCat.name);
+        setNewCategoryName("");
+        setIsAddingCategory(false);
+      }
+    }
+  };
+
+  if (itemNotFound) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] space-y-4">
+        <h1 className="text-4xl font-bold text-destructive">404</h1>
+        <p className="text-xl text-muted-foreground">Inventory Item Not Found</p>
+        <Button onClick={() => navigate("/inventory")}>Back to Inventory</Button>
+      </div>
+    );
+  }
 
   if (!item) {
     return (
-      <div className="flex justify-center items-center h-64 text-muted-foreground">
-        Loading item details...
+      <div className="flex items-center justify-center min-h-[80vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading item details...</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Edit Inventory Item: {item.name}</h1>
-
-      <Card className="bg-card border-border rounded-lg shadow-sm p-6">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold">Item Details</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="itemName">Item Name</Label>
-            <Input
-              id="itemName"
-              value={itemName}
-              onChange={(e) => setItemName(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="sku">SKU</Label>
-            <Input
-              id="sku"
-              value={sku}
-              onChange={(e) => setSku(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select value={category} onValueChange={setCategory} disabled={categories.length === 0}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.length > 0 ? (
-                  categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no-categories" disabled>
-                    No categories set up. Manage categories.
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="location">Main Storage Location</Label>
-            <Select value={location} onValueChange={setLocation}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a location" />
-              </SelectTrigger>
-              <SelectContent>
-                {locations.length > 0 ? (
-                  locations.map((loc) => (
-                    <SelectItem key={loc} value={loc}>
-                      {loc}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no-locations" disabled>
-                    No locations set up. Go to Onboarding.
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="pickingBinLocation">Picking Bin Location</Label>
-            <Select value={pickingBinLocation} onValueChange={setPickingBinLocation}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a picking bin location" />
-              </SelectTrigger>
-              <SelectContent>
-                {locations.length > 0 ? (
-                  locations.map((loc) => (
-                    <SelectItem key={loc} value={loc}>
-                      {loc}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no-locations" disabled>
-                    No locations set up. Go to Onboarding.
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="pickingBinQuantity">Picking Bin Quantity</Label>
-            <Input
-              id="pickingBinQuantity"
-              type="number"
-              value={pickingBinQuantity}
-              onChange={(e) => setPickingBinQuantity(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="overstockQuantity">Overstock Quantity</Label>
-            <Input
-              id="overstockQuantity"
-              type="number"
-              value={overstockQuantity}
-              onChange={(e) => setOverstockQuantity(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="reorderLevel">Overall Reorder Level</Label>
-            <Input
-              id="reorderLevel"
-              type="number"
-              value={reorderLevel}
-              onChange={(e) => setReorderLevel(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="pickingReorderLevel">Picking Bin Reorder Level</Label>
-            <Input
-              id="pickingReorderLevel"
-              type="number"
-              value={pickingReorderLevel}
-              onChange={(e) => setPickingReorderLevel(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="committedStock">Committed Stock</Label>
-            <Input
-              id="committedStock"
-              type="number"
-              value={committedStock}
-              onChange={(e) => setCommittedStock(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="incomingStock">Incoming Stock</Label>
-            <Input
-              id="incomingStock"
-              type="number"
-              value={incomingStock}
-              onChange={(e) => setIncomingStock(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="unitCost">Unit Cost</Label>
-            <Input
-              id="unitCost"
-              type="number"
-              value={unitCost}
-              onChange={(e) => setUnitCost(e.target.value)}
-              step="0.01"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="retailPrice">Retail Price</Label>
-            <Input
-              id="retailPrice"
-              type="number"
-              value={retailPrice}
-              onChange={(e) => setRetailPrice(e.target.value)}
-              step="0.01"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="vendor">Primary Vendor</Label>
-            <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
-              <SelectTrigger id="vendor">
-                <SelectValue placeholder="Select a vendor (Optional)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No Vendor</SelectItem>
-                {vendors.map((vendor) => (
-                  <SelectItem key={vendor.id} value={vendor.id}>
-                    {vendor.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="barcodeValue">Barcode/QR Value</Label>
-            <div className="flex gap-2">
-              <Input
-                id="barcodeValue"
-                value={barcodeValue}
-                onChange={(e) => setBarcodeValue(e.target.value)}
-                placeholder="Enter SKU or custom value"
-              />
-              <Select value={barcodeType} onValueChange={(value: "CODE128" | "QR") => setBarcodeType(value)}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CODE128">Barcode</SelectItem>
-                  <SelectItem value="QR">QR Code</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button type="button" onClick={handleGenerateBarcode} variant="outline">
-                Generate
-              </Button>
-            </div>
-            {barcodeSvg && (
-              <div className="mt-2 p-2 border border-border rounded-md bg-muted/20 flex justify-center">
-                <div dangerouslySetInnerHTML={{ __html: barcodeSvg }} />
-              </div>
-            )}
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="itemImage">Product Image</Label>
-            <Input
-              id="itemImage"
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-            />
-            {imageUrlPreview && (
-              <div className="mt-2">
-                <img src={imageUrlPreview} alt="Product Preview" className="max-w-[150px] max-h-[100px] object-contain border border-border p-1 rounded-md" />
-              </div>
-            )}
-          </div>
-          <div className="space-y-2 md:col-span-2 border-t border-border pt-4 mt-4">
-            <h3 className="text-lg font-semibold">Auto-Reorder Settings</h3>
-            <div className="flex items-center justify-between space-x-2">
-              <Label htmlFor="autoReorderEnabled">Enable Auto-Reorder</Label>
-              <Switch
-                id="autoReorderEnabled"
-                checked={autoReorderEnabled}
-                onCheckedChange={setAutoReorderEnabled}
-              />
-            </div>
-            {autoReorderEnabled && (
-              <div className="space-y-2 mt-2">
-                <Label htmlFor="autoReorderQuantity">Quantity to Auto-Reorder</Label>
-                <Input
-                  id="autoReorderQuantity"
-                  type="number"
-                  value={autoReorderQuantity}
-                  onChange={(e) => setAutoReorderQuantity(e.target.value)}
-                  placeholder="e.g., 50"
-                  min="1"
-                />
-                <p className="text-xs text-muted-foreground">
-                  This quantity will be ordered when stock drops to or below the overall reorder level.
-                </p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="flex justify-end space-x-2">
+    <div className="flex flex-col space-y-6 p-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Edit Inventory Item: {item.name}</h1>
         <Button variant="outline" onClick={() => navigate("/inventory")}>
-          Cancel
+          Back to Inventory
         </Button>
-        <Button onClick={handleSubmit}>Save Changes</Button>
       </div>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Item Details */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Basic Information</h2>
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Item Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sku"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>SKU</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {barcodeUrl && (
+                <FormItem>
+                  <FormLabel>Barcode</FormLabel>
+                  <FormControl>
+                    <img src={barcodeUrl} alt={`Barcode for ${item.sku}`} className="max-w-[200px] h-auto border p-2 rounded-md bg-white" />
+                  </FormControl>
+                  <FormDescription>This barcode is generated from the SKU.</FormDescription>
+                </FormItem>
+              )}
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.name}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onSelect={() => setIsAddingCategory(true)}>
+                          <PlusCircle className="mr-2 h-4 w-4" /> Add New Category
+                        </DropdownMenuItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {isAddingCategory && (
+                <div className="flex space-x-2">
+                  <Input
+                    placeholder="New category name"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                  />
+                  <Button type="button" onClick={handleAddCategory}>
+                    Add
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setIsAddingCategory(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              )}
+              <FormField
+                control={form.control}
+                name="vendorId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Vendor</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a vendor (optional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        {vendors.map((vendor) => (
+                          <SelectItem key={vendor.id} value={vendor.id}>
+                            {vendor.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="imageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Image URL (Optional)</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Stock & Pricing */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Stock & Pricing</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="pickingBinQuantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Picking Bin Quantity</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="overstockQuantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Overstock Quantity</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="reorderLevel"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reorder Level (Total)</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pickingReorderLevel"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Picking Reorder Level</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="committedStock"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Committed Stock</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="incomingStock"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Incoming Stock</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="unitCost"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Unit Cost</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="retailPrice"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Retail Price</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Primary Location</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pickingBinLocation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Picking Bin Location</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="autoReorderEnabled"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Enable Auto-Reorder</FormLabel>
+                      <FormDescription>
+                        Automatically create purchase orders when stock hits reorder level.
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+              {form.watch("autoReorderEnabled") && (
+                <FormField
+                  control={form.control}
+                  name="autoReorderQuantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Auto-Reorder Quantity</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full" disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+        </form>
+      </Form>
     </div>
   );
 };

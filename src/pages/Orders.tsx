@@ -1,298 +1,576 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
+import { PlusCircle, Search, Edit, Archive, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { showSuccess } from "@/utils/toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
-import { useOrders, OrderItem } from "@/context/OrdersContext";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, Package, TrendingUp, Clock, AlertCircle, ChevronDown, Table2, LayoutGrid, PlusCircle } from "lucide-react";
-import KanbanBoard from "@/components/orders/KanbanBoard";
-import OrderListTable from "@/components/orders/OrderListTable";
-import ReceiveShipmentDialog from "@/components/orders/ReceiveShipmentDialog";
-import FulfillOrderDialog from "@/components/orders/FulfillOrderDialog";
-import TransferStockDialog from "@/components/orders/TransferStockDialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useOrders, OrderItem, POItem } from "@/context/OrdersContext";
+import { Badge } from "@/components/ui/badge";
+import { useProfile } from "@/context/ProfileContext";
+import { useInventory } from "@/context/InventoryContext";
+import { showError, showSuccess } from "@/utils/toast";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
-const Orders: React.FC = () => {
-  const navigate = useNavigate();
-  const { orders } = useOrders();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [orderTypeFilter, setOrderTypeFilter] = useState("all");
-  const [shippingMethodFilter, setShippingMethodFilter] = useState("all");
-  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
+const formSchema = z.object({
+  type: z.enum(["Sales", "Purchase"]),
+  customerSupplier: z.string().min(1, "Customer/Supplier name is required"),
+  date: z.string().min(1, "Date is required"),
+  status: z.enum(["New Order", "Processing", "Packed", "Shipped", "On Hold / Problem", "Archived"]),
+  totalAmount: z.number().min(0, "Total amount must be non-negative"),
+  dueDate: z.string().min(1, "Due date is required"),
+  itemCount: z.number().min(1, "At least one item is required"),
+  notes: z.string().optional(),
+  orderType: z.enum(["Retail", "Wholesale"]),
+  shippingMethod: z.enum(["Standard", "Express"]),
+  deliveryRoute: z.string().optional(),
+  items: z.array(z.object({
+    itemName: z.string().min(1, "Item name is required"),
+    quantity: z.number().min(1, "Quantity must be at least 1"),
+    unitPrice: z.number().min(0, "Unit price must be non-negative"),
+    inventoryItemId: z.string().optional(),
+  })).min(1, "At least one item is required"),
+  terms: z.string().optional(),
+});
 
-  const [isReceiveShipmentDialogOpen, setIsReceiveShipmentDialogOpen] = useState(false);
-  const [isFulfillOrderDialogOpen, setIsFulfillOrderDialogOpen] = useState(false);
-  const [isTransferStockDialogOpen, setIsTransferStockDialogOpen] = useState(false);
+interface AddOrderFormProps {
+  onClose: () => void;
+}
 
-  const handleCreatePO = () => navigate("/create-po");
-  const handleCreateInvoice = () => navigate("/create-invoice");
-  const handleReceiveShipment = () => setIsReceiveShipmentDialogOpen(true);
-  const handleFulfillOrder = () => setIsFulfillOrderDialogOpen(true);
-  const handleTransferStock = () => setIsTransferStockDialogOpen(true);
+const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
+  const { addOrder } = useOrders();
+  const { inventoryItems } = useInventory();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      type: "Sales",
+      customerSupplier: "",
+      date: new Date().toISOString().split('T')[0],
+      status: "New Order",
+      totalAmount: 0,
+      dueDate: new Date().toISOString().split('T')[0],
+      itemCount: 0,
+      notes: "",
+      orderType: "Retail",
+      shippingMethod: "Standard",
+      deliveryRoute: "",
+      items: [{ itemName: "", quantity: 1, unitPrice: 0, inventoryItemId: "" }],
+      terms: "",
+    },
+  });
 
-  const handleOrderClick = (order: OrderItem) => {
-    navigate(`/orders/${order.id}`);
+  const watchItems = form.watch("items");
+  useEffect(() => {
+    const newTotalAmount = watchItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    form.setValue("totalAmount", newTotalAmount);
+    form.setValue("itemCount", watchItems.length);
+  }, [watchItems, form]);
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      await addOrder(values);
+      onClose();
+      form.reset();
+    } catch (error: any) {
+      showError(`Failed to add order: ${error.message}`);
+    }
   };
 
-  const filteredOrders = useMemo(() => {
-    let filtered = orders;
+  const handleAddItem = () => {
+    form.setValue("items", [...form.getValues("items"), { itemName: "", quantity: 1, unitPrice: 0, inventoryItemId: "" }]);
+  };
 
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (order) =>
-          order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.customerSupplier.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.notes.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+  const handleRemoveItem = (index: number) => {
+    const currentItems = form.getValues("items");
+    form.setValue("items", currentItems.filter((_, i) => i !== index));
+  };
+
+  const handleInventoryItemChange = (index: number, inventoryItemId: string) => {
+    const selectedItem = inventoryItems.find(item => item.id === inventoryItemId);
+    if (selectedItem) {
+      form.setValue(`items.${index}.itemName`, selectedItem.name);
+      form.setValue(`items.${index}.unitPrice`, selectedItem.retailPrice); // Or unitCost depending on order type
+      form.setValue(`items.${index}.inventoryItemId`, selectedItem.id);
     }
-
-    if (typeFilter !== "all") {
-      filtered = filtered.filter((order) => order.type === typeFilter);
-    }
-
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((order) => order.status === statusFilter);
-    } else {
-      // Default 'all' filter should exclude archived orders
-      filtered = filtered.filter((order) => order.status !== "Archived");
-    }
-
-    if (orderTypeFilter !== "all") {
-      filtered = filtered.filter((order) => order.orderType === orderTypeFilter);
-    }
-
-    if (shippingMethodFilter !== "all") {
-      filtered = filtered.filter((order) => order.shippingMethod === shippingMethodFilter);
-    }
-
-    return filtered;
-  }, [orders, searchTerm, typeFilter, statusFilter, orderTypeFilter, shippingMethodFilter]);
-
-  const uniqueOrderTypes = useMemo(() => {
-    const types = new Set<string>();
-    orders.forEach(order => types.add(order.orderType));
-    return ["all", ...Array.from(types)];
-  }, [orders]);
-
-  const uniqueShippingMethods = useMemo(() => {
-    const methods = new Set<string>();
-    orders.forEach(order => methods.add(order.shippingMethod));
-    return ["all", ...Array.from(methods)];
-  }, [orders]);
-
-  const today = new Date();
-  const ordersDueToday = filteredOrders.filter(
-    (order) =>
-      new Date(order.dueDate).toDateString() === today.toDateString() &&
-      order.status !== "Shipped" &&
-      order.status !== "Packed" &&
-      order.status !== "Archived"
-  ).length;
-
-  const totalNewOrders = filteredOrders.filter(order => order.status === "New Order").length;
-  const totalProcessingOrders = filteredOrders.filter(order => order.status === "Processing").length;
-  const totalPackedOrders = filteredOrders.filter(order => order.status === "Packed").length;
-  const totalShippedOrders = filteredOrders.filter(order => order.status === "Shipped").length;
-  const totalOnHoldOrders = filteredOrders.filter(order => order.status === "On Hold / Problem").length;
-
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4"> {/* Adjusted for mobile stacking */}
-        <h1 className="text-3xl font-bold">Orders Management</h1>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="w-full sm:w-auto"> {/* Full width on small screens */}
-              <PlusCircle className="h-4 w-4 mr-2" /> Create Order <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>New Order</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleCreatePO}>Purchase Order</DropdownMenuItem>
-            <DropdownMenuItem onClick={handleCreateInvoice}>Sales Invoice</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4"> {/* Adjusted grid for better mobile */}
-        <Card className="bg-card border-border rounded-lg shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">New Orders</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalNewOrders}</div>
-            <p className="text-xs text-muted-foreground">Awaiting review</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-card border-border rounded-lg shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Processing</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalProcessingOrders}</div>
-            <p className="text-xs text-muted-foreground">In fulfillment</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-card border-border rounded-lg shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Packed Today</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalPackedOrders}</div>
-            <p className="text-xs text-muted-foreground">Ready for shipment</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-card border-border rounded-lg shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Due Today</CardTitle>
-            <CalendarDays className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{ordersDueToday}</div>
-            <p className="text-xs text-muted-foreground">Urgent orders</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-card border-border rounded-lg shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">On Hold</CardTitle>
-            <AlertCircle className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalOnHoldOrders}</div>
-            <p className="text-xs text-muted-foreground">Requires attention</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Consolidated row for actions, search, filters, and view mode */}
-      <div className="flex flex-wrap items-center gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="flex-shrink-0"> {/* Added flex-shrink-0 */}
-              Inventory Actions <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuLabel>Stock Operations</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleFulfillOrder}>Fulfill Order</DropdownMenuItem>
-            <DropdownMenuItem onClick={handleReceiveShipment}>Receive Shipment</DropdownMenuItem>
-            <DropdownMenuItem onClick={handleTransferStock}>Transfer Stock</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <Input
-          placeholder="Search orders..."
-          className="max-w-xs bg-input border-border text-foreground flex-grow"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Order Type</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select order type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Sales">Sales</SelectItem>
+                  <SelectItem value="Purchase">Purchase</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[150px] flex-shrink-0"> {/* Added flex-shrink-0 */}
-            <SelectValue placeholder="Filter by Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="Sales">Sales</SelectItem>
-            <SelectItem value="Purchase">Purchase</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[150px] flex-shrink-0"> {/* Added flex-shrink-0 */}
-            <SelectValue placeholder="Filter by Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Active</SelectItem>
-            <SelectItem value="New Order">New Order</SelectItem>
-            <SelectItem value="Processing">Processing</SelectItem>
-            <SelectItem value="Packed">Packed</SelectItem>
-            <SelectItem value="Shipped">Shipped</SelectItem>
-            <SelectItem value="On Hold / Problem">On Hold / Problem</SelectItem>
-            <SelectItem value="Archived">Archived</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={orderTypeFilter} onValueChange={setOrderTypeFilter}>
-          <SelectTrigger className="w-[150px] flex-shrink-0"> {/* Added flex-shrink-0 */}
-            <SelectValue placeholder="Filter by Order Type" />
-          </SelectTrigger>
-          <SelectContent>
-            {uniqueOrderTypes.map(type => (
-              <SelectItem key={type} value={type}>
-                {type === "all" ? "All Order Types" : type}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={shippingMethodFilter} onValueChange={setShippingMethodFilter}>
-          <SelectTrigger className="w-[150px] flex-shrink-0"> {/* Added flex-shrink-0 */}
-            <SelectValue placeholder="Filter by Shipping" />
-          </SelectTrigger>
-          <SelectContent>
-            {uniqueShippingMethods.map(method => (
-              <SelectItem key={method} value={method}>
-                {method === "all" ? "All Shipping Methods" : method}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <FormField
+          control={form.control}
+          name="customerSupplier"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{form.watch("type") === "Sales" ? "Customer Name" : "Supplier Name"}</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Order Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="dueDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Due Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="New Order">New Order</SelectItem>
+                  <SelectItem value="Processing">Processing</SelectItem>
+                  <SelectItem value="Packed">Packed</SelectItem>
+                  <SelectItem value="Shipped">Shipped</SelectItem>
+                  <SelectItem value="On Hold / Problem">On Hold / Problem</SelectItem>
+                  <SelectItem value="Archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="orderType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Sales Order Type</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select order type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Retail">Retail</SelectItem>
+                  <SelectItem value="Wholesale">Wholesale</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="shippingMethod"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Shipping Method</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select shipping method" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Standard">Standard</SelectItem>
+                  <SelectItem value="Express">Express</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="deliveryRoute"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Delivery Route (Optional)</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <h3 className="text-lg font-semibold mt-6">Items</h3>
+        {form.watch("items").map((item, index) => (
+          <div key={index} className="border p-4 rounded-md space-y-2">
+            <div className="flex justify-between items-center">
+              <h4 className="font-medium">Item #{index + 1}</h4>
+              <Button type="button" variant="destructive" size="sm" onClick={() => handleRemoveItem(index)}>
+                Remove
+              </Button>
+            </div>
+            <FormField
+              control={form.control}
+              name={`items.${index}.inventoryItemId`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Select Inventory Item</FormLabel>
+                  <Select onValueChange={(value) => handleInventoryItemChange(index, value)} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select an item" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {inventoryItems.map((invItem) => (
+                        <SelectItem key={invItem.id} value={invItem.id}>
+                          {invItem.name} (SKU: {invItem.sku})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name={`items.${index}.itemName`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Item Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name={`items.${index}.quantity`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quantity</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`items.${index}.unitPrice`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Unit Price</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        ))}
+        <Button type="button" variant="outline" onClick={handleAddItem}>
+          Add Another Item
+        </Button>
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes (Optional)</FormLabel>
+              <FormControl>
+                <Textarea {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="terms"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Terms and Conditions (Optional)</FormLabel>
+              <FormControl>
+                <Textarea {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="flex justify-between items-center font-bold text-lg">
+          <span>Total Amount:</span>
+          <span>${form.watch("totalAmount").toFixed(2)}</span>
+        </div>
+        <Button type="submit" className="w-full">Add Order</Button>
+      </form>
+    </Form>
+  );
+};
 
-        {/* View Mode Toggle */}
-        <ToggleGroup type="single" value={viewMode} onValueChange={(value: "kanban" | "list") => value && setViewMode(value)} aria-label="View mode toggle" className="flex-shrink-0"> {/* Added flex-shrink-0 */}
-          <ToggleGroupItem value="kanban" aria-label="Toggle Kanban view">
-            <LayoutGrid className="h-4 w-4" />
-          </ToggleGroupItem>
-          <ToggleGroupItem value="list" aria-label="Toggle List view">
-            <Table2 className="h-4 w-4" />
-          </ToggleGroupItem>
-        </ToggleGroup>
+export const createOrderColumns = (updateOrder: (order: OrderItem) => void, archiveOrder: (id: string) => void): ColumnDef<OrderItem>[] => [
+  {
+    accessorKey: "id",
+    header: "Order ID",
+    cell: ({ row }) => <Link to={`/orders/${row.original.id}`} className="font-medium hover:underline">{row.getValue("id")}</Link>,
+  },
+  {
+    accessorKey: "type",
+    header: "Type",
+    cell: ({ row }) => (
+      <Badge variant={row.original.type === "Sales" ? "default" : "secondary"}>
+        {row.original.type}
+      </Badge>
+    ),
+  },
+  {
+    accessorKey: "customerSupplier",
+    header: "Customer/Supplier",
+  },
+  {
+    accessorKey: "date",
+    header: "Date",
+  },
+  {
+    accessorKey: "dueDate",
+    header: "Due Date",
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      let variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" = "default";
+      switch (row.original.status) {
+        case "New Order":
+          variant = "default";
+          break;
+        case "Processing":
+          variant = "secondary";
+          break;
+        case "Packed":
+          variant = "outline";
+          break;
+        case "Shipped":
+          variant = "success";
+          break;
+        case "On Hold / Problem":
+          variant = "warning";
+          break;
+        case "Archived":
+          variant = "destructive";
+          break;
+      }
+      return <Badge variant={variant}>{row.original.status}</Badge>;
+    },
+  },
+  {
+    accessorKey: "totalAmount",
+    header: "Total Amount",
+    cell: ({ row }) => `$${parseFloat(row.original.totalAmount.toString() || '0').toFixed(2)}`,
+  },
+  {
+    accessorKey: "itemCount",
+    header: "Items",
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => (
+      <div className="flex space-x-2">
+        <Link to={`/orders/${row.original.id}`}>
+          <Button variant="outline" size="sm">
+            <Eye className="h-4 w-4 mr-1" /> View
+          </Button>
+        </Link>
+        <Link to={`/orders/${row.original.id}`}>
+          <Button variant="outline" size="sm">
+            <Edit className="h-4 w-4 mr-1" /> Edit
+          </Button>
+        </Link>
+        {row.original.status !== "Archived" && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => archiveOrder(row.original.id)}
+          >
+            <Archive className="h-4 w-4 mr-1" /> Archive
+          </Button>
+        )}
+      </div>
+    ),
+  },
+];
+
+const Orders: React.FC = () => {
+  const { orders, fetchOrders, updateOrder, archiveOrder } = useOrders();
+  const { profile } = useProfile();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isAddOrderDialogOpen, setIsAddOrderDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("all"); // State for active tab
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  const filteredOrders = useMemo(() => {
+    let currentOrders = orders;
+
+    if (activeTab === "sales") {
+      currentOrders = currentOrders.filter(order => order.type === "Sales");
+    } else if (activeTab === "purchase") {
+      currentOrders = currentOrders.filter(order => order.type === "Purchase");
+    } else if (activeTab === "archived") {
+      currentOrders = currentOrders.filter(order => order.status === "Archived");
+    } else {
+      // "all" tab, exclude archived by default unless explicitly filtered
+      currentOrders = currentOrders.filter(order => order.status !== "Archived");
+    }
+
+    return currentOrders.filter(order =>
+      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customerSupplier.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.status.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [orders, searchTerm, activeTab]);
+
+  const columns = useMemo(() => createOrderColumns(updateOrder, archiveOrder), [updateOrder, archiveOrder]);
+
+  return (
+    <div className="flex flex-col space-y-6 p-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Order Management</h1>
+        <div className="flex items-center space-x-4">
+          <Input
+            placeholder="Search orders..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
+          <Dialog open={isAddOrderDialogOpen} onOpenChange={setIsAddOrderDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" /> Create New Order
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create New Order</DialogTitle>
+                <DialogDescription>
+                  Fill in the details to create a new sales or purchase order.
+                </DialogDescription>
+              </DialogHeader>
+              <AddOrderForm onClose={() => setIsAddOrderDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      {orders.length > 0 ? (
-        viewMode === "kanban" ? (
-          <KanbanBoard onOrderClick={handleOrderClick} filteredOrders={filteredOrders} />
-        ) : (
-          <OrderListTable onOrderClick={handleOrderClick} filteredOrders={filteredOrders} />
-        )
-      ) : (
-        <Card className="bg-card border-border rounded-lg p-6 text-center text-muted-foreground">
-          <CardTitle className="text-xl font-semibold mb-2">No Orders Found</CardTitle>
-          <CardContent>
-            <p>Start by creating a new Purchase Order or importing sales data.</p>
-            <Button onClick={handleCreatePO} className="mt-4">
-              + Create First Purchase Order
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      <ReceiveShipmentDialog
-        isOpen={isReceiveShipmentDialogOpen}
-        onClose={() => setIsReceiveShipmentDialogOpen(false)}
-      />
-      <FulfillOrderDialog
-        isOpen={isFulfillOrderDialogOpen}
-        onClose={() => setIsFulfillOrderDialogOpen(false)}
-      />
-      <TransferStockDialog
-        isOpen={isTransferStockDialogOpen}
-        onClose={() => setIsTransferStockDialogOpen(false)}
-      />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="all">All Active Orders</TabsTrigger>
+          <TabsTrigger value="sales">Sales Orders</TabsTrigger>
+          <TabsTrigger value="purchase">Purchase Orders</TabsTrigger>
+          <TabsTrigger value="archived">Archived Orders</TabsTrigger>
+        </TabsList>
+        <TabsContent value="all">
+          <div className="rounded-md border">
+            <DataTable columns={columns} data={filteredOrders} />
+          </div>
+        </TabsContent>
+        <TabsContent value="sales">
+          <div className="rounded-md border">
+            <DataTable columns={columns} data={filteredOrders} />
+          </div>
+        </TabsContent>
+        <TabsContent value="purchase">
+          <div className="rounded-md border">
+            <DataTable columns={columns} data={filteredOrders} />
+          </div>
+        </TabsContent>
+        <TabsContent value="archived">
+          <div className="rounded-md border">
+            <DataTable columns={columns} data={filteredOrders} />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
