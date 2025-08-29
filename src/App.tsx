@@ -24,7 +24,6 @@ import Users from "./pages/Users";
 import CreateInvoice from "./pages/CreateInvoice";
 import SetupInstructions from "./pages/SetupInstructions";
 import WarehouseOperationsPage from "./pages/WarehouseOperationsPage";
-import AISummaryPage from "./pages/AISummaryPage"; // NEW: Import AISummaryPage
 import ResetPassword from "./pages/ResetPassword";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { InventoryProvider } from "./context/InventoryContext";
@@ -83,7 +82,7 @@ const AuthenticatedApp = () => {
                       <Route path="users" element={<Users />} />
                       <Route path="setup-instructions" element={<SetupInstructions />} />
                       <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
-                      <Route path="ai-summary" element={<AISummaryPage />} /> {/* NEW: Add AISummaryPage route */}
+                      {/* REMOVED: <Route path="ai-summary" element={<AISummaryPage />} /> */}
                       <Route path="*" element={<NotFound />} />
                     </Route>
                   </Routes>

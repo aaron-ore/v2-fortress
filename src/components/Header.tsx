@@ -38,7 +38,7 @@ const Header: React.FC = () => {
     { to: "/vendors", label: "Vendors" },
     { to: "/reports", label: "Reports" },
     { to: "/warehouse-operations", label: "Warehouse Ops" },
-    { to: "/ai-summary", label: "AI Summary" },
+    // REMOVED: { to: "/ai-summary", label: "AI Summary" },
   ];
 
   const handleLogout = async () => {
