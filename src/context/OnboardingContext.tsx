@@ -38,11 +38,8 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   const [companyProfile, setCompanyProfileState] = useState<CompanyProfile | null>(() => {
     if (typeof window !== 'undefined') {
       const storedProfile = localStorage.getItem("companyProfile");
-      if (!storedProfile) { // Always load mock if not in local storage
-        console.warn("Loading mock company profile as local storage is empty.");
-        return mockCompanyProfile;
-      }
-      return storedProfile ? JSON.parse(storedProfile) : null;
+      // If no stored profile, initialize with a default, but don't log as "mock"
+      return storedProfile ? JSON.parse(storedProfile) : mockCompanyProfile;
     }
     return null;
   });
@@ -50,10 +47,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   const [locations, setLocations] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const storedLocations = localStorage.getItem("inventoryLocations");
-      if (!storedLocations) { // Always load mock if not in local storage
-        console.warn("Loading mock locations as local storage is empty.");
-        return mockLocations;
-      }
+      // If no stored locations, initialize with an empty array
       return storedLocations ? JSON.parse(storedLocations) : [];
     }
     return [];

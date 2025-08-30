@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect, useCa
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
-import { mockCategories } from "@/utils/mockData";
+// REMOVED: import { mockCategories } from "@/utils/mockData";
 // REMOVED: import { useActivityLogs } from "./ActivityLogContext";
 
 export interface Category { // Exported interface
@@ -40,21 +40,15 @@ export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     if (error) {
       console.error("Error fetching categories:", error);
-      // REMOVED: showError("Failed to load categories."); // Removed this toast
-      console.warn("Loading mock categories due to Supabase error.");
-      setCategories(mockCategories);
+      showError("Failed to load categories.");
+      setCategories([]); // Return empty array on error
     } else {
       const fetchedCategories: Category[] = data.map((cat: any) => ({
         id: cat.id,
         name: cat.name,
         organizationId: cat.organization_id, // Mapped organization_id to organizationId
       }));
-      if (fetchedCategories.length === 0) { // Always load mock data if no data is returned
-        console.warn("Loading mock categories as Supabase returned no data.");
-        setCategories(mockCategories);
-      } else {
-        setCategories(fetchedCategories);
-      }
+      setCategories(fetchedCategories); // Set fetched data, could be empty
     }
   }, [profile?.organizationId]);
 

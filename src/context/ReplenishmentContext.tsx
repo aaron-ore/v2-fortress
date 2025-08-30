@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect, useCa
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
-import { mockReplenishmentTasks } from "@/utils/mockData"; // Import mock data
+// REMOVED: import { mockReplenishmentTasks } from "@/utils/mockData"; // Import mock data
 
 export interface ReplenishmentTask {
   id: string;
@@ -74,17 +74,11 @@ export const ReplenishmentProvider: React.FC<{ children: ReactNode }> = ({ child
 
     if (error) {
       console.error("Error fetching replenishment tasks:", error);
-      // REMOVED: showError("Failed to load replenishment tasks."); // Removed this toast
-      console.warn("Loading mock replenishment tasks due to Supabase error.");
-      setReplenishmentTasks(mockReplenishmentTasks.map(mapSupabaseTaskToReplenishmentTask));
+      showError("Failed to load replenishment tasks.");
+      setReplenishmentTasks([]); // Return empty array on error
     } else {
       const fetchedTasks: ReplenishmentTask[] = data.map(mapSupabaseTaskToReplenishmentTask);
-      if (fetchedTasks.length === 0) { // Always load mock data if no data is returned
-        console.warn("Loading mock replenishment tasks as Supabase returned no data.");
-        setReplenishmentTasks(mockReplenishmentTasks.map(mapSupabaseTaskToReplenishmentTask));
-      } else {
-        setReplenishmentTasks(fetchedTasks);
-      }
+      setReplenishmentTasks(fetchedTasks); // Set fetched data, could be empty
     }
   }, [profile?.organizationId]);
 

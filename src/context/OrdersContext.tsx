@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect, useCa
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
-import { mockOrders } from "@/utils/mockData";
+// REMOVED: import { mockOrders } from "@/utils/mockData";
 // REMOVED: import { useActivityLogs } from "./ActivityLogContext";
 
 export interface POItem {
@@ -104,17 +104,11 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error fetching orders:", error);
-      // REMOVED: showError("Failed to load orders."); // Removed this toast
-      console.warn("Loading mock orders due to Supabase error.");
-      setOrders(mockOrders.map(mapSupabaseOrderItemToOrderItem));
+      showError("Failed to load orders.");
+      setOrders([]); // Return empty array on error
     } else {
       const fetchedOrders: OrderItem[] = data.map(mapSupabaseOrderItemToOrderItem);
-      if (fetchedOrders.length === 0) { // Always load mock data if no data is returned
-        console.warn("Loading mock orders as Supabase returned no data.");
-        setOrders(mockOrders.map(mapSupabaseOrderItemToOrderItem));
-      } else {
-        setOrders(fetchedOrders);
-      }
+      setOrders(fetchedOrders); // Set fetched data, could be empty
     }
   }, [profile?.organizationId]);
 

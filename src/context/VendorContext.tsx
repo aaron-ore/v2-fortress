@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect, useCa
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
-import { mockVendors } from "@/utils/mockData";
+// REMOVED: import { mockVendors } from "@/utils/mockData";
 // REMOVED: import { useActivityLogs } from "./ActivityLogContext"; // NEW: Import useActivityLogs
 
 export interface Vendor {
@@ -47,9 +47,8 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     if (error) {
       console.error("Error fetching vendors:", error);
-      // REMOVED: showError("Failed to load vendors."); // Removed this toast
-      console.warn("Loading mock vendors due to Supabase error.");
-      setVendors(mockVendors);
+      showError("Failed to load vendors.");
+      setVendors([]); // Return empty array on error
     } else {
       const fetchedVendors: Vendor[] = data.map((vendor: any) => ({
         id: vendor.id,
@@ -62,12 +61,7 @@ export const VendorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         organizationId: vendor.organization_id,
         createdAt: vendor.created_at,
       }));
-      if (fetchedVendors.length === 0) { // Always load mock data if no data is returned
-        console.warn("Loading mock vendors as Supabase returned no data.");
-        setVendors(mockVendors);
-      } else {
-        setVendors(fetchedVendors);
-      }
+      setVendors(fetchedVendors); // Set fetched data, could be empty
     }
   }, [profile?.organizationId]);
 

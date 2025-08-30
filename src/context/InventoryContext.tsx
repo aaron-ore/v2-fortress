@@ -12,7 +12,7 @@ import React, {
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
-import { mockInventoryItems } from "@/utils/mockData";
+// REMOVED: import { mockInventoryItems } from "@/utils/mockData";
 import { useOrders } from "./OrdersContext";
 import { useVendors } from "./VendorContext";
 import { processAutoReorder } from "@/utils/autoReorderLogic";
@@ -132,21 +132,12 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error fetching inventory items:", error);
-      console.warn("Loading mock inventory items due to Supabase error.");
-      const mockItems = mockInventoryItems.map(mapSupabaseItemToInventoryItem);
-      setInventoryItems(mockItems);
-      return mockItems;
+      setInventoryItems([]); // Return empty array on error
+      return [];
     } else {
       const fetchedItems: InventoryItem[] = data.map(mapSupabaseItemToInventoryItem);
-      if (fetchedItems.length === 0) {
-        console.warn("Loading mock inventory items as Supabase returned no data.");
-        const mockItems = mockInventoryItems.map(mapSupabaseItemToInventoryItem);
-        setInventoryItems(mockItems);
-        return mockItems;
-      } else {
-        setInventoryItems(fetchedItems);
-        return fetchedItems;
-      }
+      setInventoryItems(fetchedItems); // Set fetched data, could be empty
+      return fetchedItems;
     }
   }, [profile?.organizationId]);
 
