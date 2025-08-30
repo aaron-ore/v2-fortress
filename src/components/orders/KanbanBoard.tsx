@@ -56,19 +56,19 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ onOrderClick, filteredOrders 
     if (!activeOrder) return;
 
     const sourceColumnStatus = activeOrder.status;
-    // Explicitly type targetColumnStatusCandidate to help TypeScript with union types
-    const targetColumnStatusCandidate: OrderItem['status'] | undefined = columns.find(col => col.id === overId)?.status;
+    const targetColumnStatusCandidate = columns.find(col => col.id === overId)?.status;
 
-    // Ensure targetColumnStatus is a valid OrderItem['status'] or default to source
-    const targetColumnStatus: OrderItem['status'] = targetColumnStatusCandidate || sourceColumnStatus;
+    let targetColumnStatus: OrderItem['status'];
+    if (targetColumnStatusCandidate && columns.some(col => col.status === targetColumnStatusCandidate)) {
+      targetColumnStatus = targetColumnStatusCandidate;
+    } else {
+      targetColumnStatus = sourceColumnStatus;
+    }
 
     if (sourceColumnStatus === targetColumnStatus) {
-      // Reordering within the same column (not implemented for simplicity, but dnd-kit supports it)
-      // For now, we'll just update the status if it's a column change
       return;
     }
 
-    // Update the order's status
     const updatedOrder = { ...activeOrder, status: targetColumnStatus };
     updateOrder(updatedOrder);
     showSuccess(`Order ${activeOrder.id} moved to "${targetColumnStatus}"!`);

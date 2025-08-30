@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useImperativeHandle, forwardRef, useState, useCallback } from "react";
-import { Html5Qrcode, Html5QrcodeSupportedFormats, Html5QrcodeFullConfig, Html5QrcodeCameraScanConfig } from "html5-qrcode"; // Corrected: Html5QrcodeScanConfig to Html5QrcodeCameraScanConfig
+import { Html5Qrcode, Html5QrcodeSupportedFormats, Html5QrcodeFullConfig, Html5QrcodeCameraScanConfig } from "html5-qrcode";
 import { QrReader } from 'react-qr-reader';
 
 export interface QrScannerRef {
@@ -26,7 +26,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
     const [activeScannerType, setActiveScannerType] = useState<ScannerType>('html5-qrcode');
     const [isScannerReady, setIsScannerReady] = useState(false);
 
-    const html5QrcodeConstructorConfig: Html5QrcodeFullConfig = { // Config for Html5Qrcode constructor
+    const html5QrcodeConstructorConfig: Html5QrcodeFullConfig = {
       formatsToSupport: [
         Html5QrcodeSupportedFormats.QR_CODE,
         Html5QrcodeSupportedFormats.CODE_128,
@@ -34,7 +34,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       verbose: false,
     };
 
-    const html5QrcodeCameraScanConfig: Html5QrcodeCameraScanConfig = { // Corrected: Renamed from html5QrcodeScanConfig
+    const html5QrcodeCameraScanConfig: Html5QrcodeCameraScanConfig = {
       fps: 10,
       qrbox: { width: 250, height: 250 },
       aspectRatio: 1.0,
@@ -49,7 +49,6 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
             await html5QrCodeInstanceRef.current.stop();
             console.log("[QrScanner] Html5Qrcode stopped successfully.");
           }
-          // Always call clear to remove the video element and clean up
           if (typeof html5QrCodeInstanceRef.current.clear === 'function') {
             html5QrCodeInstanceRef.current.clear();
             console.log("[QrScanner] Html5Qrcode cleared successfully.");
@@ -66,7 +65,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
 
     const stopAndClear = useCallback(async () => {
       await stopAndClearHtml5Qrcode();
-      setActiveScannerType('html5-qrcode'); // Reset to default for next attempt
+      setActiveScannerType('html5-qrcode');
       setIsScannerReady(false);
     }, [stopAndClearHtml5Qrcode]);
 
@@ -74,16 +73,14 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       stopAndClear: stopAndClear,
     }));
 
-    // This function attempts to start Html5Qrcode once.
-    // It returns true on success, false on generic failure, or error.name for specific errors.
     const tryStartHtml5Qrcode = useCallback(async (element: HTMLDivElement, constraints: MediaTrackConstraints, strategyName: string): Promise<boolean | string> => {
       if (!isMounted.current) return false;
 
       console.log(`[QrScanner - ${strategyName}] Attempting to start Html5Qrcode with constraints:`, constraints);
-      await stopAndClearHtml5Qrcode(); // Ensure previous instance is stopped before new attempt
+      await stopAndClearHtml5Qrcode();
 
       try {
-        const newScanner = new Html5Qrcode(element.id, html5QrcodeConstructorConfig); // Pass constructor config here
+        const newScanner = new Html5Qrcode(element.id, html5QrcodeConstructorConfig);
         html5QrCodeInstanceRef.current = newScanner;
 
         if (!newScanner || typeof newScanner.start !== 'function') {
@@ -93,7 +90,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
 
         await newScanner.start(
           constraints,
-          html5QrcodeCameraScanConfig, // Corrected: Pass the html5QrcodeCameraScanConfig object here
+          html5QrcodeCameraScanConfig,
           (decodedText) => {
             if (isMounted.current) {
               console.log(`[QrScanner - ${strategyName}] Scan successful:`, decodedText);
@@ -116,7 +113,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       } catch (err: any) {
         if (isMounted.current) {
           console.error(`[QrScanner - ${strategyName}] Critical error during Html5Qrcode start:`, err);
-          return err.name || false; // Return error name for specific handling
+          return err.name || false;
         }
         return false;
       }
@@ -140,16 +137,14 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       const cameras = await Html5Qrcode.getCameras().catch(e => {
         console.warn("[QrScanner] Failed to get camera list:", e);
         return [];
-      );
+      }); // Corrected: Removed extra parenthesis
       console.log("[QrScanner] Available cameras:", cameras);
 
       const strategies = [
-        // Strategy 1: Default facingMode with a short delay
         {
           name: "Html5Qrcode - Default (Short Delay)",
           exec: async () => await tryStartHtml5Qrcode(element, { facingMode: facingMode }, "Strategy 1")
         },
-        // Strategy 2: Default facingMode with a longer delay
         {
           name: "Html5Qrcode - Default (Longer Delay)",
           exec: async () => {
@@ -157,7 +152,6 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
             return await tryStartHtml5Qrcode(element, { facingMode: facingMode }, "Strategy 2");
           }
         },
-        // Strategy 3: Explicit 'environment' camera by ID
         {
           name: "Html5Qrcode - Explicit Environment Camera",
           exec: async () => {
@@ -169,7 +163,6 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
             return false;
           }
         },
-        // Strategy 4: Explicit 'user' camera by ID
         {
           name: "Html5Qrcode - Explicit User Camera",
           exec: async () => {
@@ -181,16 +174,14 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
             return false;
           }
         },
-        // Strategy 5: Fallback to react-qr-reader
         {
           name: "react-qr-reader Fallback",
           exec: async () => {
             console.log("[QrScanner] Attempting Strategy 5: Fallback to react-qr-reader.");
             setActiveScannerType('react-qr-reader');
-            // react-qr-reader handles its own 'ready' state via rendering
             onReady();
             setIsScannerReady(true);
-            return true; // Assume react-qr-reader will attempt to start
+            return true;
           }
         }
       ];
@@ -200,11 +191,10 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         console.log(`[QrScanner] Executing strategy ${i + 1}/${strategies.length}: ${strategies[i].name}...`);
         let result = await strategies[i].exec();
 
-        // Implement retry for NotReadableError for html5-qrcode strategies
-        if (typeof result === 'string' && result === "NotReadableError" && i < strategies.length - 1) { // Only retry html5-qrcode strategies
+        if (typeof result === 'string' && result === "NotReadableError" && i < strategies.length - 1) {
           console.warn(`[QrScanner] Strategy ${i + 1} failed with NotReadableError. Retrying once...`);
-          await new Promise(resolve => setTimeout(resolve, 1500)); // Wait 1.5 seconds before retry
-          result = await strategies[i].exec(); // Retry the same strategy
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          result = await strategies[i].exec();
         }
 
         if (result === true) {
@@ -212,12 +202,12 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
           setActiveScannerType(i < strategies.length - 1 ? 'html5-qrcode' : 'react-qr-reader');
           return;
         } else if (typeof result === 'string') {
-          lastErrorName = result; // Store the specific error name
+          lastErrorName = result;
         } else {
-          lastErrorName = "UnknownError"; // Generic error
+          lastErrorName = "UnknownError";
         }
         console.log(`[QrScanner] Strategy ${i + 1} (${strategies[i].name}) failed. Trying next.`);
-        await stopAndClearHtml5Qrcode(); // Clear any partial html5-qrcode setup before next attempt
+        await stopAndClearHtml5Qrcode();
       }
 
       console.error("[QrScanner] All camera initialization strategies failed.");
@@ -239,13 +229,11 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       isMounted.current = true;
       console.log("[QrScanner] Component mounted or facingMode changed. Initiating strategy attempts...");
       
-      // Use a small delay to ensure the div is fully rendered and available in the DOM
       const timer = setTimeout(() => {
         if (scannerDivRef.current) {
           attemptStrategies();
         } else {
           console.warn("[QrScanner] scannerDivRef.current is null after initial timeout. Retrying strategy attempts.");
-          // If ref is still null, schedule another attempt, but don't loop indefinitely
           setTimeout(() => {
             if (scannerDivRef.current) {
               attemptStrategies();
@@ -264,7 +252,6 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       };
     }, [facingMode, attemptStrategies, stopAndClear, onError]);
 
-    // Handle react-qr-reader results
     const handleQrReaderResult = (result: any, error: any) => {
       if (result) {
         console.log("[QrScanner - react-qr-reader] Scan successful:", result.text);
