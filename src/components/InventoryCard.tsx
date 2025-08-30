@@ -28,15 +28,15 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
       : "text-red-400";
 
   return (
-    <Card className="group relative bg-card border-border rounded-lg shadow-sm overflow-hidden transition-all duration-200 hover:shadow-lg">
-      <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
+    <Card className="group relative bg-card border-border rounded-lg shadow-sm overflow-hidden transition-all duration-200 hover:shadow-lg flex flex-col aspect-square"> {/* Added flex-col and aspect-square */}
+      <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between flex-shrink-0"> {/* Added flex-shrink-0 */}
         <CardTitle className="text-base font-semibold text-foreground truncate">
           {item.name}
         </CardTitle>
         <Package className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
-      <CardContent className="p-4 pt-0">
-        <div className="flex items-center justify-center h-24 bg-muted/30 rounded-md mb-3 overflow-hidden">
+      <CardContent className="p-4 pt-0 flex-grow flex flex-col justify-between"> {/* Added flex-grow and flex-col justify-between */}
+        <div className="flex items-center justify-center h-24 bg-muted/30 rounded-md mb-3 overflow-hidden flex-shrink-0">
           {item.imageUrl ? (
             <img
               src={item.imageUrl}
@@ -51,7 +51,7 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
             />
           )}
         </div>
-        <div className="text-sm text-muted-foreground mb-2">
+        <div className="text-sm text-muted-foreground mb-2 flex-shrink-0">
           <p className="flex items-center gap-1">
             <Tag className="h-3 w-3" /> SKU: {item.sku}
           </p>
@@ -59,7 +59,7 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
             <MapPin className="h-3 w-3" /> Location: {item.location}
           </p>
         </div>
-        <div className="flex items-baseline justify-between mt-3">
+        <div className="flex items-baseline justify-between mt-3 flex-shrink-0">
           <span className="text-4xl font-bold text-foreground">{item.quantity}</span>
           <span className={cn("text-sm font-medium", stockStatusClass)}>
             {item.status}

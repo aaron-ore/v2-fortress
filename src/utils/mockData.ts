@@ -60,17 +60,17 @@ export const mockInventoryItems: InventoryItem[] = [
     description: "Ergonomic wireless mouse with long battery life.",
     sku: "WM-001",
     category: "Electronics",
-    pickingBinQuantity: 10, // NEW
-    overstockQuantity: 5, // NEW
+    pickingBinQuantity: 10,
+    overstockQuantity: 5,
     quantity: 15, // Derived
     reorderLevel: 20,
-    pickingReorderLevel: 15, // NEW
+    pickingReorderLevel: 15,
     committedStock: 5,
     incomingStock: 0,
     unitCost: 15.00,
     retailPrice: 29.99,
     location: "Main Warehouse",
-    pickingBinLocation: "MW-A-01-1-A", // NEW
+    pickingBinLocation: "MW-A-01-1-A",
     status: "Low Stock",
     lastUpdated: "2024-08-01",
     imageUrl: "https://via.placeholder.com/150/0000FF/FFFFFF?text=Mouse",
@@ -86,17 +86,17 @@ export const mockInventoryItems: InventoryItem[] = [
     description: "RGB mechanical keyboard with tactile switches.",
     sku: "MK-002",
     category: "Electronics",
-    pickingBinQuantity: 3, // NEW
-    overstockQuantity: 2, // NEW
+    pickingBinQuantity: 3,
+    overstockQuantity: 2,
     quantity: 5, // Derived
     reorderLevel: 10,
-    pickingReorderLevel: 5, // NEW
+    pickingReorderLevel: 5,
     committedStock: 0,
     incomingStock: 20,
     unitCost: 60.00,
     retailPrice: 119.99,
     location: "Main Warehouse",
-    pickingBinLocation: "MW-A-02-1-B", // NEW
+    pickingBinLocation: "MW-A-02-1-B",
     status: "Low Stock",
     lastUpdated: "2024-08-05",
     imageUrl: "https://via.placeholder.com/150/FF0000/FFFFFF?text=Keyboard",
@@ -112,17 +112,17 @@ export const mockInventoryItems: InventoryItem[] = [
     description: "Premium A4 notebook, 100 pages.",
     sku: "NB-003",
     category: "Office Supplies",
-    pickingBinQuantity: 100, // NEW
-    overstockQuantity: 20, // NEW
+    pickingBinQuantity: 100,
+    overstockQuantity: 20,
     quantity: 120, // Derived
     reorderLevel: 50,
-    pickingReorderLevel: 80, // NEW
+    pickingReorderLevel: 80,
     committedStock: 10,
     incomingStock: 0,
     unitCost: 2.50,
     retailPrice: 4.99,
     location: "Store Front",
-    pickingBinLocation: "SF-B-01-2-C", // NEW
+    pickingBinLocation: "SF-B-01-2-C",
     status: "In Stock",
     lastUpdated: "2024-07-20",
     imageUrl: "https://via.placeholder.com/150/00FF00/FFFFFF?text=Notebook",
@@ -138,17 +138,17 @@ export const mockInventoryItems: InventoryItem[] = [
     description: "Smooth writing blue gel pen.",
     sku: "GP-004",
     category: "Office Supplies",
-    pickingBinQuantity: 0, // NEW
-    overstockQuantity: 0, // NEW
+    pickingBinQuantity: 0,
+    overstockQuantity: 0,
     quantity: 0, // Derived
     reorderLevel: 30,
-    pickingReorderLevel: 20, // NEW
+    pickingReorderLevel: 20,
     committedStock: 0,
     incomingStock: 0,
     unitCost: 0.75,
     retailPrice: 1.50,
     location: "Store Front",
-    pickingBinLocation: "SF-B-02-1-A", // NEW
+    pickingBinLocation: "SF-B-02-1-A",
     status: "Out of Stock",
     lastUpdated: "2024-08-10",
     imageUrl: "https://via.placeholder.com/150/FFFF00/000000?text=Pen",
@@ -164,17 +164,17 @@ export const mockInventoryItems: InventoryItem[] = [
     description: "Heavy-duty adjustable wrench, 10-inch.",
     sku: "AW-005",
     category: "Tools",
-    pickingBinQuantity: 25, // NEW
-    overstockQuantity: 5, // NEW
+    pickingBinQuantity: 25,
+    overstockQuantity: 5,
     quantity: 30, // Derived
     reorderLevel: 10,
-    pickingReorderLevel: 10, // NEW
+    pickingReorderLevel: 10,
     committedStock: 0,
     incomingStock: 0,
     unitCost: 12.00,
     retailPrice: 24.00,
     location: "Tool Shed",
-    pickingBinLocation: "TS-C-01-1-A", // NEW
+    pickingBinLocation: "TS-C-01-1-A",
     status: "In Stock",
     lastUpdated: "2024-07-15",
     imageUrl: "https://via.placeholder.com/150/FF00FF/FFFFFF?text=Wrench",
@@ -190,17 +190,17 @@ export const mockInventoryItems: InventoryItem[] = [
     description: "Comfortable cotton t-shirt, large size, blue color.",
     sku: "TS-LB-006",
     category: "Apparel",
-    pickingBinQuantity: 5, // NEW
-    overstockQuantity: 3, // NEW
+    pickingBinQuantity: 5,
+    overstockQuantity: 3,
     quantity: 8, // Derived
     reorderLevel: 15,
-    pickingReorderLevel: 10, // NEW
+    pickingReorderLevel: 10,
     committedStock: 2,
     incomingStock: 0,
     unitCost: 8.00,
     retailPrice: 18.00,
     location: "Main Warehouse",
-    pickingBinLocation: "MW-B-03-2-D", // NEW
+    pickingBinLocation: "MW-B-03-2-D",
     status: "Low Stock",
     lastUpdated: "2024-08-03",
     imageUrl: "https://via.placeholder.com/150/00FFFF/000000?text=T-Shirt",

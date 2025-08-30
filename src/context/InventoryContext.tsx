@@ -128,14 +128,15 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
   useEffect(() => {
     if (!isLoadingProfile) {
-      fetchInventoryItems().then(() => {
+      fetchInventoryItems().then((fetchedItems) => { // Capture fetched items
         if (!isInitialLoad.current && profile?.organizationId) {
+          // Use the *latest* state of inventoryItems, which might be updated by fetchInventoryItems
           processAutoReorder(inventoryItems, addOrder, vendors, profile.organizationId, addNotification);
         }
         isInitialLoad.current = false;
       });
     }
-  }, [fetchInventoryItems, isLoadingProfile, profile?.organizationId, addOrder, vendors, addNotification, inventoryItems]);
+  }, [fetchInventoryItems, isLoadingProfile, profile?.organizationId, addOrder, vendors, addNotification]); // Removed inventoryItems from dependency array
 
   const addInventoryItem = async (item: Omit<InventoryItem, "id" | "status" | "lastUpdated" | "organizationId" | "quantity">) => {
     const { data: { session } } = await supabase.auth.getSession();
