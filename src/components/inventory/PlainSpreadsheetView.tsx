@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { InventoryItem, useInventory } from "@/context/InventoryContext";
 import { useCategories } from "@/context/CategoryContext";
-import { useVendors } from "@/context/VendorContext";
+import { useVendors } from "@/context/VendorContext"; // Corrected import
 import { useOnboarding } from "@/context/OnboardingContext";
 import { showError, showSuccess } from "@/utils/toast";
 import { Loader2, Save, XCircle, Edit, Trash2 } from "lucide-react";
@@ -38,7 +38,7 @@ const PlainSpreadsheetView: React.FC<PlainSpreadsheetViewProps> = ({
 }) => {
   const { updateInventoryItem, refreshInventory } = useInventory();
   const { categories } = useCategories();
-  const { vendors } = useVendencies();
+  const { vendors } = useVendors(); // Corrected hook call
   const { locations } = useOnboarding();
 
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
