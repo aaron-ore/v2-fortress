@@ -54,7 +54,8 @@ const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
     return null;
   }
 
-  const baseButtonClass = "h-10 w-full justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors";
+  // Base classes for the button, without horizontal padding
+  const baseButtonClass = "h-10 w-full justify-start rounded-md py-2 text-sm font-medium transition-colors";
   const activeClass = "bg-primary text-primary-foreground hover:bg-primary/90";
   const inactiveClass = "text-muted-foreground hover:bg-muted/20 hover:text-foreground";
 
@@ -64,13 +65,13 @@ const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
         <AccordionItem value={item.title} className="border-none">
           <AccordionTrigger className={cn(
             baseButtonClass,
-            "py-2 px-3 flex items-center justify-between",
+            "py-2", // Ensure vertical padding
+            isCollapsed ? "justify-center px-0" : "justify-start px-3", // Adjust horizontal padding based on collapsed state
             currentIsActive ? activeClass : inactiveClass,
-            "hover:no-underline",
-            isCollapsed && "justify-center" // Center icon when collapsed
+            "hover:no-underline"
           )}>
             <div className="flex items-center">
-              <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+              <item.icon className={cn("h-6 w-6", !isCollapsed && "mr-3")} /> {/* Increased icon size */}
               {!isCollapsed && (
                 <span className="truncate">{item.title}</span>
               )}
@@ -102,7 +103,7 @@ const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
             variant="ghost"
             className={cn(
               baseButtonClass,
-              isCollapsed ? "justify-center" : "justify-start",
+              isCollapsed ? "justify-center px-0" : "justify-start px-3", // Adjust horizontal padding based on collapsed state
               currentIsActive ? activeClass : inactiveClass,
             )}
             onClick={() => {
@@ -113,7 +114,7 @@ const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
               }
             }}
           >
-            <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+            <item.icon className={cn("h-6 w-6", !isCollapsed && "mr-3")} /> {/* Increased icon size */}
             {!isCollapsed && (
               <span className="truncate">{item.title}</span>
             )}
@@ -137,7 +138,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
 
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true); // Set to true for collapsed by default
 
   // Determine if a given href is active or part of an active parent
   const isActive = (href: string) => {
@@ -159,13 +160,17 @@ const Sidebar: React.FC<SidebarProps> = () => {
         <Button
           variant="ghost"
           size="icon"
-          className={cn("h-9 w-9", isCollapsed ? "mx-auto" : "ml-auto")} // Centered when collapsed, right-aligned when expanded
+          className={cn(
+            "h-10 w-10", // Consistent button size
+            isCollapsed ? "mx-auto px-0" : "ml-auto", // Centered and no horizontal padding when collapsed
+            "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
+          )}
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
           {isCollapsed ? (
-            <Menu className="h-5 w-5" /> // Hamburger when collapsed
+            <Menu className="h-6 w-6" /> // Increased icon size
           ) : (
-            <ChevronLeft className="h-5 w-5" /> // Chevron left when expanded
+            <ChevronLeft className="h-6 w-6" /> // Increased icon size
           )}
         </Button>
       </div>
