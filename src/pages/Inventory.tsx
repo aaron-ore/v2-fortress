@@ -214,7 +214,7 @@ const Inventory: React.FC = () => {
     <div className="flex flex-col space-y-6 p-6">
       <h1 className="text-3xl font-bold">Inventory Management</h1>
 
-      {/* Top Row: Search, Add New Item, Manage Categories, Manage Locations */}
+      {/* Top Row: Search and Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <Input
           placeholder="Search by name, SKU, or description..."
@@ -222,19 +222,6 @@ const Inventory: React.FC = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <Button onClick={() => setIsAddInventoryDialogOpen(true)}>
-          <PlusCircle className="h-4 w-4 mr-2" /> Add New Item
-        </Button>
-        <Button variant="outline" onClick={() => setIsManageCategoriesDialogOpen(true)}>
-          Manage Categories
-        </Button>
-        <Button variant="outline" onClick={() => setIsManageLocationsDialogOpen(true)}>
-          <MapPin className="h-4 w-4 mr-2" /> Manage Locations
-        </Button>
-      </div>
-
-      {/* Second Row: Filters and View Toggles */}
-      <div className="flex flex-wrap items-center gap-2">
         <Select value={locationFilter} onValueChange={setLocationFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All Locations" />
@@ -303,13 +290,22 @@ const Inventory: React.FC = () => {
 
       {/* Main Inventory Display Area */}
       <div className="rounded-md border">
-        <CardHeader className="pb-4 flex flex-row items-center justify-between">
+        <CardHeader className="pb-4 flex flex-row items-center justify-between flex-wrap gap-2"> {/* Added flex-wrap and gap */}
           <CardTitle className="text-xl font-semibold">Current Stock</CardTitle>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-wrap gap-2"> {/* Added flex-wrap and gap */}
+            <Button onClick={() => setIsAddInventoryDialogOpen(true)} size="sm"> {/* Added size="sm" */}
+              <PlusCircle className="h-4 w-4 mr-2" /> Add New Item
+            </Button>
+            <Button variant="outline" onClick={() => setIsManageCategoriesDialogOpen(true)} size="sm"> {/* Added size="sm" */}
+              Manage Categories
+            </Button>
+            <Button variant="outline" onClick={() => setIsManageLocationsDialogOpen(true)} size="sm"> {/* Added size="sm" */}
+              <MapPin className="h-4 w-4 mr-2" /> Manage Locations
+            </Button>
             {/* Consolidated "Actions" and "Scan Item" into a new "Tools" dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline">
+                <Button variant="outline" size="sm"> {/* Added size="sm" */}
                   <PackagePlus className="h-4 w-4 mr-2" /> Tools <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>

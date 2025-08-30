@@ -139,13 +139,13 @@ const BulkUpdateDialog: React.FC<BulkUpdateDialogProps> = ({ isOpen, onClose }) 
               let value = row[field];
               // Type conversion for numeric fields
               if (["quantity", "reorderLevel", "committedStock", "incomingStock"].includes(field)) {
-                value = parseInt(value);
+                value = parseInt(String(value) || '0'); // Ensure string before parseInt, default to '0'
                 if (isNaN(value) || value < 0) {
                   errors.push(`SKU '${skuToUpdate}': Invalid number for field '${field}'. Skipping update for this field.`);
                   continue;
                 }
               } else if (["unitCost", "retailPrice"].includes(field)) {
-                value = parseFloat(value);
+                value = parseFloat(String(value) || '0'); // Ensure string before parseFloat, default to '0'
                 if (isNaN(value) || value < 0) {
                   errors.push(`SKU '${skuToUpdate}': Invalid number for field '${field}'. Skipping update for this field.`);
                   continue;

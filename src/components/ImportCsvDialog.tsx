@@ -116,15 +116,18 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
       const itemName = String(row.name || '').trim();
       const sku = String(row.sku || '').trim();
       const categoryName = String(row.category || '').trim();
-      const quantity = parseInt(row.quantity);
-      const reorderLevel = parseInt(row.reorderLevel);
-      const unitCost = parseFloat(row.unitCost);
-      const retailPrice = parseFloat(row.retailPrice);
+      const pickingBinQuantity = parseInt(String(row.pickingBinQuantity || '0')); // NEW: Default to '0'
+      const overstockQuantity = parseInt(String(row.overstockQuantity || '0')); // NEW: Default to '0'
+      const reorderLevel = parseInt(String(row.reorderLevel || '0'));
+      const pickingReorderLevel = parseInt(String(row.pickingReorderLevel || '0')); // NEW: Default to '0'
+      const unitCost = parseFloat(String(row.unitCost || '0'));
+      const retailPrice = parseFloat(String(row.retailPrice || '0'));
       const location = String(row.location || '').trim();
+      const pickingBinLocation = String(row.pickingBinLocation || '').trim(); // NEW: Default to empty string
 
       // Basic validation for required fields
-      if (!itemName || !sku || !categoryName || isNaN(quantity) || quantity < 0 || isNaN(reorderLevel) || reorderLevel < 0 || isNaN(unitCost) || unitCost < 0 || isNaN(retailPrice) || retailPrice < 0 || !location) {
-        errors.push(`Row with SKU '${sku || 'N/A'}': Missing or invalid required fields (name, sku, category, quantity, reorderLevel, unitCost, retailPrice, location).`);
+      if (!itemName || !sku || !categoryName || isNaN(pickingBinQuantity) || pickingBinQuantity < 0 || isNaN(overstockQuantity) || overstockQuantity < 0 || isNaN(reorderLevel) || reorderLevel < 0 || isNaN(pickingReorderLevel) || pickingReorderLevel < 0 || isNaN(unitCost) || unitCost < 0 || isNaN(retailPrice) || retailPrice < 0 || !location || !pickingBinLocation) {
+        errors.push(`Row with SKU '${sku || 'N/A'}': Missing or invalid required fields (name, sku, category, pickingBinQuantity, overstockQuantity, reorderLevel, pickingReorderLevel, unitCost, retailPrice, location, pickingBinLocation).`);
         errorCount++;
         continue;
       }
@@ -141,6 +144,12 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
         errorCount++;
         continue;
       }
+      // Validate pickingBinLocation exists
+      if (!currentLocationsSet.has(pickingBinLocation.toLowerCase())) {
+        errors.push(`Row with SKU '${sku}': Picking Bin Location '${pickingBinLocation}' does not exist and was not confirmed to be added. Item skipped.`);
+        errorCount++;
+        continue;
+      }
 
       const isDuplicate = existingInventorySkus.has(sku.toLowerCase());
 
@@ -153,12 +162,14 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
           const existingItem = inventoryItems.find(item => item.sku.toLowerCase() === sku.toLowerCase());
           if (existingItem) {
             const oldQuantity = existingItem.quantity;
-            const quantityToAdd = quantity; // quantity from CSV row
+            const quantityToAdd = pickingBinQuantity + overstockQuantity; // Total quantity from CSV row
             const newQuantity = oldQuantity + quantityToAdd;
 
             const updatedItem = {
               ...existingItem,
-              quantity: newQuantity,
+              quantity: newQuantity, // This will be derived in context
+              pickingBinQuantity: existingItem.pickingBinQuantity + pickingBinQuantity, // Add to picking bin
+              overstockQuantity: existingItem.overstockQuantity + overstockQuantity, // Add to overstock
               lastUpdated: new Date().toISOString().split('T')[0],
               // Other fields from CSV are ignored for 'add_to_stock' to keep it simple
             };
@@ -195,16 +206,21 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
           description: String(row.description || '').trim(),
           sku: sku,
           category: categoryName,
-          quantity: quantity,
+          pickingBinQuantity: pickingBinQuantity,
+          overstockQuantity: overstockQuantity,
           reorderLevel: reorderLevel,
-          committedStock: parseInt(row.committedStock) || 0,
-          incomingStock: parseInt(row.incomingStock) || 0,
+          pickingReorderLevel: pickingReorderLevel,
+          committedStock: parseInt(String(row.committedStock || '0')),
+          incomingStock: parseInt(String(row.incomingStock || '0')),
           unitCost: unitCost,
           retailPrice: retailPrice,
           location: location,
+          pickingBinLocation: pickingBinLocation,
           imageUrl: String(row.imageUrl || '').trim() || undefined,
           vendorId: String(row.vendorId || '').trim() || undefined,
           barcodeUrl: String(row.barcodeUrl || '').trim() || undefined,
+          autoReorderEnabled: String(row.autoReorderEnabled || 'false').toLowerCase() === 'true',
+          autoReorderQuantity: parseInt(String(row.autoReorderQuantity || '0')),
         };
         await addInventoryItem(newItemData);
         successCount++;
@@ -273,7 +289,7 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
           if (sku && existingInventorySkus.has(sku.toLowerCase())) {
             foundDuplicates.push({
               sku: sku,
-              csvQuantity: parseInt(row.quantity) || 0,
+              csvQuantity: parseInt(String(row.quantity || '0')) || 0, // Ensure quantity is parsed safely
               itemName: String(row.name || '').trim(),
             });
           }

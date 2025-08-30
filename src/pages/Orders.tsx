@@ -558,6 +558,24 @@ const Orders: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"> {/* NEW: Adjusted for layout */}
         <h1 className="text-3xl font-bold">Order Management</h1>
         <div className="flex flex-wrap items-center gap-2">
+          {/* NEW: Order Actions Dropdown - Moved to the left */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Order Actions <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setIsReceiveShipmentDialogOpen(true)}>
+                <PackagePlus className="h-4 w-4 mr-2" /> Receive Shipment
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsFulfillOrderDialogOpen(true)}>
+                <PackageCheck className="h-4 w-4 mr-2" /> Fulfill Order
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Input
             placeholder="Search orders..."
             value={searchTerm}
@@ -587,24 +605,6 @@ const Orders: React.FC = () => {
               <AddOrderForm onClose={() => setIsAddOrderDialogOpen(false)} />
             </DialogContent>
           </Dialog>
-          {/* NEW: Order Actions Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                Order Actions <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setIsReceiveShipmentDialogOpen(true)}>
-                <PackagePlus className="h-4 w-4 mr-2" /> Receive Shipment
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setIsFulfillOrderDialogOpen(true)}>
-                <PackageCheck className="h-4 w-4 mr-2" /> Fulfill Order
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 

@@ -114,7 +114,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
   const handleReceivedQuantityChange = (itemId: number, quantity: string) => {
     setReceivedItems((prev) =>
       prev.map((item) =>
-        item.id === itemId ? { ...item, receivedQuantity: parseInt(quantity) || 0 } : item
+        item.id === itemId ? { ...item, receivedQuantity: parseInt(quantity || '0') } : item // NEW: Default to '0'
       )
     );
   };

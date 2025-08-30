@@ -157,13 +157,13 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       return;
     }
 
-    const parsedPickingBinQuantity = parseInt(pickingBinQuantity); // NEW
-    const parsedOverstockQuantity = parseInt(overstockQuantity); // NEW
-    const parsedReorderLevel = parseInt(reorderLevel);
-    const parsedPickingReorderLevel = parseInt(pickingReorderLevel); // NEW
-    const parsedUnitCost = parseFloat(unitCost);
-    const parsedRetailPrice = parseFloat(retailPrice);
-    const parsedAutoReorderQuantity = parseInt(autoReorderQuantity) || 0;
+    const parsedPickingBinQuantity = parseInt(pickingBinQuantity || '0'); // NEW: Default to '0'
+    const parsedOverstockQuantity = parseInt(overstockQuantity || '0'); // NEW: Default to '0'
+    const parsedReorderLevel = parseInt(reorderLevel || '0');
+    const parsedPickingReorderLevel = parseInt(pickingReorderLevel || '0'); // NEW: Default to '0'
+    const parsedUnitCost = parseFloat(unitCost || '0');
+    const parsedRetailPrice = parseFloat(retailPrice || '0');
+    const parsedAutoReorderQuantity = parseInt(autoReorderQuantity || '0');
 
     if (
       isNaN(parsedPickingBinQuantity) || parsedPickingBinQuantity < 0 || // NEW
@@ -219,7 +219,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     !pickingBinLocation || // NEW
     locations.length === 0 ||
     categories.length === 0 ||
-    (autoReorderEnabled && (parseInt(autoReorderQuantity) <= 0 || isNaN(parseInt(autoReorderQuantity))));
+    (autoReorderEnabled && (parseInt(autoReorderQuantity || '0') <= 0 || isNaN(parseInt(autoReorderQuantity || '0')))); // NEW: Default to '0'
 
   const handleOpenManageLocations = () => {
     setIsManageLocationsDialogOpen(true);
