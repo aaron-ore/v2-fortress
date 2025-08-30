@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react";
+"use client";
+
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -64,6 +66,8 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
 
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
 
+  const prevItemIdRef = useRef<string | null>(null); // Ref to track previous item ID
+
   // Filter stock movements for the current item
   const itemStockMovements = useMemo(() => {
     return stockMovements
@@ -73,15 +77,22 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
 
   useEffect(() => {
     if (isOpen) {
-      setAdjustmentAmount("");
-      setAdjustmentType("add");
-      setAdjustmentTarget("pickingBin"); // Reset to default
-      setAdjustmentReason("");
+      // Only reset/initialize if a new item is selected or dialog just opened
+      if (currentItem?.id !== prevItemIdRef.current) {
+        setAdjustmentAmount("");
+        setAdjustmentType("add");
+        setAdjustmentTarget("pickingBin");
+        setAdjustmentReason("");
+        setAutoReorderEnabled(currentItem?.autoReorderEnabled || false);
+        setAutoReorderQuantity(currentItem?.autoReorderQuantity?.toString() || "");
+        prevItemIdRef.current = currentItem?.id || null;
+      }
       if (currentItem) {
         fetchStockMovements(currentItem.id);
-        setAutoReorderEnabled(currentItem.autoReorderEnabled);
-        setAutoReorderQuantity(currentItem.autoReorderQuantity.toString());
       }
+    } else {
+      // When dialog closes, clear previous item ID
+      prevItemIdRef.current = null;
     }
   }, [isOpen, currentItem, fetchStockMovements]);
 
