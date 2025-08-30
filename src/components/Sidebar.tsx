@@ -1,7 +1,23 @@
 "use client";
 
 import React from "react";
-import { cn } from "@/lib/utils"; // Keep cn for basic class joining
+import { useLocation, useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { mainNavItems, userAndSettingsNavItems, supportAndResourcesNavItems, NavItem } from "@/lib/navigation";
+import { useNotifications } from "@/context/NotificationContext";
+import { useProfile } from "@/context/ProfileContext";
+import { LogOut, ChevronLeft, ChevronRight } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
+import { showError, showSuccess } from "@/utils/toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -9,11 +25,186 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { unreadCount } = useNotifications();
+  const { profile } = useProfile();
+
+  const handleLogout = async () => {
+    const { data: { session } = { session: null } } = await supabase.auth.getSession();
+    if (!session) {
+      showSuccess("You are already logged out.");
+      navigate("/auth");
+      return;
+    }
+
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      showError("Failed to log out: " + error.message);
+    } else {
+      showSuccess("Logged out successfully!");
+      navigate("/auth");
+    }
+  };
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+
+  const baseButtonClass = "justify-start text-base font-medium transition-colors w-full";
+  const activeLinkClass = "text-sidebar-active-foreground bg-sidebar-active-background hover:bg-sidebar-active-background/80";
+  const inactiveLinkClass = "text-sidebar-foreground hover:bg-sidebar-background/50";
+
+  const renderNavItems = (items: NavItem[], isSubItem = false) => (
+    <div className={cn("space-y-1", isSubItem && "ml-4 border-l border-sidebar-border pl-2")}>
+      {items.map((item) => {
+        const currentIsActive = location.pathname.startsWith(item.href) || (item.href === "/" && location.pathname === "/");
+
+        if (item.adminOnly && profile?.role !== 'admin') {
+          return null;
+        }
+
+        if (item.isParent && item.children) {
+          return (
+            <Accordion type="single" collapsible key={item.title} className="w-full">
+              <AccordionItem value={item.title} className="border-none">
+                <AccordionTrigger className={cn(
+                  baseButtonClass,
+                  "py-2 px-3 flex items-center justify-between",
+                  currentIsActive ? activeLinkClass : inactiveLinkClass,
+                  "hover:no-underline",
+                  isCollapsed && "justify-center px-0"
+                )}>
+                  <div className="flex items-center">
+                    <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+                    {!isCollapsed && <span className="truncate">{item.title}</span>}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-1">
+                  {renderNavItems(item.children, true)}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          );
+        }
+
+        return (
+          <Button
+            key={item.title}
+            variant="ghost"
+            className={cn(
+              baseButtonClass,
+              currentIsActive ? activeLinkClass : inactiveLinkClass,
+              isCollapsed && "justify-center px-0"
+            )}
+            onClick={() => {
+              if (item.action) {
+                item.action();
+              } else {
+                handleNavigation(item.href);
+              }
+            }}
+          >
+            <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+            {!isCollapsed && <span className="truncate">{item.title}</span>}
+            {item.title === "Notifications" && unreadCount > 0 && !isCollapsed && (
+              <span className="ml-auto px-2 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full">
+                {unreadCount}
+              </span>
+            )}
+          </Button>
+        );
+      })}
+    </div>
+  );
+
   return (
-    <div className={cn("fixed top-0 left-0 h-screen bg-blue-500 text-white p-4", isCollapsed ? "w-[80px]" : "w-[280px]")}>
-      <h1>Sidebar Test</h1>
-      <p>Status: {isCollapsed ? "Collapsed" : "Expanded"}</p>
-      <button onClick={onToggleCollapse} className="mt-4 p-2 bg-blue-700 rounded">Toggle Sidebar</button>
+    <div
+      className={cn(
+        "fixed top-0 left-0 h-screen flex flex-col bg-sidebar-background text-sidebar-foreground transition-all duration-200 z-30 border-r border-sidebar-border",
+        isCollapsed ? "w-[80px]" : "w-[280px]", // Adjusted widths for better spacing
+      )}
+    >
+      {/* Header with Logo and Title */}
+      <div className={cn("flex items-center h-[60px] px-4 flex-shrink-0", isCollapsed ? "justify-center" : "justify-between")}>
+        <div className={cn("flex items-center space-x-2", isCollapsed && "hidden")}>
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="text-primary"
+          >
+            <path
+              d="M12 2L2 12L12 22L22 12L12 2Z"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 2L2 12L12 22L22 12L12 2Z"
+              fill="currentColor"
+              fillOpacity="0.2"
+            />
+          </svg>
+          <span className="text-xl font-semibold text-foreground">Fortress</span>
+        </div>
+        {/* Toggle button inside sidebar header for collapsed state */}
+        {isCollapsed && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleCollapse}
+            className="h-9 w-9 rounded-full bg-sidebar-toggle-background text-sidebar-foreground hover:bg-sidebar-toggle-background/80"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        )}
+      </div>
+
+      {/* User Profile Section */}
+      {!isCollapsed && profile && (
+        <div className="flex items-center p-4 border-b border-sidebar-border flex-shrink-0">
+          <Avatar className="h-9 w-9">
+            <AvatarImage src={profile.avatarUrl} alt={profile.fullName} />
+            <AvatarFallback>{profile.fullName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+          </Avatar>
+          <div className="ml-3 overflow-hidden">
+            <p className="text-sm font-medium text-sidebar-foreground truncate">{profile.fullName}</p>
+            <p className="text-xs text-muted-foreground truncate">{profile.role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Navigation Links */}
+      <ScrollArea className="flex-grow py-4 px-3">
+        <nav className="flex flex-col space-y-4">
+          {renderNavItems(mainNavItems)}
+
+          <div className={cn("px-3 py-2 text-xs font-semibold text-muted-foreground uppercase", isCollapsed && "text-center")}>
+            {!isCollapsed && "User & Account"}
+          </div>
+          {renderNavItems(userAndSettingsNavItems)}
+
+          <div className={cn("px-3 py-2 text-xs font-semibold text-muted-foreground uppercase", isCollapsed && "text-center")}>
+            {!isCollapsed && "Support & Resources"}
+          </div>
+          {renderNavItems(supportAndResourcesNavItems)}
+        </nav>
+      </ScrollArea>
+
+      {/* Logout Button */}
+      <div className="mt-auto p-3 border-t border-sidebar-border flex-shrink-0">
+        <Button
+          variant="ghost"
+          className={cn(baseButtonClass, "text-destructive focus:bg-destructive/10", isCollapsed && "justify-center px-0")}
+          onClick={handleLogout}
+        >
+          <LogOut className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+          {!isCollapsed && "Logout"}
+        </Button>
+      </div>
     </div>
   );
 };

@@ -50,22 +50,21 @@ const Layout: React.FC = () => {
           <Sidebar isCollapsed={isSidebarCollapsed} onToggleCollapse={handleToggleSidebar} />
 
           {/* Sidebar Toggle Button (fixed, outside sidebar) */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "fixed top-6 z-40 transition-all duration-200",
-              isSidebarCollapsed ? `left-[${sidebarWidthCollapsed}px] -translate-x-1/2` : `left-[${sidebarWidthExpanded}px] -translate-x-1/2`,
-              "h-9 w-9 rounded-full bg-sidebar-toggle-background text-sidebar-foreground hover:bg-sidebar-toggle-background/80 shadow-md"
-            )}
-            onClick={handleToggleSidebar}
-          >
-            {isSidebarCollapsed ? (
-              <ChevronRight className="h-5 w-5" />
-            ) : (
-              <ChevronRight className="h-5 w-5 rotate-180" />
-            )}
-          </Button>
+          {/* This button is now only visible when the sidebar is expanded, as the collapsed state has its own toggle */}
+          {!isSidebarCollapsed && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "fixed top-6 z-40 transition-all duration-200",
+                `left-[${sidebarWidthExpanded}px] -translate-x-1/2`, // Position when expanded
+                "h-9 w-9 rounded-full bg-sidebar-toggle-background text-sidebar-foreground hover:bg-sidebar-toggle-background/80 shadow-md"
+              )}
+              onClick={handleToggleSidebar}
+            >
+              <ChevronRight className="h-5 w-5 rotate-180" /> {/* Always rotate 180 when visible (sidebar expanded) */}
+            </Button>
+          )}
 
           {/* Main Content Area */}
           <div
