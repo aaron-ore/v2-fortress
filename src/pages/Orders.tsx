@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { PlusCircle, Search, Edit, Archive, Eye } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { PlusCircle, Search, Edit, Archive, Eye, PackageCheck, PackagePlus, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -43,6 +43,18 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { DateRangePicker } from "@/components/DateRangePicker"; // NEW: Import DateRangePicker
+import { DateRange } from "react-day-picker"; // NEW: Import DateRange
+import FulfillOrderDialog from "@/components/orders/FulfillOrderDialog"; // NEW: Import FulfillOrderDialog
+import ReceiveShipmentDialog from "@/components/orders/ReceiveShipmentDialog"; // NEW: Import ReceiveShipmentDialog
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const formSchema = z.object({
   type: z.enum(["Sales", "Purchase"]),
@@ -486,13 +498,25 @@ const Orders: React.FC = () => {
   const [isAddOrderDialogOpen, setIsAddOrderDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all"); // State for active tab
 
+  // NEW: State for date range filter
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  // NEW: States for new dialogs
+  const [isFulfillOrderDialogOpen, setIsFulfillOrderDialogOpen] = useState(false);
+  const [isReceiveShipmentDialogOpen, setIsReceiveShipmentDialogOpen] = useState(false);
+
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
 
+  // NEW: Handler to clear date filter
+  const handleClearDateFilter = () => {
+    setDateRange(undefined);
+  };
+
   const filteredOrders = useMemo(() => {
     let currentOrders = orders;
 
+    // Apply tab filter
     if (activeTab === "sales") {
       currentOrders = currentOrders.filter(order => order.type === "Sales");
     } else if (activeTab === "purchase") {
@@ -504,26 +528,49 @@ const Orders: React.FC = () => {
       currentOrders = currentOrders.filter(order => order.status !== "Archived");
     }
 
-    return currentOrders.filter(order =>
+    // Apply search term filter
+    const searchFiltered = currentOrders.filter(order =>
       order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customerSupplier.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.status.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [orders, searchTerm, activeTab]);
+
+    // NEW: Apply date range filter
+    if (dateRange?.from) {
+      const fromDate = new Date(dateRange.from);
+      fromDate.setHours(0, 0, 0, 0);
+      const toDate = dateRange.to ? new Date(dateRange.to) : fromDate;
+      toDate.setHours(23, 59, 59, 999);
+
+      return searchFiltered.filter(order => {
+        const orderDate = new Date(order.date);
+        return orderDate >= fromDate && orderDate <= toDate;
+      });
+    }
+
+    return searchFiltered;
+  }, [orders, searchTerm, activeTab, dateRange]); // NEW: Add dateRange to dependencies
 
   const columns = useMemo(() => createOrderColumns(updateOrder, archiveOrder), [updateOrder, archiveOrder]);
 
   return (
     <div className="flex flex-col space-y-6 p-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"> {/* NEW: Adjusted for layout */}
         <h1 className="text-3xl font-bold">Order Management</h1>
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-wrap items-center gap-2">
           <Input
             placeholder="Search orders..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
+            className="max-w-xs"
           />
+          {/* NEW: Date Range Picker */}
+          <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
+          {dateRange?.from && (
+            <Button variant="outline" onClick={handleClearDateFilter}>
+              Clear Filter
+            </Button>
+          )}
           <Dialog open={isAddOrderDialogOpen} onOpenChange={setIsAddOrderDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -540,6 +587,24 @@ const Orders: React.FC = () => {
               <AddOrderForm onClose={() => setIsAddOrderDialogOpen(false)} />
             </DialogContent>
           </Dialog>
+          {/* NEW: Order Actions Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Order Actions <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setIsReceiveShipmentDialogOpen(true)}>
+                <PackagePlus className="h-4 w-4 mr-2" /> Receive Shipment
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsFulfillOrderDialogOpen(true)}>
+                <PackageCheck className="h-4 w-4 mr-2" /> Fulfill Order
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -571,6 +636,17 @@ const Orders: React.FC = () => {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* NEW: Fulfill Order Dialog */}
+      <FulfillOrderDialog
+        isOpen={isFulfillOrderDialogOpen}
+        onClose={() => setIsFulfillOrderDialogOpen(false)}
+      />
+      {/* NEW: Receive Shipment Dialog */}
+      <ReceiveShipmentDialog
+        isOpen={isReceiveShipmentDialogOpen}
+        onClose={() => setIsReceiveShipmentDialogOpen(false)}
+      />
     </div>
   );
 };

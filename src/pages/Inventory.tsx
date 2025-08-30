@@ -119,8 +119,8 @@ export const createInventoryColumns = (deleteItem: (id: string, name: string) =>
     id: "actions",
     header: "Actions",
     cell: ({ row }) => (
-      <div className="flex space-x-2">
-        <TooltipProvider>
+      <TooltipProvider> {/* Moved TooltipProvider to wrap the entire cell */}
+        <div className="flex space-x-2">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="outline" size="icon" onClick={() => navigate(`/inventory/${row.original.id}`)}>
@@ -131,8 +131,6 @@ export const createInventoryColumns = (deleteItem: (id: string, name: string) =>
               <p>View Details</p>
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>
-        <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="outline" size="icon" onClick={() => navigate(`/inventory/${row.original.id}`)}>
@@ -143,8 +141,6 @@ export const createInventoryColumns = (deleteItem: (id: string, name: string) =>
               <p>Edit Item</p>
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>
-        <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="destructive" size="icon" onClick={() => deleteItem(row.original.id, row.original.name)}>
@@ -155,8 +151,8 @@ export const createInventoryColumns = (deleteItem: (id: string, name: string) =>
               <p>Delete Item</p>
             </TooltipContent>
           </Tooltip>
-        </TooltipProvider>
-      </div>
+        </div>
+      </TooltipProvider>
     ),
   },
 ];
