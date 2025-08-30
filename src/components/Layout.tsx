@@ -20,7 +20,7 @@ const Layout: React.FC = () => {
   const sidebarWidthExpanded = 280; // Matches Sidebar.tsx expanded width
 
   return (
-    <div className="app-main-layout min-h-screen flex bg-background text-foreground">
+    <div className="app-main-layout min-h-screen flex bg-background text-foreground "> {/* Added a space at the end of className */}
       {isMobile ? (
         <div className="flex flex-col w-full">
           <Header
