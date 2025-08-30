@@ -48,7 +48,6 @@ const LossesCard: React.FC = () => {
         <div className="text-sm font-bold text-foreground">
           ${totalLosses.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
         </div>
-        {/* Removed ResponsiveContainer and set fixed width/height */}
         <LineChart width={80} height={15} data={data}>
           <Line type="monotone" dataKey="value" stroke="hsl(var(--destructive))" strokeWidth={2} dot={false} />
         </LineChart>
