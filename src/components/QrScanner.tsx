@@ -137,7 +137,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       const cameras = await Html5Qrcode.getCameras().catch(e => {
         console.warn("[QrScanner] Failed to get camera list:", e);
         return [];
-      }); // Corrected: Removed extra parenthesis
+      });
       console.log("[QrScanner] Available cameras:", cameras);
 
       const strategies = [
