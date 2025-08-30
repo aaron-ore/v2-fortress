@@ -5,7 +5,11 @@ import { MadeWithDyad } from "./made-with-dyad";
 import AnnouncementBar from "./AnnouncementBar";
 import Sidebar from "./Sidebar"; // Import the new Sidebar component
 import { useIsMobile } from "@/hooks/use-mobile"; // Import useIsMobile
-import * as ResizableComponents from "react-resizable-panels"; // NEW: Namespace import
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "react-resizable-panels"; // Reverted to named imports
 
 const Layout: React.FC = () => {
   const isMobile = useIsMobile();
@@ -25,9 +29,9 @@ const Layout: React.FC = () => {
           </main>
         </>
       ) : (
-        <ResizableComponents.ResizablePanelGroup direction="horizontal">
+        <ResizablePanelGroup direction="horizontal">
           <Sidebar />
-          <ResizableComponents.ResizablePanel defaultSize={82}> {/* Main content panel */}
+          <ResizablePanel defaultSize={82}> {/* Main content panel */}
             <div className="flex flex-col h-full">
               <Header /> {/* Header for desktop (now only contains global actions) */}
               <AnnouncementBar
@@ -39,8 +43,8 @@ const Layout: React.FC = () => {
                 <Outlet />
               </main>
             </div>
-          </ResizableComponents.ResizablePanel>
-        </ResizableComponents.ResizablePanelGroup>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       )}
       <div className="mt-auto">
         <MadeWithDyad />
