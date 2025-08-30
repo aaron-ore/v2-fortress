@@ -5,7 +5,7 @@ import { MadeWithDyad } from "./made-with-dyad";
 import AnnouncementBar from "./AnnouncementBar";
 // import Sidebar from "./Sidebar"; // Temporarily removed
 import { useIsMobile } from "@/hooks/use-mobile";
-import * as ResizableComponents from "react-resizable-panels";
+// import * as ResizableComponents from "react-resizable-panels"; // Temporarily removed
 
 const Layout: React.FC = () => {
   const isMobile = useIsMobile();
@@ -25,28 +25,25 @@ const Layout: React.FC = () => {
           </main>
         </>
       ) : (
-        <ResizableComponents.ResizablePanelGroup direction="horizontal">
-          {/* <Sidebar /> */}
-          <ResizableComponents.ResizablePanel defaultSize={18} minSize={4} maxSize={20} className="flex flex-col bg-card border-r border-border transition-all duration-200">
+        // Temporarily replaced ResizableComponents with a basic div structure
+        <div className="flex h-full">
+          <div className="w-[250px] flex-shrink-0 flex flex-col bg-card border-r border-border">
             <div className="p-4 text-center text-muted-foreground">
               Placeholder Sidebar
             </div>
-          </ResizableComponents.ResizablePanel>
-          <ResizableComponents.ResizableHandle withHandle />
-          <ResizableComponents.ResizablePanel defaultSize={82}>
-            <div className="flex flex-col h-full">
-              <Header />
-              <AnnouncementBar
-                message="Welcome to Fortress. Let's Get You Set Up."
-                linkTo="/setup-instructions"
-                linkText="Click here"
-              />
-              <main className="flex-grow p-6 container mx-auto overflow-y-auto">
-                <Outlet />
-              </main>
-            </div>
-          </ResizableComponents.ResizablePanel>
-        </ResizableComponents.ResizablePanelGroup>
+          </div>
+          <div className="flex-grow flex flex-col">
+            <Header />
+            <AnnouncementBar
+              message="Welcome to Fortress. Let's Get You Set Up."
+              linkTo="/setup-instructions"
+              linkText="Click here"
+            />
+            <main className="flex-grow p-6 container mx-auto overflow-y-auto">
+              <Outlet />
+            </main>
+          </div>
+        </div>
       )}
       <div className="mt-auto">
         <MadeWithDyad />
