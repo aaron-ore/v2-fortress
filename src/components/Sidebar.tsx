@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Fragment, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import * as ResizableComponents from "react-resizable-panels";
+// import * as ResizableComponents from "react-resizable-panels"; // Removed
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,9 +53,9 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SidebarProps {
-  defaultSize?: number;
-  minSize?: number;
-  maxSize?: number;
+  // defaultSize?: number; // Removed
+  // minSize?: number; // Removed
+  // maxSize?: number; // Removed
 }
 
 interface SidebarNavItemProps {
@@ -157,9 +157,9 @@ const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
 
 
 const Sidebar: React.FC<SidebarProps> = ({
-  defaultSize = 18,
-  minSize = 4,
-  maxSize = 20,
+  // defaultSize = 18, // Removed
+  // minSize = 4, // Removed
+  // maxSize = 20, // Removed
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -195,17 +195,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <ResizableComponents.ResizablePanel
-      defaultSize={defaultSize}
-      minSize={minSize}
-      maxSize={maxSize}
-      onCollapse={() => setIsCollapsed(true)}
-      onExpand={() => setIsCollapsed(false)}
-      collapsible={true}
+    // Removed ResizableComponents.ResizablePanel wrapper
+    <div
       className={cn(
         "flex flex-col bg-card border-r border-border transition-all duration-200",
         isCollapsed ? "w-[60px]" : "w-[250px]",
       )}
+      // Removed onCollapse, onExpand, collapsible props
     >
       {/* Top Section: Logo */}
       <div className="flex items-center justify-between p-4 h-[60px] flex-shrink-0">
@@ -400,7 +396,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         isOpen={isGlobalSearchDialogOpen}
         onClose={() => setIsGlobalSearchDialogOpen(false)}
       />
-    </ResizableComponents.ResizablePanel>
+    </div>
   );
 };
 

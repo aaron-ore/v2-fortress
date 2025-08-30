@@ -53,7 +53,6 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.0",
     "react-qr-reader": "3.0.0-beta-1",
-    "react-resizable-panels": "^1.0.0",
     "react-router-dom": "^6.26.2",
     "recharts": "^2.12.7",
     "sonner": "^1.5.0",
@@ -81,11 +80,5 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^6.3.4"
-  },
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
   }
 }

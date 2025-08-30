@@ -5,7 +5,7 @@ import { MadeWithDyad } from "./made-with-dyad";
 import AnnouncementBar from "./AnnouncementBar";
 import Sidebar from "./Sidebar"; // Re-enabled
 import { useIsMobile } from "@/hooks/use-mobile";
-import * as ResizableComponents from "react-resizable-panels"; // Re-enabled
+// import * as ResizableComponents from "react-resizable-panels"; // Removed
 
 const Layout: React.FC = () => {
   const isMobile = useIsMobile();
@@ -25,23 +25,21 @@ const Layout: React.FC = () => {
           </main>
         </>
       ) : (
-        <ResizableComponents.ResizablePanelGroup direction="horizontal">
-          <Sidebar /> {/* Re-enabled */}
-          <ResizableComponents.ResizableHandle withHandle />
-          <ResizableComponents.ResizablePanel defaultSize={82}>
-            <div className="flex flex-col h-full">
-              <Header />
-              <AnnouncementBar
-                message="Welcome to Fortress. Let's Get You Set Up."
-                linkTo="/setup-instructions"
-                linkText="Click here"
-              />
-              <main className="flex-grow p-6 container mx-auto overflow-y-auto">
-                <Outlet />
-              </main>
-            </div>
-          </ResizableComponents.ResizablePanel>
-        </ResizableComponents.ResizablePanelGroup>
+        // Reverted to a fixed desktop layout without ResizableComponents
+        <div className="flex h-full">
+          <Sidebar /> {/* Sidebar is now directly rendered */}
+          <div className="flex-grow flex flex-col">
+            <Header />
+            <AnnouncementBar
+              message="Welcome to Fortress. Let's Get You Set Up."
+              linkTo="/setup-instructions"
+              linkText="Click here"
+            />
+            <main className="flex-grow p-6 container mx-auto overflow-y-auto">
+              <Outlet />
+            </main>
+          </div>
+        </div>
       )}
       <div className="mt-auto">
         <MadeWithDyad />
