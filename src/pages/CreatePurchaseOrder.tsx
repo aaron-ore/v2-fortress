@@ -185,7 +185,7 @@ const CreatePurchaseOrder: React.FC = () => {
   };
 
   const calculateTotalAmount = () => {
-    const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+    const subtotal = items.reduce((sum, item) => sum + (isNaN(item.quantity) ? 0 : item.quantity) * (isNaN(item.unitPrice) ? 0 : item.unitPrice), 0);
     return subtotal * (1 + taxRate);
   };
 
@@ -205,7 +205,7 @@ const CreatePurchaseOrder: React.FC = () => {
   };
 
   const handleSubmit = () => {
-    if (!supplierName || !poNumber || !dueDate || items.some(item => !item.itemName || item.quantity <= 0 || item.unitPrice <= 0)) {
+    if (!supplierName || !poNumber || !dueDate || items.some(item => !item.itemName || isNaN(item.quantity) || item.quantity <= 0 || isNaN(item.unitPrice) || item.unitPrice <= 0)) {
       showError("Please fill in all required PO details and ensure all items have valid names, quantities, and prices.");
       return;
     }
@@ -231,7 +231,7 @@ const CreatePurchaseOrder: React.FC = () => {
   };
 
   const handlePrintPdf = () => {
-    if (!poNumber || !supplierName || !dueDate || items.some(item => !item.itemName || item.quantity <= 0 || item.unitPrice <= 0)) {
+    if (!poNumber || !supplierName || items.some(item => !item.itemName || isNaN(item.quantity) || item.quantity <= 0 || isNaN(item.unitPrice) || item.unitPrice <= 0)) {
       showError("Please fill in all required PO details before generating the PDF.");
       return;
     }
@@ -243,14 +243,14 @@ const CreatePurchaseOrder: React.FC = () => {
     const pdfProps = {
       poNumber,
       poDate,
-      supplierName,
-      supplierEmail,
-      supplierAddress,
-      supplierContact: supplierContact.replace(/[^\d]/g, ''),
+      supplierName: supplier, // Use the 'supplier' state from EditPurchaseOrder
+      supplierEmail: supplierEmail, // Use the state variable
+      supplierAddress: supplierAddress, // Use the state variable
+      supplierContact: supplierContact, // Use the state variable
       recipientName: companyProfile.name,
       recipientAddress: companyProfile.address,
-      recipientContact: companyProfile.currency,
-      terms,
+      recipientContact: companyProfile.currency, // Assuming currency is used as a generic contact for company
+      terms, // Use the terms state
       dueDate,
       items,
       notes,

@@ -30,6 +30,25 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
   const { profile, isLoadingProfile } = useProfile();
   // REMOVED: const { addActivity } = useActivityLogs();
 
+  const mapSupabaseMovementToStockMovement = (movement: any): StockMovement => {
+    const amount = parseInt(movement.amount || '0');
+    const oldQuantity = parseInt(movement.old_quantity || '0');
+    const newQuantity = parseInt(movement.new_quantity || '0');
+
+    return {
+      id: movement.id,
+      itemId: movement.item_id,
+      itemName: movement.item_name,
+      type: movement.type,
+      amount: isNaN(amount) ? 0 : amount,
+      oldQuantity: isNaN(oldQuantity) ? 0 : oldQuantity,
+      newQuantity: isNaN(newQuantity) ? 0 : newQuantity,
+      reason: movement.reason,
+      timestamp: movement.timestamp,
+      organizationId: movement.organization_id,
+    };
+  };
+
   const fetchStockMovements = useCallback(async (itemId?: string) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session || !profile?.organizationId) {
@@ -54,18 +73,7 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
       showError("Failed to load stock movements.");
       // No mock data for stock movements as it's highly dynamic and item-specific
     } else {
-      const fetchedMovements: StockMovement[] = data.map((movement: any) => ({
-        id: movement.id,
-        itemId: movement.item_id,
-        itemName: movement.item_name,
-        type: movement.type,
-        amount: movement.amount,
-        oldQuantity: movement.old_quantity,
-        newQuantity: movement.new_quantity,
-        reason: movement.reason,
-        timestamp: movement.timestamp,
-        organizationId: movement.organization_id,
-      }));
+      const fetchedMovements: StockMovement[] = data.map(mapSupabaseMovementToStockMovement);
       setStockMovements(fetchedMovements);
     }
   }, [profile?.organizationId]);
@@ -103,18 +111,7 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
       // REMOVED: addActivity("Stock Movement Failed", `Failed to log stock movement for ${movement.itemName} (Item ID: ${movement.itemId}).`, { error: error.message, movement });
       showError(`Failed to log stock movement: ${error.message}`);
     } else if (data && data.length > 0) {
-      const newMovement: StockMovement = {
-        id: data[0].id,
-        itemId: data[0].item_id,
-        itemName: data[0].item_name,
-        type: data[0].type,
-        amount: data[0].amount,
-        oldQuantity: data[0].old_quantity,
-        newQuantity: data[0].new_quantity,
-        reason: data[0].reason,
-        timestamp: data[0].timestamp,
-        organizationId: data[0].organization_id,
-      };
+      const newMovement: StockMovement = mapSupabaseMovementToStockMovement(data[0]);
       setStockMovements((prev) => [newMovement, ...prev]);
       // REMOVED: addActivity("Stock Movement", `${movement.type === 'add' ? 'Added' : 'Subtracted'} ${movement.amount} units of ${movement.itemName}. Reason: ${movement.reason}.`, { itemId: movement.itemId, itemName: movement.itemName, type: movement.type, amount: movement.amount, newQuantity: movement.newQuantity });
     }

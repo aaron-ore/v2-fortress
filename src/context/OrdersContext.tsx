@@ -50,6 +50,36 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
   const { profile, isLoadingProfile } = useProfile();
   // REMOVED: const { addActivity } = useActivityLogs();
 
+  const mapSupabaseOrderItemToOrderItem = (order: any): OrderItem => {
+    const totalAmount = parseFloat(order.total_amount || '0');
+    const itemCount = parseInt(order.item_count || '0');
+    const items: POItem[] = (order.items || []).map((item: any) => ({
+      id: item.id,
+      itemName: item.itemName,
+      quantity: parseInt(item.quantity || '0'),
+      unitPrice: parseFloat(item.unitPrice || '0'),
+      inventoryItemId: item.inventoryItemId,
+    }));
+
+    return {
+      id: order.id,
+      type: order.type,
+      customerSupplier: order.customer_supplier,
+      date: order.created_at,
+      status: order.status,
+      totalAmount: isNaN(totalAmount) ? 0 : totalAmount,
+      dueDate: order.due_date,
+      itemCount: isNaN(itemCount) ? 0 : itemCount,
+      notes: order.notes || "",
+      orderType: order.order_type,
+      shippingMethod: order.shipping_method,
+      deliveryRoute: order.delivery_route || undefined, // NEW
+      items: items,
+      organizationId: order.organization_id,
+      terms: order.terms || undefined,
+    };
+  };
+
   const fetchOrders = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session || !profile?.organizationId) {
@@ -67,28 +97,12 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
       console.error("Error fetching orders:", error);
       // REMOVED: showError("Failed to load orders."); // Removed this toast
       console.warn("Loading mock orders due to Supabase error.");
-      setOrders(mockOrders);
+      setOrders(mockOrders.map(mapSupabaseOrderItemToOrderItem));
     } else {
-      const fetchedOrders: OrderItem[] = data.map((order: any) => ({
-        id: order.id,
-        type: order.type,
-        customerSupplier: order.customer_supplier,
-        date: order.created_at,
-        status: order.status,
-        totalAmount: parseFloat(order.total_amount || '0'), // Ensure it's a number, default to 0
-        dueDate: order.due_date,
-        itemCount: order.item_count,
-        notes: order.notes || "",
-        orderType: order.order_type,
-        shippingMethod: order.shipping_method,
-        deliveryRoute: order.delivery_route || undefined, // NEW
-        items: order.items || [],
-        organizationId: order.organization_id,
-        terms: order.terms || undefined,
-      }));
+      const fetchedOrders: OrderItem[] = data.map(mapSupabaseOrderItemToOrderItem);
       if (fetchedOrders.length === 0) { // Always load mock data if no data is returned
         console.warn("Loading mock orders as Supabase returned no data.");
-        setOrders(mockOrders);
+        setOrders(mockOrders.map(mapSupabaseOrderItemToOrderItem));
       } else {
         setOrders(fetchedOrders);
       }
@@ -134,9 +148,10 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
       // REMOVED: addActivity("Order Update Failed", `Failed to update order: ${updatedOrder.id}.`, { error: error.message, orderId: updatedOrder.id });
       showError(`Failed to update order: ${error.message}`);
     } else if (data && data.length > 0) {
+      const addedOrder: OrderItem = mapSupabaseOrderItemToOrderItem(data[0]);
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
-          order.id === updatedOrder.id ? { ...updatedOrder, organizationId: data[0].organization_id } : order,
+          order.id === updatedOrder.id ? addedOrder : order,
         ),
       );
       // REMOVED: addActivity("Order Updated", `Updated ${updatedOrder.type} order: ${updatedOrder.id} to status "${updatedOrder.status}".`, { orderId: updatedOrder.id, newStatus: updatedOrder.status });
@@ -180,7 +195,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
       // REMOVED: addActivity("Order Add Failed", `Failed to add new ${newOrder.type} order for ${newOrder.customerSupplier}.`, { error: error.message, orderType: newOrder.type });
       showError(`Failed to add order: ${error.message}`);
     } else if (data && data.length > 0) {
-      const addedOrder: OrderItem = { ...newOrder, id: data[0].id, organizationId: data[0].organization_id };
+      const addedOrder: OrderItem = mapSupabaseOrderItemToOrderItem(data[0]);
       setOrders((prevOrders) => [...prevOrders, addedOrder]);
       // REMOVED: addActivity("Order Added", `Created new ${addedOrder.type} order: ${addedOrder.id} for ${addedOrder.customerSupplier}.`, { orderId: addedOrder.id, orderType: addedOrder.type });
       showSuccess(`Order ${addedOrder.id} created successfully!`);

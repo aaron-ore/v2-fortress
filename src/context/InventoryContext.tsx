@@ -1,3 +1,5 @@
+"use client";
+
 import React, {
   createContext,
   useState,
@@ -71,31 +73,44 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
   // REMOVED: const { addActivity } = useActivityLogs();
   const isInitialLoad = useRef(true);
 
-  const mapSupabaseItemToInventoryItem = (item: any): InventoryItem => ({
-    id: item.id,
-    name: item.name,
-    description: item.description || "",
-    sku: item.sku,
-    pickingBinQuantity: item.picking_bin_quantity,
-    overstockQuantity: item.overstock_quantity,
-    quantity: item.picking_bin_quantity + item.overstock_quantity, // Derived
-    reorderLevel: item.reorder_level,
-    pickingReorderLevel: item.picking_reorder_level || 0, // Default to 0 if null
-    committedStock: item.committed_stock,
-    incomingStock: item.incoming_stock,
-    unitCost: parseFloat(item.unit_cost || '0'), // Ensure it's a number, default to 0
-    retailPrice: parseFloat(item.retail_price || '0'), // Ensure it's a number, default to 0
-    location: item.location,
-    pickingBinLocation: item.picking_bin_location || item.location, // Default to main location if not set
-    status: item.status,
-    lastUpdated: item.last_updated,
-    imageUrl: item.image_url || undefined,
-    vendorId: item.vendor_id || undefined,
-    barcodeUrl: item.barcode_url || undefined,
-    organizationId: item.organization_id,
-    autoReorderEnabled: item.auto_reorder_enabled || false,
-    autoReorderQuantity: item.auto_reorder_quantity || 0,
-  });
+  const mapSupabaseItemToInventoryItem = (item: any): InventoryItem => {
+    const pickingBinQuantity = parseInt(item.picking_bin_quantity || '0');
+    const overstockQuantity = parseInt(item.overstock_quantity || '0');
+    const reorderLevel = parseInt(item.reorder_level || '0');
+    const pickingReorderLevel = parseInt(item.picking_reorder_level || '0');
+    const committedStock = parseInt(item.committed_stock || '0');
+    const incomingStock = parseInt(item.incoming_stock || '0');
+    const unitCost = parseFloat(item.unit_cost || '0');
+    const retailPrice = parseFloat(item.retail_price || '0');
+    const autoReorderQuantity = parseInt(item.auto_reorder_quantity || '0');
+
+    return {
+      id: item.id,
+      name: item.name,
+      description: item.description || "",
+      sku: item.sku,
+      category: item.category,
+      pickingBinQuantity: isNaN(pickingBinQuantity) ? 0 : pickingBinQuantity,
+      overstockQuantity: isNaN(overstockQuantity) ? 0 : overstockQuantity,
+      quantity: (isNaN(pickingBinQuantity) ? 0 : pickingBinQuantity) + (isNaN(overstockQuantity) ? 0 : overstockQuantity), // Derived
+      reorderLevel: isNaN(reorderLevel) ? 0 : reorderLevel,
+      pickingReorderLevel: isNaN(pickingReorderLevel) ? 0 : pickingReorderLevel,
+      committedStock: isNaN(committedStock) ? 0 : committedStock,
+      incomingStock: isNaN(incomingStock) ? 0 : incomingStock,
+      unitCost: isNaN(unitCost) ? 0 : unitCost,
+      retailPrice: isNaN(retailPrice) ? 0 : retailPrice,
+      location: item.location,
+      pickingBinLocation: item.picking_bin_location || item.location, // Default to main location if not set
+      status: item.status,
+      lastUpdated: item.last_updated,
+      imageUrl: item.image_url || undefined,
+      vendorId: item.vendor_id || undefined,
+      barcodeUrl: item.barcode_url || undefined,
+      organizationId: item.organization_id,
+      autoReorderEnabled: item.auto_reorder_enabled || false,
+      autoReorderQuantity: isNaN(autoReorderQuantity) ? 0 : autoReorderQuantity,
+    };
+  };
 
   const fetchInventoryItems = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();

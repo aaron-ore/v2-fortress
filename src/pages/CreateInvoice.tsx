@@ -185,7 +185,7 @@ const CreateInvoice: React.FC = () => {
   };
 
   const calculateTotalAmount = () => {
-    const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+    const subtotal = items.reduce((sum, item) => sum + (isNaN(item.quantity) ? 0 : item.quantity) * (isNaN(item.unitPrice) ? 0 : item.unitPrice), 0);
     return subtotal * (1 + taxRate);
   };
 
@@ -205,7 +205,7 @@ const CreateInvoice: React.FC = () => {
   };
 
   const handleSubmit = () => {
-    if (!customerName || !invoiceNumber || !dueDate || items.some(item => !item.itemName || item.quantity <= 0 || item.unitPrice <= 0)) {
+    if (!customerName || !invoiceNumber || !dueDate || items.some(item => !item.itemName || isNaN(item.quantity) || item.quantity <= 0 || isNaN(item.unitPrice) || item.unitPrice <= 0)) {
       showError("Please fill in all required invoice details and ensure all items have valid names, quantities, and prices.");
       return;
     }
@@ -231,7 +231,7 @@ const CreateInvoice: React.FC = () => {
   };
 
   const handlePrintPdf = () => {
-    if (!invoiceNumber || !customerName || !dueDate || items.some(item => !item.itemName || item.quantity <= 0 || item.unitPrice <= 0)) {
+    if (!invoiceNumber || !customerName || !dueDate || items.some(item => !item.itemName || isNaN(item.quantity) || item.quantity <= 0 || isNaN(item.unitPrice) || item.unitPrice <= 0)) {
       showError("Please fill in all required invoice details before generating the PDF.");
       return;
     }
@@ -358,7 +358,7 @@ const CreateInvoice: React.FC = () => {
                   id="terms"
                   value={terms}
                   onChange={(e) => setTerms(e.target.value)}
-                  placeholder="e.g., Net 30, Due on Receipt"
+                  placeholder="e.g., Due on Receipt"
                 />
               </div>
               <div className="space-y-2">

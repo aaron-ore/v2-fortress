@@ -31,6 +31,23 @@ export const ReplenishmentProvider: React.FC<{ children: ReactNode }> = ({ child
   const [replenishmentTasks, setReplenishmentTasks] = useState<ReplenishmentTask[]>([]);
   const { profile, isLoadingProfile } = useProfile();
 
+  const mapSupabaseTaskToReplenishmentTask = (task: any): ReplenishmentTask => {
+    const quantity = parseInt(task.quantity || '0');
+    return {
+      id: task.id,
+      itemId: task.item_id,
+      itemName: task.item_name,
+      fromLocation: task.from_location,
+      toLocation: task.to_location,
+      quantity: isNaN(quantity) ? 0 : quantity,
+      status: task.status,
+      assignedTo: task.assigned_to || undefined,
+      createdAt: task.created_at,
+      completedAt: task.completed_at || undefined,
+      organizationId: task.organization_id,
+    };
+  };
+
   const fetchReplenishmentTasks = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session || !profile?.organizationId) {
@@ -48,24 +65,12 @@ export const ReplenishmentProvider: React.FC<{ children: ReactNode }> = ({ child
       console.error("Error fetching replenishment tasks:", error);
       // REMOVED: showError("Failed to load replenishment tasks."); // Removed this toast
       console.warn("Loading mock replenishment tasks due to Supabase error.");
-      setReplenishmentTasks(mockReplenishmentTasks);
+      setReplenishmentTasks(mockReplenishmentTasks.map(mapSupabaseTaskToReplenishmentTask));
     } else {
-      const fetchedTasks: ReplenishmentTask[] = data.map((task: any) => ({
-        id: task.id,
-        itemId: task.item_id,
-        itemName: task.item_name,
-        fromLocation: task.from_location,
-        toLocation: task.to_location,
-        quantity: task.quantity,
-        status: task.status,
-        assignedTo: task.assigned_to || undefined,
-        createdAt: task.created_at,
-        completedAt: task.completed_at || undefined,
-        organizationId: task.organization_id,
-      }));
+      const fetchedTasks: ReplenishmentTask[] = data.map(mapSupabaseTaskToReplenishmentTask);
       if (fetchedTasks.length === 0) { // Always load mock data if no data is returned
         console.warn("Loading mock replenishment tasks as Supabase returned no data.");
-        setReplenishmentTasks(mockReplenishmentTasks);
+        setReplenishmentTasks(mockReplenishmentTasks.map(mapSupabaseTaskToReplenishmentTask));
       } else {
         setReplenishmentTasks(fetchedTasks);
       }
@@ -103,18 +108,7 @@ export const ReplenishmentProvider: React.FC<{ children: ReactNode }> = ({ child
       console.error("Error adding replenishment task:", error);
       showError(`Failed to add replenishment task: ${error.message}`);
     } else if (data && data.length > 0) {
-      const newTask: ReplenishmentTask = {
-        id: data[0].id,
-        itemId: data[0].item_id,
-        itemName: data[0].item_name,
-        fromLocation: data[0].from_location,
-        toLocation: data[0].to_location,
-        quantity: data[0].quantity,
-        status: data[0].status,
-        assignedTo: data[0].assigned_to || undefined,
-        createdAt: data[0].created_at,
-        organizationId: data[0].organization_id,
-      };
+      const newTask: ReplenishmentTask = mapSupabaseTaskToReplenishmentTask(data[0]);
       setReplenishmentTasks((prev) => [newTask, ...prev]);
       showSuccess(`Replenishment task for ${task.itemName} created!`);
     }
@@ -147,9 +141,10 @@ export const ReplenishmentProvider: React.FC<{ children: ReactNode }> = ({ child
       console.error("Error updating replenishment task:", error);
       showError(`Failed to update replenishment task: ${error.message}`);
     } else if (data && data.length > 0) {
+      const updatedTaskFromDB: ReplenishmentTask = mapSupabaseTaskToReplenishmentTask(data[0]);
       setReplenishmentTasks((prev) =>
         prev.map((task) =>
-          task.id === updatedTask.id ? { ...updatedTask, organizationId: data[0].organization_id } : task,
+          task.id === updatedTask.id ? updatedTaskFromDB : task,
         ),
       );
       showSuccess(`Replenishment task ${updatedTask.id} updated to ${updatedTask.status}.`);
