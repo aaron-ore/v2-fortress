@@ -3,10 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  ResizableHandle,
-  ResizablePanel,
   ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle, // Keep this for now, but we'll use ResizableComponents.ResizableHandle
 } from "react-resizable-panels";
+import * as ResizableComponents from "react-resizable-panels"; // NEW: Namespace import
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -130,21 +131,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </TooltipTrigger>
                 {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
               </Tooltip>
-            </TooltipProvider>
-            {item.isParent && !isCollapsed && (activeParent === item.href || currentIsActive) && item.children && (
-              <div className="mt-1 space-y-1">
-                {renderNavItems(item.children, true)}
-              </div>
-            )}
-          </React.Fragment>
-        );
+            </React.Fragment>
+          );
       })}
     </div>
   );
 
   return (
-    <ResizablePanelGroup direction="horizontal" className="min-h-screen w-full">
-      <ResizablePanel
+    <ResizableComponents.ResizablePanelGroup direction="horizontal" className="min-h-screen w-full">
+      <ResizableComponents.ResizablePanel
         defaultSize={defaultSize}
         minSize={minSize}
         maxSize={maxSize}
@@ -186,7 +181,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Main Navigation Area */}
-        <ScrollArea className="flex-grow px-2 py-4">
+        <ResizableComponents.ScrollArea className="flex-grow px-2 py-4">
           <div className="space-y-4">
             {renderNavItems(mainNavItems)}
 
@@ -200,7 +195,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
             {renderNavItems(supportAndResourcesNavItems)}
           </div>
-        </ScrollArea>
+        </ResizableComponents.ScrollArea>
 
         {/* Bottom Section: Collapse Button, User Dropdown, Global Actions */}
         <div className="mt-auto p-2 border-t border-border flex-shrink-0">
@@ -310,8 +305,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             </TooltipProvider>
           </div>
         </div>
-      </ResizablePanel>
-      <ResizableHandle withHandle />
+      </ResizableComponents.ResizablePanel>
+      <ResizableComponents.ResizableHandle withHandle />
 
       <NotificationSheet
         isOpen={isNotificationSheetOpen}
@@ -321,7 +316,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         isOpen={isGlobalSearchDialogOpen}
         onClose={() => setIsGlobalSearchDialogOpen(false)}
       />
-    </ResizablePanelGroup>
+    </ResizableComponents.ResizablePanelGroup>
   );
 };
 
