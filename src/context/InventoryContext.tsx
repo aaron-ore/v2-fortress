@@ -306,8 +306,12 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
   const refreshInventory = async () => {
     await fetchInventoryItems();
+    // The processAutoReorder call here was problematic because `inventoryItems` might not be fully updated yet.
+    // It's better to pass the freshly fetched items directly.
+    // Also, ensure it's only called if profile.organizationId is available.
     if (profile?.organizationId) {
-      processAutoReorder(inventoryItems, addOrder, vendors, profile.organizationId, addNotification);
+      const currentItems = await fetchInventoryItems(); // Fetch again to ensure latest data
+      processAutoReorder(currentItems, addOrder, vendors, profile.organizationId, addNotification);
     }
   };
 
@@ -323,6 +327,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 export const useInventory = () => {
   const context = useContext(InventoryContext);
   if (context === undefined) {
+    console.error("useInventory called outside of InventoryProvider. Current component stack:", new Error().stack); // Added diagnostic log
     throw new Error("useInventory must be used within an InventoryProvider");
   }
   return context;
