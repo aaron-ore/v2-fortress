@@ -34,7 +34,7 @@ export interface OrderItem {
 interface OrdersContextType {
   orders: OrderItem[];
   updateOrder: (updatedOrder: OrderItem) => void;
-  addOrder: (newOrder: Omit<OrderItem, "id" | "organizationId">) => void;
+  addOrder: (newOrder: Omit<OrderItem, "id" | "organizationId">) => Promise<void>; // Made async
   archiveOrder: (orderId: string) => void;
   fetchOrders: () => Promise<void>;
 }
@@ -168,7 +168,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const addOrder = async (newOrder: Omit<OrderItem, "id" | "organizationId">) => {
+  const addOrder = async (newOrder: Omit<OrderItem, "id" | "organizationId">) => { // Made async
     const { data: { session } } = await supabase.auth.getSession();
     if (!session || !profile?.organizationId) {
       showError("You must be logged in and have an organization ID to add orders.");

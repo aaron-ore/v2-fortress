@@ -152,9 +152,9 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
   useEffect(() => {
     if (!isLoadingProfile) {
-      fetchInventoryItems().then(async (fetchedItems) => {
+      fetchInventoryItems().then((fetchedItems) => {
         if (!isInitialLoad.current && profile?.organizationId) {
-          await processAutoReorder(fetchedItems, addOrder, vendors, profile.organizationId, addNotification);
+          processAutoReorder(fetchedItems, addOrder, vendors, profile.organizationId, addNotification);
         }
         isInitialLoad.current = false;
       });
@@ -210,7 +210,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
       // REMOVED: addActivity("Inventory Added", `Added new inventory item: ${newItem.name} (SKU: ${newItem.sku}).`, { itemId: newItem.id, sku: newItem.sku, quantity: newItem.quantity });
       showSuccess(`Added new inventory item: ${newItem.name} (SKU: ${newItem.sku}).`);
       if (profile?.organizationId) {
-        await processAutoReorder([...inventoryItems, newItem], addOrder, vendors, profile.organizationId, addNotification);
+        processAutoReorder([...inventoryItems, newItem], addOrder, vendors, profile.organizationId, addNotification);
       }
     } else {
       const errorMessage = "Failed to add item: No data returned after insert.";
@@ -273,7 +273,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
       // REMOVED: addActivity("Inventory Updated", `Updated inventory item: ${updatedItemFromDB.name} (SKU: ${updatedItemFromDB.sku}).`, { itemId: updatedItemFromDB.id, sku: updatedItemFromDB.sku, newQuantity: updatedItemFromDB.quantity });
       showSuccess(`Updated inventory item: ${updatedItemFromDB.name} (SKU: ${updatedItemFromDB.sku}).`);
       if (profile?.organizationId) {
-        await processAutoReorder(inventoryItems.map(item => item.id === updatedItemFromDB.id ? updatedItemFromDB : item), addOrder, vendors, profile.organizationId, addNotification);
+        processAutoReorder(inventoryItems.map(item => item.id === updatedItemFromDB.id ? updatedItemFromDB : item), addOrder, vendors, profile.organizationId, addNotification);
       }
     } else {
       const errorMessage = "Update might not have been saved. Check database permissions.";
@@ -312,7 +312,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
   const refreshInventory = async () => {
     const currentItems = await fetchInventoryItems(); // Fetch again to ensure latest data
     if (profile?.organizationId) {
-      await processAutoReorder(currentItems, addOrder, vendors, profile.organizationId, addNotification);
+      processAutoReorder(currentItems, addOrder, vendors, profile.organizationId, addNotification);
     }
   };
 

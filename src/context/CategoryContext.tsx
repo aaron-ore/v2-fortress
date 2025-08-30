@@ -5,7 +5,7 @@ import { useProfile } from "./ProfileContext";
 import { mockCategories } from "@/utils/mockData";
 // REMOVED: import { useActivityLogs } from "./ActivityLogContext";
 
-export interface Category {
+export interface Category { // Exported interface
   id: string;
   name: string;
   organizationId: string | null;
@@ -47,7 +47,7 @@ export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }
       const fetchedCategories: Category[] = data.map((cat: any) => ({
         id: cat.id,
         name: cat.name,
-        organizationId: cat.organization_id,
+        organizationId: cat.organization_id, // Mapped organization_id to organizationId
       }));
       if (fetchedCategories.length === 0) { // Always load mock data if no data is returned
         console.warn("Loading mock categories as Supabase returned no data.");
@@ -93,13 +93,14 @@ export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }
           .eq("organization_id", profile.organizationId)
           .single();
         if (existingDbCategory) {
-          setCategories((prev) => Array.from(new Set([...prev, existingDbCategory].map(c => JSON.stringify(c)))).map(s => JSON.parse(s)));
-          // REMOVED: addActivity("Category Add Concurrently", `Category "${trimmedName}" already exists, added concurrently.`, { categoryName: trimmedName });
-          return {
+          const mappedExistingCategory: Category = { // Explicitly map to Category
             id: existingDbCategory.id,
             name: existingDbCategory.name,
             organizationId: existingDbCategory.organization_id,
-          } as Category;
+          };
+          setCategories((prev) => Array.from(new Set([...prev, mappedExistingCategory].map(c => JSON.stringify(c)))).map(s => JSON.parse(s)));
+          // REMOVED: addActivity("Category Add Concurrently", `Category "${trimmedName}" already exists, added concurrently.`, { categoryName: trimmedName });
+          return mappedExistingCategory;
         }
       }
       console.error("Error adding category:", error);

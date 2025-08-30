@@ -1,7 +1,7 @@
 import { InventoryItem } from "@/context/InventoryContext";
-import { OrderItem, POItem } from "@/context/OrdersContext";
+import { Category } from "@/context/CategoryContext"; // Corrected import
 import { Vendor } from "@/context/VendorContext";
-import { Category } from "@/context/CategoryContext";
+import { OrderItem, POItem } from "@/context/OrdersContext";
 import { ReplenishmentTask } from "@/context/ReplenishmentContext"; // NEW: Import ReplenishmentTask
 
 // --- Mock Categories ---
