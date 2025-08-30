@@ -158,6 +158,7 @@ const Inventory: React.FC = () => {
         const matchesSearch =
           item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (item.vendorId ? (vendorNameMap.get(item.vendorId) || "").toLowerCase().includes(searchTerm.toLowerCase()) : false);
@@ -211,7 +212,7 @@ const Inventory: React.FC = () => {
   const columnsForDataTable = useMemo(() => createInventoryColumns(handleQuickView), [handleQuickView]);
 
   return (
-    <div className="flex flex-col space-y-6 p-6">
+    <div className="flex flex-col space-y-6"> {/* Removed p-6 from here */}
       <h1 className="text-3xl font-bold">Inventory Management</h1>
 
       {/* Top Row: Search and Filters */}
@@ -338,9 +339,9 @@ const Inventory: React.FC = () => {
               {viewMode === "card" && (
                 <InventoryCardGrid
                   items={filteredItems}
-                  onAdjustStock={handleQuickView} // This will open the quick view dialog
+                  onAdjustStock={handleQuickView}
                   onCreateOrder={handleCreateOrder}
-                  onViewDetails={handleQuickView} // This will also open the quick view dialog
+                  onViewDetails={handleQuickView}
                   onDeleteItem={handleDeleteItemClick}
                 />
               )}
