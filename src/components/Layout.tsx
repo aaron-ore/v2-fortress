@@ -20,7 +20,7 @@ const Layout: React.FC = () => {
   const sidebarWidthExpanded = 280; // Matches Sidebar.tsx expanded width
 
   return (
-    <div className="app-main-layout min-h-screen flex bg-background text-foreground "> {/* Added a space at the end of className */}
+    <div className="app-main-layout min-h-screen flex bg-background text-foreground ">
       {isMobile ? (
         <div className="flex flex-col w-full">
           <Header
@@ -42,7 +42,7 @@ const Layout: React.FC = () => {
       ) : (
         <>
           {/* Desktop Sidebar */}
-          <Sidebar isCollapsed={isCollapsed} onToggleCollapse={onToggleCollapse} /> {/* NEW: Pass from context */}
+          <Sidebar />
 
           {/* Main Content Area */}
           <div
@@ -50,7 +50,7 @@ const Layout: React.FC = () => {
               "flex-grow flex flex-col h-screen overflow-y-auto p-6 transition-all duration-200",
               "space-y-6"
             )}
-            style={{ marginLeft: isCollapsed ? `${sidebarWidthCollapsed}px` : `${sidebarWidthExpanded}px` }} {/* NEW: Use isCollapsed from context */}
+            style={{ marginLeft: isCollapsed ? `${sidebarWidthCollapsed}px` : `${sidebarWidthExpanded}px` }}
           >
             <Header
               setIsNotificationSheetOpen={setIsNotificationSheetOpen}
@@ -61,7 +61,7 @@ const Layout: React.FC = () => {
               linkTo="/setup-instructions"
               linkText="Click here"
             />
-            <main className="flex-grow bg-card rounded-lg shadow-sm p-6"> {/* Main content as a floating card */}
+            <main className="flex-grow bg-card rounded-lg shadow-sm p-6">
               <Outlet />
             </main>
             <div className="mt-auto">
