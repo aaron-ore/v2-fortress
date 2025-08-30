@@ -3,9 +3,9 @@ import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import { MadeWithDyad } from "./made-with-dyad";
 import AnnouncementBar from "./AnnouncementBar";
-// import Sidebar from "./Sidebar"; // Temporarily removed
+import Sidebar from "./Sidebar"; // Re-enabled
 import { useIsMobile } from "@/hooks/use-mobile";
-// import * as ResizableComponents from "react-resizable-panels"; // Temporarily removed
+import * as ResizableComponents from "react-resizable-panels"; // Re-enabled
 
 const Layout: React.FC = () => {
   const isMobile = useIsMobile();
@@ -25,25 +25,23 @@ const Layout: React.FC = () => {
           </main>
         </>
       ) : (
-        // Temporarily replaced ResizableComponents with a basic div structure
-        <div className="flex h-full">
-          <div className="w-[250px] flex-shrink-0 flex flex-col bg-card border-r border-border">
-            <div className="p-4 text-center text-muted-foreground">
-              Placeholder Sidebar
+        <ResizableComponents.ResizablePanelGroup direction="horizontal">
+          <Sidebar /> {/* Re-enabled */}
+          <ResizableComponents.ResizableHandle withHandle />
+          <ResizableComponents.ResizablePanel defaultSize={82}>
+            <div className="flex flex-col h-full">
+              <Header />
+              <AnnouncementBar
+                message="Welcome to Fortress. Let's Get You Set Up."
+                linkTo="/setup-instructions"
+                linkText="Click here"
+              />
+              <main className="flex-grow p-6 container mx-auto overflow-y-auto">
+                <Outlet />
+              </main>
             </div>
-          </div>
-          <div className="flex-grow flex flex-col">
-            <Header />
-            <AnnouncementBar
-              message="Welcome to Fortress. Let's Get You Set Up."
-              linkTo="/setup-instructions"
-              linkText="Click here"
-            />
-            <main className="flex-grow p-6 container mx-auto overflow-y-auto">
-              <Outlet />
-            </main>
-          </div>
-        </div>
+          </ResizableComponents.ResizablePanel>
+        </ResizableComponents.ResizablePanelGroup>
       )}
       <div className="mt-auto">
         <MadeWithDyad />
