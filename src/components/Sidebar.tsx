@@ -48,6 +48,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"; // Import Accordion components
+import { ScrollArea } from "@/components/ui/scroll-area"; // Corrected: Import ScrollArea directly
 
 interface SidebarProps {
   defaultSize?: number;
@@ -217,7 +218,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Main Navigation Area */}
-        <ResizableComponents.ScrollArea className="flex-grow px-2 py-4">
+        <ScrollArea className="flex-grow px-2 py-4"> {/* Corrected: Using ScrollArea directly */}
           <div className="space-y-4">
             {renderNavItems(mainNavItems)}
 
@@ -231,7 +232,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
             {renderNavItems(supportAndResourcesNavItems)}
           </div>
-        </ResizableComponents.ScrollArea>
+        </ScrollArea>
 
         {/* Bottom Section: Collapse Button, User Dropdown, Global Actions */}
         <div className="mt-auto p-2 border-t border-border flex-shrink-0">
