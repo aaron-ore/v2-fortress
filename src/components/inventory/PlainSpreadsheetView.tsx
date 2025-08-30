@@ -154,14 +154,14 @@ const PlainSpreadsheetView: React.FC<PlainSpreadsheetViewProps> = ({
         case "vendorId":
           return (
             <Select
-              value={String(currentValue || "")}
-              onValueChange={(val) => handleValueChange("vendorId", val === "" ? undefined : val)}
+              value={String(currentValue || "none")} {/* Ensure default is 'none' */}
+              onValueChange={(val) => handleValueChange("vendorId", val === "none" ? undefined : val)}
             >
               <SelectTrigger className="h-8">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
+                <SelectItem value="none">None</SelectItem> {/* Changed value to 'none' */}
                 {vendors.map((vendor) => (
                   <SelectItem key={vendor.id} value={vendor.id}>
                     {vendor.name}
