@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { PlusCircle, Search, Info, MoreHorizontal, Eye, Edit, Trash2, Grid2X2, List, LayoutGrid, MapPin, PackagePlus, Upload, Repeat, Scan as ScanIcon, Columns, ChevronDown } from "lucide-react";
+import { PlusCircle, Search, Info, MoreHorizontal, Eye, Edit, Trash2, List, LayoutGrid, MapPin, PackagePlus, Upload, Repeat, Scan as ScanIcon, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -39,7 +39,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { showError, showSuccess } from "@/utils/toast";
 
 // Custom components for the new UI
-import PlainSpreadsheetView from "@/components/inventory/PlainSpreadsheetView";
 import InventoryCardGrid from "@/components/inventory/InventoryCardGrid";
 import InventoryCard from "@/components/InventoryCard"; // Used by InventoryCardGrid
 import ManageLocationsDialog from "@/components/ManageLocationsDialog";
@@ -51,24 +50,6 @@ import AutoReorderSettingsDialog from "@/components/AutoReorderSettingsDialog";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import InventoryItemQuickViewDialog from "@/components/InventoryItemQuickViewDialog";
 import AddInventoryDialog from "@/components/AddInventoryDialog"; // Use the existing AddInventoryDialog
-
-const allColumns = [
-  { key: "reorderAutoFill", label: "Reorder (auto-fill)", className: "w-[120px]", type: "string" },
-  { key: "lastSoldDate", label: "Last Sold Date", className: "w-[120px]", type: "string" },
-  { key: "dateOfLastOrder", label: "Date of Last Order", className: "w-[120px]", type: "string" },
-  { key: "sku", label: "Item No.", className: "w-[120px]", type: "string" },
-  { key: "name", label: "Item name", className: "min-w-[150px]", type: "string" },
-  { key: "vendorName", label: "Vendor", className: "w-[120px]", type: "string" },
-  { key: "location", label: "Stock Location", className: "w-[120px]", type: "string" },
-  { key: "description", label: "Description", className: "min-w-[200px]", type: "string" },
-  { key: "unitCost", label: "Cost Per Item", className: "w-[100px] text-right", type: "number" },
-  { key: "quantity", label: "Stock Quantity", className: "w-[100px] text-right", type: "number" },
-  { key: "stockValue", label: "Total Value", className: "w-[100px] text-right", type: "number" },
-  { key: "reorderLevel", label: "Reorder Level", className: "w-[100px] text-right", type: "number" },
-  { key: "daysForReorder", label: "Days for Reorder", className: "w-[120px] text-right", type: "string" },
-  { key: "nextReorderQuantity", label: "Next Reorder Quantity", className: "w-[150px] text-right", type: "number" },
-  { key: "actions", label: "Actions", className: "w-[80px] text-center", type: "actions" },
-];
 
 export const createInventoryColumns = (deleteItem: (id: string, name: string) => void, navigate: (path: string) => void): ColumnDef<InventoryItem>[] => [
   {
@@ -202,23 +183,12 @@ const Inventory: React.FC = () => {
   const [isQuickViewDialogOpen, setIsQuickViewDialogOpen] = useState(false);
   const [selectedItemForQuickView, setSelectedItemForQuickView] = useState<InventoryItem | null>(null);
 
-  const [viewMode, setViewMode] = useState<"table" | "card" | "spreadsheet">("table"); // Default to table view
+  const [viewMode, setViewMode] = useState<"table" | "card">("table"); // Removed 'spreadsheet' view
   const [locationFilter, setLocationFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(() => {
-    const initialVisible: Record<string, boolean> = {};
-    allColumns.forEach(col => {
-      // Set default visibility for columns, e.g., hide description by default
-      initialVisible[col.key] = !["description", "imageUrl", "barcodeUrl", "committedStock", "incomingStock", "pickingReorderLevel", "pickingBinLocation"].includes(col.key);
-      // Ensure essential columns are visible
-      if (["sku", "name", "quantity", "reorderLevel", "location", "actions"].includes(col.key)) {
-        initialVisible[col.key] = true;
-      }
-    });
-    return initialVisible;
-  });
+  // Removed allColumns and visibleColumns states as they are no longer needed for spreadsheet view
 
   useEffect(() => {
     refreshInventory();
@@ -247,12 +217,7 @@ const Inventory: React.FC = () => {
       .map(item => ({
         ...item,
         vendorName: item.vendorId ? vendorNameMap.get(item.vendorId) || '-' : '-',
-        reorderAutoFill: item.quantity <= item.reorderLevel ? "REORDER" : "OK",
-        lastSoldDate: "N/A", // Mock data
-        dateOfLastOrder: "N/A", // Mock data
-        daysForReorder: item.quantity <= item.reorderLevel ? 7 : "-", // Mock data
-        nextReorderQuantity: item.quantity <= item.reorderLevel ? item.autoReorderQuantity : "-", // Mock data
-        stockValue: item.quantity * item.unitCost, // Calculate stock value
+        // Removed spreadsheet-specific mock data fields
       }));
   }, [inventoryItems, searchTerm, vendorNameMap, locationFilter, categoryFilter, statusFilter]);
 
@@ -286,12 +251,7 @@ const Inventory: React.FC = () => {
     setIsScanItemDialogOpen(true);
   };
 
-  const handleToggleColumn = (key: string) => {
-    setVisibleColumns(prev => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
+  // Removed handleToggleColumn as it's no longer needed
 
   const columnsForDataTable = useMemo(() => createInventoryColumns(deleteInventoryItem, navigate), [deleteInventoryItem, navigate]);
 
@@ -387,22 +347,7 @@ const Inventory: React.FC = () => {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={viewMode === "spreadsheet" ? "secondary" : "outline"}
-                  size="icon"
-                  onClick={() => setViewMode("spreadsheet")}
-                >
-                  <Grid2X2 className="h-4 w-4" /> {/* Using Grid2X2 for spreadsheet icon */}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Spreadsheet View</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {/* Removed Spreadsheet View Button */}
         </div>
       </div>
 
@@ -433,33 +378,7 @@ const Inventory: React.FC = () => {
             <Button variant="outline" onClick={handleScanItem}>
               <ScanIcon className="h-4 w-4 mr-2" /> Scan Item
             </Button>
-            {viewMode === "spreadsheet" && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <Columns className="h-4 w-4 mr-2" /> Columns
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="max-h-60 overflow-y-auto">
-                  <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {allColumns.map(col => (
-                    <DropdownMenuItem key={col.key} onSelect={(e) => e.preventDefault()}> {/* Prevent menu closing */}
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`col-${col.key}`}
-                          checked={visibleColumns[col.key]}
-                          onCheckedChange={() => handleToggleColumn(col.key)}
-                        />
-                        <label htmlFor={`col-${col.key}`} className="cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                          {col.label}
-                        </label>
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            {/* Removed Columns Dropdown Menu */}
           </div>
         </CardHeader>
         <CardContent>
@@ -479,17 +398,7 @@ const Inventory: React.FC = () => {
                   onDeleteItem={handleDeleteItemClick}
                 />
               )}
-              {viewMode === "spreadsheet" && (
-                <PlainSpreadsheetView
-                  items={filteredItems}
-                  visibleColumns={visibleColumns}
-                  allColumns={allColumns}
-                  vendorNameMap={vendorNameMap}
-                  onViewDetails={handleViewDetails}
-                  onEditItem={handleEditItem}
-                  onDeleteItem={handleDeleteItemClick}
-                />
-              )}
+              {/* Removed Spreadsheet View Rendering */}
             </>
           )}
         </CardContent>

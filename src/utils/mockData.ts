@@ -258,7 +258,10 @@ export const mockInventoryItems: InventoryItem[] = [
     autoReorderEnabled: false,
     autoReorderQuantity: 0,
   },
-];
+].map(item => ({
+  ...item,
+  quantity: item.pickingBinQuantity + item.overstockQuantity, // Ensure consistency
+}));
 
 // --- Mock Orders ---
 export const mockOrders: OrderItem[] = [
