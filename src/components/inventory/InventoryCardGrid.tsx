@@ -1,6 +1,6 @@
 import React from "react";
-import { InventoryItem } from "@/context/InventoryContext";
 import InventoryCard from "@/components/InventoryCard"; // Assuming this component exists and is suitable
+import { InventoryItem } from "@/context/InventoryContext";
 
 interface InventoryCardGridProps {
   items: InventoryItem[];
@@ -22,7 +22,7 @@ const InventoryCardGrid: React.FC<InventoryCardGridProps> = ({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
       {items.map((item) => (
         <InventoryCard
           key={item.id}
