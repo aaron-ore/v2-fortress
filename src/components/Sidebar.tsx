@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react"; // Changed to namespace import
-import { Fragment, useState, useEffect } from "react"; // Explicitly import Fragment
+import * as React from "react";
+import { Fragment, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import * as ResizableComponents from "react-resizable-panels"; // Namespace import
+import * as ResizableComponents from "react-resizable-panels";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,14 +42,14 @@ import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import NotificationSheet from "./NotificationSheet";
 import GlobalSearchDialog from "./GlobalSearchDialog";
-import { mainNavItems, userAndSettingsNavItems, supportAndResourcesNavItems } from "@/lib/navigation";
+import { mainNavItems, userAndSettingsNavItems, supportAndResourcesNavItems, NavItem } from "@/lib/navigation";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"; // Import Accordion components
-import { ScrollArea } from "@/components/ui/scroll-area"; // Corrected: Import ScrollArea directly
+} from "@/components/ui/accordion";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SidebarProps {
   defaultSize?: number;
@@ -70,7 +70,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
   const [isGlobalSearchDialogOpen, setIsGlobalSearchDialogOpen] = useState(false);
-  const [activeParent, setActiveParent] = useState<string | null>(null); // For nested menu expansion
 
   // Determine if a given href is active or part of an active parent
   const isActive = (href: string) => {
@@ -96,87 +95,83 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  const renderNavItems = (items: typeof mainNavItems, isSubItem = false): React.ReactNode[] => {
-    const renderedItems: React.ReactNode[] = [];
+  const renderSingleNavItem = (item: NavItem, isSubItem = false) => {
+    const currentIsActive = isActive(item.href);
 
-    items.forEach((item) => {
-      const currentIsActive = isActive(item.href);
-      const isParentActive = item.isParent && currentIsActive;
+    if (item.adminOnly && profile?.role !== 'admin') {
+      return null;
+    }
 
-      if (item.adminOnly && profile?.role !== 'admin') {
-        return; // Skip rendering for non-admin users
-      }
-
-      if (item.isParent && item.children) {
-        renderedItems.push(
-          <Accordion type="single" collapsible key={item.title} className="w-full">
-            <AccordionItem value={item.title} className="border-none">
-              <TooltipProvider key={item.title} delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <AccordionTrigger className={cn(
-                      "h-10 w-full justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                      isCollapsed ? "justify-center" : "justify-start",
-                      currentIsActive
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                        : "text-muted-foreground hover:bg-muted/20 hover:text-foreground",
-                      "hover:no-underline"
-                    )}>
-                      <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
-                      {!isCollapsed && (
-                        <span className="truncate">{item.title}</span>
-                      )}
-                      {isCollapsed && <span className="sr-only">{item.title}</span>} {/* For accessibility when collapsed */}
-                    </AccordionTrigger>
-                  </TooltipTrigger>
-                  {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
-                </Tooltip>
-              </AccordionItem>
-            </Accordion>
-            <AccordionContent className="pb-1">
-              <div className={cn("space-y-1", "ml-4 border-l border-muted/30 pl-2")}>
-                {renderNavItems(item.children, true)}
-              </div>
-            </AccordionContent>
-          </Accordion>
-        );
-      } else {
-        renderedItems.push(
-          <Fragment key={item.title}> {/* Changed to Fragment */}
+    if (item.isParent && item.children) {
+      return (
+        <Accordion type="single" collapsible key={item.title} className="w-full">
+          <AccordionItem value={item.title} className="border-none">
             <TooltipProvider delayDuration={0}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className={cn(
-                      "h-10 w-full justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                      isCollapsed ? "justify-center" : "justify-start",
-                      currentIsActive
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                        : "text-muted-foreground hover:bg-muted/20 hover:text-foreground",
-                    )}
-                    onClick={() => {
-                      if (item.action) {
-                        item.action();
-                      } else {
-                        navigate(item.href);
-                      }
-                    }}
-                  >
+                  <AccordionTrigger className={cn(
+                    "h-10 w-full justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    isCollapsed ? "justify-center" : "justify-start",
+                    currentIsActive
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "text-muted-foreground hover:bg-muted/20 hover:text-foreground",
+                    "hover:no-underline"
+                  )}>
                     <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
                     {!isCollapsed && (
                       <span className="truncate">{item.title}</span>
                     )}
-                  </Button>
+                    {isCollapsed && <span className="sr-only">{item.title}</span>}
+                  </AccordionTrigger>
                 </TooltipTrigger>
                 {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
               </Tooltip>
             </TooltipProvider>
-          </Fragment>
-        );
-      }
-    });
-    return renderedItems;
+            <AccordionContent className="pb-1">
+              <div className={cn("space-y-1", "ml-4 border-l border-muted/30 pl-2")}>
+                {item.children.map(child => renderSingleNavItem(child, true))}
+              </div>
+            </AccordionContent>
+          </Accordion>
+      );
+    }
+
+    return (
+      <TooltipProvider key={item.title} delayDuration={0}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              className={cn(
+                "h-10 w-full justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                isCollapsed ? "justify-center" : "justify-start",
+                currentIsActive
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "text-muted-foreground hover:bg-muted/20 hover:text-foreground",
+              )}
+              onClick={() => {
+                if (item.action) {
+                  item.action();
+                } else {
+                  navigate(item.href);
+                }
+              }}
+            >
+              <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+              {!isCollapsed && (
+                <span className="truncate">{item.title}</span>
+              )}
+              {item.title === "Notifications" && unreadCount > 0 && !isCollapsed && (
+                <span className="ml-auto px-2 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full">
+                  {unreadCount}
+                </span>
+              )}
+            </Button>
+          </TooltipTrigger>
+          {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
+        </Tooltip>
+      </TooltipProvider>
+    );
   };
 
   return (
@@ -193,7 +188,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           isCollapsed ? "w-[60px]" : "w-[250px]",
         )}
       >
-        {/* Top Section: Logo, Search, Notifications */}
+        {/* Top Section: Logo */}
         <div className="flex items-center justify-between p-4 h-[60px] flex-shrink-0">
           <div className={cn("flex items-center space-x-2", isCollapsed && "justify-center w-full")}>
             <svg
@@ -223,26 +218,26 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Main Navigation Area */}
-        <ScrollArea className="flex-grow px-2 py-4"> {/* Corrected: Using ScrollArea directly */}
+        <ScrollArea className="flex-grow px-2 py-4">
           <div className="space-y-4">
-            {renderNavItems(mainNavItems)}
+            {mainNavItems.map(item => renderSingleNavItem(item))}
 
             <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase">
-              {!isCollapsed && "User & Settings"}
+              {!isCollapsed && "User & Account"}
             </div>
-            {renderNavItems(userAndSettingsNavItems.filter(item => !item.adminOnly || profile?.role === 'admin'))}
+            {userAndSettingsNavItems.filter(item => !item.adminOnly || profile?.role === 'admin').map(item => renderSingleNavItem(item))}
 
             <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase">
               {!isCollapsed && "Support & Resources"}
             </div>
-            {renderNavItems(supportAndResourcesNavItems)}
+            {supportAndResourcesNavItems.map(item => renderSingleNavItem(item))}
           </div>
         </ScrollArea>
 
-        {/* Bottom Section: Collapse Button, User Dropdown, Global Actions */}
+        {/* Bottom Section: Global Search, Notifications, User Dropdown, Collapse Button */}
         <div className="mt-auto p-2 border-t border-border flex-shrink-0">
           <div className="flex flex-col space-y-1">
-            {/* Global Search & Notifications (always visible, even when collapsed) */}
+            {/* Global Search & Notifications */}
             <div className="flex items-center justify-between px-1">
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
