@@ -174,9 +174,9 @@ const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
                   <Input type="date" {...field} />
                 </FormControl>
                 <FormMessage />
-              </FormItem>
-            )}
-          />
+            </FormItem>
+          )}
+        />
           <FormField
             control={form.control}
             name="dueDate"
@@ -396,7 +396,7 @@ export const createOrderColumns = (updateOrder: (order: OrderItem) => void, arch
     accessorKey: "type",
     header: "Type",
     cell: ({ row }) => (
-      <Badge variant={row.original.type === "Sales" ? "default" : "secondary"}>
+      <Badge variant={row.original.type === "Sales" ? "info" : "default"}> {/* Using 'info' for Sales, 'default' for Purchase */}
         {row.original.type}
       </Badge>
     ),
@@ -417,25 +417,25 @@ export const createOrderColumns = (updateOrder: (order: OrderItem) => void, arch
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      let variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" = "default";
+      let variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" | "info" | "muted" = "info";
       switch (row.original.status) {
         case "New Order":
-          variant = "default";
+          variant = "default"; // Primary color
           break;
         case "Processing":
-          variant = "secondary";
+          variant = "secondary"; // Secondary color
           break;
         case "Packed":
-          variant = "outline";
+          variant = "outline"; // Greenish
           break;
         case "Shipped":
-          variant = "success";
+          variant = "muted"; // Grayish
           break;
         case "On Hold / Problem":
-          variant = "warning";
+          variant = "warning"; // Yellow/Orange
           break;
         case "Archived":
-          variant = "destructive";
+          variant = "destructive"; // Red
           break;
       }
       return <Badge variant={variant}>{row.original.status}</Badge>;

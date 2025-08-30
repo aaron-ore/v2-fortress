@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { OrderItem } from "@/context/OrdersContext";
 import { format, isValid } from "date-fns"; // Import isValid
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge"; // Import Badge
 
 interface OrderListTableProps {
   filteredOrders: OrderItem[];
@@ -53,29 +54,43 @@ const OrderListTable: React.FC<OrderListTableProps> = ({ filteredOrders, onOrder
                     isDueSoon && "text-yellow-500",
                   );
 
+                  let statusVariant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" | "info" | "muted" = "info";
+                  switch (order.status) {
+                    case "New Order":
+                      statusVariant = "default";
+                      break;
+                    case "Processing":
+                      statusVariant = "secondary";
+                      break;
+                    case "Packed":
+                      statusVariant = "outline";
+                      break;
+                    case "Shipped":
+                      statusVariant = "muted";
+                      break;
+                    case "On Hold / Problem":
+                      statusVariant = "warning";
+                      break;
+                    case "Archived":
+                      statusVariant = "destructive";
+                      break;
+                  }
+
                   return (
                     <TableRow key={order.id} onClick={() => onOrderClick(order)} className="cursor-pointer hover:bg-muted/20">
                       <TableCell className="font-medium">{order.id}</TableCell>
-                      <TableCell>{order.type}</TableCell>
+                      <TableCell>
+                        <Badge variant={order.type === "Sales" ? "info" : "default"}>
+                          {order.type}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="truncate max-w-[200px]">{order.customerSupplier}</TableCell>
                       <TableCell>{format(new Date(order.date), "MMM dd, yyyy")}</TableCell>
                       <TableCell className={dueDateClass}>{isDueDateValid ? format(dueDate, "MMM dd, yyyy") : "N/A"}</TableCell>
                       <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            order.status === "New Order"
-                              ? "bg-blue-500/20 text-blue-400"
-                              : order.status === "Processing"
-                              ? "bg-purple-500/20 text-purple-400"
-                              : order.status === "Packed"
-                              ? "bg-green-500/20 text-green-400"
-                              : order.status === "Shipped"
-                              ? "bg-gray-500/20 text-gray-400"
-                              : "bg-red-500/20 text-red-400"
-                          }`}
-                        >
+                        <Badge variant={statusVariant}>
                           {order.status}
-                        </span>
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">{order.itemCount}</TableCell>
                       <TableCell className="text-right font-semibold">${order.totalAmount.toFixed(2)}</TableCell>

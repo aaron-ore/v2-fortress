@@ -27,14 +27,14 @@ const LowStockAlertsCard: React.FC = () => {
     <Card className="bg-card border-border rounded-lg shadow-sm p-4">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-lg font-bold text-foreground">Low Stock Alerts</CardTitle>
-        <Bell className="h-4 w-4 text-red-500" />
+        <Bell className="h-4 w-4 text-yellow-500" />
       </CardHeader>
       <CardContent className="p-4 pt-0 flex flex-col justify-between h-full">
         {lowStockItems.length > 0 ? (
           <ul className="text-sm space-y-2">
             {lowStockItems.slice(0, 3).map(item => (
               <li key={item.id} className="flex items-center justify-between">
-                <span>{item.name} <span className="text-red-400">({item.quantity} units)</span></span>
+                <span>{item.name} <span className="text-yellow-400">({item.quantity} units)</span></span>
                 <Button variant="link" size="sm" onClick={() => handleReorder(item.name, item.sku)} className="text-primary">Reorder</Button>
               </li>
             ))}

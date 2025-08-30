@@ -61,10 +61,10 @@ const LiveMetricsCard: React.FC = () => {
   ];
 
   const buttonData = [
-    { value: inventoryItems.length, label: "Items", color: "hsl(var(--primary))" }, // Green
-    { value: orders.length, label: "Orders", color: "hsl(var(--accent))" }, // Blue
-    { value: vendors.length, label: "Vendors", color: "hsl(var(--secondary))" }, // Teal
-    { value: stockMovements.length, label: "Adjustments", color: "hsl(var(--muted))" }, // Blue
+    { value: inventoryItems.length, label: "Items", variant: "default" as const },
+    { value: orders.length, label: "Orders", variant: "secondary" as const },
+    { value: vendors.length, label: "Vendors", variant: "outline" as const },
+    { value: stockMovements.length, label: "Adjustments", variant: "ghost" as const },
   ];
 
   return (
@@ -83,9 +83,8 @@ const LiveMetricsCard: React.FC = () => {
           {buttonData.map((btn, index) => (
             <div key={index} className="flex flex-col items-center">
               <Button
-                variant="outline"
-                className={cn("h-8 w-full text-xs font-bold text-white")}
-                style={{ backgroundColor: btn.color, borderColor: btn.color }}
+                variant={btn.variant}
+                className={cn("h-8 w-full text-xs font-bold")}
               >
                 {btn.value}
               </Button>

@@ -11,6 +11,7 @@ import { useInventory, InventoryItem } from "@/context/InventoryContext";
 import { useReplenishment, ReplenishmentTask } from "@/context/ReplenishmentContext";
 import { useProfile } from "@/context/ProfileContext";
 import { formatDistanceToNowStrict } from "date-fns";
+import { Badge } from "@/components/ui/badge"; // Import Badge
 
 const ReplenishmentManagementTool: React.FC = () => {
   const { inventoryItems, updateInventoryItem, refreshInventory } = useInventory();
@@ -186,31 +187,45 @@ const ReplenishmentManagementTool: React.FC = () => {
               <p className="text-center text-muted-foreground text-sm py-4">No tasks found for this status.</p>
             ) : (
               <div className="space-y-2">
-                {filteredTasks.map(task => (
-                  <div
-                    key={task.id}
-                    className={`flex flex-col p-2 rounded-md cursor-pointer ${selectedTask?.id === task.id ? "bg-primary/20" : "hover:bg-muted/30"}`}
-                    onClick={() => setSelectedTask(task)}
-                  >
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="font-semibold">{task.itemName} ({task.quantity} units)</span>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                        task.status === "Pending" ? "bg-yellow-500/20 text-yellow-400" :
-                        task.status === "Assigned" ? "bg-blue-500/20 text-blue-400" :
-                        task.status === "Completed" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-                      }`}>
-                        {task.status}
-                      </span>
+                {filteredTasks.map(task => {
+                  let taskStatusVariant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" | "info" | "muted" = "info";
+                  switch (task.status) {
+                    case "Pending":
+                      taskStatusVariant = "warning";
+                      break;
+                    case "Assigned":
+                      taskStatusVariant = "secondary";
+                      break;
+                    case "Completed":
+                      taskStatusVariant = "success";
+                      break;
+                    case "Cancelled":
+                      taskStatusVariant = "destructive";
+                      break;
+                  }
+
+                  return (
+                    <div
+                      key={task.id}
+                      className={`flex flex-col p-2 rounded-md cursor-pointer ${selectedTask?.id === task.id ? "bg-primary/20" : "hover:bg-muted/30"}`}
+                      onClick={() => setSelectedTask(task)}
+                    >
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-semibold">{task.itemName} ({task.quantity} units)</span>
+                        <Badge variant={taskStatusVariant}>
+                          {task.status}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        <ArrowRight className="h-3 w-3 inline-block mr-1" /> {task.fromLocation} to {task.toLocation}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Created: {formatDistanceToNowStrict(new Date(task.createdAt), { addSuffix: true })}
+                        {task.assignedTo && ` | Assigned to: ${allProfiles.find(p => p.id === task.assignedTo)?.fullName || 'Unknown'}`}
+                      </p>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      <ArrowRight className="h-3 w-3 inline-block mr-1" /> {task.fromLocation} to {task.toLocation}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Created: {formatDistanceToNowStrict(new Date(task.createdAt), { addSuffix: true })}
-                      {task.assignedTo && ` | Assigned to: ${allProfiles.find(p => p.id === task.assignedTo)?.fullName || 'Unknown'}`}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </ScrollArea>
@@ -220,7 +235,11 @@ const ReplenishmentManagementTool: React.FC = () => {
               <h3 className="text-lg font-semibold">Task Details: {selectedTask.id}</h3>
               <p className="text-sm text-muted-foreground">Item: {selectedTask.itemName} ({selectedTask.quantity} units)</p>
               <p className="text-sm text-muted-foreground">Move from: {selectedTask.fromLocation} to {selectedTask.toLocation}</p>
-              <p className="text-sm text-muted-foreground">Status: {selectedTask.status}</p>
+              <p className="text-sm text-muted-foreground">Status: <Badge variant={
+                selectedTask.status === "Pending" ? "warning" :
+                selectedTask.status === "Assigned" ? "secondary" :
+                selectedTask.status === "Completed" ? "success" : "destructive"
+              }>{selectedTask.status}</Badge></p>
 
               {selectedTask.status === "Pending" && (
                 <div className="space-y-2">

@@ -23,6 +23,7 @@ import { processAutoReorder } from "@/utils/autoReorderLogic"; // NEW: Import au
 import { useNavigate } from "react-router-dom";
 import { Package, Tag, Scale, DollarSign, ArrowUp, ArrowDown, Trash2, History, Repeat } from "lucide-react"; // NEW: Import Repeat icon
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge"; // Import Badge
 
 interface InventoryItemQuickViewDialogProps {
   isOpen: boolean;
@@ -262,6 +263,19 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
     return null;
   }
 
+  let statusVariant: "success" | "warning" | "destructive" | "info" | "muted" = "info";
+  switch (currentItem.status) {
+    case "In Stock":
+      statusVariant = "success";
+      break;
+    case "Low Stock":
+      statusVariant = "warning";
+      break;
+    case "Out of Stock":
+      statusVariant = "destructive";
+      break;
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
@@ -304,17 +318,9 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
             </div>
             <div className="flex items-center gap-2 col-span-2">
               <span className="font-semibold text-lg text-foreground">Total Stock: {currentItem.quantity} units</span>
-              <span
-                className={`px-2 py-1 rounded-full text-xs font-semibold ml-2 ${
-                  currentItem.status === "In Stock"
-                    ? "bg-green-500/20 text-green-400"
-                    : currentItem.status === "Low Stock"
-                    ? "bg-yellow-500/20 text-yellow-400"
-                    : "bg-red-500/20 text-red-400"
-                }`}
-              >
+              <Badge variant={statusVariant} className="ml-2">
                 {currentItem.status}
-              </span>
+              </Badge>
             </div>
             <div className="flex items-center gap-2 col-span-2">
               <span className="font-semibold text-base text-foreground">Picking Bin: {currentItem.pickingBinQuantity} units</span>

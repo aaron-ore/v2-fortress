@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { PlusCircle, Search, Info, MoreHorizontal, Eye, Edit, Trash2, List, LayoutGrid, MapPin, PackagePlus, Upload, Repeat, Scan as ScanIcon, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -90,7 +90,7 @@ export const createInventoryColumns = (deleteItem: (id: string, name: string) =>
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      let variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" = "default";
+      let variant: "success" | "warning" | "destructive" | "info" | "muted" = "info"; // Default to info
       switch (row.original.status) {
         case "In Stock":
           variant = "success";
@@ -221,10 +221,10 @@ const Inventory: React.FC = () => {
       }));
   }, [inventoryItems, searchTerm, vendorNameMap, locationFilter, categoryFilter, statusFilter]);
 
-  const handleDeleteItemClick = (itemId: string, itemName: string) => {
+  const handleDeleteItemClick = useCallback((itemId: string, itemName: string) => {
     setItemToDelete({ id: itemId, name: itemName });
     setIsConfirmDeleteDialogOpen(true);
-  };
+  }, []);
 
   const confirmDeleteItem = async () => {
     if (itemToDelete) {
@@ -234,18 +234,18 @@ const Inventory: React.FC = () => {
     setItemToDelete(null);
   };
 
-  const handleViewDetails = (item: InventoryItem) => {
+  const handleViewDetails = useCallback((item: InventoryItem) => {
     navigate(`/inventory/${item.id}`);
-  };
+  }, [navigate]);
 
-  const handleEditItem = (item: InventoryItem) => {
+  const handleEditItem = useCallback((item: InventoryItem) => {
     navigate(`/inventory/${item.id}`);
-  };
+  }, [navigate]);
 
-  const handleQuickView = (item: InventoryItem) => {
+  const handleQuickView = useCallback((item: InventoryItem) => {
     setSelectedItemForQuickView(item);
     setIsQuickViewDialogOpen(true);
-  };
+  }, []);
 
   const handleScanItem = () => {
     setIsScanItemDialogOpen(true);
@@ -393,7 +393,7 @@ const Inventory: React.FC = () => {
                 <InventoryCardGrid
                   items={filteredItems}
                   onAdjustStock={handleQuickView} // Use quick view for adjust stock
-                  onCreateOrder={(item) => showSuccess(`Create order for ${item.name} (placeholder)`)} // Placeholder
+                  onCreateOrder={useCallback((item) => showSuccess(`Create order for ${item.name} (placeholder)`), [])} // Placeholder
                   onViewDetails={handleViewDetails}
                   onDeleteItem={handleDeleteItemClick}
                 />

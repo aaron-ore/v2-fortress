@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Package, Calendar, MessageSquare, Truck, ShoppingCart } from "lucide-react";
 import { format, isValid } from "date-fns"; // Import isValid
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge"; // Import Badge
 
 interface OrderCardProps {
   order: OrderItem;
@@ -26,8 +27,30 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onClick }) => {
     !isOverdue && !isDueSoon && "text-muted-foreground"
   );
 
-  const orderTypeColor = order.orderType === "Retail" ? "bg-blue-500/20 text-blue-400" : "bg-purple-500/20 text-purple-400";
-  const shippingMethodColor = order.shippingMethod === "Express" ? "bg-red-500/20 text-red-400" : "bg-green-500/20 text-green-400";
+  let statusVariant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" | "info" | "muted" = "info";
+  switch (order.status) {
+    case "New Order":
+      statusVariant = "default";
+      break;
+    case "Processing":
+      statusVariant = "secondary";
+      break;
+    case "Packed":
+      statusVariant = "outline";
+      break;
+    case "Shipped":
+      statusVariant = "muted";
+      break;
+    case "On Hold / Problem":
+      statusVariant = "warning";
+      break;
+    case "Archived":
+      statusVariant = "destructive";
+      break;
+  }
+
+  const orderTypeVariant = order.orderType === "Retail" ? "info" : "default"; // Using info for Retail, default for Wholesale
+  const shippingMethodVariant = order.shippingMethod === "Express" ? "destructive" : "success"; // Using destructive for Express, success for Standard
 
   return (
     <Card
@@ -69,12 +92,15 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onClick }) => {
           </span>
         </div>
         <div className="flex flex-wrap gap-1 mt-2">
-          <span className={cn("px-2 py-0.5 rounded-full text-xs font-semibold", orderTypeColor)}>
+          <Badge variant={orderTypeVariant}>
             {order.orderType}
-          </span>
-          <span className={cn("px-2 py-0.5 rounded-full text-xs font-semibold", shippingMethodColor)}>
+          </Badge>
+          <Badge variant={shippingMethodVariant}>
             {order.shippingMethod}
-          </span>
+          </Badge>
+          <Badge variant={statusVariant}>
+            {order.status}
+          </Badge>
         </div>
       </CardContent>
     </Card>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Package, Tag, MapPin, Eye, PlusCircle, MinusCircle, Trash2 } from "lucide-react";
 import { InventoryItem } from "@/context/InventoryContext";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge"; // Import Badge
 
 interface InventoryCardProps {
   item: InventoryItem;
@@ -20,12 +21,18 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
   onViewDetails,
   onDeleteItem,
 }) => {
-  const stockStatusClass =
-    item.status === "In Stock"
-      ? "text-green-400"
-      : item.status === "Low Stock"
-      ? "text-yellow-400"
-      : "text-red-400";
+  let statusVariant: "success" | "warning" | "destructive" | "info" | "muted" = "info";
+  switch (item.status) {
+    case "In Stock":
+      statusVariant = "success";
+      break;
+    case "Low Stock":
+      statusVariant = "warning";
+      break;
+    case "Out of Stock":
+      statusVariant = "destructive";
+      break;
+  }
 
   return (
     <Card className="group relative bg-card border-border rounded-lg shadow-sm overflow-hidden transition-all duration-200 hover:shadow-lg flex flex-col aspect-square"> {/* Added flex-col and aspect-square */}
@@ -61,9 +68,9 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
         </div>
         <div className="flex items-baseline justify-between mt-3 flex-shrink-0">
           <span className="text-4xl font-bold text-foreground">{item.quantity}</span>
-          <span className={cn("text-sm font-medium", stockStatusClass)}>
+          <Badge variant={statusVariant}>
             {item.status}
-          </span>
+          </Badge>
         </div>
       </CardContent>
 
