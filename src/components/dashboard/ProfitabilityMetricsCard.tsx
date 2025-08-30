@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
@@ -83,7 +85,7 @@ const ProfitabilityMetricsCard: React.FC = () => {
                   itemStyle={{ color: "hsl(var(--foreground))", fontSize: "0.75rem" }}
                   labelStyle={{ color: "hsl(var(--muted-foreground))", fontSize: "0.75rem" }}
                 />
-                <Bar dataKey="value" fill={({ color }: { color: string }) => color} radius={[4, 4, 0, 0]} label={{ position: 'insideRight', formatter: (value: number) => `${value}%`, fill: 'white', fontSize: 10 }} />
+                <Bar dataKey="value" fill={(entry: any) => entry.color} radius={[4, 4, 0, 0]} label={{ position: 'insideRight', formatter: (value: number) => `${value}%`, fill: 'white', fontSize: 10 }} />
               </BarChart>
             </ResponsiveContainer>
           </div>

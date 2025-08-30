@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -163,7 +165,7 @@ const FulfillOrderTool: React.FC<FulfillOrderToolProps> = ({ onScanRequest, scan
 
     if (updatesSuccessful) {
       const newStatus = allItemsFulfilled ? "Packed" : "Processing"; // If partially fulfilled, keep as processing
-      const updatedSO = { ...selectedSO, status: newStatus };
+      const updatedSO = { ...selectedSO, status: newStatus as OrderItem['status'] };
       await updateOrder(updatedSO);
       showSuccess(`Fulfillment for SO ${selectedSO.id} completed. Status updated to "${newStatus}".`);
       refreshInventory();

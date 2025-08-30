@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -244,7 +246,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
 
     if (updatesSuccessful) {
       const newStatus = allItemsReceived ? "Shipped" : "Processing"; // If partially received, keep as processing
-      const updatedPO = { ...selectedPO, status: newStatus };
+      const updatedPO = { ...selectedPO, status: newStatus as OrderItem['status'] };
       await updateOrder(updatedPO);
       showSuccess(`Receiving for PO ${selectedPO.id} completed. Status updated to "${newStatus}".`);
       refreshInventory(); // Ensure inventory context is refreshed

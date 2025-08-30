@@ -114,7 +114,7 @@ const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await addOrder(values);
+      await addOrder(values as Omit<OrderItem, "id" | "organizationId">);
       onClose();
       form.reset();
     } catch (error: any) {

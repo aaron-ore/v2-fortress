@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -164,7 +166,7 @@ const ShipOrderTool: React.FC<ShipOrderToolProps> = ({ onScanRequest, scannedDat
 
     if (updatesSuccessful) {
       const newStatus = allItemsPicked ? "Shipped" : "Packed";
-      const updatedSO = { ...selectedSO, status: newStatus };
+      const updatedSO = { ...selectedSO, status: newStatus as OrderItem['status'] };
       await updateOrder(updatedSO);
       showSuccess(`Shipment for SO ${selectedSO.id} completed. Status updated to "${newStatus}".`);
       refreshInventory();

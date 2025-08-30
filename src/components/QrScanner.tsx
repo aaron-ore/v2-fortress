@@ -1,5 +1,7 @@
+"use client";
+
 import React, { useRef, useEffect, useImperativeHandle, forwardRef, useState, useCallback } from "react";
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeSupportedFormats, Html5QrcodeFullConfig } from "html5-qrcode"; // Import Html5QrcodeFullConfig
 import { QrReader } from 'react-qr-reader';
 
 export interface QrScannerRef {
@@ -24,11 +26,12 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
     const [activeScannerType, setActiveScannerType] = useState<ScannerType>('html5-qrcode');
     const [isScannerReady, setIsScannerReady] = useState(false);
 
-    const html5QrcodeConfig = {
+    const html5QrcodeConfig: Html5QrcodeFullConfig = { // Explicitly type config
       fps: 10,
       qrbox: { width: 250, height: 250 },
       aspectRatio: 1.0,
       disableFlip: false,
+      verbose: false, // Added verbose property
     };
 
     const stopAndClearHtml5Qrcode = useCallback(async () => {
@@ -78,6 +81,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
             Html5QrcodeSupportedFormats.QR_CODE,
             Html5QrcodeSupportedFormats.CODE_128,
           ],
+          verbose: false, // Added verbose property
         });
         html5QrCodeInstanceRef.current = newScanner;
 
@@ -86,8 +90,9 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
           return false;
         }
 
-        await newScanner.start(
+        await newScanner.start( // Pass html5QrcodeConfig as the second argument
           constraints,
+          html5QrcodeConfig, // Pass the config object here
           (decodedText) => {
             if (isMounted.current) {
               console.log(`[QrScanner - ${strategyName}] Scan successful:`, decodedText);
@@ -114,7 +119,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         }
         return false;
       }
-    }, [onScan, onReady, stopAndClearHtml5Qrcode]);
+    }, [onScan, onReady, stopAndClearHtml5Qrcode, html5QrcodeConfig]);
 
 
     const attemptStrategies = useCallback(async () => {
