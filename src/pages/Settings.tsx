@@ -15,7 +15,6 @@ import { useOnboarding } from "@/context/OnboardingContext";
 
 const Settings: React.FC = () => {
   const { theme, setTheme } = useTheme();
-  const [pendingTheme, setPendingTheme] = useState(theme);
   const { profile, updateProfile, isLoadingProfile } = useProfile();
   const { companyProfile, setCompanyProfile, locations, addLocation, removeLocation } = useOnboarding();
 
@@ -26,25 +25,12 @@ const Settings: React.FC = () => {
   const [isSavingCompanyProfile, setIsSavingCompanyProfile] = useState(false);
 
   useEffect(() => {
-    setPendingTheme(theme);
-  }, [theme]);
-
-  useEffect(() => {
     if (companyProfile) {
       setCompanyName(companyProfile.name);
       setCompanyAddress(companyProfile.address);
       setCompanyCurrency(companyProfile.currency);
     }
   }, [companyProfile]);
-
-  const handleSaveTheme = () => {
-    setTheme(pendingTheme);
-    showSuccess("Theme updated successfully!");
-  };
-
-  const handleCancelTheme = () => {
-    setPendingTheme(theme);
-  };
 
   const handleSaveCompanyProfile = async () => {
     setIsSavingCompanyProfile(true);
@@ -77,7 +63,6 @@ const Settings: React.FC = () => {
     showSuccess(`Location "${locationToRemove}" removed.`);
   };
 
-  const hasThemeChanges = pendingTheme !== theme;
   const hasCompanyProfileChanges =
     companyName !== (companyProfile?.name || "") ||
     companyAddress !== (companyProfile?.address || "") ||
@@ -87,39 +72,7 @@ const Settings: React.FC = () => {
     <div className="flex flex-col space-y-6 p-6">
       <h1 className="text-3xl font-bold">Settings</h1>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Theme Settings</CardTitle>
-          <CardDescription>Customize the appearance of the application.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <RadioGroup value={pendingTheme} onValueChange={setPendingTheme}>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="light" id="light" />
-              <Label htmlFor="light">Light</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="dark" id="dark" />
-              <Label htmlFor="dark">Dark</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="system" id="system" />
-              <Label htmlFor="system">System</Label>
-            </div>
-          </RadioGroup>
-
-          {hasThemeChanges && (
-            <div className="mt-4 flex space-x-2">
-              <Button onClick={handleSaveTheme}>
-                Save Changes
-              </Button>
-              <Button variant="outline" onClick={handleCancelTheme}>
-                Cancel
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Removed the Theme Settings card */}
 
       <Card>
         <CardHeader>

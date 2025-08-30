@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -10,12 +10,27 @@ import { showSuccess } from "@/utils/toast";
 import { useTheme } from "next-themes"; // Import useTheme
 
 const AccountSettings: React.FC = () => {
-  const { theme, setTheme } = useTheme(); // Use theme and setTheme from next-themes
-  const [currentPassword, setCurrentPassword] = React.useState("");
-  const [newPassword, setNewPassword] = React.useState("");
-  const [confirmNewPassword, setConfirmNewPassword] = React.useState("");
-  const [language, setLanguage] = React.useState("en");
-  const [twoFactorAuth, setTwoFactorAuth] = React.useState(false);
+  const { theme, setTheme } = useTheme(); // Current active theme from next-themes
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [twoFactorAuth, setTwoFactorAuth] = useState(false);
+
+  // States to hold selected but not yet saved values for General Settings
+  const [selectedLanguage, setSelectedLanguage] = useState("en"); // This will be the value in the dropdown
+  const [selectedTheme, setSelectedTheme] = useState(theme); // This will be the value in the dropdown
+
+  // Load initial values for language and theme when component mounts or theme changes externally
+  useEffect(() => {
+    // For language, if it were persisted, load it here. For now, default to 'en'.
+    // const storedLanguage = localStorage.getItem("userLanguage") || "en";
+    // setSelectedLanguage(storedLanguage);
+    setSelectedLanguage("en"); // Assuming 'en' is the default/current language for now
+
+    // Initialize selectedTheme with the current active theme
+    setSelectedTheme(theme);
+  }, [theme]); // Re-run if the actual theme changes externally
 
   const handleChangePassword = () => {
     if (newPassword !== confirmNewPassword) {
@@ -29,7 +44,15 @@ const AccountSettings: React.FC = () => {
   };
 
   const handleSaveGeneralSettings = () => {
-    // Theme changes are now handled directly by useTheme, no need to save here.
+    // Apply theme change if different from current active theme
+    if (selectedTheme !== theme) {
+      setTheme(selectedTheme);
+    }
+    // Apply language change (if persistence were implemented)
+    // if (selectedLanguage !== currentLanguage) { // 'currentLanguage' would be a state or context value
+    //   localStorage.setItem("userLanguage", selectedLanguage);
+    //   // Update a global language context if available
+    // }
     showSuccess("General settings saved!");
   };
 
@@ -37,6 +60,9 @@ const AccountSettings: React.FC = () => {
     setTwoFactorAuth(checked);
     showSuccess(`Two-factor authentication ${checked ? "enabled" : "disabled"}!`);
   };
+
+  // Determine if there are unsaved changes in General Settings
+  const hasGeneralSettingsChanges = selectedTheme !== theme || selectedLanguage !== "en"; // Compare with current/default values
 
   return (
     <div className="space-y-6">
@@ -54,7 +80,7 @@ const AccountSettings: React.FC = () => {
             <Label htmlFor="language" className="flex items-center gap-2">
               <Globe className="h-4 w-4 text-muted-foreground" /> Language
             </Label>
-            <Select value={language} onValueChange={setLanguage}>
+            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
               <SelectTrigger id="language">
                 <SelectValue placeholder="Select language" />
               </SelectTrigger>
@@ -69,7 +95,7 @@ const AccountSettings: React.FC = () => {
             <Label htmlFor="theme" className="flex items-center gap-2">
               <Palette className="h-4 w-4 text-muted-foreground" /> Theme
             </Label>
-            <Select value={theme} onValueChange={setTheme}>
+            <Select value={selectedTheme} onValueChange={setSelectedTheme}>
               <SelectTrigger id="theme">
                 <SelectValue placeholder="Select theme" />
               </SelectTrigger>
@@ -82,7 +108,9 @@ const AccountSettings: React.FC = () => {
             </Select>
           </div>
           <div className="md:col-span-2 flex justify-end">
-            <Button onClick={handleSaveGeneralSettings}>Save General Settings</Button>
+            <Button onClick={handleSaveGeneralSettings} disabled={!hasGeneralSettingsChanges}>
+              Save General Settings
+            </Button>
           </div>
         </CardContent>
       </Card>
