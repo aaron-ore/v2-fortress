@@ -293,22 +293,22 @@ const Inventory: React.FC = () => {
 
       {/* Main Inventory Display Area */}
       <div className="rounded-md border">
-        <CardHeader className="pb-4 flex flex-row items-center justify-between flex-wrap gap-2"> {/* Added flex-wrap and gap */}
+        <CardHeader className="pb-4 flex flex-row items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-xl font-semibold">Current Stock</CardTitle>
-          <div className="flex items-center space-x-2 flex-wrap gap-2"> {/* Added flex-wrap and gap */}
-            <Button onClick={() => setIsAddInventoryDialogOpen(true)} size="sm"> {/* Added size="sm" */}
+          <div className="flex items-center space-x-2 flex-wrap gap-2">
+            <Button onClick={() => setIsAddInventoryDialogOpen(true)} size="sm">
               <PlusCircle className="h-4 w-4 mr-2" /> Add New Item
             </Button>
-            <Button variant="outline" onClick={() => setIsManageCategoriesDialogOpen(true)} size="sm"> {/* Added size="sm" */}
+            <Button variant="outline" onClick={() => setIsManageCategoriesDialogOpen(true)} size="sm">
               Manage Categories
             </Button>
-            <Button variant="outline" onClick={() => setIsManageLocationsDialogOpen(true)} size="sm"> {/* Added size="sm" */}
+            <Button variant="outline" onClick={() => setIsManageLocationsDialogOpen(true)} size="sm">
               <MapPin className="h-4 w-4 mr-2" /> Manage Locations
             </Button>
             {/* Consolidated "Actions" and "Scan Item" into a new "Tools" dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm"> {/* Added size="sm" */}
+                <Button variant="outline" size="sm">
                   <PackagePlus className="h-4 w-4 mr-2" /> Tools <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
