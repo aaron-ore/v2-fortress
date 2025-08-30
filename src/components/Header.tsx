@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Search, Bell, User, LogOut, MoreVertical, Menu } from "lucide-react";
+import { Search, Bell, User, LogOut, MoreVertical, Flag } from "lucide-react"; // Added Flag icon
 import { showSuccess, showError } from "@/utils/toast";
 import CurrentDateTime from "./CurrentDateTime";
 import { useNotifications } from "@/context/NotificationContext";
@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { userAndSettingsNavItems, supportAndResourcesNavItems, NavItem } from "@/lib/navigation";
+import { Input } from "@/components/ui/input"; // Import Input for search bar
 
 interface HeaderProps {
   setIsNotificationSheetOpen: (isOpen: boolean) => void;
@@ -69,41 +70,75 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
     </>
   );
 
-  return (
-    <header className="bg-card border-b border-border px-4 py-3 flex items-center justify-between h-[60px] flex-shrink-0">
-      <div className="flex items-center space-x-4">
-        {/* Hamburger icon and Fortress logo */}
-        <MobileNav /> {/* This component now handles the SheetTrigger (hamburger + logo) */}
+  if (isMobile) {
+    return (
+      <header className="bg-card border-b border-border px-4 py-3 flex items-center justify-between h-[60px] flex-shrink-0">
+        <div className="flex items-center space-x-4">
+          <MobileNav />
+          <div className="flex items-center space-x-2">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-primary"
+            >
+              <path
+                d="M12 2L2 12L12 22L22 12L12 2Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 2L2 12L12 22L22 12L12 2Z"
+                fill="currentColor"
+                fillOpacity="0.2"
+              />
+            </svg>
+            <span className="text-xl font-semibold text-foreground">Fortress</span>
+          </div>
+        </div>
+
         <div className="flex items-center space-x-2">
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="text-primary"
+          <CurrentDateTime />
+          <Button variant="ghost" size="icon" onClick={() => setIsGlobalSearchDialogOpen(true)}>
+            <Search className="h-5 w-5 text-muted-foreground" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            onClick={() => setIsNotificationSheetOpen(true)}
           >
-            <path
-              d="M12 2L2 12L12 22L22 12L12 2Z"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M12 2L2 12L12 22L22 12L12 2Z"
-              fill="currentColor"
-              fillOpacity="0.2"
-            />
-          </svg>
-          <span className="text-xl font-semibold text-foreground">Fortress</span>
+            <Bell className="h-5 w-5 text-muted-foreground" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
+            )}
+          </Button>
+        </div>
+      </header>
+    );
+  }
+
+  // Desktop Header
+  return (
+    <header className="bg-card rounded-lg shadow-sm p-4 flex items-center justify-between h-[80px] flex-shrink-0"> {/* Increased height, added padding, rounded corners, shadow */}
+      <div className="flex items-center space-x-4 flex-grow">
+        <div className="relative flex-grow max-w-md"> {/* Search bar */}
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+            placeholder="Search (Ctrl+K)"
+            className="pl-10 pr-4 py-2 rounded-full bg-input border-border focus:ring-2 focus:ring-primary focus:border-transparent"
+            onClick={() => setIsGlobalSearchDialogOpen(true)}
+          />
         </div>
       </div>
 
-      {/* Right-side Icons and Date/Time */}
-      <div className="flex items-center space-x-2">
-        <CurrentDateTime /> {/* Date/Time always in header */}
-        <Button variant="ghost" size="icon" onClick={() => setIsGlobalSearchDialogOpen(true)}>
-          <Search className="h-5 w-5 text-muted-foreground" />
+      <div className="flex items-center space-x-4">
+        <CurrentDateTime /> {/* Date/Time on desktop header */}
+        <Button variant="ghost" size="icon"> {/* Placeholder for flag */}
+          <Flag className="h-5 w-5 text-muted-foreground" />
         </Button>
         <Button
           variant="ghost"
@@ -117,34 +152,31 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
           )}
         </Button>
 
-        {/* User Profile Dropdown (Desktop only) */}
-        {!isMobile && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="h-10 w-auto justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors text-muted-foreground hover:bg-muted/20 hover:text-foreground"
-              >
-                <User className="h-5 w-5 mr-3" />
-                <span className="truncate">{profile?.fullName || "My Profile"}</span>
-                <MoreVertical className="ml-auto h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end">
-              <DropdownMenuLabel>User & Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {renderDropdownItems(userAndSettingsNavItems)}
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Support & Resources</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {renderDropdownItems(supportAndResourcesNavItems)}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:bg-destructive/10">
-                <LogOut className="h-4 w-4 mr-2" /> Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="h-10 w-auto justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors text-muted-foreground hover:bg-muted/20 hover:text-foreground"
+            >
+              <User className="h-5 w-5 mr-3" />
+              <span className="truncate">{profile?.fullName || "My Profile"}</span>
+              <MoreVertical className="ml-auto h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end">
+            <DropdownMenuLabel>User & Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {renderDropdownItems(userAndSettingsNavItems)}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Support & Resources</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {renderDropdownItems(supportAndResourcesNavItems)}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:bg-destructive/10">
+              <LogOut className="h-4 w-4 mr-2" /> Logout
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

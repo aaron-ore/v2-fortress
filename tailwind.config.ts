@@ -52,6 +52,13 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // NEW Sidebar specific colors
+        "sidebar-background": "hsl(var(--sidebar-background))",
+        "sidebar-foreground": "hsl(var(--sidebar-foreground))",
+        "sidebar-active-background": "hsl(var(--sidebar-active-background))",
+        "sidebar-active-foreground": "hsl(var(--sidebar-active-foreground))",
+        "sidebar-border": "hsl(var(--sidebar-border))",
+        "sidebar-toggle-background": "hsl(var(--sidebar-toggle-background))",
       },
       borderRadius: {
         lg: "var(--radius)",
