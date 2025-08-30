@@ -301,8 +301,10 @@ const PlainSpreadsheetView: React.FC<PlainSpreadsheetViewProps> = ({
                   {renderCell(item, column.key)}
                 </TableCell>
               ))}
-            </TableBody>
-          </Table>
+            </TableRow> {/* This closing tag was missing */}
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 };
