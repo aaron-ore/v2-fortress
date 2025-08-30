@@ -35,7 +35,7 @@ import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
 import { useOnboarding } from "@/context/OnboardingContext"; // Import useOnboarding
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"; // Removed TooltipProvider
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { showError, showSuccess } from "@/utils/toast";
 
 // Custom components for the new UI
@@ -245,7 +245,10 @@ const Inventory: React.FC = () => {
     setIsScanItemDialogOpen(true);
   };
 
-  // Removed handleToggleColumn as it's no longer needed
+  // Moved useCallback for onCreateOrder outside conditional rendering
+  const handleCreateOrder = useCallback((item: InventoryItem) => {
+    showSuccess(`Create order for ${item.name} (placeholder)`);
+  }, []);
 
   const columnsForDataTable = useMemo(() => createInventoryColumns(deleteInventoryItem, navigate), [deleteInventoryItem, navigate]);
 
@@ -383,7 +386,7 @@ const Inventory: React.FC = () => {
                 <InventoryCardGrid
                   items={filteredItems}
                   onAdjustStock={handleQuickView} // Use quick view for adjust stock
-                  onCreateOrder={useCallback((item) => showSuccess(`Create order for ${item.name} (placeholder)`), [])} // Placeholder
+                  onCreateOrder={handleCreateOrder} // Use the memoized callback
                   onViewDetails={handleViewDetails}
                   onDeleteItem={handleDeleteItemClick}
                 />
