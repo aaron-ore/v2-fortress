@@ -28,15 +28,15 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
       : "text-red-400";
 
   return (
-    <Card className="group relative bg-card border-border rounded-lg shadow-sm overflow-hidden transition-all duration-200 hover:shadow-lg h-64 w-full"> {/* Fixed height and width for square-like card */}
-      <CardHeader className="p-3 pb-1 flex flex-row items-center justify-between"> {/* Adjusted padding */}
-        <CardTitle className="text-sm font-semibold text-foreground truncate"> {/* Adjusted font size */}
+    <Card className="group relative bg-card border-border rounded-lg shadow-sm overflow-hidden transition-all duration-200 hover:shadow-lg">
+      <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
+        <CardTitle className="text-base font-semibold text-foreground truncate">
           {item.name}
         </CardTitle>
-        <Package className="h-3 w-3 text-muted-foreground" /> {/* Adjusted icon size */}
+        <Package className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
-      <CardContent className="p-3 pt-0"> {/* Adjusted padding */}
-        <div className="flex items-center justify-center h-24 w-full aspect-square bg-muted/30 rounded-md mb-2 overflow-hidden mx-auto"> {/* Made image container square */}
+      <CardContent className="p-4 pt-0">
+        <div className="flex items-center justify-center h-24 bg-muted/30 rounded-md mb-3 overflow-hidden">
           {item.imageUrl ? (
             <img
               src={item.imageUrl}
@@ -51,7 +51,7 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
             />
           )}
         </div>
-        <div className="text-xs text-muted-foreground mb-1"> {/* Adjusted font size */}
+        <div className="text-sm text-muted-foreground mb-2">
           <p className="flex items-center gap-1">
             <Tag className="h-3 w-3" /> SKU: {item.sku}
           </p>
@@ -59,9 +59,9 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
             <MapPin className="h-3 w-3" /> Location: {item.location}
           </p>
         </div>
-        <div className="flex items-baseline justify-between mt-2"> {/* Adjusted margin */}
-          <span className="text-2xl font-bold text-foreground">{item.quantity.toLocaleString()}</span> {/* Ensured quantity is formatted */}
-          <span className={cn("text-xs font-medium", stockStatusClass)}> {/* Adjusted font size */}
+        <div className="flex items-baseline justify-between mt-3">
+          <span className="text-4xl font-bold text-foreground">{item.quantity}</span>
+          <span className={cn("text-sm font-medium", stockStatusClass)}>
             {item.status}
           </span>
         </div>
