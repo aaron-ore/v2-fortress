@@ -53,7 +53,7 @@ const Layout: React.FC = () => {
               "flex-grow flex flex-col h-screen overflow-y-auto p-6 transition-all duration-200",
               "space-y-6"
             )}
-            style={{ marginLeft: isSidebarCollapsed ? sidebarWidthCollapsed : sidebarWidthExpanded }}
+            style={{ marginLeft: isSidebarCollapsed ? `${sidebarWidthCollapsed}px` : `${sidebarWidthExpanded}px` }}
           >
             <Header
               setIsNotificationSheetOpen={setIsNotificationSheetOpen}

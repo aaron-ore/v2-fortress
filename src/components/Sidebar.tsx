@@ -52,11 +52,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
   };
 
   const baseButtonClass = "justify-start text-base font-medium transition-colors w-full";
-  const activeLinkClass = "text-sidebar-active-foreground bg-sidebar-active-background hover:bg-sidebar-active-background/80";
-  const inactiveLinkClass = "text-sidebar-foreground hover:bg-sidebar-background/50";
+  const activeLinkClass = "text-sidebar-active-foreground bg-sidebar-active-background hover:bg-sidebar-active-background/80 rounded-md"; // Added rounded-md
+  const inactiveLinkClass = "text-sidebar-foreground hover:bg-sidebar-background/50 rounded-md"; // Added rounded-md
 
   const renderFortressLogo = (isCollapsedState: boolean) => (
-    <div className={cn("flex items-center space-x-2", isCollapsedState && "justify-center")}>
+    <div className={cn("flex items-center space-x-2", isCollapsedState ? "justify-center" : "justify-start")}>
       <svg
         width="24"
         height="24"
@@ -99,7 +99,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
               className={cn(
                 baseButtonClass,
                 currentIsActive ? activeLinkClass : inactiveLinkClass,
-                "justify-center px-0"
+                "justify-center px-0 rounded-md" // Ensure rounded-md for collapsed parent
               )}
               onClick={() => handleNavigation(item.href)} // Navigate to parent link when collapsed
             >
@@ -114,7 +114,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
               <AccordionItem value={item.title} className="border-none">
                 <AccordionTrigger className={cn(
                   baseButtonClass,
-                  "py-2 px-3 flex items-center justify-between",
+                  "py-2 px-3 flex items-center justify-between rounded-md", // Added rounded-md
                   currentIsActive ? activeLinkClass : inactiveLinkClass,
                   "hover:no-underline",
                   isCollapsed && "justify-center px-0"
@@ -139,7 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
             className={cn(
               baseButtonClass,
               currentIsActive ? activeLinkClass : inactiveLinkClass,
-              isCollapsed && "justify-center px-0"
+              isCollapsed && "justify-center px-0 rounded-md" // Ensure rounded-md for collapsed items
             )}
             onClick={() => {
               if (item.action) {
@@ -169,10 +169,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
         isCollapsed ? "w-[80px]" : "w-[280px]",
       )}
     >
-      {/* Header with Logo and Toggle Button */}
+      {/* Header: Logo and Collapse Button (when expanded) */}
       <div className={cn("flex items-center h-[60px] px-4 flex-shrink-0", isCollapsed ? "justify-center" : "justify-between")}>
         {renderFortressLogo(isCollapsed)}
-        {!isCollapsed && ( // Toggle button only visible when expanded, to the right of the full logo
+        {!isCollapsed && ( // Collapse button only visible when expanded, to the right of the full logo
           <Button
             variant="ghost"
             size="icon"
@@ -184,7 +184,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
         )}
       </div>
 
-      {/* Notch Toggle Button - visible only when collapsed */}
+      {/* Notch Expand Button - visible only when collapsed */}
       {isCollapsed && (
         <Button
           variant="ghost"
@@ -231,7 +231,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
       <div className="mt-auto p-3 border-t border-sidebar-border flex-shrink-0">
         <Button
           variant="ghost"
-          className={cn(baseButtonClass, "text-destructive focus:bg-destructive/10", isCollapsed && "justify-center px-0")}
+          className={cn(baseButtonClass, "text-destructive focus:bg-destructive/10 rounded-md", isCollapsed && "justify-center px-0")} // Added rounded-md
           onClick={handleLogout}
         >
           <LogOut className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
