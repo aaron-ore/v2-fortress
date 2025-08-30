@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import React from "react"; // Added this import
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
