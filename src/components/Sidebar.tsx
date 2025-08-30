@@ -95,50 +95,52 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  const renderNavItems = (items: typeof mainNavItems, isSubItem = false) => (
-    <div className={cn("space-y-1", isSubItem && "ml-4 border-l border-muted/30 pl-2")}>
-      {items.map((item) => {
-        const currentIsActive = isActive(item.href);
-        const isParentActive = item.isParent && currentIsActive;
+  const renderNavItems = (items: typeof mainNavItems, isSubItem = false): React.ReactNode[] => {
+    const renderedItems: React.ReactNode[] = [];
 
-        if (item.adminOnly && profile?.role !== 'admin') {
-          return null;
-        }
+    items.forEach((item) => {
+      const currentIsActive = isActive(item.href);
+      const isParentActive = item.isParent && currentIsActive;
 
-        if (item.isParent && item.children) {
-          return (
-            <Accordion type="single" collapsible key={item.title} className="w-full">
-              <AccordionItem value={item.title} className="border-none">
-                <TooltipProvider key={item.title} delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <AccordionTrigger className={cn(
-                        "h-10 w-full justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                        isCollapsed ? "justify-center" : "justify-start",
-                        currentIsActive
-                          ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                          : "text-muted-foreground hover:bg-muted/20 hover:text-foreground",
-                        "hover:no-underline"
-                      )}>
-                        <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
-                        {!isCollapsed && (
-                          <span className="truncate">{item.title}</span>
-                        )}
-                        {isCollapsed && <span className="sr-only">{item.title}</span>} {/* For accessibility when collapsed */}
-                      </AccordionTrigger>
-                    </TooltipTrigger>
-                    {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
-                  </Tooltip>
-                </TooltipProvider>
-                <AccordionContent className="pb-1">
+      if (item.adminOnly && profile?.role !== 'admin') {
+        return; // Skip rendering for non-admin users
+      }
+
+      if (item.isParent && item.children) {
+        renderedItems.push(
+          <Accordion type="single" collapsible key={item.title} className="w-full">
+            <AccordionItem value={item.title} className="border-none">
+              <TooltipProvider key={item.title} delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <AccordionTrigger className={cn(
+                      "h-10 w-full justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      isCollapsed ? "justify-center" : "justify-start",
+                      currentIsActive
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                        : "text-muted-foreground hover:bg-muted/20 hover:text-foreground",
+                      "hover:no-underline"
+                    )}>
+                      <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+                      {!isCollapsed && (
+                        <span className="truncate">{item.title}</span>
+                      )}
+                      {isCollapsed && <span className="sr-only">{item.title}</span>} {/* For accessibility when collapsed */}
+                    </AccordionTrigger>
+                  </TooltipTrigger>
+                  {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
+                </Tooltip>
+              </TooltipProvider>
+              <AccordionContent className="pb-1">
+                <div className={cn("space-y-1", "ml-4 border-l border-muted/30 pl-2")}>
                   {renderNavItems(item.children, true)}
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          );
-        }
-
-        return (
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        );
+      } else {
+        renderedItems.push(
           <React.Fragment key={item.title}>
             <TooltipProvider delayDuration={0}>
               <Tooltip>
@@ -170,9 +172,10 @@ const Sidebar: React.FC<SidebarProps> = ({
               </Tooltip>
             </React.Fragment>
         );
-      })}
-    </div>
-  );
+      }
+    });
+    return renderedItems;
+  };
 
   return (
     <ResizableComponents.ResizablePanelGroup direction="horizontal" className="min-h-screen w-full">
