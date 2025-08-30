@@ -17,8 +17,10 @@ const Layout: React.FC = () => {
   const [isGlobalSearchDialogOpen, setIsGlobalSearchDialogOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true); // Default collapsed
 
+  const sidebarWidth = isCollapsed ? 60 : 250; // Define sidebar widths
+
   return (
-    <div className="app-main-layout min-h-screen flex flex-col bg-background text-foreground">
+    <div className="app-main-layout min-h-screen flex bg-background text-foreground">
       {isMobile ? (
         <>
           <Header
@@ -35,26 +37,34 @@ const Layout: React.FC = () => {
           </main>
         </>
       ) : (
-        <div className="flex h-full">
+        <>
           <Sidebar isCollapsed={isCollapsed} />
-          {/* Toggle button positioned absolutely relative to the main content area */}
-          <div className={cn("flex-grow flex flex-col overflow-y-auto relative")}>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "absolute top-4 z-20 transition-all duration-200",
-                isCollapsed ? "left-0 -translate-x-1/2" : "left-0 -translate-x-1/2", // Always left-0, centered on the border
-                "h-9 w-9 text-muted-foreground hover:bg-muted/20 hover:text-foreground"
-              )}
-              onClick={() => setIsCollapsed(!isCollapsed)}
-            >
-              {isCollapsed ? (
-                <Menu className="h-5 w-5" />
-              ) : (
-                <ChevronLeft className="h-5 w-5" />
-              )}
-            </Button>
+          {/* Toggle button fixed to the screen, positioned at the edge of the sidebar */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "fixed top-4 z-20 transition-all duration-200", // Fixed position
+              `left-[${sidebarWidth}px] -translate-x-1/2`, // Dynamic left based on sidebarWidth
+              "h-9 w-9 text-muted-foreground hover:bg-muted/20 hover:text-foreground"
+            )}
+            onClick={() => setIsCollapsed(!isCollapsed)}
+          >
+            {isCollapsed ? (
+              <Menu className="h-5 w-5" />
+            ) : (
+              <ChevronLeft className="h-5 w-5" />
+            )}
+          </Button>
+
+          {/* Main content area, with dynamic left margin and its own scroll */}
+          <div
+            className={cn(
+              "flex-grow flex flex-col h-screen overflow-y-auto", // Added h-screen and overflow-y-auto
+              isCollapsed ? "ml-[60px]" : "ml-[250px]", // Dynamic margin-left
+              "transition-all duration-200"
+            )}
+          >
             <Header
               setIsNotificationSheetOpen={setIsNotificationSheetOpen}
               setIsGlobalSearchDialogOpen={setIsGlobalSearchDialogOpen}
@@ -67,14 +77,13 @@ const Layout: React.FC = () => {
             <main className="flex-grow p-6 container mx-auto">
               <Outlet />
             </main>
+            <div className="mt-auto"> {/* MadeWithDyad should be inside the scrollable area */}
+              <MadeWithDyad />
+            </div>
           </div>
-        </div>
+        </>
       )}
-      <div className="mt-auto">
-        <MadeWithDyad />
-      </div>
-
-      {/* Global Dialogs - rendered here so they are always available */}
+      {/* Global Dialogs - always rendered */}
       <NotificationSheet
         isOpen={isNotificationSheetOpen}
         onOpenChange={setIsNotificationSheetOpen}

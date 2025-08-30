@@ -151,14 +151,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => { // Receive isColl
   return (
     <div
       className={cn(
-        "flex flex-col bg-card border-r border-border transition-all duration-200 flex-shrink-0",
+        "fixed top-0 left-0 h-screen flex flex-col bg-card border-r border-border transition-all duration-200 flex-shrink-0", // Added fixed, top-0, left-0, h-screen
         isCollapsed ? "w-[60px]" : "w-[250px]",
       )}
     >
       {/* Top Section: Logo */}
-      <div className="flex items-center justify-center p-4 h-[60px] flex-shrink-0">
-        {isCollapsed ? (
-          // Collapsed: Only triangle logo, centered
+      <div className={cn(
+        "flex items-center p-4 h-[60px] flex-shrink-0",
+        isCollapsed ? "justify-center" : "justify-start" // Center logo when collapsed
+      )}>
+        <div className="flex items-center space-x-2">
           <svg
             width="24"
             height="24"
@@ -179,32 +181,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => { // Receive isColl
               fillOpacity="0.2"
             />
           </svg>
-        ) : (
-          // Expanded: Full logo (triangle + text)
-          <div className="flex items-center space-x-2">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="text-primary"
-            >
-              <path
-                d="M12 2L2 12L12 22L22 12L12 2Z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M12 2L2 12L12 22L22 12L12 2Z"
-                fill="currentColor"
-                fillOpacity="0.2"
-              />
-            </svg>
+          {!isCollapsed && ( // Show "Fortress" text only when expanded
             <span className="text-xl font-semibold text-foreground">Fortress</span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Main Navigation Area */}
