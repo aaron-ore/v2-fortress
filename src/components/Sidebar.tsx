@@ -66,7 +66,7 @@ const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
           <AccordionTrigger className={cn(
             baseButtonClass,
             "py-2", // Ensure vertical padding
-            isCollapsed ? "justify-center px-0" : "justify-start px-3", // Adjust horizontal padding based on collapsed state
+            isCollapsed ? "justify-center px-0 [&>svg]:hidden" : "justify-start px-3", // Hide chevron when collapsed
             currentIsActive ? activeClass : inactiveClass,
             "hover:no-underline"
           )}>
@@ -176,7 +176,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
       </div>
 
       {/* Main Navigation Area */}
-      <ScrollArea className="flex-grow px-2 py-4">
+      <ScrollArea className="flex-grow h-full px-2 py-4"> {/* Added h-full to ensure ScrollArea takes full height */}
         <div className="space-y-4">
           {mainNavItems.map(item => (
             <SidebarNavItem
