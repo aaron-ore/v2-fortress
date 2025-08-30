@@ -186,7 +186,7 @@ const PlainSpreadsheetView: React.FC<PlainSpreadsheetViewProps> = ({
                     {loc}
                   </SelectItem>
                 ))}
-              </MSelectContent>
+              </SelectContent>
             </Select>
           );
         case "autoReorderEnabled":
