@@ -64,6 +64,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
           return null;
         }
 
+        // Special handling for "Warehouse Operations" dropdown when collapsed
+        if (item.isParent && item.children && isCollapsed) {
+          return (
+            <Button
+              key={item.title}
+              variant="ghost"
+              className={cn(
+                baseButtonClass,
+                currentIsActive ? activeLinkClass : inactiveLinkClass,
+                "justify-center px-0"
+              )}
+              onClick={() => handleNavigation(item.href)} // Navigate to parent link when collapsed
+            >
+              <item.icon className="h-5 w-5" />
+            </Button>
+          );
+        }
+
         if (item.isParent && item.children) {
           return (
             <Accordion type="single" collapsible key={item.title} className="w-full">
@@ -150,17 +168,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
           </svg>
           <span className="text-xl font-semibold text-foreground">Fortress</span>
         </div>
-        {/* Toggle button inside sidebar header for collapsed state */}
-        {isCollapsed && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleCollapse}
-            className="h-9 w-9 rounded-full bg-sidebar-toggle-background text-sidebar-foreground hover:bg-sidebar-toggle-background/80"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
-        )}
+        {/* Toggle button inside sidebar header */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleCollapse}
+          className={cn(
+            "h-9 w-9 rounded-full bg-sidebar-toggle-background text-sidebar-foreground hover:bg-sidebar-toggle-background/80",
+            isCollapsed ? "ml-auto" : "ml-auto" // Position to the right of logo when expanded, or centered when collapsed
+          )}
+        >
+          {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+        </Button>
       </div>
 
       {/* User Profile Section */}

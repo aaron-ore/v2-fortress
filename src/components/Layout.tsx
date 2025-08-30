@@ -15,7 +15,7 @@ const Layout: React.FC = () => {
   const isMobile = useIsMobile();
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
   const [isGlobalSearchDialogOpen, setIsGlobalSearchDialogOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true); // State for sidebar collapse
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // Default to expanded for better first impression
 
   const sidebarWidthCollapsed = 80; // Matches Sidebar.tsx collapsed width
   const sidebarWidthExpanded = 280; // Matches Sidebar.tsx expanded width
@@ -48,23 +48,6 @@ const Layout: React.FC = () => {
         <>
           {/* Desktop Sidebar */}
           <Sidebar isCollapsed={isSidebarCollapsed} onToggleCollapse={handleToggleSidebar} />
-
-          {/* Sidebar Toggle Button (fixed, outside sidebar) */}
-          {/* This button is now only visible when the sidebar is expanded, as the collapsed state has its own toggle */}
-          {!isSidebarCollapsed && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "fixed top-6 z-40 transition-all duration-200",
-                `left-[${sidebarWidthExpanded}px] -translate-x-1/2`, // Position when expanded
-                "h-9 w-9 rounded-full bg-sidebar-toggle-background text-sidebar-foreground hover:bg-sidebar-toggle-background/80 shadow-md"
-              )}
-              onClick={handleToggleSidebar}
-            >
-              <ChevronRight className="h-5 w-5 rotate-180" /> {/* Always rotate 180 when visible (sidebar expanded) */}
-            </Button>
-          )}
 
           {/* Main Content Area */}
           <div

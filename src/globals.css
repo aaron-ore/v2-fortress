@@ -33,15 +33,13 @@
     --input: 220 10% 12%; /* Similar to card background */
     --ring: 250 80% 60%; /* Primary accent color */
 
-    --radius: 0.5rem;
-
-    /* NEW Sidebar specific colors (dark teal/green inspired by image) */
-    --sidebar-background: 170 20% 15%; /* Dark teal/green */
-    --sidebar-foreground: 0 0% 100%; /* White */
-    --sidebar-active-background: 170 20% 25%; /* Lighter teal/green */
-    --sidebar-active-foreground: 0 0% 100%; /* White */
-    --sidebar-border: 170 20% 10%; /* Darker border for sidebar */
-    --sidebar-toggle-background: 170 20% 20%; /* Slightly lighter for toggle button */
+    /* Sidebar specific colors - now matching main theme */
+    --sidebar-background: var(--background);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-active-background: var(--secondary);
+    --sidebar-active-foreground: var(--primary-foreground);
+    --sidebar-border: var(--border);
+    --sidebar-toggle-background: var(--secondary);
   }
 
   /* Explicitly apply dark theme variables when html has 'dark' class */
@@ -66,13 +64,13 @@
     --input: 220 10% 12%;
     --ring: 250 80% 60%;
 
-    /* NEW Sidebar specific colors for dark theme */
-    --sidebar-background: 170 20% 15%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-active-background: 170 20% 25%;
-    --sidebar-active-foreground: 0 0% 100%;
-    --sidebar-border: 170 20% 10%;
-    --sidebar-toggle-background: 170 20% 20%;
+    /* Sidebar specific colors for dark theme */
+    --sidebar-background: var(--background);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-active-background: var(--secondary);
+    --sidebar-active-foreground: var(--primary-foreground);
+    --sidebar-border: var(--border);
+    --sidebar-toggle-background: var(--secondary);
   }
 
   /* Ocean Breeze Palette */
@@ -105,13 +103,13 @@
     --input: 210 20% 92%; /* Slightly darker input background for light themes */
     --ring: 232 96% 87%; /* Primary color */
 
-    /* NEW Sidebar specific colors for light theme (still dark sidebar) */
-    --sidebar-background: 170 20% 15%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-active-background: 170 20% 25%;
-    --sidebar-active-foreground: 0 0% 100%;
-    --sidebar-border: 170 20% 10%;
-    --sidebar-toggle-background: 170 20% 20%;
+    /* Sidebar specific colors for light theme */
+    --sidebar-background: var(--background);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-active-background: var(--secondary);
+    --sidebar-active-foreground: var(--primary-foreground);
+    --sidebar-border: var(--border);
+    --sidebar-toggle-background: var(--secondary);
   }
 
   /* Sunset Glow Palette */
@@ -144,13 +142,13 @@
     --input: 210 20% 92%; /* Slightly darker input background for light themes */
     --ring: 0 69% 72%; /* Primary color */
 
-    /* NEW Sidebar specific colors for light theme (still dark sidebar) */
-    --sidebar-background: 170 20% 15%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-active-background: 170 20% 25%;
-    --sidebar-active-foreground: 0 0% 100%;
-    --sidebar-border: 170 20% 10%;
-    --sidebar-toggle-background: 170 20% 20%;
+    /* Sidebar specific colors for light theme */
+    --sidebar-background: var(--background);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-active-background: var(--secondary);
+    --sidebar-active-foreground: var(--primary-foreground);
+    --sidebar-border: var(--border);
+    --sidebar-toggle-background: var(--secondary);
   }
 
   /* Forest Whisper Palette */
@@ -183,13 +181,52 @@
     --input: 210 20% 92%; /* Slightly darker input background for light themes */
     --ring: 168 48% 85%; /* Primary color */
 
-    /* NEW Sidebar specific colors for light theme (still dark sidebar) */
-    --sidebar-background: 170 20% 15%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-active-background: 170 20% 25%;
-    --sidebar-active-foreground: 0 0% 100%;
-    --sidebar-border: 170 20% 10%;
-    --sidebar-toggle-background: 170 20% 20%;
+    /* Sidebar specific colors for light theme */
+    --sidebar-background: var(--background);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-active-background: var(--secondary);
+    --sidebar-active-foreground: var(--primary-foreground);
+    --sidebar-border: var(--border);
+    --sidebar-toggle-background: var(--secondary);
+  }
+
+  /* NEW: Emerald Theme Palette */
+  html.emerald {
+    --background: 160 20% 15%; /* Dark Emerald Green */
+    --foreground: 0 0% 100%; /* White */
+
+    --card: 160 20% 20%; /* Slightly lighter emerald */
+    --card-foreground: 0 0% 100%;
+
+    --popover: 160 20% 20%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 160 60% 70%; /* Bright Emerald Green */
+    --primary-foreground: 220 10% 8%; /* Dark text for primary buttons */
+
+    --secondary: 160 15% 30%; /* Muted green */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 160 10% 40%; /* Darker muted green */
+    --muted-foreground: 160 10% 60%;
+
+    --accent: 160 60% 80%; /* Lighter bright emerald */
+    --accent-foreground: 220 10% 8%;
+
+    --destructive: 0 80% 60%; /* Red */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 160 15% 25%; /* Emerald border */
+    --input: 160 20% 20%; /* Similar to card background */
+    --ring: 160 60% 70%; /* Primary color */
+
+    /* Sidebar specific colors for Emerald theme */
+    --sidebar-background: var(--background);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-active-background: var(--secondary);
+    --sidebar-active-foreground: var(--primary-foreground);
+    --sidebar-border: var(--border);
+    --sidebar-toggle-background: var(--secondary);
   }
 }
 
