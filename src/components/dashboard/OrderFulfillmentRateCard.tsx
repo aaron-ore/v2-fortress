@@ -40,8 +40,8 @@ const OrderFulfillmentRateCard: React.FC = () => {
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
+                  innerRadius={50} {/* Reduced from 60 */}
+                  outerRadius={70} {/* Reduced from 80 */}
                   fill="#8884d8"
                   paddingAngle={0}
                   dataKey="value"
@@ -58,8 +58,8 @@ const OrderFulfillmentRateCard: React.FC = () => {
                   data={[{ value: 100 }]}
                   cx="50%"
                   cy="50%"
-                  innerRadius={85}
-                  outerRadius={90}
+                  innerRadius={75} {/* Reduced from 85 */}
+                  outerRadius={80} {/* Reduced from 90 */}
                   fill="hsl(var(--primary))"
                   startAngle={90}
                   endAngle={-270}
@@ -78,7 +78,7 @@ const OrderFulfillmentRateCard: React.FC = () => {
                 <ArrowDown className="h-4 w-4 text-destructive mr-1" /> {pendingPercentage}%
               </p>
             </div>
-            <div className="absolute bottom-4 w-full flex justify-between px-8 text-muted-foreground text-sm">
+            <div className="absolute bottom-2 w-full flex justify-between px-8 text-muted-foreground text-sm"> {/* Adjusted bottom from 4 to 2 */}
               <span>0%</span>
               <span>100%</span>
             </div>
