@@ -557,57 +557,61 @@ const Orders: React.FC = () => {
 
   return (
     <div className="flex flex-col space-y-6 p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"> {/* NEW: Adjusted for layout */}
-        <h1 className="text-3xl font-bold">Order Management</h1>
-        <div className="flex flex-wrap items-center gap-2">
-          {/* NEW: Order Actions Dropdown - Moved to the left */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                Order Actions <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setIsReceiveShipmentDialogOpen(true)}>
-                <PackagePlus className="h-4 w-4 mr-2" /> Receive Shipment
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setIsFulfillOrderDialogOpen(true)}>
-                <PackageCheck className="h-4 w-4 mr-2" /> Fulfill Order
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Input
-            placeholder="Search orders..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-xs"
-          />
-          {/* NEW: Date Range Picker */}
+      <h1 className="text-3xl font-bold">Order Management</h1>
+
+      {/* First Row: Search and Date Filters */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <Input
+          placeholder="Search orders..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-xs flex-grow"
+        />
+        <div className="flex items-center gap-2">
           <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
           {dateRange?.from && (
             <Button variant="outline" onClick={handleClearDateFilter}>
               Clear Filter
             </Button>
           )}
-          <Dialog open={isAddOrderDialogOpen} onOpenChange={setIsAddOrderDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" /> Create New Order
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Create New Order</DialogTitle>
-                <DialogDescription>
-                  Fill in the details to create a new sales or purchase order.
-                </DialogDescription>
-              </DialogHeader>
-              <AddOrderForm onClose={() => setIsAddOrderDialogOpen(false)} />
-            </DialogContent>
-          </Dialog>
         </div>
+      </div>
+
+      {/* Second Row: Order Actions and Create Order */}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              Order Actions <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setIsReceiveShipmentDialogOpen(true)}>
+              <PackagePlus className="h-4 w-4 mr-2" /> Receive Shipment
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsFulfillOrderDialogOpen(true)}>
+              <PackageCheck className="h-4 w-4 mr-2" /> Fulfill Order
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Dialog open={isAddOrderDialogOpen} onOpenChange={setIsAddOrderDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" /> Create New Order
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create New Order</DialogTitle>
+              <DialogDescription>
+                Fill in the details to create a new sales or purchase order.
+              </DialogDescription>
+            </DialogHeader>
+            <AddOrderForm onClose={() => setIsAddOrderDialogOpen(false)} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
