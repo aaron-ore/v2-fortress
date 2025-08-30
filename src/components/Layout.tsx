@@ -5,7 +5,7 @@ import { MadeWithDyad } from "./made-with-dyad";
 import AnnouncementBar from "./AnnouncementBar";
 import Sidebar from "./Sidebar"; // Import the new Sidebar component
 import { useIsMobile } from "@/hooks/use-mobile"; // Import useIsMobile
-import { ResizablePanelGroup, ResizablePanel } from "react-resizable-panels"; // Import Resizable components
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "react-resizable-panels"; // Import Resizable components
 
 const Layout: React.FC = () => {
   const isMobile = useIsMobile();
