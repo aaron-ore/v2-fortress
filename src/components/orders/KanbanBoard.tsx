@@ -56,11 +56,11 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ onOrderClick, filteredOrders 
     if (!activeOrder) return;
 
     const sourceColumnStatus = activeOrder.status;
-    const targetColumnStatusCandidate = columns.find(col => col.id === overId)?.status;
+    const foundColumn = columns.find(col => col.id === overId);
 
     let targetColumnStatus: OrderItem['status'];
-    if (targetColumnStatusCandidate && columns.some(col => col.status === targetColumnStatusCandidate)) {
-      targetColumnStatus = targetColumnStatusCandidate;
+    if (foundColumn) {
+      targetColumnStatus = foundColumn.status;
     } else {
       targetColumnStatus = sourceColumnStatus;
     }
