@@ -49,7 +49,7 @@ const formSchema = z.object({
   location: z.string().min(1, "Location is required"),
   pickingBinLocation: z.string().min(1, "Picking bin location is required"),
   imageUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
-  vendorId: z.string().optional().or(z.literal("")),
+  vendorId: z.string().optional().or(z.literal("null-vendor")), // Updated to allow "null-vendor"
   autoReorderEnabled: z.boolean().default(false),
   autoReorderQuantity: z.number().min(0, "Must be non-negative").optional(),
 });
@@ -88,7 +88,7 @@ const EditInventoryItem: React.FC = () => {
           location: item.location,
           pickingBinLocation: item.pickingBinLocation,
           imageUrl: item.imageUrl || "",
-          vendorId: item.vendorId || "",
+          vendorId: item.vendorId || "null-vendor", // Default to "null-vendor" if not set
           autoReorderEnabled: item.autoReorderEnabled,
           autoReorderQuantity: item.autoReorderQuantity,
         };
@@ -109,7 +109,7 @@ const EditInventoryItem: React.FC = () => {
         location: "",
         pickingBinLocation: "",
         imageUrl: "",
-        vendorId: "",
+        vendorId: "null-vendor", // Default for new items
         autoReorderEnabled: false,
         autoReorderQuantity: 0,
       };
@@ -121,7 +121,10 @@ const EditInventoryItem: React.FC = () => {
       setItemNotFound(true);
     } else if (item) {
       setItemNotFound(false);
-      form.reset(item); // Reset form with item's values
+      form.reset({
+        ...item,
+        vendorId: item.vendorId || "null-vendor", // Ensure form is reset with "null-vendor"
+      });
       if (item.sku) {
         setBarcodeUrl(generateBarcodeSvgDataUri(item.sku));
       } else {
@@ -157,6 +160,7 @@ const EditInventoryItem: React.FC = () => {
       await updateInventoryItem({
         ...item, // Spread existing item to carry over derived/context-managed properties
         ...values,
+        vendorId: values.vendorId === "null-vendor" ? undefined : values.vendorId, // Convert "null-vendor" back to undefined
         barcodeUrl: finalBarcodeUrl,
       });
       showSuccess("Inventory item updated successfully!");
@@ -305,7 +309,7 @@ const EditInventoryItem: React.FC = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="null-vendor">None</SelectItem> {/* Changed value to "null-vendor" */}
                         {vendors.map((vendor) => (
                           <SelectItem key={vendor.id} value={vendor.id}>
                             {vendor.name}
