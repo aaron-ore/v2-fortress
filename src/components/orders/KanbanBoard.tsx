@@ -60,7 +60,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ onOrderClick, filteredOrders 
 
     let targetColumnStatus: OrderItem['status'];
     if (foundColumn) {
-      targetColumnStatus = foundColumn.status;
+      targetColumnStatus = foundColumn.status as OrderItem['status']; // Explicitly cast
     } else {
       targetColumnStatus = sourceColumnStatus;
     }
