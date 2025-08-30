@@ -1,15 +1,15 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Search, Bell, Menu, User, LogOut, MoreVertical } from "lucide-react"; // Added User, LogOut, MoreVertical
+import { Search, Bell, User, LogOut, MoreVertical, Menu } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import CurrentDateTime from "./CurrentDateTime";
 import { useNotifications } from "@/context/NotificationContext";
 import { useProfile } from "@/context/ProfileContext";
-import { supabase } from "@/lib/supabaseClient"; // Import supabase for logout
+import { supabase } from "@/lib/supabaseClient";
 import { useIsMobile } from "@/hooks/use-mobile";
-import MobileNav from "./mobile/MobileNav";
+import MobileNav from "./mobile/MobileNav"; // Keep MobileNav for the sheet trigger
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { userAndSettingsNavItems, supportAndResourcesNavItems, NavItem } from "@/lib/navigation"; // Import nav items
+import { userAndSettingsNavItems, supportAndResourcesNavItems, NavItem } from "@/lib/navigation";
 
 interface HeaderProps {
   setIsNotificationSheetOpen: (isOpen: boolean) => void;
@@ -72,37 +72,36 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
   return (
     <header className="bg-card border-b border-border px-4 py-3 flex items-center justify-between h-[60px] flex-shrink-0">
       <div className="flex items-center space-x-4">
-        {isMobile && <MobileNav />}
-        {isMobile && ( // Only show logo in header for mobile
-          <div className="flex items-center space-x-2">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="text-primary"
-            >
-              <path
-                d="M12 2L2 12L12 22L22 12L12 2Z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M12 2L2 12L12 22L22 12L12 2Z"
-                fill="currentColor"
-                fillOpacity="0.2"
-              />
-            </svg>
-            <span className="text-xl font-semibold text-foreground">Fortress</span>
-          </div>
-        )}
+        {/* Hamburger icon and Fortress logo */}
+        <MobileNav /> {/* This component now handles the SheetTrigger (hamburger + logo) */}
+        <div className="flex items-center space-x-2">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="text-primary"
+          >
+            <path
+              d="M12 2L2 12L12 22L22 12L12 2Z"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 2L2 12L12 22L22 12L12 2Z"
+              fill="currentColor"
+              fillOpacity="0.2"
+            />
+          </svg>
+          <span className="text-xl font-semibold text-foreground">Fortress</span>
+        </div>
       </div>
 
-      {/* Right-side Icons and Date/Time (Conditional for Mobile/Desktop) */}
+      {/* Right-side Icons and Date/Time */}
       <div className="flex items-center space-x-2">
-        {isMobile && <CurrentDateTime />} {/* Date/Time only on mobile header */}
+        <CurrentDateTime /> {/* Date/Time always in header */}
         <Button variant="ghost" size="icon" onClick={() => setIsGlobalSearchDialogOpen(true)}>
           <Search className="h-5 w-5 text-muted-foreground" />
         </Button>
@@ -118,6 +117,7 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
           )}
         </Button>
 
+        {/* User Profile Dropdown (Desktop only) */}
         {!isMobile && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
