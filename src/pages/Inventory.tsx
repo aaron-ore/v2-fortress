@@ -51,6 +51,42 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import InventoryItemQuickViewDialog from "@/components/InventoryItemQuickViewDialog";
 import AddInventoryDialog from "@/components/AddInventoryDialog"; // Use the existing AddInventoryDialog
 
+// Memoized component for action buttons to prevent inconsistent hook calls
+const ActionsCell = React.memo(({ row, deleteItem, navigate }: { row: any, deleteItem: (id: string, name: string) => void, navigate: (path: string) => void }) => (
+  <div className="flex space-x-2">
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button variant="outline" size="icon" onClick={() => navigate(`/inventory/${row.original.id}`)}>
+          <Eye className="h-4 w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>View Details</p>
+      </TooltipContent>
+    </Tooltip>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button variant="outline" size="icon" onClick={() => navigate(`/inventory/${row.original.id}`)}>
+          <Edit className="h-4 w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Edit Item</p>
+      </TooltipContent>
+    </Tooltip>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button variant="destructive" size="icon" onClick={() => deleteItem(row.original.id, row.original.name)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Delete Item</p>
+      </TooltipContent>
+    </Tooltip>
+  </div>
+));
+
 export const createInventoryColumns = (deleteItem: (id: string, name: string) => void, navigate: (path: string) => void): ColumnDef<InventoryItem>[] => [
   {
     accessorKey: "name",
@@ -118,40 +154,7 @@ export const createInventoryColumns = (deleteItem: (id: string, name: string) =>
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => (
-      <div className="flex space-x-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="outline" size="icon" onClick={() => navigate(`/inventory/${row.original.id}`)}>
-              <Eye className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>View Details</p>
-          </TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="outline" size="icon" onClick={() => navigate(`/inventory/${row.original.id}`)}>
-              <Edit className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Edit Item</p>
-          </TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="destructive" size="icon" onClick={() => deleteItem(row.original.id, row.original.name)}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Delete Item</p>
-          </TooltipContent>
-        </Tooltip>
-      </div>
-    ),
+    cell: ({ row }) => <ActionsCell row={row} deleteItem={deleteItem} navigate={navigate} />,
   },
 ];
 
@@ -182,8 +185,6 @@ const Inventory: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // Removed allColumns and visibleColumns states as they are no longer needed for spreadsheet view
-
   useEffect(() => {
     refreshInventory();
   }, [refreshInventory]);
@@ -211,7 +212,6 @@ const Inventory: React.FC = () => {
       .map(item => ({
         ...item,
         vendorName: item.vendorId ? vendorNameMap.get(item.vendorId) || '-' : '-',
-        // Removed spreadsheet-specific mock data fields
       }));
   }, [inventoryItems, searchTerm, vendorNameMap, locationFilter, categoryFilter, statusFilter]);
 
@@ -245,7 +245,6 @@ const Inventory: React.FC = () => {
     setIsScanItemDialogOpen(true);
   };
 
-  // Moved useCallback for onCreateOrder outside conditional rendering
   const handleCreateOrder = useCallback((item: InventoryItem) => {
     showSuccess(`Create order for ${item.name} (placeholder)`);
   }, []);
@@ -340,7 +339,6 @@ const Inventory: React.FC = () => {
               <p>Card View</p>
             </TooltipContent>
           </Tooltip>
-          {/* Removed Spreadsheet View Button */}
         </div>
       </div>
 
@@ -349,13 +347,17 @@ const Inventory: React.FC = () => {
         <CardHeader className="pb-4 flex flex-row items-center justify-between">
           <CardTitle className="text-xl font-semibold">Current Stock</CardTitle>
           <div className="flex items-center space-x-2">
+            {/* Consolidated "Actions" and "Scan Item" into a new "Tools" dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
-                  Actions <ChevronDown className="ml-2 h-4 w-4" />
+                  <PackagePlus className="h-4 w-4 mr-2" /> Tools <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleScanItem}>
+                  <ScanIcon className="h-4 w-4 mr-2" /> Scan Item
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setIsImportCsvDialogOpen(true)}>
                   <Upload className="h-4 w-4 mr-2" /> Import CSV
                 </DropdownMenuItem>
@@ -368,10 +370,6 @@ const Inventory: React.FC = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="outline" onClick={handleScanItem}>
-              <ScanIcon className="h-4 w-4 mr-2" /> Scan Item
-            </Button>
-            {/* Removed Columns Dropdown Menu */}
           </div>
         </CardHeader>
         <CardContent>
@@ -385,13 +383,12 @@ const Inventory: React.FC = () => {
               {viewMode === "card" && (
                 <InventoryCardGrid
                   items={filteredItems}
-                  onAdjustStock={handleQuickView} // Use quick view for adjust stock
-                  onCreateOrder={handleCreateOrder} // Use the memoized callback
+                  onAdjustStock={handleQuickView}
+                  onCreateOrder={handleCreateOrder}
                   onViewDetails={handleViewDetails}
                   onDeleteItem={handleDeleteItemClick}
                 />
               )}
-              {/* Removed Spreadsheet View Rendering */}
             </>
           )}
         </CardContent>
