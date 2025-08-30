@@ -29,7 +29,9 @@ import {
 } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface SidebarProps {}
+interface SidebarProps {
+  isCollapsed: boolean; // Receive isCollapsed prop
+}
 
 interface SidebarNavItemProps {
   item: NavItem;
@@ -132,13 +134,11 @@ const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
 };
 
 
-const Sidebar: React.FC<SidebarProps> = () => {
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => { // Receive isCollapsed
   const location = useLocation();
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
-
-  const [isCollapsed, setIsCollapsed] = useState(true); // Set to true for collapsed by default
 
   // Determine if a given href is active or part of an active parent
   const isActive = (href: string) => {
@@ -155,10 +155,10 @@ const Sidebar: React.FC<SidebarProps> = () => {
         isCollapsed ? "w-[60px]" : "w-[250px]",
       )}
     >
-      {/* Top Section: Logo and Toggle Button */}
-      <div className="flex items-center justify-between p-4 h-[60px] flex-shrink-0">
-        {/* Logo on the left */}
-        <div className="flex items-center space-x-2">
+      {/* Top Section: Logo */}
+      <div className="flex items-center justify-center p-4 h-[60px] flex-shrink-0">
+        {isCollapsed ? (
+          // Collapsed: Only triangle logo, centered
           <svg
             width="24"
             height="24"
@@ -179,27 +179,32 @@ const Sidebar: React.FC<SidebarProps> = () => {
               fillOpacity="0.2"
             />
           </svg>
-          {!isCollapsed && ( // Show "Fortress" text only when expanded
+        ) : (
+          // Expanded: Full logo (triangle + text)
+          <div className="flex items-center space-x-2">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-primary"
+            >
+              <path
+                d="M12 2L2 12L12 22L22 12L12 2Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 2L2 12L12 22L22 12L12 2Z"
+                fill="currentColor"
+                fillOpacity="0.2"
+              />
+            </svg>
             <span className="text-xl font-semibold text-foreground">Fortress</span>
-          )}
-        </div>
-
-        {/* Toggle Button on the right */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "h-9 w-9", // Consistent button size
-            "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
-          )}
-          onClick={() => setIsCollapsed(!isCollapsed)}
-        >
-          {isCollapsed ? (
-            <Menu className="h-5 w-5" /> // Hamburger to expand when collapsed
-          ) : (
-            <ChevronLeft className="h-5 w-5" /> // Chevron to collapse when expanded
-          )}
-        </Button>
+          </div>
+        )}
       </div>
 
       {/* Main Navigation Area */}

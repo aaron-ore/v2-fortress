@@ -7,11 +7,15 @@ import Sidebar from "./Sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NotificationSheet from "./NotificationSheet"; // Import NotificationSheet
 import GlobalSearchDialog from "./GlobalSearchDialog"; // Import GlobalSearchDialog
+import { Button } from "@/components/ui/button"; // Import Button
+import { Menu, ChevronLeft } from "lucide-react"; // Import icons
+import { cn } from "@/lib/utils"; // Import cn
 
 const Layout: React.FC = () => {
   const isMobile = useIsMobile();
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
   const [isGlobalSearchDialogOpen, setIsGlobalSearchDialogOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true); // Default collapsed
 
   return (
     <div className="app-main-layout min-h-screen flex flex-col bg-background text-foreground">
@@ -32,8 +36,25 @@ const Layout: React.FC = () => {
         </>
       ) : (
         <div className="flex h-full">
-          <Sidebar />
-          <div className="flex-grow flex flex-col overflow-y-auto"> {/* Added overflow-y-auto here */}
+          <Sidebar isCollapsed={isCollapsed} />
+          {/* Toggle button positioned absolutely relative to the main content area */}
+          <div className={cn("flex-grow flex flex-col overflow-y-auto relative")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "absolute top-4 z-20 transition-all duration-200",
+                isCollapsed ? "left-0 -translate-x-1/2" : "left-0 -translate-x-1/2", // Always left-0, centered on the border
+                "h-9 w-9 text-muted-foreground hover:bg-muted/20 hover:text-foreground"
+              )}
+              onClick={() => setIsCollapsed(!isCollapsed)}
+            >
+              {isCollapsed ? (
+                <Menu className="h-5 w-5" />
+              ) : (
+                <ChevronLeft className="h-5 w-5" />
+              )}
+            </Button>
             <Header
               setIsNotificationSheetOpen={setIsNotificationSheetOpen}
               setIsGlobalSearchDialogOpen={setIsGlobalSearchDialogOpen}
@@ -43,7 +64,7 @@ const Layout: React.FC = () => {
               linkTo="/setup-instructions"
               linkText="Click here"
             />
-            <main className="flex-grow p-6 container mx-auto"> {/* Removed overflow-y-auto here */}
+            <main className="flex-grow p-6 container mx-auto">
               <Outlet />
             </main>
           </div>
