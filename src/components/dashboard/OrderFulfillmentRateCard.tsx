@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react"; // Added this import
+import React from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,12 +26,12 @@ const OrderFulfillmentRateCard: React.FC = () => {
   const COLORS = ["#00C49F", "hsl(var(--muted))"]; // Green for fulfilled, muted for pending
 
   return (
-    <Card className="bg-card border-border rounded-lg shadow-sm p-4 flex flex-col h-[310px]"> {/* Added flex-col h-[310px] */}
+    <Card className="bg-card border-border rounded-lg shadow-sm p-4 flex flex-col h-[310px]">
       <CardHeader className="pb-2">
         <CardTitle className="text-2xl font-bold text-foreground">Fulfillment Rate</CardTitle>
         <p className="text-sm text-muted-foreground">Orders Fulfilled</p>
       </CardHeader>
-      <CardContent className="flex-grow flex flex-col items-center justify-center relative p-4 pt-0"> {/* Changed to flex-grow */}
+      <CardContent className="flex-grow flex flex-col items-center justify-center relative p-4 pt-0">
         {totalOrders > 0 ? (
           <>
             <ResponsiveContainer width="100%" height="100%">
@@ -40,8 +40,8 @@ const OrderFulfillmentRateCard: React.FC = () => {
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50} {/* Reduced from 60 */}
-                  outerRadius={70} {/* Reduced from 80 */}
+                  innerRadius={50}
+                  outerRadius={70}
                   fill="#8884d8"
                   paddingAngle={0}
                   dataKey="value"
@@ -58,15 +58,15 @@ const OrderFulfillmentRateCard: React.FC = () => {
                   data={[{ value: 100 }]}
                   cx="50%"
                   cy="50%"
-                  innerRadius={75} {/* Reduced from 85 */}
-                  outerRadius={80} {/* Reduced from 90 */}
+                  innerRadius={75}
+                  outerRadius={80}
                   fill="hsl(var(--primary))"
                   startAngle={90}
                   endAngle={-270}
                   cornerRadius={5}
                   isAnimationActive={false}
                   fillOpacity={0.2}
-                  dataKey="value" // Added dataKey
+                  dataKey="value"
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -78,7 +78,7 @@ const OrderFulfillmentRateCard: React.FC = () => {
                 <ArrowDown className="h-4 w-4 text-destructive mr-1" /> {pendingPercentage}%
               </p>
             </div>
-            <div className="absolute bottom-2 w-full flex justify-between px-8 text-muted-foreground text-sm"> {/* Adjusted bottom from 4 to 2 */}
+            <div className="absolute bottom-2 w-full flex justify-between px-8 text-muted-foreground text-sm">
               <span>0%</span>
               <span>100%</span>
             </div>
