@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
@@ -354,7 +356,7 @@ const EditInventoryItem: React.FC = () => {
                     <FormItem>
                       <FormLabel>Picking Bin Quantity</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value || '0'))} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -367,7 +369,7 @@ const EditInventoryItem: React.FC = () => {
                     <FormItem>
                       <FormLabel>Overstock Quantity</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value || '0'))} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -382,7 +384,7 @@ const EditInventoryItem: React.FC = () => {
                     <FormItem>
                       <FormLabel>Reorder Level (Total)</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value || '0'))} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -395,7 +397,7 @@ const EditInventoryItem: React.FC = () => {
                     <FormItem>
                       <FormLabel>Picking Reorder Level</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value || '0'))} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -410,7 +412,7 @@ const EditInventoryItem: React.FC = () => {
                     <FormItem>
                       <FormLabel>Committed Stock</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value || '0'))} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -423,7 +425,7 @@ const EditInventoryItem: React.FC = () => {
                     <FormItem>
                       <FormLabel>Incoming Stock</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value || '0'))} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -438,7 +440,7 @@ const EditInventoryItem: React.FC = () => {
                     <FormItem>
                       <FormLabel>Unit Cost</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.01" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                        <Input type="number" step="0.01" {...field} onChange={e => field.onChange(parseFloat(e.target.value || '0'))} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -451,7 +453,7 @@ const EditInventoryItem: React.FC = () => {
                     <FormItem>
                       <FormLabel>Retail Price</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.01" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                        <Input type="number" step="0.01" {...field} onChange={e => field.onChange(parseFloat(e.target.value || '0'))} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -514,7 +516,7 @@ const EditInventoryItem: React.FC = () => {
                     <FormItem>
                       <FormLabel>Auto-Reorder Quantity</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value || '0'))} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

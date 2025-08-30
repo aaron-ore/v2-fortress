@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { PlusCircle, Search, Edit, Archive, Eye, PackageCheck, PackagePlus, ChevronDown } from "lucide-react";
@@ -337,7 +339,7 @@ const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
                   <FormItem>
                     <FormLabel>Quantity</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                      <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value || '0'))} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -350,7 +352,7 @@ const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
                   <FormItem>
                     <FormLabel>Unit Price</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                      <Input type="number" step="0.01" {...field} onChange={e => field.onChange(parseFloat(e.target.value || '0'))} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

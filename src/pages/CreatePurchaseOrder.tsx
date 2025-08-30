@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,7 +90,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
             handleItemChange(
               item.id,
               "quantity",
-              parseInt(e.target.value) || 0,
+              parseInt(e.target.value || '0'),
             )
           }
           min="0"
@@ -103,7 +105,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
             handleItemChange(
               item.id,
               "unitPrice",
-              parseFloat(e.target.value) || 0,
+              parseFloat(e.target.value || '0'),
             )
           }
           step="0.01"

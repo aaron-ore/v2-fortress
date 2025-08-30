@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -363,7 +365,7 @@ const EditPurchaseOrder: React.FC = () => {
                               handleItemChange(
                                 item.id,
                                 "quantity",
-                                parseInt(e.target.value) || 0,
+                                parseInt(e.target.value || '0'),
                               )
                             }
                             min="0"
@@ -378,7 +380,7 @@ const EditPurchaseOrder: React.FC = () => {
                               handleItemChange(
                                 item.id,
                                 "unitPrice",
-                                parseFloat(e.target.value) || 0,
+                                parseFloat(e.target.value || '0'),
                               )
                             }
                             step="0.01"
