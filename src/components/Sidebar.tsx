@@ -84,7 +84,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
   const renderNavItems = (items: NavItem[], isSubItem = false) => (
     <div className={cn("space-y-1", isSubItem && "ml-4 border-l border-sidebar-border pl-2")}>
       {items.map((item) => {
-        const currentIsActive = location.pathname.startsWith(item.href) || (item.href === "/" && location.pathname === "/");
+        // Refined logic for active link detection
+        const currentIsActive = item.href === "/" 
+          ? location.pathname === "/" 
+          : location.pathname.startsWith(item.href);
 
         if (item.adminOnly && profile?.role !== 'admin') {
           return null;
