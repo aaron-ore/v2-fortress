@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { showSuccess, showError } from "@/utils/toast";
-import { useOrders } from "@/context/OrdersContext";
+import { useOrders, OrderItem } from "@/context/OrdersContext";
 import { useInventory } from "@/context/InventoryContext";
 import { useStockMovement } from "@/context/StockMovementContext";
 import { PackageCheck } from "lucide-react";
@@ -119,7 +119,7 @@ const FulfillOrderDialog: React.FC<FulfillOrderDialogProps> = ({ isOpen, onClose
 
     if (allUpdatesSuccessful) {
       // Update Order status
-      const updatedOrder = { ...order, status: "Packed", notes: notes || order.notes };
+      const updatedOrder: OrderItem = { ...order, status: "Packed", notes: notes || order.notes };
       updateOrder(updatedOrder);
       showSuccess(`Order ${selectedOrderId} fulfilled and packed! Inventory updated.`);
       refreshInventory(); // Ensure inventory context is refreshed

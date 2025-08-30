@@ -106,7 +106,6 @@ const InventorySelectionDialog: React.FC<InventorySelectionDialogProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by name, SKU, category..."
-              icon={<Search className="h-4 w-4 text-muted-foreground" />}
             />
           </div>
 

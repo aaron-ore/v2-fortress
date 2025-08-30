@@ -86,6 +86,27 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
     }
   };
 
+  // Helper function to check for new locations and then proceed with CSV processing
+  const checkForNewLocationsAndProceed = async (data: any[], actionForDuplicates: "skip" | "add_to_stock") => {
+    const uniqueLocationsInCsv = Array.from(new Set(data.map(row => String(row.location || '').trim())));
+    const uniquePickingBinLocationsInCsv = Array.from(new Set(data.map(row => String(row.pickingBinLocation || '').trim())));
+    const allUniqueLocationsInCsv = Array.from(new Set([...uniqueLocationsInCsv, ...uniquePickingBinLocationsInCsv]));
+
+    const existingLocationsLower = new Set(locations.map(loc => loc.toLowerCase()));
+    const newLocations = allUniqueLocationsInCsv.filter(loc => loc && !existingLocationsLower.has(loc.toLowerCase()));
+
+    if (newLocations.length > 0) {
+      setNewLocationsToConfirm(newLocations);
+      setDuplicateAction(actionForDuplicates); // Store action for duplicates
+      setIsConfirmNewLocationsDialogOpen(true);
+      setIsUploading(false); // Stop loading until user confirms new locations
+    } else {
+      // If no new locations, proceed directly to processing
+      await processCsvData(data, [], actionForDuplicates);
+      setSelectedFile(null);
+    }
+  };
+
   // Main processing function, now accepts duplicateAction
   const processCsvData = async (data: any[], confirmedNewLocations: string[], actionForDuplicates: "skip" | "add_to_stock") => {
     setIsUploading(true);

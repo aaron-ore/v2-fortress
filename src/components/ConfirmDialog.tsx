@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react"; // Import ReactNode
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +15,7 @@ interface ConfirmDialogProps {
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  description: string;
+  description: string | ReactNode; // Allow ReactNode for description
   confirmText?: string;
   cancelText?: string;
 }

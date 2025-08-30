@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { showSuccess, showError } from "@/utils/toast";
-import { useOrders } from "@/context/OrdersContext";
+import { useOrders, OrderItem } from "@/context/OrdersContext";
 import { useInventory } from "@/context/InventoryContext";
 import { useStockMovement } from "@/context/StockMovementContext";
 import { PackagePlus } from "lucide-react";
@@ -114,7 +114,7 @@ const ReceiveShipmentDialog: React.FC<ReceiveShipmentDialogProps> = ({ isOpen, o
 
     if (allUpdatesSuccessful) {
       // Update PO status (e.g., to 'Shipped' or 'Partially Received')
-      const updatedOrder = { ...order, status: "Shipped", notes: notes || order.notes };
+      const updatedOrder: OrderItem = { ...order, status: "Shipped", notes: notes || order.notes };
       updateOrder(updatedOrder);
       showSuccess(`Shipment for PO ${selectedOrderId} received successfully! Inventory updated.`);
       refreshInventory(); // Ensure inventory context is refreshed

@@ -121,7 +121,7 @@ const EditInventoryItem: React.FC = () => {
       setItemNotFound(true);
     } else if (item) {
       setItemNotFound(false);
-      form.reset(form.defaultValues); // Reset form with default values when item changes
+      form.reset(item); // Reset form with item's values
       if (item.sku) {
         setBarcodeUrl(generateBarcodeSvgDataUri(item.sku));
       } else {
@@ -155,7 +155,7 @@ const EditInventoryItem: React.FC = () => {
       }
 
       await updateInventoryItem({
-        id: item.id,
+        ...item, // Spread existing item to carry over derived/context-managed properties
         ...values,
         barcodeUrl: finalBarcodeUrl,
       });

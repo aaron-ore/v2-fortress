@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { PlusCircle, Trash2, Printer, PackageOpen } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
-import PurchaseOrderPdfContent from "@/components/PurchaseOrderPdfContent";
+import PurchaseOrderPdfContent from "@/components/PurchaseOrderPdfContent"; // Corrected import path
 import { useOnboarding } from "@/context/OnboardingContext";
 import { generateSequentialNumber } from "@/utils/numberGenerator";
 import { formatPhoneNumber } from "@/utils/formatters";
@@ -63,7 +63,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 10 : 0,
-    position: 'relative',
+    position: 'relative' as 'relative', // Explicitly set position to 'relative'
     opacity: isDragging ? 0.8 : 1,
   };
 
@@ -243,7 +243,7 @@ const CreatePurchaseOrder: React.FC = () => {
     const pdfProps = {
       poNumber,
       poDate,
-      supplierName: supplier, // Use the 'supplier' state from EditPurchaseOrder
+      supplierName: supplierName, // Use the 'supplierName' state
       supplierEmail: supplierEmail, // Use the state variable
       supplierAddress: supplierAddress, // Use the state variable
       supplierContact: supplierContact, // Use the state variable
