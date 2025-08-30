@@ -76,9 +76,9 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
     name: item.name,
     description: item.description || "",
     sku: item.sku,
-    pickingBinQuantity: item.picking_bin_quantity,
-    overstockQuantity: item.overstock_quantity,
-    quantity: item.picking_bin_quantity + item.overstock_quantity, // Derived
+    pickingBinQuantity: Number(item.picking_bin_quantity || 0), // Ensure number with fallback
+    overstockQuantity: Number(item.overstock_quantity || 0), // Ensure number with fallback
+    quantity: Number(item.picking_bin_quantity || 0) + Number(item.overstock_quantity || 0), // Derived
     reorderLevel: item.reorder_level,
     pickingReorderLevel: item.picking_reorder_level || 0, // Default to 0 if null
     committedStock: item.committed_stock,
