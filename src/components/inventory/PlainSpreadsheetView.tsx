@@ -38,7 +38,7 @@ const PlainSpreadsheetView: React.FC<PlainSpreadsheetViewProps> = ({
 }) => {
   const { updateInventoryItem, refreshInventory } = useInventory();
   const { categories } = useCategories();
-  const { vendors } = useVendors();
+  const { vendors } = useVendencies();
   const { locations } = useOnboarding();
 
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
