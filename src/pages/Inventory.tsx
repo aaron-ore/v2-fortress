@@ -51,50 +51,14 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import InventoryItemQuickViewDialog from "@/components/InventoryItemQuickViewDialog";
 import AddInventoryDialog from "@/components/AddInventoryDialog"; // Use the existing AddInventoryDialog
 
-// Memoized component for action buttons to prevent inconsistent hook calls
-const ActionsCell = React.memo(({ row, deleteItem, navigate }: { row: any, deleteItem: (id: string, name: string) => void, navigate: (path: string) => void }) => (
-  <div className="flex space-x-2">
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant="outline" size="icon" onClick={() => navigate(`/inventory/${row.original.id}`)}>
-          <Eye className="h-4 w-4" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>View Details</p>
-      </TooltipContent>
-    </Tooltip>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant="outline" size="icon" onClick={() => navigate(`/inventory/${row.original.id}`)}>
-          <Edit className="h-4 w-4" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>Edit Item</p>
-      </TooltipContent>
-    </Tooltip>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant="destructive" size="icon" onClick={() => deleteItem(row.original.id, row.original.name)}>
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>Delete Item</p>
-      </TooltipContent>
-    </Tooltip>
-  </div>
-));
-
-export const createInventoryColumns = (deleteItem: (id: string, name: string) => void, navigate: (path: string) => void): ColumnDef<InventoryItem>[] => [
+export const createInventoryColumns = (handleQuickView: (item: InventoryItem) => void): ColumnDef<InventoryItem>[] => [
   {
     accessorKey: "name",
     header: "Item Name",
     cell: ({ row }) => (
-      <Link to={`/inventory/${row.original.id}`} className="font-medium hover:underline">
+      <Button variant="link" className="p-0 h-auto text-left font-medium hover:underline" onClick={() => handleQuickView(row.original)}>
         {row.getValue("name")}
-      </Link>
+      </Button>
     ),
   },
   {
@@ -150,11 +114,6 @@ export const createInventoryColumns = (deleteItem: (id: string, name: string) =>
     accessorKey: "retailPrice",
     header: "Retail Price",
     cell: ({ row }) => `$${parseFloat(row.original.retailPrice.toString() || '0').toFixed(2)}`,
-  },
-  {
-    id: "actions",
-    header: "Actions",
-    cell: ({ row }) => <ActionsCell row={row} deleteItem={deleteItem} navigate={navigate} />,
   },
 ];
 
@@ -249,7 +208,7 @@ const Inventory: React.FC = () => {
     showSuccess(`Create order for ${item.name} (placeholder)`);
   }, []);
 
-  const columnsForDataTable = useMemo(() => createInventoryColumns(deleteInventoryItem, navigate), [deleteInventoryItem, navigate]);
+  const columnsForDataTable = useMemo(() => createInventoryColumns(handleQuickView), [handleQuickView]);
 
   return (
     <div className="flex flex-col space-y-6 p-6">
@@ -383,9 +342,9 @@ const Inventory: React.FC = () => {
               {viewMode === "card" && (
                 <InventoryCardGrid
                   items={filteredItems}
-                  onAdjustStock={handleQuickView}
+                  onAdjustStock={handleQuickView} // This will open the quick view dialog
                   onCreateOrder={handleCreateOrder}
-                  onViewDetails={handleViewDetails}
+                  onViewDetails={handleQuickView} // This will also open the quick view dialog
                   onDeleteItem={handleDeleteItemClick}
                 />
               )}
