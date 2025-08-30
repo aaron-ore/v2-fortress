@@ -214,7 +214,7 @@ const Inventory: React.FC = () => {
   const columnsForDataTable = useMemo(() => createInventoryColumns(handleQuickView), [handleQuickView]);
 
   return (
-    <div className="flex flex-col space-y-6">
+    <div className="flex flex-col space-y-6" data-testid="inventory-page-root">
       <h1 className="text-3xl font-bold">Inventory Management</h1>
 
       {/* Top Row: Search and Filters */}
