@@ -95,12 +95,17 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  const renderSingleNavItem = (item: NavItem, isSubItem = false) => {
+  // Helper function for rendering individual nav items (including nested ones)
+  const renderItem = (item: NavItem, isSubItem = false) => {
     const currentIsActive = isActive(item.href);
 
     if (item.adminOnly && profile?.role !== 'admin') {
       return null;
     }
+
+    const baseButtonClass = "h-10 w-full justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors";
+    const activeClass = "bg-primary text-primary-foreground hover:bg-primary/90";
+    const inactiveClass = "text-muted-foreground hover:bg-muted/20 hover:text-foreground";
 
     if (item.isParent && item.children) {
       return (
@@ -110,11 +115,9 @@ const Sidebar: React.FC<SidebarProps> = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <AccordionTrigger className={cn(
-                    "h-10 w-full justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    baseButtonClass,
                     isCollapsed ? "justify-center" : "justify-start",
-                    currentIsActive
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                      : "text-muted-foreground hover:bg-muted/20 hover:text-foreground",
+                    currentIsActive ? activeClass : inactiveClass,
                     "hover:no-underline"
                   )}>
                     <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
@@ -129,10 +132,11 @@ const Sidebar: React.FC<SidebarProps> = ({
             </TooltipProvider>
             <AccordionContent className="pb-1">
               <div className={cn("space-y-1", "ml-4 border-l border-muted/30 pl-2")}>
-                {item.children.map(child => renderSingleNavItem(child, true))}
+                {item.children.map(child => renderItem(child, true))}
               </div>
             </AccordionContent>
-          </Accordion>
+          </AccordionItem>
+        </Accordion>
       );
     }
 
@@ -143,11 +147,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             <Button
               variant="ghost"
               className={cn(
-                "h-10 w-full justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                baseButtonClass,
                 isCollapsed ? "justify-center" : "justify-start",
-                currentIsActive
-                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                  : "text-muted-foreground hover:bg-muted/20 hover:text-foreground",
+                currentIsActive ? activeClass : inactiveClass,
               )}
               onClick={() => {
                 if (item.action) {
@@ -220,17 +222,17 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Main Navigation Area */}
         <ScrollArea className="flex-grow px-2 py-4">
           <div className="space-y-4">
-            {mainNavItems.map(item => renderSingleNavItem(item))}
+            {mainNavItems.map(item => renderItem(item))}
 
             <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase">
               {!isCollapsed && "User & Account"}
             </div>
-            {userAndSettingsNavItems.filter(item => !item.adminOnly || profile?.role === 'admin').map(item => renderSingleNavItem(item))}
+            {userAndSettingsNavItems.map(item => renderItem(item))}
 
             <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase">
               {!isCollapsed && "Support & Resources"}
             </div>
-            {supportAndResourcesNavItems.map(item => renderSingleNavItem(item))}
+            {supportAndResourcesNavItems.map(item => renderItem(item))}
           </div>
         </ScrollArea>
 
