@@ -131,7 +131,7 @@ const PlainSpreadsheetView: React.FC<PlainSpreadsheetViewProps> = ({
       );
     }
 
-    if (isEditing && column.type !== "actions") {
+    if (isEditing) {
       switch (columnKey) {
         case "category":
           return (
@@ -154,14 +154,14 @@ const PlainSpreadsheetView: React.FC<PlainSpreadsheetViewProps> = ({
         case "vendorId":
           return (
             <Select
-              value={String(currentValue || "none")} {/* Ensure default is 'none' */}
+              value={String(currentValue || "none")}
               onValueChange={(val) => handleValueChange("vendorId", val === "none" ? undefined : val)}
             >
               <SelectTrigger className="h-8">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">None</SelectItem> {/* Changed value to 'none' */}
+                <SelectItem value="none">None</SelectItem>
                 {vendors.map((vendor) => (
                   <SelectItem key={vendor.id} value={vendor.id}>
                     {vendor.name}
@@ -207,16 +207,37 @@ const PlainSpreadsheetView: React.FC<PlainSpreadsheetViewProps> = ({
               className="h-8"
             />
           );
-        default:
+        case "pickingBinQuantity":
+        case "overstockQuantity":
+        case "reorderLevel":
+        case "pickingReorderLevel":
+        case "committedStock":
+        case "incomingStock":
+        case "unitCost":
+        case "retailPrice":
+        case "autoReorderQuantity":
           return (
             <Input
-              type={column.type === "number" ? "number" : "text"}
+              type="number"
               value={String(currentValue || "")}
-              onChange={(e) => handleValueChange(columnKey as keyof InventoryItem, column.type === "number" ? Number(e.target.value) : e.target.value)}
+              onChange={(e) => handleValueChange(columnKey as keyof InventoryItem, Number(e.target.value))}
               className="h-8"
-              step={columnKey.includes("Price") || columnKey.includes("Cost") ? "0.01" : "1"}
+              step={columnKey.includes("Cost") || columnKey.includes("Price") ? "0.01" : "1"}
             />
           );
+        case "sku":
+        case "name":
+        case "imageUrl":
+          return (
+            <Input
+              type="text"
+              value={String(currentValue || "")}
+              onChange={(e) => handleValueChange(columnKey as keyof InventoryItem, e.target.value)}
+              className="h-8"
+            />
+          );
+        default:
+          return String(currentValue || '-');
       }
     }
 
