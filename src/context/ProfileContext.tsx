@@ -13,6 +13,7 @@ export interface UserProfile {
   avatarUrl?: string;
   role: string;
   organizationId: string | null;
+  organizationCode?: string; // NEW: Add organizationCode
   createdAt: string;
 }
 
@@ -20,7 +21,7 @@ interface ProfileContextType {
   profile: UserProfile | null;
   allProfiles: UserProfile[];
   isLoadingProfile: boolean;
-  updateProfile: (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId">>) => Promise<void>;
+  updateProfile: (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode">>) => Promise<void>;
   updateUserRole: (userId: string, newRole: string, organizationId: string | null) => Promise<void>;
   fetchProfile: () => Promise<void>;
   fetchAllProfiles: () => Promise<void>;
@@ -53,7 +54,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email")
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code)") // NEW: Select unique_code from organizations
       .eq("id", session.user.id)
       .single();
 
@@ -86,6 +87,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         avatarUrl: userProfileData.avatar_url || undefined,
         role: userProfileData.role,
         organizationId: userProfileData.organization_id,
+        organizationCode: userProfileData.organizations?.unique_code || undefined, // NEW: Set organizationCode
         createdAt: userProfileData.created_at,
       });
     }
@@ -162,7 +164,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   }, [profile?.role, profile?.organizationId, fetchAllProfiles]);
 
-  const updateProfile = async (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId">>) => {
+  const updateProfile = async (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode">>) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       showError("You must be logged in to update your profile.");
@@ -197,6 +199,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         avatarUrl: data.avatar_url || undefined,
         role: data.role,
         organizationId: data.organization_id,
+        organizationCode: profile?.organizationCode, // Keep existing organizationCode
         createdAt: data.created_at,
       });
       // REMOVED: addActivity("Profile Updated", `Updated own profile details.`, { oldProfile: oldProfile, newProfile: data });
@@ -247,6 +250,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
             address: updatedProfileData.address,
             avatarUrl: updatedProfileData.avatar_url,
             email: updatedProfileData.email,
+            organizationCode: profile?.organizationCode, // Keep existing organizationCode
           } : p
         )
       );

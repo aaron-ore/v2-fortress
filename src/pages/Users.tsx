@@ -13,18 +13,17 @@ import {
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { Users as UsersIcon, Mail, UserPlus, Trash2 } from "lucide-react";
+import { Users as UsersIcon, Mail, UserPlus, Trash2, Copy, Settings as SettingsIcon } from "lucide-react"; // NEW: Import Copy and SettingsIcon
 import { useProfile, UserProfile } from "@/context/ProfileContext";
 import { showError, showSuccess } from "@/utils/toast";
 import { supabase } from "@/lib/supabaseClient";
-// REMOVED: import { useActivityLogs } from "@/context/ActivityLogContext";
+import ManageCustomRolesDialog from "@/components/ManageCustomRolesDialog"; // NEW: Import ManageCustomRolesDialog
 
 const Users: React.FC = () => {
   const { profile, allProfiles, updateUserRole, fetchAllProfiles } = useProfile();
-  // REMOVED: const { addActivity } = useActivityLogs();
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
-  // Removed inviteEmail and inviteRole states as invite functionality is removed
+  const [isManageCustomRolesDialogOpen, setIsManageCustomRolesDialogOpen] = useState(false); // NEW: State for custom roles dialog
 
   useEffect(() => {
     // Fetch all profiles when component mounts or profile changes (especially role)
@@ -32,8 +31,6 @@ const Users: React.FC = () => {
       fetchAllProfiles();
     }
   }, [profile?.role, fetchAllProfiles]);
-
-  // Removed handleInviteUser function
 
   const handleDeleteUserClick = (user: UserProfile) => {
     setUserToDelete(user);
@@ -55,10 +52,8 @@ const Users: React.FC = () => {
 
     if (error) {
       showError(`Failed to delete profile: ${error.message}`);
-      // REMOVED: addActivity("User Delete Failed", `Failed to delete profile for ${userToDelete.fullName || userToDelete.email}.`, { error: error.message, targetUserId: userToDelete.id });
     } else {
       showSuccess(`Profile for ${userToDelete.fullName || userToDelete.email} deleted.`);
-      // REMOVED: addActivity("User Deleted", `Deleted profile for ${userToDelete.fullName || userToDelete.email}.`, { targetUserId: userToDelete.id });
       fetchAllProfiles(); // Refresh the list
     }
     setIsConfirmDeleteDialogOpen(false);
@@ -75,9 +70,17 @@ const Users: React.FC = () => {
 
     try {
       await updateUserRole(userId, newRole, profile.organizationId);
-      // REMOVED: addActivity("User Role Updated", `Updated role for user ${targetUser?.fullName || userId} from "${oldRole}" to "${newRole}".`, { targetUserId: userId, oldRole, newRole });
     } catch (error: any) {
-      // REMOVED: addActivity("User Role Update Failed", `Failed to update role for user ${targetUser?.fullName || userId} to "${newRole}".`, { error: error.message, targetUserId: userId, newRole });
+      // Error handling is already in updateUserRole in ProfileContext
+    }
+  };
+
+  const handleCopyOrganizationCode = () => {
+    if (profile?.organizationCode) {
+      navigator.clipboard.writeText(profile.organizationCode);
+      showSuccess("Organization Code copied to clipboard!");
+    } else {
+      showError("No Organization Code available to copy.");
     }
   };
 
@@ -99,7 +102,34 @@ const Users: React.FC = () => {
       <h1 className="text-3xl font-bold">User Management</h1>
       <p className="text-muted-foreground">Manage user accounts and assign roles within Fortress.</p>
 
-      {/* Removed Invite New User Card */}
+      {/* NEW: Organization Code Display */}
+      <Card className="bg-card border-border rounded-lg shadow-sm p-6">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl font-semibold flex items-center gap-2">
+            <UsersIcon className="h-6 w-6 text-primary" /> Your Organization Code
+          </CardTitle>
+          <CardDescription>
+            Share this code with new users to allow them to join your organization during sign-up.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center gap-4">
+          <Input
+            value={profile?.organizationCode || "Loading..."}
+            readOnly
+            className="font-mono text-lg flex-grow"
+          />
+          <Button onClick={handleCopyOrganizationCode} disabled={!profile?.organizationCode}>
+            <Copy className="h-4 w-4 mr-2" /> Copy
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* NEW: Manage Custom Roles Button */}
+      <div className="flex justify-end">
+        <Button onClick={() => setIsManageCustomRolesDialogOpen(true)}>
+          <SettingsIcon className="h-4 w-4 mr-2" /> Manage Custom Roles
+        </Button>
+      </div>
 
       {/* All Users Table */}
       <Card className="bg-card border-border rounded-lg shadow-sm p-6">
@@ -177,6 +207,12 @@ const Users: React.FC = () => {
           cancelText="Cancel"
         />
       )}
+
+      {/* NEW: Custom Roles Dialog */}
+      <ManageCustomRolesDialog
+        isOpen={isManageCustomRolesDialogOpen}
+        onClose={() => setIsManageCustomRolesDialogOpen(false)}
+      />
     </div>
   );
 };
