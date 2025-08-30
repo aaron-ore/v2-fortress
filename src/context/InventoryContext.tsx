@@ -112,12 +112,12 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
     };
   };
 
-  const fetchInventoryItems = useCallback(async () => {
+  const fetchInventoryItems = useCallback(async (): Promise<InventoryItem[]> => {
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session || !profile?.organizationId) {
       setInventoryItems([]);
-      return;
+      return [];
     }
 
     const { data, error } = await supabase
@@ -127,31 +127,34 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error fetching inventory items:", error);
-      // REMOVED: showError("Failed to load inventory items."); // Removed this toast
       console.warn("Loading mock inventory items due to Supabase error.");
-      setInventoryItems(mockInventoryItems.map(mapSupabaseItemToInventoryItem));
+      const mockItems = mockInventoryItems.map(mapSupabaseItemToInventoryItem);
+      setInventoryItems(mockItems);
+      return mockItems;
     } else {
       const fetchedItems: InventoryItem[] = data.map(mapSupabaseItemToInventoryItem);
-      if (fetchedItems.length === 0) { // Always load mock data if no data is returned
+      if (fetchedItems.length === 0) {
         console.warn("Loading mock inventory items as Supabase returned no data.");
-        setInventoryItems(mockInventoryItems.map(mapSupabaseItemToInventoryItem));
+        const mockItems = mockInventoryItems.map(mapSupabaseItemToInventoryItem);
+        setInventoryItems(mockItems);
+        return mockItems;
       } else {
         setInventoryItems(fetchedItems);
+        return fetchedItems;
       }
     }
   }, [profile?.organizationId]);
 
   useEffect(() => {
     if (!isLoadingProfile) {
-      fetchInventoryItems().then((fetchedItems) => { // Capture fetched items
+      fetchInventoryItems().then((fetchedItems) => {
         if (!isInitialLoad.current && profile?.organizationId) {
-          // Use the *latest* state of inventoryItems, which might be updated by fetchInventoryItems
-          processAutoReorder(inventoryItems, addOrder, vendors, profile.organizationId, addNotification);
+          processAutoReorder(fetchedItems, addOrder, vendors, profile.organizationId, addNotification);
         }
         isInitialLoad.current = false;
       });
     }
-  }, [fetchInventoryItems, isLoadingProfile, profile?.organizationId, addOrder, vendors, addNotification]); // Removed inventoryItems from dependency array
+  }, [fetchInventoryItems, isLoadingProfile, profile?.organizationId, addOrder, vendors, addNotification]);
 
   const addInventoryItem = async (item: Omit<InventoryItem, "id" | "status" | "lastUpdated" | "organizationId" | "quantity">) => {
     const { data: { session } } = await supabase.auth.getSession();
