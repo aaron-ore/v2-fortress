@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Printer, QrCode, Palette, PlusCircle, Trash2, MapPin } from "lucide-react";
 import { showError, showSuccess } from "@/utils/toast";
-import { usePrint } from "@/context/PrintContext";
+import { usePrint, PrintContentData } from "@/context/PrintContext"; // Import PrintContentData
 import { useOnboarding } from "@/context/OnboardingContext";
 import { generateQrCodeSvg } from "@/utils/qrCodeGenerator";
 import { format } from "date-fns";
@@ -116,8 +116,8 @@ const LocationManagementPage: React.FC = () => {
     try {
       const qrSvg = await generateQrCodeSvg(locationString, 128); // Generate QR for print
 
-      const labelsToPrint = Array.from({ length: numQuantity }).map(() => ({
-        type: "location-label" as const, // Explicitly cast to literal type
+      const labelsToPrint: PrintContentData[] = Array.from({ length: numQuantity }).map(() => ({
+        type: "location-label",
         props: {
           area,
           row,
@@ -160,7 +160,7 @@ const LocationManagementPage: React.FC = () => {
                 <Input
                   id="newLocation"
                   value={newLocationName}
-                  onChange={(e) => setNewLocationName(e.target.value)}
+                  onChange={(e) => setNewLocationName(e.target.value.toUpperCase())}
                   placeholder="e.g., Main Warehouse, Shelf A"
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {

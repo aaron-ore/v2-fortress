@@ -1,8 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,16 +20,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PlusCircle, Trash2, Printer, PackageOpen } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PlusCircle, Trash2, Archive, Printer } from "lucide-react"; // Removed Eye icon
 import { showSuccess, showError } from "@/utils/toast";
+import { useOrders, OrderItem, POItem } from "@/context/OrdersContext"; // Import POItem
+import ConfirmDialog from "@/components/ConfirmDialog"; // Import ConfirmDialog
 import PurchaseOrderPdfContent from "@/components/PurchaseOrderPdfContent"; // Corrected import path
-import { useOnboarding } from "@/context/OnboardingContext";
-import { generateSequentialNumber } from "@/utils/numberGenerator";
-import { formatPhoneNumber } from "@/utils/formatters";
-import { useOrders, POItem } from "@/context/OrdersContext";
-import InventorySelectionDialog from "@/components/InventorySelectionDialog";
-import { InventoryItem } from "@/context/InventoryContext";
-import { usePrint } from "@/context/PrintContext";
+import { useOnboarding } from "@/context/OnboardingContext"; // Import useOnboarding for company profile
+import { usePrint } from "@/context/PrintContext"; // Import usePrint
 import {
   DndContext,
   closestCenter,
@@ -63,7 +66,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 10 : 0,
-    position: 'relative' as 'relative', // Explicitly set position to 'relative'
+    position: 'relative', // Changed from 'relative' as const
     opacity: isDragging ? 0.8 : 1,
   };
 

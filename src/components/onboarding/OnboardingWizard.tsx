@@ -1,19 +1,11 @@
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import CompanyProfileStep from "./CompanyProfileStep";
+import { CompanyProfileStepProps } from "./CompanyProfileStep"; // Import the interface
 import LocationSetupStep from "./LocationSetupStep";
+import { LocationSetupStepProps } from "./LocationSetupStep"; // Import the interface
 // import ProductImportStep from "./ProductImportStep"; // Removed
 import { useOnboarding } from "@/context/OnboardingContext";
-
-interface CompanyProfileStepProps {
-  onNext: () => void;
-  onBack?: () => void; // Added onBack prop
-}
-
-interface LocationSetupStepProps {
-  onNext: () => void;
-  onBack: () => void;
-}
 
 const OnboardingWizard: React.FC = () => {
   const { isOnboardingComplete, markOnboardingComplete } = useOnboarding();

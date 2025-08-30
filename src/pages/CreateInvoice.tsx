@@ -64,7 +64,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 10 : 0,
-    position: 'relative' as const, // Explicitly set position to 'relative'
+    position: 'relative', // Changed from 'relative' as const
     opacity: isDragging ? 0.8 : 1,
   };
 

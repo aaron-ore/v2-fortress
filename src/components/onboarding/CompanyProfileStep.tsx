@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useOnboarding } from "@/context/OnboardingContext";
 import { showError } from "@/utils/toast";
 
-interface CompanyProfileStepProps {
+export interface CompanyProfileStepProps { // Exported interface
   onNext: () => void;
   onBack?: () => void; // Added onBack prop
 }

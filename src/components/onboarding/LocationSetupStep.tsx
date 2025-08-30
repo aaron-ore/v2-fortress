@@ -6,7 +6,7 @@ import { useOnboarding } from "@/context/OnboardingContext";
 import { showSuccess, showError } from "@/utils/toast";
 import { XCircle } from "lucide-react";
 
-interface LocationSetupStepProps {
+export interface LocationSetupStepProps { // Exported interface
   onNext: () => void;
   onBack: () => void;
 }

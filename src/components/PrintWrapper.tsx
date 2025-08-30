@@ -3,6 +3,10 @@ import PurchaseOrderPdfContent from "./PurchaseOrderPdfContent";
 import InvoicePdfContent from "./InvoicePdfContent";
 import DashboardSummaryPdfContent from "./DashboardSummaryPdfContent"; // New import
 import { PrintContentData } from "@/context/PrintContext"; // Only import the interface
+import AdvancedDemandForecastPdfContent from "./AdvancedDemandForecastPdfContent"; // NEW
+import PutawayLabelPdfContent from "./PutawayLabelPdfContent"; // NEW
+import LocationLabelPdfContent from "./LocationLabelPdfContent"; // NEW
+import PickingWavePdfContent from "./PickingWavePdfContent"; // NEW
 
 interface PrintWrapperProps {
   contentData: PrintContentData;
