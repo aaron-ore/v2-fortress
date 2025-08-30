@@ -206,7 +206,9 @@ const App = () => (
         <ProfileProvider>
             <OnboardingProvider>
               <PrintProvider>
-                <AppContent />
+                <TooltipProvider> {/* Moved TooltipProvider here */}
+                  <AppContent />
+                </TooltipProvider>
               </PrintProvider>
             </OnboardingProvider>
         </ProfileProvider>

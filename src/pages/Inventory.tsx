@@ -35,7 +35,7 @@ import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
 import { useOnboarding } from "@/context/OnboardingContext"; // Import useOnboarding
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"; // Removed TooltipProvider
 import { showError, showSuccess } from "@/utils/toast";
 
 // Custom components for the new UI
@@ -119,40 +119,38 @@ export const createInventoryColumns = (deleteItem: (id: string, name: string) =>
     id: "actions",
     header: "Actions",
     cell: ({ row }) => (
-      <TooltipProvider> {/* Moved TooltipProvider to wrap the entire cell */}
-        <div className="flex space-x-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" onClick={() => navigate(`/inventory/${row.original.id}`)}>
-                <Eye className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>View Details</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" onClick={() => navigate(`/inventory/${row.original.id}`)}>
-                <Edit className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Edit Item</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="destructive" size="icon" onClick={() => deleteItem(row.original.id, row.original.name)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Delete Item</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </TooltipProvider>
+      <div className="flex space-x-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="outline" size="icon" onClick={() => navigate(`/inventory/${row.original.id}`)}>
+              <Eye className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>View Details</p>
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="outline" size="icon" onClick={() => navigate(`/inventory/${row.original.id}`)}>
+              <Edit className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Edit Item</p>
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="destructive" size="icon" onClick={() => deleteItem(row.original.id, row.original.name)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Delete Item</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
     ),
   },
 ];
@@ -311,38 +309,34 @@ const Inventory: React.FC = () => {
         </Select>
 
         <div className="flex items-center ml-auto space-x-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={viewMode === "table" ? "secondary" : "outline"}
-                  size="icon"
-                  onClick={() => setViewMode("table")}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Table View</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={viewMode === "card" ? "secondary" : "outline"}
-                  size="icon"
-                  onClick={() => setViewMode("card")}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Card View</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={viewMode === "table" ? "secondary" : "outline"}
+                size="icon"
+                onClick={() => setViewMode("table")}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Table View</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={viewMode === "card" ? "secondary" : "outline"}
+                size="icon"
+                onClick={() => setViewMode("card")}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Card View</p>
+            </TooltipContent>
+          </Tooltip>
           {/* Removed Spreadsheet View Button */}
         </div>
       </div>
