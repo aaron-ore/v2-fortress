@@ -5,7 +5,7 @@ import { useProfile } from "./ProfileContext";
 import { mockCategories } from "@/utils/mockData";
 // REMOVED: import { useActivityLogs } from "./ActivityLogContext";
 
-interface Category {
+export interface Category {
   id: string;
   name: string;
   organizationId: string | null;
@@ -95,7 +95,11 @@ export const CategoryProvider: React.FC<{ children: ReactNode }> = ({ children }
         if (existingDbCategory) {
           setCategories((prev) => Array.from(new Set([...prev, existingDbCategory].map(c => JSON.stringify(c)))).map(s => JSON.parse(s)));
           // REMOVED: addActivity("Category Add Concurrently", `Category "${trimmedName}" already exists, added concurrently.`, { categoryName: trimmedName });
-          return existingDbCategory as Category;
+          return {
+            id: existingDbCategory.id,
+            name: existingDbCategory.name,
+            organizationId: existingDbCategory.organization_id,
+          } as Category;
         }
       }
       console.error("Error adding category:", error);

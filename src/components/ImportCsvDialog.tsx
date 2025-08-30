@@ -323,29 +323,6 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
     reader.readAsBinaryString(selectedFile);
   };
 
-  const checkForNewLocationsAndProceed = async (data: any[], actionForDuplicates: "skip" | "add_to_stock") => {
-    const uniqueLocationsInCsv = Array.from(new Set(data.map(row => String(row.location || '').trim())));
-    
-    const allExistingLocationsSet = new Set([
-      ...locations.map(loc => loc.toLowerCase()),
-      ...inventoryItems.map(item => item.location.toLowerCase())
-    ]);
-
-    const unseenLocations = uniqueLocationsInCsv.filter(loc => loc && !allExistingLocationsSet.has(loc.toLowerCase()));
-
-    if (unseenLocations.length > 0) {
-      setNewLocationsToConfirm(unseenLocations);
-      setIsConfirmNewLocationsDialogOpen(true);
-      setIsUploading(false); // Stop loading indicator until confirmation
-      setDuplicateAction(actionForDuplicates); // Pass the chosen duplicate action
-    } else {
-      // No new locations, proceed directly with processing
-      await processCsvData(data, [], actionForDuplicates);
-      setIsUploading(false);
-      setSelectedFile(null);
-    }
-  };
-
   const handleDownloadTemplate = () => {
     const csv = generateInventoryCsvTemplate();
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -483,7 +460,7 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
         onConfirm={handleConfirmAddLocations}
         title="New Locations Detected"
         description={
-          <>
+          <React.Fragment>
             The following new inventory locations were found in your CSV:
             <ul className="list-disc list-inside mt-2 ml-4 text-left">
               {newLocationsToConfirm.map((loc, index) => (
@@ -491,7 +468,7 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
               ))}
             </ul>
             Would you like to add these to your available locations? Items with these locations will only be imported if confirmed.
-          </>
+          </React.Fragment>
         }
         confirmText="Add Locations & Continue"
         cancelText="Cancel Import"

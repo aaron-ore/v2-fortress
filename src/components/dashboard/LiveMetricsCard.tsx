@@ -18,7 +18,7 @@ interface ProgressBarProps {
 const ProgressBar: React.FC<ProgressBarProps> = ({ value, color, label }) => (
   <div className="flex items-center gap-2">
     <span className="text-xs text-muted-foreground w-6 text-right">{label}</span>
-    <Progress value={value} className="h-2 flex-grow" indicatorColor={color} />
+    <Progress value={value} className="h-2 flex-grow" style={{ '--progress-background': color } as React.CSSProperties} />
   </div>
 );
 

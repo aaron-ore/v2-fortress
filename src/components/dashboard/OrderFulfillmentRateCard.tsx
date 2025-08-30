@@ -52,21 +52,22 @@ const OrderFulfillmentRateCard: React.FC = () => {
                   {data.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
-                  {/* Outer ring for visual effect */}
-                  <Pie
-                    data={[{ value: 100 }]}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={85}
-                    outerRadius={90}
-                    fill="hsl(var(--primary))"
-                    startAngle={90}
-                    endAngle={-270}
-                    cornerRadius={5}
-                    isAnimationActive={false}
-                    fillOpacity={0.2}
-                  />
                 </Pie>
+                {/* Outer ring for visual effect */}
+                <Pie
+                  data={[{ value: 100 }]}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={85}
+                  outerRadius={90}
+                  fill="hsl(var(--primary))"
+                  startAngle={90}
+                  endAngle={-270}
+                  cornerRadius={5}
+                  isAnimationActive={false}
+                  fillOpacity={0.2}
+                  dataKey="value" // Added dataKey
+                />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
