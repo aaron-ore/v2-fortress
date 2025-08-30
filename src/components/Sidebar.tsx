@@ -37,7 +37,7 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { useNotifications } from "@/context/NotificationContext";
-import { useProfile } from "@/context/ProfileContext";
+import { useProfile, UserProfile } from "@/context/ProfileContext"; // Import UserProfile
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import NotificationSheet from "./NotificationSheet";
@@ -56,6 +56,112 @@ interface SidebarProps {
   minSize?: number;
   maxSize?: number;
 }
+
+interface SidebarNavItemProps {
+  item: NavItem;
+  isCollapsed: boolean;
+  isActive: (href: string) => boolean;
+  profile: UserProfile | null;
+  unreadCount: number;
+  navigate: ReturnType<typeof useNavigate>;
+}
+
+const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
+  item,
+  isCollapsed,
+  isActive,
+  profile,
+  unreadCount,
+  navigate,
+}) => {
+  const currentIsActive = isActive(item.href);
+
+  if (item.adminOnly && profile?.role !== 'admin') {
+    return null;
+  }
+
+  const baseButtonClass = "h-10 w-full justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors";
+  const activeClass = "bg-primary text-primary-foreground hover:bg-primary/90";
+  const inactiveClass = "text-muted-foreground hover:bg-muted/20 hover:text-foreground";
+
+  if (item.isParent && item.children) {
+    return (
+      <Accordion type="single" collapsible key={item.title} className="w-full">
+        <AccordionItem value={item.title} className="border-none">
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <AccordionTrigger className={cn(
+                  baseButtonClass,
+                  isCollapsed ? "justify-center" : "justify-start",
+                  currentIsActive ? activeClass : inactiveClass,
+                  "hover:no-underline"
+                )}>
+                  <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+                  {!isCollapsed && (
+                    <span className="truncate">{item.title}</span>
+                  )}
+                  {isCollapsed && <span className="sr-only">{item.title}</span>}
+                </AccordionTrigger>
+              </TooltipTrigger>
+              {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
+            </Tooltip>
+          </AccordionItem>
+          <AccordionContent className="pb-1">
+            <div className={cn("space-y-1", "ml-4 border-l border-muted/30 pl-2")}>
+              {item.children.map(child => (
+                <SidebarNavItem
+                  key={child.title}
+                  item={child}
+                  isCollapsed={isCollapsed}
+                  isActive={isActive}
+                  profile={profile}
+                  unreadCount={unreadCount}
+                  navigate={navigate}
+                />
+              ))}
+            </div>
+          </AccordionContent>
+        </Accordion>
+    );
+  }
+
+  return (
+    <TooltipProvider key={item.title} delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            className={cn(
+              baseButtonClass,
+              isCollapsed ? "justify-center" : "justify-start",
+              currentIsActive ? activeClass : inactiveClass,
+            )}
+            onClick={() => {
+              if (item.action) {
+                item.action();
+              } else {
+                navigate(item.href);
+              }
+            }}
+          >
+            <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+            {!isCollapsed && (
+              <span className="truncate">{item.title}</span>
+            )}
+            {item.title === "Notifications" && unreadCount > 0 && !isCollapsed && (
+              <span className="ml-auto px-2 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full">
+                {unreadCount}
+              </span>
+            )}
+          </Button>
+        </TooltipTrigger>
+        {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
+
 
 const Sidebar: React.FC<SidebarProps> = ({
   defaultSize = 18,
@@ -93,87 +199,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     } else {
       showSuccess("Logged out successfully!");
     }
-  };
-
-  // Helper function for rendering individual nav items (including nested ones)
-  const renderItem = (item: NavItem, isSubItem = false) => {
-    const currentIsActive = isActive(item.href);
-
-    if (item.adminOnly && profile?.role !== 'admin') {
-      return null;
-    }
-
-    const baseButtonClass = "h-10 w-full justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors";
-    const activeClass = "bg-primary text-primary-foreground hover:bg-primary/90";
-    const inactiveClass = "text-muted-foreground hover:bg-muted/20 hover:text-foreground";
-
-    if (item.isParent && item.children) {
-      return (
-        <Accordion type="single" collapsible key={item.title} className="w-full">
-          <AccordionItem value={item.title} className="border-none">
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <AccordionTrigger className={cn(
-                    baseButtonClass,
-                    isCollapsed ? "justify-center" : "justify-start",
-                    currentIsActive ? activeClass : inactiveClass,
-                    "hover:no-underline"
-                  )}>
-                    <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
-                    {!isCollapsed && (
-                      <span className="truncate">{item.title}</span>
-                    )}
-                    {isCollapsed && <span className="sr-only">{item.title}</span>}
-                  </AccordionTrigger>
-                </TooltipTrigger>
-                {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
-              </Tooltip>
-            </TooltipProvider>
-            <AccordionContent className="pb-1">
-              <div className={cn("space-y-1", "ml-4 border-l border-muted/30 pl-2")}>
-                {item.children.map(child => renderItem(child, true))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      );
-    }
-
-    return (
-      <TooltipProvider key={item.title} delayDuration={0}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              className={cn(
-                baseButtonClass,
-                isCollapsed ? "justify-center" : "justify-start",
-                currentIsActive ? activeClass : inactiveClass,
-              )}
-              onClick={() => {
-                if (item.action) {
-                  item.action();
-                } else {
-                  navigate(item.href);
-                }
-              }}
-            >
-              <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
-              {!isCollapsed && (
-                <span className="truncate">{item.title}</span>
-              )}
-              {item.title === "Notifications" && unreadCount > 0 && !isCollapsed && (
-                <span className="ml-auto px-2 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full">
-                  {unreadCount}
-                </span>
-              )}
-            </Button>
-          </TooltipTrigger>
-          {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
-        </Tooltip>
-      </TooltipProvider>
-    );
   };
 
   return (
@@ -222,17 +247,47 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Main Navigation Area */}
         <ScrollArea className="flex-grow px-2 py-4">
           <div className="space-y-4">
-            {mainNavItems.map(item => renderItem(item))}
+            {mainNavItems.map(item => (
+              <SidebarNavItem
+                key={item.title}
+                item={item}
+                isCollapsed={isCollapsed}
+                isActive={isActive}
+                profile={profile}
+                unreadCount={unreadCount}
+                navigate={navigate}
+              />
+            ))}
 
             <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase">
               {!isCollapsed && "User & Account"}
             </div>
-            {userAndSettingsNavItems.map(item => renderItem(item))}
+            {userAndSettingsNavItems.map(item => (
+              <SidebarNavItem
+                key={item.title}
+                item={item}
+                isCollapsed={isCollapsed}
+                isActive={isActive}
+                profile={profile}
+                unreadCount={unreadCount}
+                navigate={navigate}
+              />
+            ))}
 
             <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase">
               {!isCollapsed && "Support & Resources"}
             </div>
-            {supportAndResourcesNavItems.map(item => renderItem(item))}
+            {supportAndResourcesNavItems.map(item => (
+              <SidebarNavItem
+                key={item.title}
+                item={item}
+                isCollapsed={isCollapsed}
+                isActive={isActive}
+                profile={profile}
+                unreadCount={unreadCount}
+                navigate={navigate}
+              />
+            ))}
           </div>
         </ScrollArea>
 
