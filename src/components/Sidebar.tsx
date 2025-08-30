@@ -55,6 +55,32 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
   const activeLinkClass = "text-sidebar-active-foreground bg-sidebar-active-background hover:bg-sidebar-active-background/80";
   const inactiveLinkClass = "text-sidebar-foreground hover:bg-sidebar-background/50";
 
+  const renderFortressLogo = (isCollapsedState: boolean) => (
+    <div className={cn("flex items-center space-x-2", isCollapsedState && "justify-center")}>
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="text-primary"
+      >
+        <path
+          d="M12 2L2 12L12 22L22 12L12 2Z"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M12 2L2 12L12 22L22 12L12 2Z"
+          fill="currentColor"
+          fillOpacity="0.2"
+        />
+      </svg>
+      {!isCollapsedState && <span className="text-xl font-semibold text-foreground">Fortress</span>}
+    </div>
+  );
+
   const renderNavItems = (items: NavItem[], isSubItem = false) => (
     <div className={cn("space-y-1", isSubItem && "ml-4 border-l border-sidebar-border pl-2")}>
       {items.map((item) => {
@@ -140,47 +166,35 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
     <div
       className={cn(
         "fixed top-0 left-0 h-screen flex flex-col bg-sidebar-background text-sidebar-foreground transition-all duration-200 z-30 border-r border-sidebar-border",
-        isCollapsed ? "w-[80px]" : "w-[280px]", // Adjusted widths for better spacing
+        isCollapsed ? "w-[80px]" : "w-[280px]",
       )}
     >
-      {/* Header with Logo and Title */}
+      {/* Header with Logo and Toggle Button */}
       <div className={cn("flex items-center h-[60px] px-4 flex-shrink-0", isCollapsed ? "justify-center" : "justify-between")}>
-        <div className={cn("flex items-center space-x-2", isCollapsed && "hidden")}>
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="text-primary"
+        {renderFortressLogo(isCollapsed)}
+        {!isCollapsed && ( // Toggle button only visible when expanded, to the right of the full logo
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleCollapse}
+            className="h-9 w-9 rounded-full bg-sidebar-toggle-background text-sidebar-foreground hover:bg-sidebar-toggle-background/80"
           >
-            <path
-              d="M12 2L2 12L12 22L22 12L12 2Z"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M12 2L2 12L12 22L22 12L12 2Z"
-              fill="currentColor"
-              fillOpacity="0.2"
-            />
-          </svg>
-          <span className="text-xl font-semibold text-foreground">Fortress</span>
-        </div>
-        {/* Toggle button inside sidebar header */}
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+        )}
+      </div>
+
+      {/* Notch Toggle Button - visible only when collapsed */}
+      {isCollapsed && (
         <Button
           variant="ghost"
           size="icon"
           onClick={onToggleCollapse}
-          className={cn(
-            "h-9 w-9 rounded-full bg-sidebar-toggle-background text-sidebar-foreground hover:bg-sidebar-toggle-background/80",
-            isCollapsed ? "ml-auto" : "ml-auto" // Position to the right of logo when expanded, or centered when collapsed
-          )}
+          className="absolute top-4 -right-5 h-10 w-10 rounded-full bg-sidebar-toggle-background text-sidebar-foreground hover:bg-sidebar-toggle-background/80 shadow-md border border-sidebar-border"
         >
-          {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+          <ChevronRight className="h-5 w-5" />
         </Button>
-      </div>
+      )}
 
       {/* User Profile Section */}
       {!isCollapsed && profile && (

@@ -7,8 +7,6 @@ import Sidebar from "./Sidebar"; // Import the new Sidebar
 import { useIsMobile } from "@/hooks/use-mobile";
 import NotificationSheet from "./NotificationSheet";
 import GlobalSearchDialog from "./GlobalSearchDialog";
-import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react"; // Only ChevronRight for desktop toggle
 import { cn } from "@/lib/utils";
 
 const Layout: React.FC = () => {
@@ -53,9 +51,9 @@ const Layout: React.FC = () => {
           <div
             className={cn(
               "flex-grow flex flex-col h-screen overflow-y-auto p-6 transition-all duration-200",
-              isSidebarCollapsed ? `ml-[${sidebarWidthCollapsed}px]` : `ml-[${sidebarWidthExpanded}px]`,
-              "space-y-6" // Spacing between floating header, announcement, and main content
+              "space-y-6"
             )}
+            style={{ marginLeft: isSidebarCollapsed ? sidebarWidthCollapsed : sidebarWidthExpanded }}
           >
             <Header
               setIsNotificationSheetOpen={setIsNotificationSheetOpen}
