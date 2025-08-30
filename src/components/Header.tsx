@@ -73,30 +73,31 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
     <header className="bg-card border-b border-border px-4 py-3 flex items-center justify-between h-[60px] flex-shrink-0">
       <div className="flex items-center space-x-4">
         {isMobile && <MobileNav />}
-        {/* Logo and text - always visible in header */}
-        <div className="flex items-center space-x-2">
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="text-primary"
-          >
-            <path
-              d="M12 2L2 12L12 22L22 12L12 2Z"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M12 2L2 12L12 22L22 12L12 2Z"
-              fill="currentColor"
-              fillOpacity="0.2"
-            />
-          </svg>
-          <span className="text-xl font-semibold text-foreground">Fortress</span>
-        </div>
+        {isMobile && ( // Only show logo in header for mobile
+          <div className="flex items-center space-x-2">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-primary"
+            >
+              <path
+                d="M12 2L2 12L12 22L22 12L12 2Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 2L2 12L12 22L22 12L12 2Z"
+                fill="currentColor"
+                fillOpacity="0.2"
+              />
+            </svg>
+            <span className="text-xl font-semibold text-foreground">Fortress</span>
+          </div>
+        )}
       </div>
 
       {/* Right-side Icons and Date/Time (Conditional for Mobile/Desktop) */}

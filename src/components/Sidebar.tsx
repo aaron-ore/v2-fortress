@@ -155,28 +155,55 @@ const Sidebar: React.FC<SidebarProps> = () => {
         isCollapsed ? "w-[60px]" : "w-[250px]",
       )}
     >
-      {/* Top Section: Toggle Button */}
-      <div className="flex items-center p-4 h-[60px] flex-shrink-0">
+      {/* Top Section: Logo and Toggle Button */}
+      <div className="flex items-center justify-between p-4 h-[60px] flex-shrink-0">
+        {/* Logo on the left */}
+        <div className="flex items-center space-x-2">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="text-primary"
+          >
+            <path
+              d="M12 2L2 12L12 22L22 12L12 2Z"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 2L2 12L12 22L22 12L12 2Z"
+              fill="currentColor"
+              fillOpacity="0.2"
+            />
+          </svg>
+          {!isCollapsed && ( // Show "Fortress" text only when expanded
+            <span className="text-xl font-semibold text-foreground">Fortress</span>
+          )}
+        </div>
+
+        {/* Toggle Button on the right */}
         <Button
           variant="ghost"
           size="icon"
           className={cn(
-            "h-10 w-10", // Consistent button size
-            isCollapsed ? "mx-auto px-0" : "ml-auto", // Centered and no horizontal padding when collapsed
+            "h-9 w-9", // Consistent button size
             "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
           )}
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
           {isCollapsed ? (
-            <Menu className="h-6 w-6" /> // Increased icon size
+            <Menu className="h-5 w-5" /> // Hamburger to expand when collapsed
           ) : (
-            <ChevronLeft className="h-6 w-6" /> // Increased icon size
+            <ChevronLeft className="h-5 w-5" /> // Chevron to collapse when expanded
           )}
         </Button>
       </div>
 
       {/* Main Navigation Area */}
-      <ScrollArea className="flex-grow h-full px-2 py-4"> {/* Added h-full to ensure ScrollArea takes full height */}
+      <ScrollArea className="flex-grow px-2 py-4">
         <div className="space-y-4">
           {mainNavItems.map(item => (
             <SidebarNavItem

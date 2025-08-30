@@ -33,7 +33,7 @@ const Layout: React.FC = () => {
       ) : (
         <div className="flex h-full">
           <Sidebar />
-          <div className="flex-grow flex flex-col">
+          <div className="flex-grow flex flex-col overflow-y-auto"> {/* Added overflow-y-auto here */}
             <Header
               setIsNotificationSheetOpen={setIsNotificationSheetOpen}
               setIsGlobalSearchDialogOpen={setIsGlobalSearchDialogOpen}
@@ -43,7 +43,7 @@ const Layout: React.FC = () => {
               linkTo="/setup-instructions"
               linkText="Click here"
             />
-            <main className="flex-grow p-6 container mx-auto overflow-y-auto">
+            <main className="flex-grow p-6 container mx-auto"> {/* Removed overflow-y-auto here */}
               <Outlet />
             </main>
           </div>
