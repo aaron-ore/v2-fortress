@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import * as React from "react"; // Changed to namespace import
+import { Fragment, useState, useEffect } from "react"; // Explicitly import Fragment
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import * as ResizableComponents from "react-resizable-panels"; // Namespace import
 import { cn } from "@/lib/utils";
@@ -130,18 +131,18 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </TooltipTrigger>
                   {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
                 </Tooltip>
-              </TooltipProvider>
-              <AccordionContent className="pb-1">
-                <div className={cn("space-y-1", "ml-4 border-l border-muted/30 pl-2")}>
-                  {renderNavItems(item.children, true)}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+              </AccordionItem>
+            </Accordion>
+            <AccordionContent className="pb-1">
+              <div className={cn("space-y-1", "ml-4 border-l border-muted/30 pl-2")}>
+                {renderNavItems(item.children, true)}
+              </div>
+            </AccordionContent>
           </Accordion>
         );
       } else {
         renderedItems.push(
-          <React.Fragment key={item.title}>
+          <Fragment key={item.title}> {/* Changed to Fragment */}
             <TooltipProvider delayDuration={0}>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -170,7 +171,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </TooltipTrigger>
                 {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
               </Tooltip>
-            </React.Fragment>
+            </TooltipProvider>
+          </Fragment>
         );
       }
     });
