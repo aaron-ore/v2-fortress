@@ -56,7 +56,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ onOrderClick, filteredOrders 
     if (!activeOrder) return;
 
     const sourceColumnStatus = activeOrder.status;
-    const targetColumnStatusCandidate = columns.find(col => col.id === overId)?.status;
+    // Explicitly type targetColumnStatusCandidate to help TypeScript with union types
+    const targetColumnStatusCandidate: OrderItem['status'] | undefined = columns.find(col => col.id === overId)?.status;
 
     // Ensure targetColumnStatus is a valid OrderItem['status'] or default to source
     const targetColumnStatus: OrderItem['status'] = targetColumnStatusCandidate || sourceColumnStatus;

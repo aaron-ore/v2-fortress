@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -21,13 +21,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Trash2, Archive, Printer } from "lucide-react"; // Removed Eye icon
+import { PlusCircle, Trash2, Archive, Printer, PackageOpen } from "lucide-react"; // Added PackageOpen
 import { showSuccess, showError } from "@/utils/toast";
-import { useOrders, OrderItem, POItem } from "@/context/OrdersContext"; // Import POItem
-import ConfirmDialog from "@/components/ConfirmDialog"; // Import ConfirmDialog
-import PurchaseOrderPdfContent from "@/components/PurchaseOrderPdfContent"; // Corrected import path
-import { useOnboarding } from "@/context/OnboardingContext"; // Import useOnboarding for company profile
-import { usePrint } from "@/context/PrintContext"; // Import usePrint
+import { useOrders, POItem } from "@/context/OrdersContext";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import PurchaseOrderPdfContent from "@/components/PurchaseOrderPdfContent";
+import { useOnboarding } from "@/context/OnboardingContext";
+import { usePrint } from "@/context/PrintContext";
+import { generateSequentialNumber } from "@/utils/numberGenerator"; // Imported generateSequentialNumber
+import { formatPhoneNumber } from "@/utils/formatters"; // Imported formatPhoneNumber
+import InventorySelectionDialog from "@/components/InventorySelectionDialog"; // Imported InventorySelectionDialog
+import { InventoryItem } from "@/context/InventoryContext"; // Imported InventoryItem
+
 import {
   DndContext,
   closestCenter,
@@ -66,7 +71,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 10 : 0,
-    position: 'relative', // Changed from 'relative' as const
+    position: 'relative' as const, // Corrected: Added 'as const'
     opacity: isDragging ? 0.8 : 1,
   };
 

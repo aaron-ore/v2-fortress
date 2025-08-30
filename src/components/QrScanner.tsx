@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useImperativeHandle, forwardRef, useState, useCallback } from "react";
-import { Html5Qrcode, Html5QrcodeSupportedFormats, Html5QrcodeFullConfig, Html5QrcodeScanConfig } from "html5-qrcode"; // Import Html5QrcodeFullConfig and Html5QrcodeScanConfig
+import { Html5Qrcode, Html5QrcodeSupportedFormats, Html5QrcodeFullConfig, Html5QrcodeCameraScanConfig } from "html5-qrcode"; // Corrected: Html5QrcodeScanConfig to Html5QrcodeCameraScanConfig
 import { QrReader } from 'react-qr-reader';
 
 export interface QrScannerRef {
@@ -34,7 +34,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       verbose: false,
     };
 
-    const html5QrcodeScanConfig: Html5QrcodeScanConfig = { // Config for the start method (renamed from html5QrcodeCameraScanConfig)
+    const html5QrcodeCameraScanConfig: Html5QrcodeCameraScanConfig = { // Corrected: Renamed from html5QrcodeScanConfig
       fps: 10,
       qrbox: { width: 250, height: 250 },
       aspectRatio: 1.0,
@@ -93,7 +93,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
 
         await newScanner.start(
           constraints,
-          html5QrcodeScanConfig, // Pass the html5QrcodeScanConfig object here
+          html5QrcodeCameraScanConfig, // Corrected: Pass the html5QrcodeCameraScanConfig object here
           (decodedText) => {
             if (isMounted.current) {
               console.log(`[QrScanner - ${strategyName}] Scan successful:`, decodedText);
@@ -120,7 +120,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         }
         return false;
       }
-    }, [onScan, onReady, stopAndClearHtml5Qrcode, html5QrcodeConstructorConfig, html5QrcodeScanConfig]);
+    }, [onScan, onReady, stopAndClearHtml5Qrcode, html5QrcodeConstructorConfig, html5QrcodeCameraScanConfig]);
 
 
     const attemptStrategies = useCallback(async () => {
@@ -140,7 +140,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       const cameras = await Html5Qrcode.getCameras().catch(e => {
         console.warn("[QrScanner] Failed to get camera list:", e);
         return [];
-      });
+      );
       console.log("[QrScanner] Available cameras:", cameras);
 
       const strategies = [
