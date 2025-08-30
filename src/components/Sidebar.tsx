@@ -12,36 +12,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  LayoutDashboard,
-  Package,
-  Receipt,
-  Truck,
-  BarChart,
-  Warehouse,
-  Search,
-  Bell,
-  User,
-  LogOut,
-  Settings as SettingsIcon,
-  ChevronLeft,
-  ChevronRight,
-  MoreVertical,
+  Menu, // Changed to Menu for hamburger
+  ChevronLeft, // For expanded state
+  LogOut, // Still needed for logout in user dropdown
 } from "lucide-react";
 import { useNotifications } from "@/context/NotificationContext";
 import { useProfile, UserProfile } from "@/context/ProfileContext";
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
-import NotificationSheet from "./NotificationSheet";
-import GlobalSearchDialog from "./GlobalSearchDialog";
-import { mainNavItems, userAndSettingsNavItems, supportAndResourcesNavItems, NavItem } from "@/lib/navigation";
+import { mainNavItems, NavItem } from "@/lib/navigation"; // Removed userAndSettingsNavItems, supportAndResourcesNavItems
 import {
   Accordion,
   AccordionContent,
@@ -50,7 +29,7 @@ import {
 } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface SidebarProps {} // Removed unused props
+interface SidebarProps {}
 
 interface SidebarNavItemProps {
   item: NavItem;
@@ -152,15 +131,13 @@ const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
 };
 
 
-const Sidebar: React.FC<SidebarProps> = () => { // Removed unused props
+const Sidebar: React.FC<SidebarProps> = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
-  const [isGlobalSearchDialogOpen, setIsGlobalSearchDialogOpen] = useState(false);
 
   // Determine if a given href is active or part of an active parent
   const isActive = (href: string) => {
@@ -170,22 +147,6 @@ const Sidebar: React.FC<SidebarProps> = () => { // Removed unused props
     return location.pathname.startsWith(href);
   };
 
-  const handleLogout = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      showSuccess("You are already logged out.");
-      navigate("/auth");
-      return;
-    }
-
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      showError("Failed to log out: " + error.message);
-    } else {
-      showSuccess("Logged out successfully!");
-    }
-  };
-
   return (
     <div
       className={cn(
@@ -193,33 +154,20 @@ const Sidebar: React.FC<SidebarProps> = () => { // Removed unused props
         isCollapsed ? "w-[60px]" : "w-[250px]",
       )}
     >
-      {/* Top Section: Logo */}
-      <div className="flex items-center justify-between p-4 h-[60px] flex-shrink-0">
-        <div className={cn("flex items-center space-x-2", isCollapsed && "justify-center w-full")}>
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="text-primary"
-          >
-            <path
-              d="M12 2L2 12L12 22L22 12L12 2Z"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M12 2L2 12L12 22L22 12L12 2Z"
-              fill="currentColor"
-              fillOpacity="0.2"
-            />
-          </svg>
-          {!isCollapsed && (
-            <span className="text-xl font-semibold text-foreground">Fortress</span>
+      {/* Top Section: Toggle Button */}
+      <div className="flex items-center p-4 h-[60px] flex-shrink-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn("h-9 w-9", isCollapsed ? "mx-auto" : "ml-auto")} // Centered when collapsed, right-aligned when expanded
+          onClick={() => setIsCollapsed(!isCollapsed)}
+        >
+          {isCollapsed ? (
+            <Menu className="h-5 w-5" /> // Hamburger when collapsed
+          ) : (
+            <ChevronLeft className="h-5 w-5" /> // Chevron left when expanded
           )}
-        </div>
+        </Button>
       </div>
 
       {/* Main Navigation Area */}
@@ -237,155 +185,11 @@ const Sidebar: React.FC<SidebarProps> = () => { // Removed unused props
             />
           ))}
 
-          <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase">
-            {!isCollapsed && "User & Account"}
-          </div>
-          {userAndSettingsNavItems.map(item => (
-            <SidebarNavItem
-              key={item.title}
-              item={item}
-              isCollapsed={isCollapsed}
-              isActive={isActive}
-              profile={profile}
-              unreadCount={unreadCount}
-              navigate={navigate}
-            />
-          ))}
-
-          <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase">
-            {!isCollapsed && "Support & Resources"}
-          </div>
-          {supportAndResourcesNavItems.map(item => (
-            <SidebarNavItem
-              key={item.title}
-              item={item}
-              isCollapsed={isCollapsed}
-              isActive={isActive}
-              profile={profile}
-              unreadCount={unreadCount}
-              navigate={navigate}
-            />
-          ))}
+          {/* Removed User & Account and Support & Resources sections from sidebar */}
         </div>
       </ScrollArea>
 
-      {/* Bottom Section: Global Search, Notifications, User Dropdown, Collapse Button */}
-      <div className="mt-auto p-2 border-t border-border flex-shrink-0">
-        <div className="flex flex-col space-y-1">
-          {/* Global Search & Notifications */}
-          <div className="flex items-center justify-between px-1">
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={() => setIsGlobalSearchDialogOpen(true)} className="h-9 w-9">
-                    <Search className="h-5 w-5 text-muted-foreground" />
-                  </Button>
-                </TooltipTrigger>
-                {isCollapsed && <TooltipContent side="right">Global Search</TooltipContent>}
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="relative h-9 w-9"
-                    onClick={() => setIsNotificationSheetOpen(true)}
-                  >
-                    <Bell className="h-5 w-5 text-muted-foreground" />
-                    {unreadCount > 0 && (
-                      <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                {isCollapsed && <TooltipContent side="right">Notifications</TooltipContent>}
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-
-          {/* User Profile Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className={cn(
-                  "h-10 w-full justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  isCollapsed ? "justify-center" : "justify-start",
-                  "text-muted-foreground hover:bg-muted/20 hover:text-foreground",
-                )}
-              >
-                <User className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
-                {!isCollapsed && (
-                  <span className="truncate">{profile?.fullName || "My Profile"}</span>
-                )}
-                {!isCollapsed && (
-                  <MoreVertical className="ml-auto h-4 w-4" />
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" side="right" align="end">
-              <DropdownMenuLabel>User & Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/profile")}>My Profile</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/account-settings")}>Account Settings</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/notifications-page")}>Notifications</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/billing")}>Billing & Subscriptions</DropdownMenuItem>
-              {profile?.role === 'admin' && (
-                <DropdownMenuItem onClick={() => navigate("/users")}>Users</DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/settings")}>Company Settings</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Support & Resources</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/help")}>Help Center</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/whats-new")}>What’s New?</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/setup-instructions")}>Setup Instructions</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:bg-destructive/10">
-                <LogOut className="h-4 w-4 mr-2" /> Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Collapse/Expand Button (Icon-based) */}
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "h-10 w-full justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    "text-muted-foreground hover:bg-muted/20 hover:text-foreground",
-                  )}
-                  onClick={() => setIsCollapsed(!isCollapsed)}
-                >
-                  {isCollapsed ? (
-                    <ChevronRight className="h-5 w-5" />
-                  ) : (
-                    <ChevronLeft className="h-5 w-5" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              {isCollapsed ? (
-                <TooltipContent side="right">Expand Sidebar</TooltipContent>
-              ) : (
-                <TooltipContent side="right">Collapse Sidebar</TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </div>
-
-      <NotificationSheet
-        isOpen={isNotificationSheetOpen}
-        onOpenChange={setIsNotificationSheetOpen}
-      />
-      <GlobalSearchDialog
-        isOpen={isGlobalSearchDialogOpen}
-        onClose={() => setIsGlobalSearchDialogOpen(false)}
-      />
+      {/* Removed entire bottom section (Global Search, Notifications, User Dropdown, old Collapse Button) */}
     </div>
   );
 };

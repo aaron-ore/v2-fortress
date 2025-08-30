@@ -26,6 +26,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Menu, // Added Menu icon for sidebar toggle
 } from "lucide-react";
 import React from "react";
 
@@ -84,8 +85,4 @@ export const supportAndResourcesNavItems: NavItem[] = [
   { title: "Setup Instructions", href: "/setup-instructions", icon: BookOpen },
 ];
 
-export const bottomNavItems: NavItem[] = [
-  { title: "Collapse Sidebar", href: "#", icon: ChevronLeft, mobileOnly: false }, // Placeholder for collapse button
-  { title: "Expand Sidebar", href: "#", icon: ChevronRight, mobileOnly: false }, // Placeholder for expand button
-  { title: "Logout", href: "/auth", icon: LogOut },
-];
+// Removed bottomNavItems as per new requirements. Logout will be in user dropdown.
