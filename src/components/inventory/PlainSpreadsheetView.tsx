@@ -1,3 +1,4 @@
+// This comment is added to force a re-evaluation of the file.
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Table,
@@ -301,7 +302,7 @@ const PlainSpreadsheetView: React.FC<PlainSpreadsheetViewProps> = ({
                   {renderCell(item, column.key)}
                 </TableCell>
               ))}
-            </TableRow> {/* This closing tag was missing */}
+            </TableRow>
           ))}
         </TableBody>
       </Table>
