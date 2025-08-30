@@ -37,18 +37,19 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { useNotifications } from "@/context/NotificationContext";
-import { useProfile, UserProfile } from "@/context/ProfileContext"; // Import UserProfile
+import { useProfile, UserProfile } from "@/context/ProfileContext";
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import NotificationSheet from "./NotificationSheet";
 import GlobalSearchDialog from "./GlobalSearchDialog";
 import { mainNavItems, userAndSettingsNavItems, supportAndResourcesNavItems, NavItem } from "@/lib/navigation";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+// Removed Accordion imports temporarily
+// import {
+//   Accordion,
+//   AccordionContent,
+//   AccordionItem,
+//   AccordionTrigger,
+// } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SidebarProps {
@@ -84,45 +85,40 @@ const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
   const activeClass = "bg-primary text-primary-foreground hover:bg-primary/90";
   const inactiveClass = "text-muted-foreground hover:bg-muted/20 hover:text-foreground";
 
+  // TEMPORARY WORKAROUND: Render parent items as simple buttons, not Accordions
   if (item.isParent && item.children) {
     return (
-      <Accordion type="single" collapsible key={item.title} className="w-full">
-        <AccordionItem value={item.title} className="border-none">
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <AccordionTrigger className={cn(
-                  baseButtonClass,
-                  isCollapsed ? "justify-center" : "justify-start",
-                  currentIsActive ? activeClass : inactiveClass,
-                  "hover:no-underline"
-                )}>
-                  <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
-                  {!isCollapsed && (
-                    <span className="truncate">{item.title}</span>
-                  )}
-                  {isCollapsed && <span className="sr-only">{item.title}</span>}
-                </AccordionTrigger>
-              </TooltipTrigger>
-              {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
-            </Tooltip>
-          </AccordionItem>
-          <AccordionContent className="pb-1">
-            <div className={cn("space-y-1", "ml-4 border-l border-muted/30 pl-2")}>
-              {item.children.map(child => (
-                <SidebarNavItem
-                  key={child.title}
-                  item={child}
-                  isCollapsed={isCollapsed}
-                  isActive={isActive}
-                  profile={profile}
-                  unreadCount={unreadCount}
-                  navigate={navigate}
-                />
-              ))}
-            </div>
-          </AccordionContent>
-        </Accordion>
+      <TooltipProvider key={item.title} delayDuration={0}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              className={cn(
+                baseButtonClass,
+                isCollapsed ? "justify-center" : "justify-start",
+                currentIsActive ? activeClass : inactiveClass,
+              )}
+              onClick={() => {
+                // For now, just navigate to the parent href or first child if available
+                if (item.action) {
+                  item.action();
+                } else if (item.href) {
+                  navigate(item.href);
+                } else if (item.children && item.children.length > 0) {
+                  navigate(item.children[0].href);
+                }
+              }}
+            >
+              <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+              {!isCollapsed && (
+                <span className="truncate">{item.title}</span>
+              )}
+              {isCollapsed && <span className="sr-only">{item.title}</span>}
+            </Button>
+          </TooltipTrigger>
+          {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
+        </Tooltip>
+      </TooltipProvider>
     );
   }
 
