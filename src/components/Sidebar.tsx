@@ -3,7 +3,6 @@
 import * as React from "react";
 import { Fragment, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-// import * as ResizableComponents from "react-resizable-panels"; // Removed
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,7 +42,6 @@ import { showError, showSuccess } from "@/utils/toast";
 import NotificationSheet from "./NotificationSheet";
 import GlobalSearchDialog from "./GlobalSearchDialog";
 import { mainNavItems, userAndSettingsNavItems, supportAndResourcesNavItems, NavItem } from "@/lib/navigation";
-// Re-enable Accordion imports
 import {
   Accordion,
   AccordionContent,
@@ -52,11 +50,7 @@ import {
 } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface SidebarProps {
-  // defaultSize?: number; // Removed
-  // minSize?: number; // Removed
-  // maxSize?: number; // Removed
-}
+interface SidebarProps {} // Removed unused props
 
 interface SidebarNavItemProps {
   item: NavItem;
@@ -85,7 +79,6 @@ const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
   const activeClass = "bg-primary text-primary-foreground hover:bg-primary/90";
   const inactiveClass = "text-muted-foreground hover:bg-muted/20 hover:text-foreground";
 
-  // Re-enable Accordion usage for parent items
   if (item.isParent && item.children) {
     return (
       <Accordion type="single" collapsible key={item.title} className="w-full">
@@ -94,11 +87,14 @@ const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
             baseButtonClass,
             "py-2 px-3 flex items-center justify-between",
             currentIsActive ? activeClass : inactiveClass,
-            "hover:no-underline"
+            "hover:no-underline",
+            isCollapsed && "justify-center" // Center icon when collapsed
           )}>
             <div className="flex items-center">
-              <item.icon className="h-5 w-5 mr-3" />
-              <span className="truncate">{item.title}</span>
+              <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+              {!isCollapsed && (
+                <span className="truncate">{item.title}</span>
+              )}
             </div>
           </AccordionTrigger>
           <AccordionContent className="pb-1">
@@ -106,7 +102,7 @@ const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
               <SidebarNavItem
                 key={child.title}
                 item={child}
-                isCollapsed={isCollapsed} // Children should also respect collapse state
+                isCollapsed={isCollapsed}
                 isActive={isActive}
                 profile={profile}
                 unreadCount={unreadCount}
@@ -156,11 +152,7 @@ const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
 };
 
 
-const Sidebar: React.FC<SidebarProps> = ({
-  // defaultSize = 18, // Removed
-  // minSize = 4, // Removed
-  // maxSize = 20, // Removed
-}) => {
+const Sidebar: React.FC<SidebarProps> = () => { // Removed unused props
   const location = useLocation();
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
@@ -195,13 +187,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    // Removed ResizableComponents.ResizablePanel wrapper
     <div
       className={cn(
-        "flex flex-col bg-card border-r border-border transition-all duration-200",
+        "flex flex-col bg-card border-r border-border transition-all duration-200 flex-shrink-0",
         isCollapsed ? "w-[60px]" : "w-[250px]",
       )}
-      // Removed onCollapse, onExpand, collapsible props
     >
       {/* Top Section: Logo */}
       <div className="flex items-center justify-between p-4 h-[60px] flex-shrink-0">
@@ -359,15 +349,14 @@ const Sidebar: React.FC<SidebarProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Collapse/Expand Button */}
+          {/* Collapse/Expand Button (Icon-based) */}
           <TooltipProvider delayDuration={0}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   className={cn(
-                    "h-10 w-full justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    isCollapsed ? "justify-center" : "justify-start",
+                    "h-10 w-full justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
                     "text-muted-foreground hover:bg-muted/20 hover:text-foreground",
                   )}
                   onClick={() => setIsCollapsed(!isCollapsed)}
@@ -375,14 +364,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                   {isCollapsed ? (
                     <ChevronRight className="h-5 w-5" />
                   ) : (
-                    <ChevronLeft className="h-5 w-5 mr-3" />
-                  )}
-                  {!isCollapsed && (
-                    <span className="truncate">{isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}</span>
+                    <ChevronLeft className="h-5 w-5" />
                   )}
                 </Button>
               </TooltipTrigger>
-              {isCollapsed && <TooltipContent side="right">{isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}</TooltipContent>}
+              {isCollapsed ? (
+                <TooltipContent side="right">Expand Sidebar</TooltipContent>
+              ) : (
+                <TooltipContent side="right">Collapse Sidebar</TooltipContent>
+              )}
             </Tooltip>
           </TooltipProvider>
         </div>

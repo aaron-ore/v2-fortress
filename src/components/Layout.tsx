@@ -3,9 +3,9 @@ import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import { MadeWithDyad } from "./made-with-dyad";
 import AnnouncementBar from "./AnnouncementBar";
-import Sidebar from "./Sidebar"; // Re-enabled
+import Sidebar from "./Sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
-// import * as ResizableComponents from "react-resizable-panels"; // Removed
+// Removed: import * as ResizableComponents from "react-resizable-panels";
 
 const Layout: React.FC = () => {
   const isMobile = useIsMobile();
@@ -25,7 +25,7 @@ const Layout: React.FC = () => {
           </main>
         </>
       ) : (
-        // Reverted to a fixed desktop layout without ResizableComponents
+        // Fixed desktop layout without ResizableComponents
         <div className="flex h-full">
           <Sidebar /> {/* Sidebar is now directly rendered */}
           <div className="flex-grow flex flex-col">
