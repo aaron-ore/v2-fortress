@@ -61,9 +61,9 @@ export default {
         "sidebar-toggle-background": "hsl(var(--sidebar-toggle-background))",
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "var(--radius)", // 0.75rem
+        md: "calc(var(--radius) - 3px)", // 0.75rem - 3px = 9px
+        sm: "calc(var(--radius) - 6px)", // 0.75rem - 6px = 6px
       },
       keyframes: {
         "accordion-down": {

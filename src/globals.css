@@ -40,6 +40,8 @@
     --sidebar-active-foreground: var(--primary-foreground);
     --sidebar-border: var(--border);
     --sidebar-toggle-background: var(--secondary);
+
+    --radius: 0.75rem; /* Increased default radius for more rounded corners */
   }
 
   /* Explicitly apply dark theme variables when html has 'dark' class */
