@@ -8,19 +8,16 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import NotificationSheet from "./NotificationSheet";
 import GlobalSearchDialog from "./GlobalSearchDialog";
 import { cn } from "@/lib/utils";
+import { useSidebar } from "@/context/SidebarContext"; // NEW: Import useSidebar
 
 const Layout: React.FC = () => {
   const isMobile = useIsMobile();
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
   const [isGlobalSearchDialogOpen, setIsGlobalSearchDialogOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // Default to expanded for better first impression
+  const { isCollapsed, onToggleCollapse } = useSidebar(); // NEW: Use SidebarContext
 
   const sidebarWidthCollapsed = 80; // Matches Sidebar.tsx collapsed width
   const sidebarWidthExpanded = 280; // Matches Sidebar.tsx expanded width
-
-  const handleToggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
-  };
 
   return (
     <div className="app-main-layout min-h-screen flex bg-background text-foreground">
@@ -45,7 +42,7 @@ const Layout: React.FC = () => {
       ) : (
         <>
           {/* Desktop Sidebar */}
-          <Sidebar isCollapsed={isSidebarCollapsed} onToggleCollapse={handleToggleSidebar} />
+          <Sidebar isCollapsed={isCollapsed} onToggleCollapse={onToggleCollapse} /> {/* NEW: Pass from context */}
 
           {/* Main Content Area */}
           <div
@@ -53,7 +50,7 @@ const Layout: React.FC = () => {
               "flex-grow flex flex-col h-screen overflow-y-auto p-6 transition-all duration-200",
               "space-y-6"
             )}
-            style={{ marginLeft: isSidebarCollapsed ? `${sidebarWidthCollapsed}px` : `${sidebarWidthExpanded}px` }}
+            style={{ marginLeft: isCollapsed ? `${sidebarWidthCollapsed}px` : `${sidebarWidthExpanded}px` }} {/* NEW: Use isCollapsed from context */}
           >
             <Header
               setIsNotificationSheetOpen={setIsNotificationSheetOpen}

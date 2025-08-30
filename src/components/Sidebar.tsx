@@ -18,17 +18,19 @@ import { LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSidebar } from "@/context/SidebarContext"; // NEW: Import useSidebar
 
 interface SidebarProps {
-  isCollapsed: boolean;
-  onToggleCollapse: () => void;
+  // isCollapsed: boolean; // REMOVED: No longer passed as prop
+  // onToggleCollapse: () => void; // REMOVED: No longer passed as prop
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
+const Sidebar: React.FC<SidebarProps> = () => { // REMOVED: Props from function signature
   const location = useLocation();
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
+  const { isCollapsed, onToggleCollapse } = useSidebar(); // NEW: Use SidebarContext
 
   const handleLogout = async () => {
     const { data: { session } = { session: null } } = await supabase.auth.getSession();

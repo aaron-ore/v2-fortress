@@ -50,6 +50,7 @@ import AutoReorderSettingsDialog from "@/components/AutoReorderSettingsDialog";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import InventoryItemQuickViewDialog from "@/components/InventoryItemQuickViewDialog";
 import AddInventoryDialog from "@/components/AddInventoryDialog"; // Use the existing AddInventoryDialog
+import { useSidebar } from "@/context/SidebarContext"; // NEW: Import useSidebar
 
 export const createInventoryColumns = (handleQuickView: (item: InventoryItem) => void): ColumnDef<InventoryItem>[] => [
   {
@@ -123,6 +124,7 @@ const Inventory: React.FC = () => {
   const { vendors } = useVendors();
   const { locations } = useOnboarding(); // Get locations from onboarding context
   const navigate = useNavigate();
+  const { isCollapsed } = useSidebar(); // NEW: Use isCollapsed from SidebarContext
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddInventoryDialogOpen, setIsAddInventoryDialogOpen] = useState(false); // Renamed for clarity
@@ -343,6 +345,7 @@ const Inventory: React.FC = () => {
                   onCreateOrder={handleCreateOrder}
                   onViewDetails={handleQuickView}
                   onDeleteItem={handleDeleteItemClick}
+                  isSidebarCollapsed={isCollapsed} {/* NEW: Pass isSidebarCollapsed */}
                 />
               )}
             </>

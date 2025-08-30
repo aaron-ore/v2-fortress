@@ -8,6 +8,7 @@ interface InventoryCardGridProps {
   onCreateOrder: (item: InventoryItem) => void;
   onViewDetails: (item: InventoryItem) => void;
   onDeleteItem: (itemId: string, itemName: string) => void;
+  isSidebarCollapsed: boolean; // NEW: Add isSidebarCollapsed prop
 }
 
 const InventoryCardGrid: React.FC<InventoryCardGridProps> = ({
@@ -16,6 +17,7 @@ const InventoryCardGrid: React.FC<InventoryCardGridProps> = ({
   onCreateOrder,
   onViewDetails,
   onDeleteItem,
+  isSidebarCollapsed, // NEW: Destructure isSidebarCollapsed
 }) => {
   if (items.length === 0) {
     return <p className="text-center text-muted-foreground py-8">No inventory items found.</p>;
@@ -31,6 +33,7 @@ const InventoryCardGrid: React.FC<InventoryCardGridProps> = ({
           onCreateOrder={onCreateOrder}
           onViewDetails={onViewDetails}
           onDeleteItem={onDeleteItem}
+          isSidebarCollapsed={isSidebarCollapsed} // NEW: Pass isSidebarCollapsed
         />
       ))}
     </div>

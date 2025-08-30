@@ -12,6 +12,7 @@ interface InventoryCardProps {
   onCreateOrder: (item: InventoryItem) => void;
   onViewDetails: (item: InventoryItem) => void;
   onDeleteItem: (itemId: string, itemName: string) => void; // Updated prop for delete
+  isSidebarCollapsed: boolean; // NEW: Add isSidebarCollapsed prop
 }
 
 const InventoryCard: React.FC<InventoryCardProps> = ({
@@ -20,6 +21,7 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
   onCreateOrder,
   onViewDetails,
   onDeleteItem,
+  isSidebarCollapsed, // NEW: Destructure isSidebarCollapsed
 }) => {
   let statusVariant: "success" | "warning" | "destructive" | "info" | "muted" = "info";
   switch (item.status) {
@@ -43,21 +45,23 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
         <Package className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent className="p-4 pt-0 flex-grow flex flex-col justify-between"> {/* Added flex-grow and flex-col justify-between */}
-        <div className="flex items-center justify-center h-24 bg-muted/30 rounded-md mb-3 overflow-hidden flex-shrink-0">
-          {item.imageUrl ? (
-            <img
-              src={item.imageUrl}
-              alt={item.name}
-              className="h-full w-full object-contain"
-            />
-          ) : (
-            <img
-              src="/placeholder.svg"
-              alt={item.name}
-              className="h-16 w-16 object-contain text-muted-foreground"
-            />
-          )}
-        </div>
+        {isSidebarCollapsed && ( // NEW: Conditionally render image
+          <div className="flex items-center justify-center h-24 bg-muted/30 rounded-md mb-3 overflow-hidden flex-shrink-0">
+            {item.imageUrl ? (
+              <img
+                src={item.imageUrl}
+                alt={item.name}
+                className="h-full w-full object-contain"
+              />
+            ) : (
+              <img
+                src="/placeholder.svg"
+                alt={item.name}
+                className="h-16 w-16 object-contain text-muted-foreground"
+              />
+            )}
+          </div>
+        )}
         <div className="text-sm text-muted-foreground mb-2 flex-shrink-0">
           <p className="flex items-center gap-1">
             <Tag className="h-3 w-3" /> SKU: {item.sku}
