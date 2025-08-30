@@ -2,12 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle, // Keep this for now, but we'll use ResizableComponents.ResizableHandle
-} from "react-resizable-panels";
-import * as ResizableComponents from "react-resizable-panels"; // NEW: Namespace import
+import * as ResizableComponents from "react-resizable-panels"; // Namespace import
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,6 +42,12 @@ import { showError, showSuccess } from "@/utils/toast";
 import NotificationSheet from "./NotificationSheet";
 import GlobalSearchDialog from "./GlobalSearchDialog";
 import { mainNavItems, userAndSettingsNavItems, supportAndResourcesNavItems } from "@/lib/navigation";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"; // Import Accordion components
 
 interface SidebarProps {
   defaultSize?: number;
@@ -99,9 +100,46 @@ const Sidebar: React.FC<SidebarProps> = ({
         const currentIsActive = isActive(item.href);
         const isParentActive = item.isParent && currentIsActive;
 
+        if (item.adminOnly && profile?.role !== 'admin') {
+          return null;
+        }
+
+        if (item.isParent && item.children) {
+          return (
+            <Accordion type="single" collapsible key={item.title} className="w-full">
+              <AccordionItem value={item.title} className="border-none">
+                <TooltipProvider key={item.title} delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <AccordionTrigger className={cn(
+                        "h-10 w-full justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                        isCollapsed ? "justify-center" : "justify-start",
+                        currentIsActive
+                          ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                          : "text-muted-foreground hover:bg-muted/20 hover:text-foreground",
+                        "hover:no-underline"
+                      )}>
+                        <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+                        {!isCollapsed && (
+                          <span className="truncate">{item.title}</span>
+                        )}
+                        {isCollapsed && <span className="sr-only">{item.title}</span>} {/* For accessibility when collapsed */}
+                      </AccordionTrigger>
+                    </TooltipTrigger>
+                    {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
+                  </Tooltip>
+                </TooltipProvider>
+                <AccordionContent className="pb-1">
+                  {renderNavItems(item.children, true)}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          );
+        }
+
         return (
           <React.Fragment key={item.title}>
-            <TooltipProvider key={item.title} delayDuration={0}>
+            <TooltipProvider delayDuration={0}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -114,9 +152,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         : "text-muted-foreground hover:bg-muted/20 hover:text-foreground",
                     )}
                     onClick={() => {
-                      if (item.isParent) {
-                        setActiveParent(activeParent === item.href ? null : item.href);
-                      } else if (item.action) {
+                      if (item.action) {
                         item.action();
                       } else {
                         navigate(item.href);
@@ -131,8 +167,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </TooltipTrigger>
                 {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
               </Tooltip>
-            </React.Fragment>
-          );
+            </TooltipProvider>
+          </React.Fragment>
+        );
       })}
     </div>
   );
