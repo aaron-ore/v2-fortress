@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import ConfirmDialog from "@/components/ConfirmDialog"; // Import ConfirmDialog
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { showSuccess, showError } from "@/utils/toast";
 import { PlusCircle, Trash2, MapPin } from "lucide-react";

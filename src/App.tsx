@@ -25,6 +25,7 @@ import CreateInvoice from "./pages/CreateInvoice";
 import SetupInstructions from "./pages/SetupInstructions";
 import WarehouseOperationsPage from "./pages/WarehouseOperationsPage";
 import ResetPassword from "./pages/ResetPassword";
+import LocationManagementPage from "./pages/LocationManagementPage"; // NEW: Import LocationManagementPage
 import { ThemeProvider } from "./components/ThemeProvider";
 import { InventoryProvider } from "./context/InventoryContext";
 import { OrdersProvider } from "./context/OrdersContext";
@@ -82,6 +83,7 @@ const AuthenticatedApp = () => {
                       <Route path="users" element={<Users />} />
                       <Route path="setup-instructions" element={<SetupInstructions />} />
                       <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
+                      <Route path="location-management" element={<LocationManagementPage />} /> {/* NEW: Route for LocationManagementPage */}
                       {/* REMOVED: <Route path="ai-summary" element={<AISummaryPage />} /> */}
                       <Route path="*" element={<NotFound />} />
                     </Route>

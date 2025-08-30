@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Package, Scan, Truck, CheckCircle, AlertTriangle, LayoutDashboard, Search as SearchIcon, ShoppingCart, QrCode, ListOrdered, Undo2 } from "lucide-react"; // NEW: Import ListOrdered and Undo2
+import { Package, Scan, Truck, CheckCircle, AlertTriangle, LayoutDashboard, Search as SearchIcon, ShoppingCart, QrCode, ListOrdered, Undo2, MapPin } from "lucide-react"; // NEW: Import MapPin
 import { useIsMobile } from "@/hooks/use-mobile";
 import ItemLookupTool from "@/components/warehouse-operations/ItemLookupTool";
 import ReceiveInventoryTool from "@/components/warehouse-operations/ReceiveInventoryTool";
@@ -13,16 +13,17 @@ import IssueReportTool from "@/components/warehouse-operations/IssueReportTool";
 import WarehouseDashboard from "@/components/warehouse-operations/WarehouseDashboard";
 import FulfillOrderTool from "@/components/warehouse-operations/FulfillOrderTool";
 import CameraScannerDialog from "@/components/CameraScannerDialog";
-import LocationLabelGenerator from "@/pages/LocationLabelGenerator";
-import PickingWaveManagementTool from "@/components/warehouse-operations/PickingWaveManagementTool"; // NEW: Import PickingWaveManagementTool
-import ReplenishmentManagementTool from "@/components/warehouse-operations/ReplenishmentManagementTool"; // NEW: Import ReplenishmentManagementTool
-import ShippingVerificationTool from "@/components/warehouse-operations/ShippingVerificationTool"; // NEW: Import ShippingVerificationTool
-import ReturnsProcessingTool from "@/components/warehouse-operations/ReturnsProcessingTool"; // NEW: Import ReturnsProcessingTool
+import PickingWaveManagementTool from "@/components/warehouse-operations/PickingWaveManagementTool";
+import ReplenishmentManagementTool from "@/components/warehouse-operations/ReplenishmentManagementTool";
+import ShippingVerificationTool from "@/components/warehouse-operations/ShippingVerificationTool";
+import ReturnsProcessingTool from "@/components/warehouse-operations/ReturnsProcessingTool";
 import { cn } from "@/lib/utils";
 import { showError } from "@/utils/toast";
+import { useNavigate } from "react-router-dom"; // NEW: Import useNavigate
 
 const WarehouseOperationsPage: React.FC = () => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate(); // NEW: Initialize useNavigate
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
   const [onScanCallback, setOnScanCallback] = useState<((scannedData: string) => void) | null>(null);
@@ -34,14 +35,14 @@ const WarehouseOperationsPage: React.FC = () => {
     { value: "receive-inventory", label: "Receive", icon: Package },
     { value: "fulfill-order", label: "Fulfill", icon: ShoppingCart },
     { value: "ship-order", label: "Ship", icon: Truck },
-    { value: "picking-wave", label: "Pick Wave", icon: ListOrdered }, // NEW
-    { value: "replenishment", label: "Replenish", icon: CheckCircle }, // NEW
-    { value: "shipping-verify", label: "Verify Ship", icon: Truck }, // NEW
-    { value: "returns-process", label: "Returns", icon: Undo2 }, // NEW
+    { value: "picking-wave", label: "Pick Wave", icon: ListOrdered },
+    { value: "replenishment", label: "Replenish", icon: CheckCircle },
+    { value: "shipping-verify", label: "Verify Ship", icon: Truck },
+    { value: "returns-process", label: "Returns", icon: Undo2 },
     { value: "stock-transfer", label: "Transfer", icon: Scan },
     { value: "cycle-count", label: "Count", icon: CheckCircle },
     { value: "issue-report", label: "Report Issue", icon: AlertTriangle },
-    { value: "location-label-generator", label: "Labels", icon: QrCode },
+    // REMOVED: { value: "location-label-generator", label: "Labels", icon: QrCode },
   ];
 
   const handleScanRequest = (callback: (scannedData: string) => void) => {
@@ -128,6 +129,20 @@ const WarehouseOperationsPage: React.FC = () => {
               <span className="text-xs sm:text-sm">{op.label}</span>
             </Button>
           ))}
+          {/* NEW: Button to navigate to Location Management Page */}
+          <Button
+            variant="ghost"
+            className={cn(
+              "flex flex-col items-center justify-center h-auto py-3 px-2 text-sm font-medium rounded-md transition-colors text-center",
+              location.pathname === "/location-management" // Check if on the new page
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-foreground hover:bg-muted/50 hover:text-primary"
+            )}
+            onClick={() => navigate("/location-management")}
+          >
+            <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mb-1" />
+            <span className="text-xs sm:text-sm">Locations</span>
+          </Button>
         </div>
 
         <div className="flex-grow overflow-hidden">
@@ -146,16 +161,16 @@ const WarehouseOperationsPage: React.FC = () => {
           <TabsContent value="ship-order" className="h-full min-h-0">
             <ShipOrderTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
-          <TabsContent value="picking-wave" className="h-full min-h-0"> {/* NEW */}
+          <TabsContent value="picking-wave" className="h-full min-h-0">
             <PickingWaveManagementTool />
           </TabsContent>
-          <TabsContent value="replenishment" className="h-full min-h-0"> {/* NEW */}
+          <TabsContent value="replenishment" className="h-full min-h-0">
             <ReplenishmentManagementTool />
           </TabsContent>
-          <TabsContent value="shipping-verify" className="h-full min-h-0"> {/* NEW */}
+          <TabsContent value="shipping-verify" className="h-full min-h-0">
             <ShippingVerificationTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
-          <TabsContent value="returns-process" className="h-full min-h-0"> {/* NEW */}
+          <TabsContent value="returns-process" className="h-full min-h-0">
             <ReturnsProcessingTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="stock-transfer" className="h-full min-h-0">
@@ -167,9 +182,9 @@ const WarehouseOperationsPage: React.FC = () => {
           <TabsContent value="issue-report" className="h-full min-h-0">
             <IssueReportTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
-          <TabsContent value="location-label-generator" className="h-full min-h-0">
+          {/* REMOVED: <TabsContent value="location-label-generator" className="h-full min-h-0">
             <LocationLabelGenerator />
-          </TabsContent>
+          </TabsContent> */}
         </div>
       </Tabs>
 
