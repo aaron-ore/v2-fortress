@@ -35,6 +35,11 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
     const oldQuantity = parseInt(movement.old_quantity || '0');
     const newQuantity = parseInt(movement.new_quantity || '0');
 
+    // Ensure timestamp is valid or provide a fallback
+    const timestamp = movement.timestamp && !isNaN(new Date(movement.timestamp).getTime())
+      ? movement.timestamp
+      : new Date().toISOString(); // Fallback to current timestamp
+
     return {
       id: movement.id,
       itemId: movement.item_id,
@@ -44,7 +49,7 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
       oldQuantity: isNaN(oldQuantity) ? 0 : oldQuantity,
       newQuantity: isNaN(newQuantity) ? 0 : newQuantity,
       reason: movement.reason,
-      timestamp: movement.timestamp,
+      timestamp: timestamp, // Use validated timestamp
       organizationId: movement.organization_id,
     };
   };

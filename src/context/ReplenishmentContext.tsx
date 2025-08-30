@@ -33,6 +33,17 @@ export const ReplenishmentProvider: React.FC<{ children: ReactNode }> = ({ child
 
   const mapSupabaseTaskToReplenishmentTask = (task: any): ReplenishmentTask => {
     const quantity = parseInt(task.quantity || '0');
+
+    // Ensure createdAt is valid or provide a fallback
+    const createdAt = task.created_at && !isNaN(new Date(task.created_at).getTime())
+      ? task.created_at
+      : new Date().toISOString(); // Fallback to current timestamp
+
+    // Ensure completedAt is valid or provide a fallback, or keep undefined if not present
+    const completedAt = task.completed_at && !isNaN(new Date(task.completed_at).getTime())
+      ? task.completed_at
+      : undefined;
+
     return {
       id: task.id,
       itemId: task.item_id,
@@ -42,8 +53,8 @@ export const ReplenishmentProvider: React.FC<{ children: ReactNode }> = ({ child
       quantity: isNaN(quantity) ? 0 : quantity,
       status: task.status,
       assignedTo: task.assigned_to || undefined,
-      createdAt: task.created_at,
-      completedAt: task.completed_at || undefined,
+      createdAt: createdAt, // Use validated date
+      completedAt: completedAt, // Use validated date or undefined
       organizationId: task.organization_id,
     };
   };

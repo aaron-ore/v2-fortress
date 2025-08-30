@@ -84,6 +84,11 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
     const retailPrice = parseFloat(item.retail_price || '0');
     const autoReorderQuantity = parseInt(item.auto_reorder_quantity || '0');
 
+    // Ensure last_updated is valid or provide a fallback
+    const lastUpdated = item.last_updated && !isNaN(new Date(item.last_updated).getTime())
+      ? item.last_updated
+      : new Date().toISOString().split('T')[0]; // Fallback to today's date
+
     return {
       id: item.id,
       name: item.name,
@@ -102,7 +107,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
       location: item.location,
       pickingBinLocation: item.picking_bin_location || item.location, // Default to main location if not set
       status: item.status,
-      lastUpdated: item.last_updated,
+      lastUpdated: lastUpdated, // Use validated date
       imageUrl: item.image_url || undefined,
       vendorId: item.vendor_id || undefined,
       barcodeUrl: item.barcode_url || undefined,
@@ -305,12 +310,8 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const refreshInventory = async () => {
-    await fetchInventoryItems();
-    // The processAutoReorder call here was problematic because `inventoryItems` might not be fully updated yet.
-    // It's better to pass the freshly fetched items directly.
-    // Also, ensure it's only called if profile.organizationId is available.
+    const currentItems = await fetchInventoryItems(); // Fetch again to ensure latest data
     if (profile?.organizationId) {
-      const currentItems = await fetchInventoryItems(); // Fetch again to ensure latest data
       processAutoReorder(currentItems, addOrder, vendors, profile.organizationId, addNotification);
     }
   };
@@ -327,7 +328,6 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 export const useInventory = () => {
   const context = useContext(InventoryContext);
   if (context === undefined) {
-    console.error("useInventory called outside of InventoryProvider. Current component stack:", new Error().stack); // Added diagnostic log
     throw new Error("useInventory must be used within an InventoryProvider");
   }
   return context;

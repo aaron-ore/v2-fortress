@@ -61,14 +61,23 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
       inventoryItemId: item.inventoryItemId,
     }));
 
+    // Ensure date strings are valid or provide a fallback
+    const createdAtDate = order.created_at && !isNaN(new Date(order.created_at).getTime())
+      ? order.created_at
+      : new Date().toISOString().split('T')[0]; // Fallback to today's date
+    
+    const dueDate = order.due_date && !isNaN(new Date(order.due_date).getTime())
+      ? order.due_date
+      : new Date().toISOString().split('T')[0]; // Fallback to today's date
+
     return {
       id: order.id,
       type: order.type,
       customerSupplier: order.customer_supplier,
-      date: order.created_at,
+      date: createdAtDate, // Use validated date
       status: order.status,
       totalAmount: isNaN(totalAmount) ? 0 : totalAmount,
-      dueDate: order.due_date,
+      dueDate: dueDate, // Use validated date
       itemCount: isNaN(itemCount) ? 0 : itemCount,
       notes: order.notes || "",
       orderType: order.order_type,
