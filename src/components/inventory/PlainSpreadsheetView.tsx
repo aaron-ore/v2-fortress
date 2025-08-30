@@ -143,7 +143,7 @@ const PlainSpreadsheetView: React.FC<PlainSpreadsheetViewProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((cat) => (
+                {categories.filter(cat => cat.name.trim() !== '').map((cat) => (
                   <SelectItem key={cat.id} value={cat.name}>
                     {cat.name}
                   </SelectItem>
@@ -181,7 +181,7 @@ const PlainSpreadsheetView: React.FC<PlainSpreadsheetViewProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {locations.map((loc) => (
+                {locations.filter(loc => loc.trim() !== '').map((loc) => (
                   <SelectItem key={loc} value={loc}>
                     {loc}
                   </SelectItem>
@@ -301,10 +301,8 @@ const PlainSpreadsheetView: React.FC<PlainSpreadsheetViewProps> = ({
                   {renderCell(item, column.key)}
                 </TableCell>
               ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+            </TableBody>
+          </Table>
     </div>
   );
 };
