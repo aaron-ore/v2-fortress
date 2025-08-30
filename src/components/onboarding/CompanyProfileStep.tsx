@@ -9,6 +9,7 @@ import { showError } from "@/utils/toast";
 
 interface CompanyProfileStepProps {
   onNext: () => void;
+  onBack?: () => void; // Added onBack prop
 }
 
 const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
@@ -33,7 +34,7 @@ const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
 
       <div className="grid gap-4 py-4">
         <div className="space-y-2">
-          <Label htmlFor="companyName">Company Name</Label>
+          <Label htmlFor="companyName">Company Name <span className="text-red-500">*</span></Label>
           <Input
             id="companyName"
             value={companyName}
@@ -42,7 +43,7 @@ const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="currency">Default Currency</Label>
+          <Label htmlFor="currency">Default Currency <span className="text-red-500">*</span></Label>
           <Select value={currency} onValueChange={setCurrency}>
             <SelectTrigger>
               <SelectValue placeholder="Select currency" />
@@ -57,7 +58,7 @@ const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="address">Company Address</Label>
+          <Label htmlFor="address">Company Address <span className="text-red-500">*</span></Label>
           <Textarea
             id="address"
             value={address}

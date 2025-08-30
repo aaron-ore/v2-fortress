@@ -91,10 +91,10 @@ const ProfitabilityMetricsCard: React.FC = () => {
           </div>
         </div>
         {/* Custom Legend at the bottom right */}
-        <div className="flex flex-col items-start text-xs text-muted-foreground mt-auto w-full pl-2"> {/* Changed items-end to items-start and added pl-2 */}
+        <div className="flex flex-col items-start text-xs text-muted-foreground mt-auto w-full pl-2">
           {metricsData.map((entry) => (
-            <div key={entry.name} className="flex items-center gap-2 py-1"> {/* Added py-1 for spacing */}
-              <span className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }}></span> {/* Added flex-shrink-0 */}
+            <div key={entry.name} className="flex items-center gap-2 py-1">
+              <span className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }}></span>
               <span>{entry.name}</span>
             </div>
           ))}

@@ -65,7 +65,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ onOrderClick, filteredOrders 
     }
 
     // Update the order's status
-    const updatedOrder = { ...activeOrder, status: targetColumnStatus };
+    const updatedOrder = { ...activeOrder, status: targetColumnStatus as OrderItem['status'] }; // Cast to specific literal type
     updateOrder(updatedOrder);
     showSuccess(`Order ${activeOrder.id} moved to "${targetColumnStatus}"!`);
   };

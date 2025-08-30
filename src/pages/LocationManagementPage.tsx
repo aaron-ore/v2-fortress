@@ -117,7 +117,7 @@ const LocationManagementPage: React.FC = () => {
       const qrSvg = await generateQrCodeSvg(locationString, 128); // Generate QR for print
 
       const labelsToPrint = Array.from({ length: numQuantity }).map(() => ({
-        type: "location-label",
+        type: "location-label" as const, // Explicitly cast to literal type
         props: {
           area,
           row,

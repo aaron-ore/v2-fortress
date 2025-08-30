@@ -30,7 +30,7 @@ const MiniTrendChart: React.FC<MiniTrendChartProps> = ({
   const yAxisTicks = Array.from({ length: roundedMax / 500 + 1 }, (_, i) => i * 500);
 
   return (
-    <ResponsiveContainer width="100%" height={150} className={cn(className)}> {/* Adjusted height for landscape */}
+    <ResponsiveContainer width="100%" height={150} className={cn(className)}>
       <AreaChart data={data} margin={{ top: 5, right: 0, left: 0, bottom: 15 }}>
         <defs>
           <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">

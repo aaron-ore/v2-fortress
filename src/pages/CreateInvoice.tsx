@@ -64,7 +64,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 10 : 0,
-    position: 'relative',
+    position: 'relative' as const, // Explicitly set position to 'relative'
     opacity: isDragging ? 0.8 : 1,
   };
 
@@ -277,7 +277,7 @@ const CreateInvoice: React.FC = () => {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Create New Invoice</h1>
 
-      <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2"> {/* Adjusted for mobile stacking */}
+      <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
         <Button variant="outline" onClick={() => navigate("/orders")}>
           Cancel
         </Button>
@@ -374,9 +374,9 @@ const CreateInvoice: React.FC = () => {
           </Card>
 
           <Card className="bg-card border-border rounded-lg shadow-sm p-6">
-            <CardHeader className="pb-4 flex flex-row items-center justify-between flex-wrap gap-2"> {/* Added flex-wrap and gap */}
+            <CardHeader className="pb-4 flex flex-row items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-xl font-semibold">Items</CardTitle>
-              <div className="flex gap-2 flex-wrap"> {/* Added flex-wrap for mobile */}
+              <div className="flex gap-2 flex-wrap">
                 <Button variant="outline" size="sm" onClick={() => setIsInventorySelectionDialogOpen(true)}>
                   <PackageOpen className="h-4 w-4 mr-2" /> Add from Inventory
                 </Button>
@@ -391,12 +391,12 @@ const CreateInvoice: React.FC = () => {
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
               >
-                <div className="overflow-x-auto"> {/* Added overflow-x-auto for table */}
-                  <Table className="min-w-[600px]"> {/* Added min-w to ensure horizontal scroll */}
+                <div className="overflow-x-auto">
+                  <Table className="min-w-[600px]">
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[20px]"></TableHead>
-                        <TableHead>Item Name</TableHead> {/* Removed fixed width */}
+                        <TableHead>Item Name</TableHead>
                         <TableHead className="w-[100px] text-right">Quantity</TableHead>
                         <TableHead className="w-[120px] text-right">Unit Price</TableHead>
                         <TableHead className="w-[120px] text-right">Total</TableHead>

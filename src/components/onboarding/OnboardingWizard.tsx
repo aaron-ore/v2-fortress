@@ -5,6 +5,16 @@ import LocationSetupStep from "./LocationSetupStep";
 // import ProductImportStep from "./ProductImportStep"; // Removed
 import { useOnboarding } from "@/context/OnboardingContext";
 
+interface CompanyProfileStepProps {
+  onNext: () => void;
+  onBack?: () => void; // Added onBack prop
+}
+
+interface LocationSetupStepProps {
+  onNext: () => void;
+  onBack: () => void;
+}
+
 const OnboardingWizard: React.FC = () => {
   const { isOnboardingComplete, markOnboardingComplete } = useOnboarding();
   const [currentStep, setCurrentStep] = useState(0);
@@ -12,11 +22,11 @@ const OnboardingWizard: React.FC = () => {
   const steps = [
     {
       title: "Company Profile",
-      component: CompanyProfileStep,
+      component: CompanyProfileStep as React.FC<CompanyProfileStepProps>, // Cast to ensure type compatibility
     },
     {
       title: "Warehouse & Locations",
-      component: LocationSetupStep,
+      component: LocationSetupStep as React.FC<LocationSetupStepProps>, // Cast to ensure type compatibility
     },
     // Removed ProductImportStep
   ];

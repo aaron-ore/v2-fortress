@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
-import { useInventory } from "@/context/Inventory/Context";
+import { useInventory } from "@/context/InventoryContext"; // Corrected import path
 
 const TopSellingProductsCard: React.FC = () => {
   const { inventoryItems } = useInventory();
