@@ -15,7 +15,7 @@ import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { showError, showSuccess } from "@/utils/toast";
-import { Loader2, Save, XCircle } from "lucide-react";
+import { Loader2, Save, XCircle, Edit, Trash2 } from "lucide-react";
 
 interface PlainSpreadsheetViewProps {
   items: InventoryItem[];
