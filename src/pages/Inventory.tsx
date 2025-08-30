@@ -27,20 +27,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Import Card components
-import { DataTable } from "@/components/ui/data-table"; // Keep DataTable for default view
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
 import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
-import { useOnboarding } from "@/context/OnboardingContext"; // Import useOnboarding
+import { useOnboarding } from "@/context/OnboardingContext";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { showError, showSuccess } from "@/utils/toast";
 
-// Custom components for the new UI
 import InventoryCardGrid from "@/components/inventory/InventoryCardGrid";
-import InventoryCard from "@/components/InventoryCard"; // Used by InventoryCardGrid
+import InventoryCard from "@/components/InventoryCard";
 import ManageLocationsDialog from "@/components/ManageLocationsDialog";
 import CategoryManagementDialog from "@/components/CategoryManagementDialog";
 import ScanItemDialog from "@/components/ScanItemDialog";
@@ -49,8 +48,8 @@ import ImportCsvDialog from "@/components/ImportCsvDialog";
 import AutoReorderSettingsDialog from "@/components/AutoReorderSettingsDialog";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import InventoryItemQuickViewDialog from "@/components/InventoryItemQuickViewDialog";
-import AddInventoryDialog from "@/components/AddInventoryDialog"; // Use the existing AddInventoryDialog
-import { useSidebar } from "@/context/SidebarContext"; // NEW: Import useSidebar
+import AddInventoryDialog from "@/components/AddInventoryDialog";
+import { useSidebar } from "@/context/SidebarContext";
 
 export const createInventoryColumns = (handleQuickView: (item: InventoryItem) => void): ColumnDef<InventoryItem>[] => [
   {
@@ -91,7 +90,7 @@ export const createInventoryColumns = (handleQuickView: (item: InventoryItem) =>
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      let variant: "success" | "warning" | "destructive" | "info" | "muted" = "info"; // Default to info
+      let variant: "success" | "warning" | "destructive" | "info" | "muted" = "info";
       switch (row.original.status) {
         case "In Stock":
           variant = "success";
@@ -122,12 +121,12 @@ const Inventory: React.FC = () => {
   const { inventoryItems, deleteInventoryItem, refreshInventory } = useInventory();
   const { categories } = useCategories();
   const { vendors } = useVendors();
-  const { locations } = useOnboarding(); // Get locations from onboarding context
+  const { locations } = useOnboarding();
   const navigate = useNavigate();
-  const { isCollapsed } = useSidebar(); // NEW: Use isCollapsed from SidebarContext
+  const { isCollapsed } = useSidebar();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAddInventoryDialogOpen, setIsAddInventoryDialogOpen] = useState(false); // Renamed for clarity
+  const [isAddInventoryDialogOpen, setIsAddInventoryDialogOpen] = useState(false);
   const [isManageCategoriesDialogOpen, setIsManageCategoriesDialogOpen] = useState(false);
   const [isManageLocationsDialogOpen, setIsManageLocationsDialogOpen] = useState(false);
   const [isScanItemDialogOpen, setIsScanItemDialogOpen] = useState(false);
@@ -141,7 +140,7 @@ const Inventory: React.FC = () => {
   const [isQuickViewDialogOpen, setIsQuickViewDialogOpen] = useState(false);
   const [selectedItemForQuickView, setSelectedItemForQuickView] = useState<InventoryItem | null>(null);
 
-  const [viewMode, setViewMode] = useState<"table" | "card">("table"); // Removed 'spreadsheet' view
+  const [viewMode, setViewMode] = useState<"table" | "card">("table");
   const [locationFilter, setLocationFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -217,7 +216,6 @@ const Inventory: React.FC = () => {
     <div className="flex flex-col space-y-6" data-testid="inventory-page-root">
       <h1 className="text-3xl font-bold">Inventory Management</h1>
 
-      {/* Top Row: Search and Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <Input
           placeholder="Search by name, SKU, or description..."
@@ -291,7 +289,6 @@ const Inventory: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Inventory Display Area */}
       <div className="rounded-md border">
         <CardHeader className="pb-4 flex flex-row items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-xl font-semibold">Current Stock</CardTitle>
@@ -305,7 +302,6 @@ const Inventory: React.FC = () => {
             <Button variant="outline" onClick={() => setIsManageLocationsDialogOpen(true)} size="sm">
               <MapPin className="h-4 w-4 mr-2" /> Manage Locations
             </Button>
-            {/* Consolidated "Actions" and "Scan Item" into a new "Tools" dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -345,7 +341,7 @@ const Inventory: React.FC = () => {
                   onCreateOrder={handleCreateOrder}
                   onViewDetails={handleQuickView}
                   onDeleteItem={handleDeleteItemClick}
-                  isSidebarCollapsed={isCollapsed} {/* NEW: Pass isSidebarCollapsed */}
+                  isSidebarCollapsed={isCollapsed}
                 />
               )}
             </>
@@ -353,7 +349,6 @@ const Inventory: React.FC = () => {
         </CardContent>
       </div>
 
-      {/* Dialogs */}
       <AddInventoryDialog
         isOpen={isAddInventoryDialogOpen}
         onClose={() => setIsAddInventoryDialogOpen(false)}
