@@ -96,7 +96,8 @@ const AuthenticatedApp = () => {
           </CategoryProvider>
         </VendorProvider>
       </OrdersProvider>
-    </SidebarProvider> {/* NEW: Close SidebarProvider */}
+    </SidebarProvider>
+    // NEW: Close SidebarProvider
   );
 };
 
