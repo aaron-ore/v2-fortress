@@ -14,7 +14,7 @@ const Layout: React.FC = () => {
   const isMobile = useIsMobile();
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
   const [isGlobalSearchDialogOpen, setIsGlobalSearchDialogOpen] = useState(false);
-  const { isCollapsed, onToggleCollapse } = useSidebar(); // NEW: Use SidebarContext
+  const { isCollapsed } = useSidebar(); // NEW: Use isCollapsed from SidebarContext
 
   const sidebarWidthCollapsed = 80; // Matches Sidebar.tsx collapsed width
   const sidebarWidthExpanded = 280; // Matches Sidebar.tsx expanded width
@@ -42,7 +42,7 @@ const Layout: React.FC = () => {
       ) : (
         <>
           {/* Desktop Sidebar */}
-          <Sidebar />
+          <Sidebar /> {/* REMOVED: isCollapsed and onToggleCollapse props */}
 
           {/* Main Content Area */}
           <div
