@@ -85,7 +85,7 @@ const ProfitabilityMetricsCard: React.FC = () => {
                   itemStyle={{ color: "hsl(var(--foreground))", fontSize: "0.75rem" }}
                   labelStyle={{ color: "hsl(var(--muted-foreground))", fontSize: "0.75rem" }}
                 />
-                <Bar dataKey="value" fill={((entry: { color: string }) => entry.color) as any} radius={[4, 4, 0, 0]} label={{ position: 'insideRight', formatter: (value: number) => `${value}%`, fill: 'white', fontSize: 10 }} />
+                <Bar dataKey="value" fill={({ color }) => color} radius={[4, 4, 0, 0]} label={{ position: 'insideRight', formatter: (value: number) => `${value}%`, fill: 'white', fontSize: 10 }} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -94,7 +94,7 @@ const ProfitabilityMetricsCard: React.FC = () => {
         <div className="flex flex-col items-start text-xs text-muted-foreground mt-auto w-full pl-2">
           {metricsData.map((entry) => (
             <div key={entry.name} className="flex items-center gap-2 py-1">
-              <span className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }}></span>
+              <span className="h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }}></span>
               <span>{entry.name}</span>
             </div>
           ))}
