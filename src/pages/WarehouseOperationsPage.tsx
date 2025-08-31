@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import TabsList and TabsTrigger
-import { Package, Scan, Truck, CheckCircle, AlertTriangle, LayoutDashboard, Search as SearchIcon, ShoppingCart, QrCode, ListOrdered, Undo2, MapPin, Camera } from "lucide-react"; // NEW: Import Camera icon
+import { Tabs, TabsContent } from "@/components/ui/tabs"; // Keep Tabs and TabsContent
+import { Package, Scan, Truck, CheckCircle, AlertTriangle, LayoutDashboard, Search as SearchIcon, ShoppingCart, QrCode, ListOrdered, Undo2, MapPin, Camera, XCircle } from "lucide-react"; // NEW: Import XCircle
 import { useIsMobile } from "@/hooks/use-mobile";
 import ItemLookupTool from "@/components/warehouse-operations/ItemLookupTool";
 import ReceiveInventoryTool from "@/components/warehouse-operations/ReceiveInventoryTool";
@@ -16,17 +16,18 @@ import PickingWaveManagementTool from "@/components/warehouse-operations/Picking
 import ReplenishmentManagementTool from "@/components/warehouse-operations/ReplenishmentManagementTool";
 import ShippingVerificationTool from "@/components/warehouse-operations/ShippingVerificationTool";
 import ReturnsProcessingTool from "@/components/warehouse-operations/ReturnsProcessingTool";
-import QrScanner, { QrScannerRef } from "@/components/QrScanner"; // NEW: Import QrScanner
+import QrScanner, { QrScannerRef } from "@/components/QrScanner";
 import { cn } from "@/lib/utils";
 import { showError, showSuccess } from "@/utils/toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom"; // NEW: Import useLocation
 
 const WarehouseOperationsPage: React.FC = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const location = useLocation(); // NEW: Initialize useLocation
   const [activeTab, setActiveTab] = useState("dashboard");
   const [scannedDataForTool, setScannedDataForTool] = useState<string | null>(null);
-  const [scannerFacingMode, setScannerFacingMode] = useState<"user" | "environment">("environment"); // Default to back camera
+  const [scannerFacingMode, setScannerFacingMode] = useState<"user" | "environment">("environment");
   const [isScannerLoading, setIsScannerLoading] = useState(true);
   const [scannerError, setScannerError] = useState<string | null>(null);
   const qrScannerRef = useRef<QrScannerRef>(null);
@@ -44,7 +45,8 @@ const WarehouseOperationsPage: React.FC = () => {
     { value: "stock-transfer", label: "Transfer", icon: Scan },
     { value: "cycle-count", label: "Count", icon: CheckCircle },
     { value: "issue-report", label: "Report Issue", icon: AlertTriangle },
-    { value: "scanner", label: "Scan", icon: QrCode }, // NEW: Add scanner tab
+    { value: "scanner", label: "Scan", icon: QrCode },
+    { value: "location-management", label: "Locations", icon: MapPin, isPageLink: true }, // NEW: Add isPageLink property
   ];
 
   // Effect to stop scanner when leaving the scanner tab
@@ -119,38 +121,31 @@ const WarehouseOperationsPage: React.FC = () => {
       </Button>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-grow flex flex-col">
-        {/* Grid of buttons for navigation */}
-        <TabsList className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 mb-4 p-1 bg-muted rounded-lg overflow-x-auto"> {/* Added overflow-x-auto */}
+        {/* Grid of square buttons for navigation */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mb-4 p-1 bg-muted rounded-lg overflow-x-auto">
           {operationButtons.map((op) => (
-            <TabsTrigger
+            <Button
               key={op.value}
-              value={op.value}
+              variant="ghost"
               className={cn(
-                "flex flex-col items-center justify-center h-auto py-3 px-2 text-sm font-medium rounded-md transition-colors text-center",
-                activeTab === op.value
+                "flex flex-col items-center justify-center h-24 w-full aspect-square py-3 px-2 text-sm font-medium rounded-lg transition-colors text-center",
+                op.value === activeTab || (op.isPageLink && location.pathname === `/${op.value}`)
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-foreground hover:bg-muted/50 hover:text-primary"
               )}
+              onClick={() => {
+                if (op.isPageLink) {
+                  navigate(`/${op.value}`);
+                } else {
+                  setActiveTab(op.value);
+                }
+              }}
             >
-              <op.icon className="h-4 w-4 sm:h-5 sm:w-5 mb-1" />
-              <span className="text-xs sm:text-sm">{op.label}</span>
-            </TabsTrigger>
+              <op.icon className="h-6 w-6 sm:h-7 sm:w-7 mb-1" />
+              <span className="text-xs sm:text-sm font-semibold">{op.label}</span>
+            </Button>
           ))}
-          {/* Button to navigate to Location Management Page */}
-          <Button
-            variant="ghost"
-            className={cn(
-              "flex flex-col items-center justify-center h-auto py-3 px-2 text-sm font-medium rounded-md transition-colors text-center",
-              location.pathname === "/location-management"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-foreground hover:bg-muted/50 hover:text-primary"
-            )}
-            onClick={() => navigate("/location-management")}
-          >
-            <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mb-1" />
-            <span className="text-xs sm:text-sm">Locations</span>
-          </Button>
-        </TabsList>
+        </div>
 
         <div className="flex-grow overflow-hidden">
           <TabsContent value="dashboard" className="h-full min-h-0">
