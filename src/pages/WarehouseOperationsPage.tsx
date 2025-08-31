@@ -16,7 +16,7 @@ import PickingWaveManagementTool from "@/components/warehouse-operations/Picking
 import ReplenishmentManagementTool from "@/components/warehouse-operations/ReplenishmentManagementTool";
 import ShippingVerificationTool from "@/components/warehouse-operations/ShippingVerificationTool";
 import ReturnsProcessingTool from "@/components/warehouse-operations/ReturnsProcessingTool";
-import CameraScannerDialog from "@/components/CameraScannerDialog"; // NEW: Import CameraScannerDialog
+import CameraScannerDialog from "@/components/CameraScannerDialog";
 import { cn } from "@/lib/utils";
 import { showError, showSuccess } from "@/utils/toast";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -27,8 +27,8 @@ const WarehouseOperationsPage: React.FC = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [scannedDataForTool, setScannedDataForTool] = useState<string | null>(null);
-  const [isCameraScannerDialogOpen, setIsCameraScannerDialogOpen] = useState(false); // NEW: State for dialog
-  const [scanCallback, setScanCallback] = useState<((scannedData: string) => void) | null>(null); // NEW: Callback for specific tool
+  const [isCameraScannerDialogOpen, setIsCameraScannerDialogOpen] = useState(false);
+  const [scanCallback, setScanCallback] = useState<((scannedData: string) => void) | null>(null);
 
   const operationButtons = [
     { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -46,34 +46,32 @@ const WarehouseOperationsPage: React.FC = () => {
     { value: "location-management", label: "Locations", icon: MapPin, isPageLink: true },
   ];
 
-  // NEW: Function to open scanner dialog and set a callback
   const requestScan = (callback: (scannedData: string) => void) => {
-    setScanCallback(() => callback); // Store the callback
-    setIsCameraScannerDialogOpen(true); // Open the dialog
+    setScanCallback(() => callback);
+    setIsCameraScannerDialogOpen(true);
   };
 
-  // NEW: Handle successful scan from the dialog
   const handleScanSuccessFromDialog = (decodedText: string) => {
     if (scanCallback) {
       scanCallback(decodedText); // Call the tool-specific callback
       setScanCallback(null); // Clear the callback
     } else {
-      // If no specific tool requested, default to item lookup
+      // If no specific tool requested (e.g., global scan button),
+      // route to item lookup and pass the data.
       setScannedDataForTool(decodedText);
       setActiveTab("item-lookup");
       showSuccess(`Scanned: ${decodedText}. Switching to Item Lookup.`);
     }
-    setIsCameraScannerDialogOpen(false); // Close the dialog
+    setIsCameraScannerDialogOpen(false);
   };
 
-  // NEW: Handle dialog close (e.g., user clicks outside or presses escape)
   const handleCameraScannerDialogClose = () => {
     setIsCameraScannerDialogOpen(false);
-    setScanCallback(null); // Clear any pending callback
+    setScanCallback(null);
   };
 
   const handleScannedDataProcessed = () => {
-    setScannedDataForTool(null);
+    setScannedDataForTool(null); // Clear the scanned data after the tool has processed it
   };
 
   if (!isMobile) {
@@ -98,7 +96,6 @@ const WarehouseOperationsPage: React.FC = () => {
     <div className="flex flex-col h-full w-full p-4 bg-background text-foreground">
       <h1 className="text-2xl font-bold text-center mb-6">Warehouse Operations</h1>
 
-      {/* Global Scan Button - now opens the dialog */}
       <Button
         className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-3 flex items-center justify-center gap-2 mb-4"
         onClick={() => requestScan(() => {})} // Pass a dummy callback for global scan
@@ -108,7 +105,6 @@ const WarehouseOperationsPage: React.FC = () => {
       </Button>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-grow flex flex-col">
-        {/* Grid of square buttons for navigation */}
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mb-4 p-1 bg-muted rounded-lg overflow-x-auto">
           {operationButtons.map((op) => (
             <Button
@@ -174,7 +170,6 @@ const WarehouseOperationsPage: React.FC = () => {
         </div>
       </Tabs>
 
-      {/* NEW: Camera Scanner Dialog */}
       <CameraScannerDialog
         isOpen={isCameraScannerDialogOpen}
         onClose={handleCameraScannerDialogClose}

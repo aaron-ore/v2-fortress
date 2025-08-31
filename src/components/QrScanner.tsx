@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useImperativeHandle, forwardRef, useState, useCallback } from "react";
-import { Html5Qrcode, Html5QrcodeSupportedFormats, Html5QrcodeFullConfig, Html5QrcodeCameraScanConfig } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeSupportedFormats, Html5QrcodeFullConfig, Html5QrcodeCameraScanConfig, Html5QrcodeCamera } from "html5-qrcode";
 
 export interface QrScannerRef {
   stopAndClear: () => Promise<void>;
@@ -69,7 +69,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         } catch (e) {
           console.warn("[QrScanner] Error during scanner clear:", e);
         } finally {
-          html5QrCodeRef.current = null;
+          html5QrCodeRef.current = null; // Crucial: Nullify the instance
         }
       } else {
         console.log("[QrScanner] No scanner instance to clear.");
@@ -78,9 +78,41 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
 
     const stopAndClear = useCallback(async () => {
       console.log("[QrScanner] stopAndClear called.");
-      await stopScanner();
-      clearScanner();
+      await stopScanner(); // Ensure scanner is stopped first
+      clearScanner();    // Then clear the instance
     }, [stopScanner, clearScanner]);
+
+    // Modified to strictly look for 'environment' camera
+    const getEnvironmentCameraDeviceId = useCallback(async (): Promise<string | null> => {
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+        if (cameras.length === 0) {
+          console.warn("[QrScanner] No cameras found.");
+          return null;
+        }
+
+        // Strictly prioritize 'environment' (back) camera
+        const environmentCamera = cameras.find(camera => camera.label.toLowerCase().includes("environment") || camera.label.toLowerCase().includes("back"));
+        if (environmentCamera) {
+          console.log(`[QrScanner] Found environment/back camera: ${environmentCamera.label}`);
+          return environmentCamera.id;
+        }
+
+        // If no explicit 'environment' or 'back' label, try to infer from position or just take the first one
+        // This is a fallback, but we'll make the error message clear if it's not ideal.
+        if (cameras.length > 0) {
+          console.warn("[QrScanner] No explicit 'environment' or 'back' camera found in labels. Falling back to first available camera. This might not be the desired back camera.");
+          return cameras[0].id;
+        }
+
+        console.warn("[QrScanner] No suitable back camera found.");
+        return null;
+
+      } catch (e) {
+        console.error("[QrScanner] Error getting camera devices:", e);
+        return null;
+      }
+    }, []);
 
     const startScanner = useCallback(async () => {
       if (!isMounted.current || !isOpen) {
@@ -88,11 +120,15 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         return;
       }
 
-      await stopAndClear();
+      await stopAndClear(); // Always start with a clean slate
       await new Promise(resolve => setTimeout(resolve, 300)); // Small delay for camera resource release
 
-      // Explicitly request the 'environment' (back) camera
-      const constraints: MediaTrackConstraints = { facingMode: { exact: "environment" } };
+      const deviceId = await getEnvironmentCameraDeviceId();
+
+      if (!deviceId) {
+        onError("No suitable back camera found or camera access denied. Please check permissions.");
+        return;
+      }
 
       if (!html5QrCodeRef.current) {
         console.log("[QrScanner] Creating new Html5Qrcode instance.");
@@ -102,14 +138,15 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       }
 
       for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt++) {
-        console.log(`[QrScanner] Attempt ${attempt}/${RETRY_ATTEMPTS} to start scanner with constraints:`, constraints);
+        console.log(`[QrScanner] Attempt ${attempt}/${RETRY_ATTEMPTS} to start scanner with deviceId: ${deviceId}`);
         try {
           await html5QrCodeRef.current.start(
-            constraints,
+            deviceId,
             html5QrcodeCameraScanConfig,
-            (decodedText) => {
+            async (decodedText) => { // Made async to await stopScanner
               if (isMounted.current) {
                 console.log("[QrScanner] Scan successful:", decodedText);
+                await stopScanner(); // Immediately stop scanner after a successful scan
                 onScan(decodedText);
               }
             },
@@ -149,7 +186,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
           }
         }
       }
-    }, [isOpen, onScan, onReady, onError, stopAndClear, html5QrcodeConstructorConfig, html5QrcodeCameraScanConfig]);
+    }, [isOpen, onScan, onReady, onError, stopAndClear, getEnvironmentCameraDeviceId, html5QrcodeConstructorConfig, html5QrcodeCameraScanConfig, stopScanner]);
 
     const retryStart = useCallback(async () => {
       console.log("[QrScanner] retryStart called.");

@@ -33,7 +33,6 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   description = "Point your camera at a barcode or QR code to scan.",
 }) => {
   const qrScannerRef = useRef<QrScannerRef>(null);
-  // Removed scannerFacingMode state as we will only use 'environment'
   const [isScannerLoading, setIsScannerLoading] = useState(true);
   const [scannerError, setScannerError] = useState<string | null>(null);
   const [manualInputMode, setManualInputMode] = useState(false);
@@ -46,6 +45,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
       setManualInputMode(false);
       setManualInputValue("");
     } else {
+      // When dialog closes, ensure scanner is stopped and cleared
       qrScannerRef.current?.stopAndClear();
     }
   }, [isOpen]);
@@ -64,8 +64,6 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
     setIsScannerLoading(false);
     setScannerError(null);
   };
-
-  // Removed toggleFacingMode as it's no longer needed
 
   const handleRetryScan = () => {
     setScannerError(null);
@@ -153,7 +151,6 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
               </>
             )}
           </Button>
-          {/* Removed the "Switch Camera" button */}
           <Button variant="ghost" onClick={onClose} className="w-full sm:w-auto">
             Close
           </Button>
