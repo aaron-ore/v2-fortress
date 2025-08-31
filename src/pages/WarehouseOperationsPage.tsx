@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent } from "@/components/ui/tabs"; // Keep Tabs and TabsContent
-import { Package, Scan, Truck, CheckCircle, AlertTriangle, LayoutDashboard, Search as SearchIcon, ShoppingCart, QrCode, ListOrdered, Undo2, MapPin, Camera, XCircle } from "lucide-react"; // NEW: Import XCircle
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Package, Scan, Truck, CheckCircle, AlertTriangle, LayoutDashboard, Search as SearchIcon, ShoppingCart, ListOrdered, Undo2, MapPin } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ItemLookupTool from "@/components/warehouse-operations/ItemLookupTool";
 import ReceiveInventoryTool from "@/components/warehouse-operations/ReceiveInventoryTool";
@@ -16,21 +16,19 @@ import PickingWaveManagementTool from "@/components/warehouse-operations/Picking
 import ReplenishmentManagementTool from "@/components/warehouse-operations/ReplenishmentManagementTool";
 import ShippingVerificationTool from "@/components/warehouse-operations/ShippingVerificationTool";
 import ReturnsProcessingTool from "@/components/warehouse-operations/ReturnsProcessingTool";
-import QrScanner, { QrScannerRef } from "@/components/QrScanner";
+import CameraScannerDialog from "@/components/CameraScannerDialog"; // NEW: Import CameraScannerDialog
 import { cn } from "@/lib/utils";
 import { showError, showSuccess } from "@/utils/toast";
-import { useNavigate, useLocation } from "react-router-dom"; // NEW: Import useLocation
+import { useNavigate, useLocation } from "react-router-dom";
 
 const WarehouseOperationsPage: React.FC = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const location = useLocation(); // NEW: Initialize useLocation
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [scannedDataForTool, setScannedDataForTool] = useState<string | null>(null);
-  const [scannerFacingMode, setScannerFacingMode] = useState<"user" | "environment">("environment");
-  const [isScannerLoading, setIsScannerLoading] = useState(true);
-  const [scannerError, setScannerError] = useState<string | null>(null);
-  const qrScannerRef = useRef<QrScannerRef>(null);
+  const [isCameraScannerDialogOpen, setIsCameraScannerDialogOpen] = useState(false); // NEW: State for dialog
+  const [scanCallback, setScanCallback] = useState<((scannedData: string) => void) | null>(null); // NEW: Callback for specific tool
 
   const operationButtons = [
     { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -45,48 +43,37 @@ const WarehouseOperationsPage: React.FC = () => {
     { value: "stock-transfer", label: "Transfer", icon: Scan },
     { value: "cycle-count", label: "Count", icon: CheckCircle },
     { value: "issue-report", label: "Report Issue", icon: AlertTriangle },
-    { value: "scanner", label: "Scan", icon: QrCode },
-    { value: "location-management", label: "Locations", icon: MapPin, isPageLink: true }, // NEW: Add isPageLink property
+    { value: "location-management", label: "Locations", icon: MapPin, isPageLink: true },
   ];
 
-  // Effect to stop scanner when leaving the scanner tab
-  useEffect(() => {
-    if (activeTab !== "scanner" && qrScannerRef.current) {
-      qrScannerRef.current.stopAndClear();
-      setIsScannerLoading(true);
-      setScannerError(null);
-    }
-  }, [activeTab]);
+  // NEW: Function to open scanner dialog and set a callback
+  const requestScan = (callback: (scannedData: string) => void) => {
+    setScanCallback(() => callback); // Store the callback
+    setIsCameraScannerDialogOpen(true); // Open the dialog
+  };
 
-  const handleGlobalScanClick = () => {
-    setActiveTab("scanner");
-    setScannedDataForTool(null); // Clear previous scanned data
+  // NEW: Handle successful scan from the dialog
+  const handleScanSuccessFromDialog = (decodedText: string) => {
+    if (scanCallback) {
+      scanCallback(decodedText); // Call the tool-specific callback
+      setScanCallback(null); // Clear the callback
+    } else {
+      // If no specific tool requested, default to item lookup
+      setScannedDataForTool(decodedText);
+      setActiveTab("item-lookup");
+      showSuccess(`Scanned: ${decodedText}. Switching to Item Lookup.`);
+    }
+    setIsCameraScannerDialogOpen(false); // Close the dialog
+  };
+
+  // NEW: Handle dialog close (e.g., user clicks outside or presses escape)
+  const handleCameraScannerDialogClose = () => {
+    setIsCameraScannerDialogOpen(false);
+    setScanCallback(null); // Clear any pending callback
   };
 
   const handleScannedDataProcessed = () => {
     setScannedDataForTool(null);
-  };
-
-  const handleScannerScan = (decodedText: string) => {
-    setScannedDataForTool(decodedText);
-    setActiveTab("item-lookup"); // Automatically switch to item lookup after a scan
-    showSuccess(`Scanned: ${decodedText}. Switching to Item Lookup.`);
-  };
-
-  const handleScannerError = (errorMessage: string) => {
-    setScannerError(errorMessage);
-    showError(`Scanner error: ${errorMessage}`);
-  };
-
-  const handleScannerReady = () => {
-    setIsScannerLoading(false);
-    setScannerError(null);
-  };
-
-  const toggleFacingMode = () => {
-    setScannerFacingMode((prevMode) => (prevMode === "user" ? "environment" : "user"));
-    setIsScannerLoading(true);
-    setScannerError(null);
   };
 
   if (!isMobile) {
@@ -111,10 +98,10 @@ const WarehouseOperationsPage: React.FC = () => {
     <div className="flex flex-col h-full w-full p-4 bg-background text-foreground">
       <h1 className="text-2xl font-bold text-center mb-6">Warehouse Operations</h1>
 
-      {/* Global Scan Button */}
+      {/* Global Scan Button - now opens the dialog */}
       <Button
         className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-3 flex items-center justify-center gap-2 mb-4"
-        onClick={handleGlobalScanClick}
+        onClick={() => requestScan(() => {})} // Pass a dummy callback for global scan
       >
         <Scan className="h-6 w-6" />
         Scan Item
@@ -152,16 +139,16 @@ const WarehouseOperationsPage: React.FC = () => {
             <WarehouseDashboard />
           </TabsContent>
           <TabsContent value="item-lookup" className="h-full min-h-0">
-            <ItemLookupTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <ItemLookupTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="receive-inventory" className="h-full min-h-0">
-            <ReceiveInventoryTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <ReceiveInventoryTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="fulfill-order" className="h-full min-h-0">
-            <FulfillOrderTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <FulfillOrderTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="ship-order" className="h-full min-h-0">
-            <ShipOrderTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <ShipOrderTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="picking-wave" className="h-full min-h-0">
             <PickingWaveManagementTool />
@@ -170,65 +157,29 @@ const WarehouseOperationsPage: React.FC = () => {
             <ReplenishmentManagementTool />
           </TabsContent>
           <TabsContent value="shipping-verify" className="h-full min-h-0">
-            <ShippingVerificationTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <ShippingVerificationTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="returns-process" className="h-full min-h-0">
-            <ReturnsProcessingTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <ReturnsProcessingTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="stock-transfer" className="h-full min-h-0">
-            <StockTransferTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <StockTransferTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="cycle-count" className="h-full min-h-0">
-            <CycleCountTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <CycleCountTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="issue-report" className="h-full min-h-0">
-            <IssueReportTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
-          </TabsContent>
-          {/* NEW: Scanner Tab Content */}
-          <TabsContent value="scanner" className="h-full min-h-0 flex flex-col">
-            <Card className="flex-grow flex flex-col bg-card border-border shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <QrCode className="h-5 w-5 text-primary" /> Live Scanner
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-grow flex flex-col items-center justify-center bg-black rounded-md overflow-hidden relative p-0"> {/* Removed my-4, added p-0 */}
-                {/* Fixed aspect ratio container for the scanner */}
-                <div className="relative w-full pb-[100%]"> {/* pb-[100%] creates a square aspect ratio */}
-                  {isScannerLoading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/70 text-white text-lg z-10">
-                      Loading camera...
-                    </div>
-                  )}
-                  {scannerError && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-900/70 text-white text-center p-4 z-10">
-                      <XCircle className="h-8 w-8 mb-2" />
-                      <p className="font-semibold">Camera Error:</p>
-                      <p className="text-sm">{scannerError}</p>
-                      <p className="text-xs mt-2">Try switching cameras or refreshing the page.</p>
-                    </div>
-                  )}
-                  <div className="absolute inset-0"> {/* This div ensures QrScanner fills the aspect ratio container */}
-                    <QrScanner
-                      key={scannerFacingMode} // Key changes when facingMode changes, forcing remount
-                      ref={qrScannerRef}
-                      onScan={handleScannerScan}
-                      onError={handleScannerError}
-                      onReady={handleScannerReady}
-                      facingMode={scannerFacingMode}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-              <div className="flex justify-center mt-4 p-4"> {/* Added mt-4 for spacing */}
-                <Button variant="secondary" onClick={toggleFacingMode} className="w-full">
-                  <Camera className="h-4 w-4 mr-2" /> Switch to {scannerFacingMode === "user" ? "Back" : "Front"} Camera
-                </Button>
-              </div>
-            </Card>
+            <IssueReportTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
         </div>
       </Tabs>
+
+      {/* NEW: Camera Scanner Dialog */}
+      <CameraScannerDialog
+        isOpen={isCameraScannerDialogOpen}
+        onClose={handleCameraScannerDialogClose}
+        onScanSuccess={handleScanSuccessFromDialog}
+      />
     </div>
   );
 };
