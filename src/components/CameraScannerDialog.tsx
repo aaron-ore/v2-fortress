@@ -52,7 +52,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
 
   const handleScannerScan = (decodedText: string) => {
     onScanSuccess(decodedText);
-    onClose();
+    onClose(); // Close dialog immediately on successful scan
   };
 
   const handleScannerError = (errorMessage: string) => {
