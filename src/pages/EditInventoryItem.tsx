@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,9 +29,8 @@ import { useInventory } from "@/context/InventoryContext";
 import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
 import { PlusCircle, Loader2 } from "lucide-react";
-import { DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { showError, showSuccess } from "@/utils/toast";
-import { generateBarcodeSvgDataUri } from "@/utils/barcode"; // Import barcode utility
+import { generateBarcodeSvgDataUri } from "@/utils/barcode";
 
 const formSchema = z.object({
   name: z.string().min(1, "Item name is required"),
@@ -49,7 +48,7 @@ const formSchema = z.object({
   location: z.string().min(1, "Location is required"),
   pickingBinLocation: z.string().min(1, "Picking bin location is required"),
   imageUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
-  vendorId: z.string().optional().or(z.literal("null-vendor")), // Updated to allow "null-vendor"
+  vendorId: z.string().optional().or(z.literal("null-vendor")),
   autoReorderEnabled: z.boolean().default(false),
   autoReorderQuantity: z.number().min(0, "Must be non-negative").optional(),
 });
@@ -88,7 +87,7 @@ const EditInventoryItem: React.FC = () => {
           location: item.location,
           pickingBinLocation: item.pickingBinLocation,
           imageUrl: item.imageUrl || "",
-          vendorId: item.vendorId || "null-vendor", // Default to "null-vendor" if not set
+          vendorId: item.vendorId || "null-vendor",
           autoReorderEnabled: item.autoReorderEnabled,
           autoReorderQuantity: item.autoReorderQuantity,
         };
@@ -109,7 +108,7 @@ const EditInventoryItem: React.FC = () => {
         location: "",
         pickingBinLocation: "",
         imageUrl: "",
-        vendorId: "null-vendor", // Default for new items
+        vendorId: "null-vendor",
         autoReorderEnabled: false,
         autoReorderQuantity: 0,
       };
@@ -123,7 +122,7 @@ const EditInventoryItem: React.FC = () => {
       setItemNotFound(false);
       form.reset({
         ...item,
-        vendorId: item.vendorId || "null-vendor", // Ensure form is reset with "null-vendor"
+        vendorId: item.vendorId || "null-vendor",
       });
       if (item.sku) {
         setBarcodeUrl(generateBarcodeSvgDataUri(item.sku));
@@ -133,7 +132,6 @@ const EditInventoryItem: React.FC = () => {
     }
   }, [item, id, form]);
 
-  // Update barcode when SKU changes in the form
   const watchSku = form.watch("sku");
   useEffect(() => {
     if (watchSku) {
@@ -151,16 +149,16 @@ const EditInventoryItem: React.FC = () => {
     setIsSaving(true);
     try {
       let finalBarcodeUrl = barcodeUrl;
-      if (values.sku && !barcodeUrl) { // Generate if SKU exists but barcodeUrl is missing
+      if (values.sku && !barcodeUrl) {
         finalBarcodeUrl = generateBarcodeSvgDataUri(values.sku);
-      } else if (!values.sku) { // Clear if SKU is removed
+      } else if (!values.sku) {
         finalBarcodeUrl = undefined;
       }
 
       await updateInventoryItem({
-        ...item, // Spread existing item to carry over derived/context-managed properties
+        ...item,
         ...values,
-        vendorId: values.vendorId === "null-vendor" ? undefined : values.vendorId, // Convert "null-vendor" back to undefined
+        vendorId: values.vendorId === "null-vendor" ? undefined : values.vendorId,
         barcodeUrl: finalBarcodeUrl,
       });
       showSuccess("Inventory item updated successfully!");
@@ -271,10 +269,10 @@ const EditInventoryItem: React.FC = () => {
                             {category.name}
                           </SelectItem>
                         ))}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onSelect={() => setIsAddingCategory(true)}>
+                        {/* Replaced DropdownMenuSeparator and DropdownMenuItem with a regular SelectItem */}
+                        <SelectItem value="add-new-category" onClick={() => setIsAddingCategory(true)}>
                           <PlusCircle className="mr-2 h-4 w-4" /> Add New Category
-                        </DropdownMenuItem>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -309,7 +307,7 @@ const EditInventoryItem: React.FC = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="null-vendor">None</SelectItem> {/* Changed value to "null-vendor" */}
+                        <SelectItem value="null-vendor">None</SelectItem>
                         {vendors.map((vendor) => (
                           <SelectItem key={vendor.id} value={vendor.id}>
                             {vendor.name}
