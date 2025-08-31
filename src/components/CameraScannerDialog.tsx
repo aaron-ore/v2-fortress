@@ -93,7 +93,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
             )}
             <div className="absolute inset-0"> {/* This div ensures QrScanner fills the aspect ratio container */}
               <QrScanner
-                key={scannerFacingMode} // Key changes when facingMode changes, forcing remount
+                // Removed key={scannerFacingMode}
                 ref={qrScannerRef}
                 onScan={handleScannerScan}
                 onError={handleScannerError}

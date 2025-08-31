@@ -80,6 +80,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
 
       console.log(`[QrScanner - ${strategyName}] Attempting to start Html5Qrcode with constraints:`, constraints);
       await stopAndClearHtml5Qrcode(); 
+      await new Promise(resolve => setTimeout(resolve, 500)); // Small delay before starting
 
       try {
         const newScanner = new Html5Qrcode(element.id, html5QrcodeConstructorConfig);
