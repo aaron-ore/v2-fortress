@@ -44,7 +44,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
     };
 
     const stopScanner = useCallback(async () => {
-      if (html5QrCodeRef.current) { // Only check if instance exists, always attempt to stop
+      if (html5QrCodeRef.current) {
         console.log("[QrScanner] Attempting to stop scanner...");
         try {
           await html5QrCodeRef.current.stop();
@@ -93,78 +93,17 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       await stopAndClear();
       await new Promise(resolve => setTimeout(resolve, 500)); // Small delay for camera resource release
 
-      // --- NEW: Explicitly request camera permission first ---
-      try {
-        console.log("[QrScanner] Requesting camera permissions...");
-        // Request video stream to trigger permission prompt for the environment camera
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        // If successful, stop the temporary stream immediately to release resources
-        stream.getTracks().forEach(track => track.stop());
-        console.log("[QrScanner] Camera permissions granted.");
-      } catch (err: any) {
-        console.error("[QrScanner] Error requesting camera permissions:", err);
-        setIsScannerActive(false);
-        let permissionErrorMessage = "Camera access was denied or no suitable camera found. ";
-        if (err.name === "NotAllowedError") {
-          permissionErrorMessage += "Please grant camera access in your browser's site settings.";
-        } else if (err.name === "NotFoundError") {
-          permissionErrorMessage += "No camera devices were found on your device.";
-        } else if (err.name === "NotReadableError") {
-          permissionErrorMessage += "The camera might be in use by another application.";
-        } else {
-          permissionErrorMessage += "An unknown error occurred during permission request.";
-        }
-        onError(permissionErrorMessage);
-        return; // Stop here if permissions are not granted
-      }
-      // --- END NEW: Explicitly request camera permission first ---
-
-      // --- NEW LOGIC TO SELECT CAMERA BY DEVICE ID ---
-      let cameraSelection: string | undefined = undefined;
-      try {
-        const cameras = await Html5Qrcode.getCameras();
-        if (cameras && cameras.length > 0) {
-          console.log("[QrScanner] Available cameras:", cameras);
-          // Try to find an 'environment' camera. Heuristic: often contains 'back'/'rear' in label.
-          let environmentCamera = cameras.find(camera => camera.label.toLowerCase().includes('back') || camera.label.toLowerCase().includes('rear'));
-          
-          if (!environmentCamera && cameras.length === 1) {
-            environmentCamera = cameras[0]; // If only one, assume it's the primary one
-          } else if (!environmentCamera && cameras.length > 1) {
-            // Fallback: if no explicit 'back'/'rear' label, try the last one as it's often the main rear camera
-            environmentCamera = cameras[cameras.length - 1];
-          }
-
-          if (environmentCamera) {
-            cameraSelection = environmentCamera.id;
-            console.log("[QrScanner] Selected camera device ID:", cameraSelection, "Label:", environmentCamera.label);
-          } else {
-            console.warn("[QrScanner] No explicit 'environment' camera found by label. Falling back to generic 'environment' string.");
-            cameraSelection = "environment"; // Fallback to generic string
-          }
-        } else {
-          console.warn("[QrScanner] No cameras found by Html5Qrcode.getCameras(). Falling back to generic 'environment' string.");
-          cameraSelection = "environment"; // Fallback to generic string
-        }
-      } catch (err: any) {
-        console.error("[QrScanner] Error enumerating cameras:", err);
-        onError("Failed to list cameras. " + err.message);
-        return;
-      }
-      // --- END NEW LOGIC ---
-
-      if (!cameraSelection) {
-        onError("No camera could be selected for scanning.");
-        return;
-      }
+      // Rely on html5-qrcode's start method to handle camera selection and permissions
+      // Use facingMode constraint directly for the back camera
+      const cameraTarget: MediaTrackConstraints = { facingMode: { exact: "environment" } };
 
       // Always create a new Html5Qrcode instance for a fresh start
       html5QrCodeRef.current = new Html5Qrcode(QR_SCANNER_DIV_ID, html5QrcodeConstructorConfig);
 
-      console.log(`[QrScanner] Attempting to start scanner with selection:`, cameraSelection);
+      console.log(`[QrScanner] Attempting to start scanner with target:`, cameraTarget);
       try {
         await html5QrCodeRef.current.start(
-          cameraSelection, // Pass the string (device ID or "environment")
+          cameraTarget, // Pass MediaTrackConstraints object
           html5QrcodeCameraScanConfig,
           async (decodedText) => { // Made async to await stopScanner
             if (isMounted.current) {
@@ -189,13 +128,13 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         if (isMounted.current) {
           console.error(`[QrScanner] Error starting scanner:`, err);
           setIsScannerActive(false);
-          let errorMessage = "Failed to initialize scanner after permissions. ";
+          let errorMessage = "Failed to start camera. ";
           if (err.name === "NotReadableError") {
             errorMessage += "The camera might be in use by another application, or there's a temporary hardware issue. Please try closing other camera apps. ";
           } else if (err.name === "NotAllowedError") {
             errorMessage += "Camera access was denied. Please check your browser's site permissions for this page and grant camera access. ";
           } else if (err.name === "OverconstrainedError") {
-            errorMessage += "The camera could not be activated with the requested settings (e.g., back camera not found or available). Try restarting your device or closing other camera apps. ";
+            errorMessage += "No suitable back camera found or it's not available on your device. Try restarting your device or closing other camera apps. ";
           } else if (err.name === "NotFoundError") {
             errorMessage += "No camera devices were found. ";
           } else {
