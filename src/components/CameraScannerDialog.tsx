@@ -128,3 +128,4 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
 };
 
 export default CameraScannerDialog;
+// Added a comment to trigger re-evaluation.
