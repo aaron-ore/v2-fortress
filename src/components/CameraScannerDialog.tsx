@@ -37,6 +37,10 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
       setIsLoadingCamera(true);
       setCameraError(null);
     } else {
+      // When dialog closes, ensure scanner is stopped and cleared
+      if (qrScannerRef.current) {
+        qrScannerRef.current.stopAndClear();
+      }
       setIsCameraActive(false);
       setIsLoadingCamera(false);
     }
@@ -65,11 +69,12 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
     setFacingMode((prevMode) => (prevMode === "user" ? "environment" : "user"));
     setIsLoadingCamera(true);
     setCameraError(null);
+    // The `key` prop on QrScanner will handle forcing a remount.
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full h-full max-w-full max-h-full flex flex-col p-4 sm:max-w-[425px] sm:h-[80vh] sm:max-h-[600px]"> {/* Adjusted for full screen on small, constrained on larger */}
+      <DialogContent className="w-full h-full max-w-full max-h-full flex flex-col p-4 sm:max-w-[425px] sm:h-[80vh] sm:max-h-[600px]">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Scan className="h-6 w-6 text-primary" /> Scan Barcode
@@ -78,7 +83,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
             Point your camera at a barcode or QR code.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-grow flex flex-col items-center justify-center bg-black rounded-md overflow-hidden relative my-4"> {/* Added vertical margin */}
+        <div className="flex-grow flex flex-col items-center justify-center bg-black rounded-md overflow-hidden relative my-4">
           {isCameraActive ? (
             <>
               {isLoadingCamera && (
@@ -95,6 +100,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
                 </div>
               )}
               <QrScanner
+                key={facingMode} {/* Key changes when facingMode changes, forcing remount */}
                 ref={qrScannerRef}
                 onScan={handleScannerScan}
                 onError={handleScannerError}

@@ -45,14 +45,13 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       if (html5QrCodeInstanceRef.current) {
         console.log("[QrScanner] Attempting to stop Html5Qrcode instance...");
         try {
-          if (typeof html5QrCodeInstanceRef.current.stop === 'function') {
+          // Only attempt to stop if the scanner is actually running
+          if (html5QrCodeInstanceRef.current.isScanning) {
             await html5QrCodeInstanceRef.current.stop();
             console.log("[QrScanner] Html5Qrcode stopped successfully.");
           }
-          if (typeof html5QrCodeInstanceRef.current.clear === 'function') {
-            html5QrCodeInstanceRef.current.clear();
-            console.log("[QrScanner] Html5Qrcode cleared successfully.");
-          }
+          html5QrCodeInstanceRef.current.clear(); // Always try to clear resources
+          console.log("[QrScanner] Html5Qrcode cleared successfully.");
         } catch (e) {
           console.warn("[QrScanner] Error stopping/clearing Html5Qrcode (might be already stopped or camera not found):", e);
         } finally {
@@ -77,7 +76,8 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       if (!isMounted.current) return false;
 
       console.log(`[QrScanner - ${strategyName}] Attempting to start Html5Qrcode with constraints:`, constraints);
-      await stopAndClearHtml5Qrcode();
+      // Ensure previous scanner is stopped before starting a new one
+      await stopAndClearHtml5Qrcode(); 
 
       try {
         const newScanner = new Html5Qrcode(element.id, html5QrcodeConstructorConfig);
@@ -130,7 +130,8 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         return;
       }
 
-      await stopAndClear();
+      // Ensure all previous scanners are stopped before starting new attempts
+      await stopAndClear(); 
 
       console.log("[QrScanner] Starting camera initialization strategies...");
 
@@ -229,11 +230,13 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       isMounted.current = true;
       console.log("[QrScanner] Component mounted or facingMode changed. Initiating strategy attempts...");
       
-      const timer = setTimeout(() => {
+      // Add a small delay before attempting to start the camera
+      const startAttemptTimer = setTimeout(() => {
         if (scannerDivRef.current) {
           attemptStrategies();
         } else {
           console.warn("[QrScanner] scannerDivRef.current is null after initial timeout. Retrying strategy attempts.");
+          // Fallback retry if ref is not immediately available
           setTimeout(() => {
             if (scannerDivRef.current) {
               attemptStrategies();
@@ -242,11 +245,11 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
             }
           }, 500);
         }
-      }, 100);
+      }, 300); // Increased delay to 300ms
 
       return () => {
         isMounted.current = false;
-        clearTimeout(timer);
+        clearTimeout(startAttemptTimer);
         console.log("[QrScanner] Component unmounting. Stopping scanner...");
         stopAndClear();
       };
