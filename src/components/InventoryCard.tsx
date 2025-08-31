@@ -1,18 +1,19 @@
-import React from "react";
+import React, { useState, useEffect } from "react"; // Added useEffect and useState
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Package, Tag, MapPin, Eye, PlusCircle, MinusCircle, Trash2 } from "lucide-react";
 import { InventoryItem } from "@/context/InventoryContext";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge"; // Import Badge
+import { Badge } from "@/components/ui/badge";
+import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
 
 interface InventoryCardProps {
   item: InventoryItem;
   onAdjustStock: (item: InventoryItem) => void;
   onCreateOrder: (item: InventoryItem) => void;
   onViewDetails: (item: InventoryItem) => void;
-  onDeleteItem: (itemId: string, itemName: string) => void; // Updated prop for delete
-  isSidebarCollapsed: boolean; // NEW: Add isSidebarCollapsed prop
+  onDeleteItem: (itemId: string, itemName: string) => void;
+  isSidebarCollapsed: boolean;
 }
 
 const InventoryCard: React.FC<InventoryCardProps> = ({
@@ -21,8 +22,27 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
   onCreateOrder,
   onViewDetails,
   onDeleteItem,
-  isSidebarCollapsed, // NEW: Destructure isSidebarCollapsed
+  isSidebarCollapsed,
 }) => {
+  const [qrCodeSvg, setQrCodeSvg] = useState<string | null>(null); // State for QR code SVG
+
+  useEffect(() => {
+    const generateAndSetQr = async () => {
+      if (item.barcodeUrl) { // item.barcodeUrl now stores the raw data
+        try {
+          const svg = await generateQrCodeSvg(item.barcodeUrl, 50); // Generate smaller QR for card
+          setQrCodeSvg(svg);
+        } catch (error) {
+          console.error("Error generating QR code for card display:", error);
+          setQrCodeSvg(null);
+        }
+      } else {
+        setQrCodeSvg(null);
+      }
+    };
+    generateAndSetQr();
+  }, [item.barcodeUrl]); // Regenerate if barcodeUrl changes
+
   let statusVariant: "success" | "warning" | "destructive" | "info" | "muted" = "info";
   switch (item.status) {
     case "In Stock":
@@ -37,15 +57,15 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
   }
 
   return (
-    <Card className="group relative bg-card border-border rounded-lg shadow-sm overflow-hidden transition-all duration-200 hover:shadow-lg flex flex-col aspect-square"> {/* Added flex-col and aspect-square */}
-      <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between flex-shrink-0"> {/* Added flex-shrink-0 */}
+    <Card className="group relative bg-card border-border rounded-lg shadow-sm overflow-hidden transition-all duration-200 hover:shadow-lg flex flex-col aspect-square">
+      <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between flex-shrink-0">
         <CardTitle className="text-base font-semibold text-foreground truncate">
           {item.name}
         </CardTitle>
         <Package className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
-      <CardContent className="p-4 pt-0 flex-grow flex flex-col justify-between"> {/* Added flex-grow and flex-col justify-between */}
-        {isSidebarCollapsed && ( // NEW: Conditionally render image
+      <CardContent className="p-4 pt-0 flex-grow flex flex-col justify-between">
+        {isSidebarCollapsed && (
           <div className="flex items-center justify-center h-24 bg-muted/30 rounded-md mb-3 overflow-hidden flex-shrink-0">
             {item.imageUrl ? (
               <img
@@ -76,6 +96,11 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
             {item.status}
           </Badge>
         </div>
+        {qrCodeSvg && ( // Display QR code if available
+          <div className="mt-2 flex justify-center flex-shrink-0">
+            <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-12 h-12 object-contain" />
+          </div>
+        )}
       </CardContent>
 
       {/* Quick Actions Overlay */}

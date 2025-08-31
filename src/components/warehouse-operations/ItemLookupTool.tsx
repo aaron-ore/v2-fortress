@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Barcode, Package, Tag, MapPin, Info, Image } from "lucide-react";
 import { useInventory } from "@/context/InventoryContext";
 import { showError, showSuccess } from "@/utils/toast";
+import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
 
 interface ItemLookupToolProps {
   onScanRequest: (callback: (scannedData: string) => void) => void;
@@ -18,6 +19,7 @@ const ItemLookupTool: React.FC<ItemLookupToolProps> = ({ onScanRequest, scannedD
   const { inventoryItems } = useInventory();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [qrCodeSvg, setQrCodeSvg] = useState<string | null>(null); // State for QR code SVG
 
   useEffect(() => {
     if (scannedDataFromGlobal) {
@@ -27,6 +29,24 @@ const ItemLookupTool: React.FC<ItemLookupToolProps> = ({ onScanRequest, scannedD
     }
   }, [scannedDataFromGlobal, onScannedDataProcessed]);
 
+  useEffect(() => {
+    // Generate QR code for selected item display
+    const generateAndSetQr = async () => {
+      if (selectedItem?.barcodeUrl) { // selectedItem.barcodeUrl now stores raw data
+        try {
+          const svg = await generateQrCodeSvg(selectedItem.barcodeUrl, 100);
+          setQrCodeSvg(svg);
+        } catch (error) {
+          console.error("Error generating QR code for item lookup display:", error);
+          setQrCodeSvg(null);
+        }
+      } else {
+        setQrCodeSvg(null);
+      }
+    };
+    generateAndSetQr();
+  }, [selectedItem]); // Regenerate if selectedItem or its barcodeUrl changes
+
   const filteredItems = useMemo(() => {
     if (!searchTerm) return [];
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
@@ -34,7 +54,7 @@ const ItemLookupTool: React.FC<ItemLookupToolProps> = ({ onScanRequest, scannedD
       (item) =>
         item.name.toLowerCase().includes(lowerCaseSearchTerm) ||
         item.sku.toLowerCase().includes(lowerCaseSearchTerm) ||
-        (item.barcodeUrl && item.barcodeUrl.toLowerCase().includes(lowerCaseSearchTerm))
+        (item.barcodeUrl && item.barcodeUrl.toLowerCase().includes(lowerCaseSearchTerm)) // Match against raw barcodeUrl
     );
   }, [inventoryItems, searchTerm]);
 
@@ -49,7 +69,7 @@ const ItemLookupTool: React.FC<ItemLookupToolProps> = ({ onScanRequest, scannedD
       (item) =>
         item.name.toLowerCase().includes(lowerCaseTerm) ||
         item.sku.toLowerCase().includes(lowerCaseTerm) ||
-        (item.barcodeUrl && item.barcodeUrl.toLowerCase().includes(lowerCaseTerm))
+        (item.barcodeUrl && item.barcodeUrl.toLowerCase().includes(lowerCaseTerm)) // Match against raw barcodeUrl
     );
 
     if (foundItem) {
@@ -158,9 +178,9 @@ const ItemLookupTool: React.FC<ItemLookupToolProps> = ({ onScanRequest, scannedD
                   <span className="font-semibold">Description:</span> {selectedItem.description}
                 </p>
               )}
-              {selectedItem.barcodeUrl && (
+              {qrCodeSvg && ( // Display QR code if available
                 <div className="mt-2 p-2 border border-border rounded-md bg-muted/20 flex justify-center">
-                  <div dangerouslySetInnerHTML={{ __html: selectedItem.barcodeUrl }} />
+                  <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} />
                 </div>
               )}
             </CardContent>

@@ -19,8 +19,7 @@ import { useOnboarding } from "@/context/OnboardingContext";
 import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
 import ManageLocationsDialog from "@/components/ManageLocationsDialog";
-import JsBarcode from "jsbarcode";
-import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // NEW: Import QR code generator
+import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
 
 interface AddInventoryDialogProps {
   isOpen: boolean;
@@ -40,18 +39,17 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   const [description, setDescription] = useState("");
   const [sku, setSku] = useState("");
   const [category, setCategory] = useState("");
-  const [pickingBinQuantity, setPickingBinQuantity] = useState(""); // NEW
-  const [overstockQuantity, setOverstockQuantity] = useState(""); // NEW
+  const [pickingBinQuantity, setPickingBinQuantity] = useState("");
+  const [overstockQuantity, setOverstockQuantity] = useState("");
   const [reorderLevel, setReorderLevel] = useState("");
-  const [pickingReorderLevel, setPickingReorderLevel] = useState(""); // NEW
+  const [pickingReorderLevel, setPickingReorderLevel] = useState("");
   const [unitCost, setUnitCost] = useState("");
   const [retailPrice, setRetailPrice] = useState("");
   const [location, setLocation] = useState("");
-  const [pickingBinLocation, setPickingBinLocation] = useState(""); // NEW
+  const [pickingBinLocation, setPickingBinLocation] = useState("");
   const [selectedVendorId, setSelectedVendorId] = useState("none");
-  const [barcodeValue, setBarcodeValue] = useState("");
-  const [barcodeType, setBarcodeType] = useState<"CODE128" | "QR">("CODE128");
-  const [barcodeSvg, setBarcodeSvg] = useState<string | null>(null);
+  const [barcodeValue, setBarcodeValue] = useState(""); // This will store the raw data for QR code
+  const [qrCodeSvgPreview, setQrCodeSvgPreview] = useState<string | null>(null); // For displaying the generated QR
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrlPreview, setImageUrlPreview] = useState<string | null>(null);
   const [autoReorderEnabled, setAutoReorderEnabled] = useState(false);
@@ -66,18 +64,17 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       setDescription("");
       setSku("");
       setCategory("");
-      setPickingBinQuantity(""); // NEW
-      setOverstockQuantity(""); // NEW
+      setPickingBinQuantity("");
+      setOverstockQuantity("");
       setReorderLevel("");
-      setPickingReorderLevel(""); // NEW
+      setPickingReorderLevel("");
       setUnitCost("");
       setRetailPrice("");
       setLocation("");
-      setPickingBinLocation(""); // NEW
+      setPickingBinLocation("");
       setSelectedVendorId("none");
       setBarcodeValue("");
-      setBarcodeType("CODE128");
-      setBarcodeSvg(null);
+      setQrCodeSvgPreview(null);
       setImageFile(null);
       setImageUrlPreview(null);
       setAutoReorderEnabled(false);
@@ -85,9 +82,24 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     }
   }, [isOpen]);
 
-  // Autopopulate barcodeValue with SKU
+  // Autopopulate barcodeValue with SKU and generate QR preview
   useEffect(() => {
-    setBarcodeValue(sku.trim());
+    const updateQrCode = async () => {
+      const value = sku.trim();
+      setBarcodeValue(value);
+      if (value) {
+        try {
+          const svg = await generateQrCodeSvg(value, 100);
+          setQrCodeSvgPreview(svg);
+        } catch (error) {
+          console.error("Error generating QR code preview:", error);
+          setQrCodeSvgPreview(null);
+        }
+      } else {
+        setQrCodeSvgPreview(null);
+      }
+    };
+    updateQrCode();
   }, [sku]);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,65 +123,37 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     }
   };
 
-  const handleGenerateBarcode = async () => {
-    if (!barcodeValue.trim()) {
-      showError("Please enter a value to generate the barcode/QR code (e.g., SKU).");
-      setBarcodeSvg(null);
-      return;
-    }
-    try {
-      if (barcodeType === "CODE128") {
-        const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        JsBarcode(svgElement, barcodeValue.trim(), {
-          format: "CODE128",
-          displayValue: true,
-          height: 50,
-          width: 2,
-          margin: 0,
-        });
-        setBarcodeSvg(svgElement.outerHTML);
-      } else {
-        const qrSvg = await generateQrCodeSvg(barcodeValue.trim(), 100);
-        setBarcodeSvg(qrSvg);
-      }
-      showSuccess(`${barcodeType === "CODE128" ? "Barcode" : "QR Code"} generated!`);
-    } catch (error: any) {
-      showError(`Failed to generate ${barcodeType === "CODE128" ? "barcode" : "QR code"}: ${error.message}`);
-      setBarcodeSvg(null);
-    }
-  };
-
   const handleSubmit = async () => {
     if (
       !itemName.trim() ||
       !sku.trim() ||
       !category.trim() ||
-      !pickingBinQuantity || // NEW
-      !overstockQuantity || // NEW
+      !pickingBinQuantity ||
+      !overstockQuantity ||
       !reorderLevel ||
-      !pickingReorderLevel || // NEW
+      !pickingReorderLevel ||
       !unitCost ||
       !retailPrice ||
       !location ||
-      !pickingBinLocation // NEW
+      !pickingBinLocation
     ) {
       showError("Please fill in all required fields.");
       return;
     }
 
-    const parsedPickingBinQuantity = parseInt(pickingBinQuantity || '0'); // NEW: Default to '0'
-    const parsedOverstockQuantity = parseInt(overstockQuantity || '0'); // NEW: Default to '0'
+    const parsedPickingBinQuantity = parseInt(pickingBinQuantity || '0');
+    const parsedOverstockQuantity = parseInt(overstockQuantity || '0');
     const parsedReorderLevel = parseInt(reorderLevel || '0');
-    const parsedPickingReorderLevel = parseInt(pickingReorderLevel || '0'); // NEW: Default to '0'
+    const parsedPickingReorderLevel = parseInt(pickingReorderLevel || '0');
     const parsedUnitCost = parseFloat(unitCost || '0');
     const parsedRetailPrice = parseFloat(retailPrice || '0');
     const parsedAutoReorderQuantity = parseInt(autoReorderQuantity || '0');
 
     if (
-      isNaN(parsedPickingBinQuantity) || parsedPickingBinQuantity < 0 || // NEW
-      isNaN(parsedOverstockQuantity) || parsedOverstockQuantity < 0 || // NEW
+      isNaN(parsedPickingBinQuantity) || parsedPickingBinQuantity < 0 ||
+      isNaN(parsedOverstockQuantity) || parsedOverstockQuantity < 0 ||
       isNaN(parsedReorderLevel) || parsedReorderLevel < 0 ||
-      isNaN(parsedPickingReorderLevel) || parsedPickingReorderLevel < 0 || // NEW
+      isNaN(parsedPickingReorderLevel) || parsedPickingReorderLevel < 0 ||
       isNaN(parsedUnitCost) || parsedUnitCost < 0 ||
       isNaN(parsedRetailPrice) || parsedRetailPrice < 0 ||
       (autoReorderEnabled && (isNaN(parsedAutoReorderQuantity) || parsedAutoReorderQuantity <= 0))
@@ -183,19 +167,19 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       description: description.trim(),
       sku: sku.trim(),
       category: category.trim(),
-      pickingBinQuantity: parsedPickingBinQuantity, // NEW
-      overstockQuantity: parsedOverstockQuantity, // NEW
+      pickingBinQuantity: parsedPickingBinQuantity,
+      overstockQuantity: parsedOverstockQuantity,
       reorderLevel: parsedReorderLevel,
-      pickingReorderLevel: parsedPickingReorderLevel, // NEW
+      pickingReorderLevel: parsedPickingReorderLevel,
       committedStock: 0,
       incomingStock: 0,
       unitCost: parsedUnitCost,
       retailPrice: parsedRetailPrice,
       location: location,
-      pickingBinLocation: pickingBinLocation, // NEW
+      pickingBinLocation: pickingBinLocation,
       imageUrl: imageUrlPreview || undefined,
       vendorId: selectedVendorId === "none" ? undefined : selectedVendorId,
-      barcodeUrl: barcodeSvg || undefined,
+      barcodeUrl: barcodeValue || undefined, // Store the raw barcode value
       autoReorderEnabled: autoReorderEnabled,
       autoReorderQuantity: parsedAutoReorderQuantity,
     };
@@ -209,17 +193,17 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     !itemName.trim() ||
     !sku.trim() ||
     !category.trim() ||
-    !pickingBinQuantity || // NEW
-    !overstockQuantity || // NEW
+    !pickingBinQuantity ||
+    !overstockQuantity ||
     !reorderLevel ||
-    !pickingReorderLevel || // NEW
+    !pickingReorderLevel ||
     !unitCost ||
     !retailPrice ||
     !location ||
-    !pickingBinLocation || // NEW
+    !pickingBinLocation ||
     locations.length === 0 ||
     categories.length === 0 ||
-    (autoReorderEnabled && (parseInt(autoReorderQuantity || '0') <= 0 || isNaN(parseInt(autoReorderQuantity || '0')))); // NEW: Default to '0'
+    (autoReorderEnabled && (parseInt(autoReorderQuantity || '0') <= 0 || isNaN(parseInt(autoReorderQuantity || '0'))));
 
   const handleOpenManageLocations = () => {
     setIsManageLocationsDialogOpen(true);
@@ -419,30 +403,17 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="barcodeValue">Barcode/QR Value</Label>
-            <div className="flex gap-2">
-              <Input
-                id="barcodeValue"
-                value={barcodeValue}
-                onChange={(e) => setBarcodeValue(e.target.value)}
-                placeholder="Enter SKU or custom value"
-              />
-              <Select value={barcodeType} onValueChange={(value: "CODE128" | "QR") => setBarcodeType(value)}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CODE128">Barcode</SelectItem>
-                  <SelectItem value="QR">QR Code</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button type="button" onClick={handleGenerateBarcode} variant="outline">
-                Generate
-              </Button>
-            </div>
-            {barcodeSvg && (
+            <Label htmlFor="barcodeValue">QR Code Value (from SKU)</Label>
+            <Input
+              id="barcodeValue"
+              value={barcodeValue}
+              onChange={(e) => setSku(e.target.value)} // Update SKU, which triggers QR generation
+              placeholder="Enter SKU or custom value"
+              disabled // Disable direct editing, it's tied to SKU
+            />
+            {qrCodeSvgPreview && (
               <div className="mt-2 p-2 border border-border rounded-md bg-muted/20 flex justify-center">
-                <div dangerouslySetInnerHTML={{ __html: barcodeSvg }} />
+                <div dangerouslySetInnerHTML={{ __html: qrCodeSvgPreview }} />
               </div>
             )}
           </div>

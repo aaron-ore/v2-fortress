@@ -14,18 +14,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Switch } from "@/components/ui/switch"; // NEW: Import Switch
+import { Switch } from "@/components/ui/switch";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { showSuccess, showError } from "@/utils/toast";
-import { useInventory, InventoryItem } from "@/context/InventoryContext";
+import { useInventory } from "@/context/InventoryContext";
 import { useStockMovement } from "@/context/StockMovementContext";
-import { useOrders, OrderItem, POItem } from "@/context/OrdersContext"; // NEW: Import useOrders, OrderItem, POItem
-import { useVendors } from "@/context/VendorContext"; // NEW: Import useVendors
-import { processAutoReorder } from "@/utils/autoReorderLogic"; // NEW: Import autoReorderLogic
+import { useOrders, OrderItem, POItem } from "@/context/OrdersContext";
+import { useVendors } from "@/context/VendorContext";
+import { processAutoReorder } from "@/utils/autoReorderLogic";
 import { useNavigate } from "react-router-dom";
-import { Package, Tag, Scale, DollarSign, ArrowUp, ArrowDown, Trash2, History, Repeat } from "lucide-react"; // NEW: Import Repeat icon
+import { Package, Tag, Scale, DollarSign, ArrowUp, ArrowDown, Trash2, History, Repeat } from "lucide-react";
 import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge"; // Import Badge
+import { Badge } from "@/components/ui/badge";
+import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
 
 interface InventoryItemQuickViewDialogProps {
   isOpen: boolean;
@@ -49,8 +50,8 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
 }) => {
   const { inventoryItems, updateInventoryItem, deleteInventoryItem, refreshInventory } = useInventory();
   const { stockMovements, addStockMovement, fetchStockMovements } = useStockMovement();
-  const { addOrder } = useOrders(); // NEW: Use addOrder
-  const { vendors } = useVendors(); // NEW: Use vendors
+  const { addOrder } = useOrders();
+  const { vendors } = useVendors();
   const navigate = useNavigate();
 
   const currentItem = useMemo(() => {
@@ -59,14 +60,15 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
 
   const [adjustmentAmount, setAdjustmentAmount] = useState("");
   const [adjustmentType, setAdjustmentType] = useState<"add" | "subtract">("add");
-  const [adjustmentTarget, setAdjustmentTarget] = useState<"pickingBin" | "overstock">("pickingBin"); // NEW
+  const [adjustmentTarget, setAdjustmentTarget] = useState<"pickingBin" | "overstock">("pickingBin");
   const [adjustmentReason, setAdjustmentReason] = useState("");
   const [autoReorderEnabled, setAutoReorderEnabled] = useState(false);
   const [autoReorderQuantity, setAutoReorderQuantity] = useState("");
+  const [qrCodeSvg, setQrCodeSvg] = useState<string | null>(null); // State for QR code SVG
 
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
 
-  const prevItemIdRef = useRef<string | null>(null); // Ref to track previous item ID
+  const prevItemIdRef = useRef<string | null>(null);
 
   // Filter stock movements for the current item
   const itemStockMovements = useMemo(() => {
@@ -77,7 +79,6 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
 
   useEffect(() => {
     if (isOpen) {
-      // Only reset/initialize if a new item is selected or dialog just opened
       if (currentItem?.id !== prevItemIdRef.current) {
         setAdjustmentAmount("");
         setAdjustmentType("add");
@@ -89,10 +90,25 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
       }
       if (currentItem) {
         fetchStockMovements(currentItem.id);
+        // Generate QR code SVG from item.barcodeUrl (raw data)
+        const generateAndSetQr = async () => {
+          if (currentItem.barcodeUrl) {
+            try {
+              const svg = await generateQrCodeSvg(currentItem.barcodeUrl, 100);
+              setQrCodeSvg(svg);
+            } catch (error) {
+              console.error("Error generating QR code for quick view display:", error);
+              setQrCodeSvg(null);
+            }
+          } else {
+            setQrCodeSvg(null);
+          }
+        };
+        generateAndSetQr();
       }
     } else {
-      // When dialog closes, clear previous item ID
       prevItemIdRef.current = null;
+      setQrCodeSvg(null); // Clear QR code when dialog closes
     }
   }, [isOpen, currentItem, fetchStockMovements]);
 
@@ -225,7 +241,6 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
     const totalAmount = poItems.reduce((sum, poItem) => sum + poItem.quantity * poItem.unitPrice, 0);
 
     const newPurchaseOrder: Omit<OrderItem, "id" | "organizationId"> = {
-      // id: newPoNumber, // ID is generated by addOrder, not passed in Omit type
       type: "Purchase",
       customerSupplier: vendor.name,
       date: new Date().toISOString().split("T")[0],
@@ -243,7 +258,6 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
     try {
       await addOrder(newPurchaseOrder);
       showSuccess(`Manual reorder placed for ${currentItem.name} (PO: ${newPoNumber}). Email simulated to ${vendor.email || 'vendor'}.`);
-      // Simulate email sending
       console.log(`Simulating email to ${vendor.email} for PO ${newPoNumber} with items:`, poItems);
       onClose();
     } catch (error: any) {
@@ -337,9 +351,9 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
               <span className="font-semibold text-base text-foreground">Picking Bin: {currentItem.pickingBinQuantity} units</span>
               <span className="font-semibold text-base text-foreground ml-4">Overstock: {currentItem.overstockQuantity} units</span>
             </div>
-            {currentItem.barcodeUrl && (
+            {qrCodeSvg && ( // Display QR code if available
               <div className="col-span-2 mt-2 p-2 border border-border rounded-md bg-muted/20 flex justify-center">
-                <div dangerouslySetInnerHTML={{ __html: currentItem.barcodeUrl }} />
+                <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} />
               </div>
             )}
           </div>
@@ -381,7 +395,7 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
                 </RadioGroup>
               </div>
               <div className="space-y-2">
-                <Label>Adjustment Target</Label> {/* NEW */}
+                <Label>Adjustment Target</Label>
                 <RadioGroup
                   value={adjustmentTarget}
                   onValueChange={(value: "pickingBin" | "overstock") => setAdjustmentTarget(value)}

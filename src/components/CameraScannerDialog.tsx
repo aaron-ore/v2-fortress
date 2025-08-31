@@ -45,7 +45,6 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
       setManualInputMode(false);
       setManualInputValue("");
     } else {
-      // When dialog closes, ensure scanner is stopped and cleared
       qrScannerRef.current?.stopAndClear();
     }
   }, [isOpen]);

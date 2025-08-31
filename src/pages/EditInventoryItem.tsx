@@ -30,7 +30,7 @@ import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { showError, showSuccess } from "@/utils/toast";
-import { generateBarcodeSvgDataUri } from "@/utils/barcode";
+import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
 
 const formSchema = z.object({
   name: z.string().min(1, "Item name is required"),
@@ -63,7 +63,7 @@ const EditInventoryItem: React.FC = () => {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [barcodeUrl, setBarcodeUrl] = useState<string | undefined>(undefined);
+  const [qrCodeSvg, setQrCodeSvg] = useState<string | undefined>(undefined); // State for QR code SVG
 
   const item = useMemo(() => inventoryItems.find((i) => i.id === id), [inventoryItems, id]);
 
@@ -124,21 +124,41 @@ const EditInventoryItem: React.FC = () => {
         ...item,
         vendorId: item.vendorId || "null-vendor",
       });
-      if (item.sku) {
-        setBarcodeUrl(generateBarcodeSvgDataUri(item.sku));
-      } else {
-        setBarcodeUrl(undefined);
-      }
+      // Generate QR code SVG from item.barcodeUrl (which now stores raw data)
+      const generateAndSetQr = async () => {
+        if (item.barcodeUrl) {
+          try {
+            const svg = await generateQrCodeSvg(item.barcodeUrl, 100);
+            setQrCodeSvg(svg);
+          } catch (error) {
+            console.error("Error generating QR code for display:", error);
+            setQrCodeSvg(undefined);
+          }
+        } else {
+          setQrCodeSvg(undefined);
+        }
+      };
+      generateAndSetQr();
     }
   }, [item, id, form]);
 
   const watchSku = form.watch("sku");
   useEffect(() => {
-    if (watchSku) {
-      setBarcodeUrl(generateBarcodeSvgDataUri(watchSku));
-    } else {
-      setBarcodeUrl(undefined);
-    }
+    // Regenerate QR code preview if SKU changes
+    const generateAndSetQr = async () => {
+      if (watchSku) {
+        try {
+          const svg = await generateQrCodeSvg(watchSku, 100);
+          setQrCodeSvg(svg);
+        } catch (error) {
+          console.error("Error generating QR code preview:", error);
+          setQrCodeSvg(undefined);
+        }
+      } else {
+        setQrCodeSvg(undefined);
+      }
+    };
+    generateAndSetQr();
   }, [watchSku]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -148,18 +168,14 @@ const EditInventoryItem: React.FC = () => {
     }
     setIsSaving(true);
     try {
-      let finalBarcodeUrl = barcodeUrl;
-      if (values.sku && !barcodeUrl) {
-        finalBarcodeUrl = generateBarcodeSvgDataUri(values.sku);
-      } else if (!values.sku) {
-        finalBarcodeUrl = undefined;
-      }
+      // Store the raw SKU value in barcodeUrl, not the SVG
+      const finalBarcodeValue = values.sku || undefined;
 
       await updateInventoryItem({
         ...item,
         ...values,
         vendorId: values.vendorId === "null-vendor" ? undefined : values.vendorId,
-        barcodeUrl: finalBarcodeUrl,
+        barcodeUrl: finalBarcodeValue, // Store raw SKU value
       });
       showSuccess("Inventory item updated successfully!");
       navigate("/inventory");
@@ -242,13 +258,13 @@ const EditInventoryItem: React.FC = () => {
                   </FormItem>
                 )}
               />
-              {barcodeUrl && (
+              {qrCodeSvg && (
                 <FormItem>
-                  <FormLabel>Barcode</FormLabel>
+                  <FormLabel>QR Code</FormLabel>
                   <FormControl>
-                    <img src={barcodeUrl} alt={`Barcode for ${item.sku}`} className="max-w-[200px] h-auto border p-2 rounded-md bg-white" />
+                    <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="max-w-[100px] h-auto border p-2 rounded-md bg-white" />
                   </FormControl>
-                  <FormDescription>This barcode is generated from the SKU.</FormDescription>
+                  <FormDescription>This QR code is generated from the SKU.</FormDescription>
                 </FormItem>
               )}
               <FormField
@@ -269,7 +285,6 @@ const EditInventoryItem: React.FC = () => {
                             {category.name}
                           </SelectItem>
                         ))}
-                        {/* Replaced DropdownMenuSeparator and DropdownMenuItem with a regular SelectItem */}
                         <SelectItem value="add-new-category" onClick={() => setIsAddingCategory(true)}>
                           <PlusCircle className="mr-2 h-4 w-4" /> Add New Category
                         </SelectItem>
