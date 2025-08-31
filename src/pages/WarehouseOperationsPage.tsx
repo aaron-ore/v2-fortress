@@ -78,6 +78,32 @@ const WarehouseOperationsPage: React.FC = () => {
     { value: "location-management", label: "Locations", icon: MapPin, type: "page-link" },
   ];
 
+  // Effect to handle URL hash changes for opening tabs/dialogs
+  useEffect(() => {
+    const hash = location.hash.replace("#", "");
+
+    // Close all dialogs first to ensure only one is open at a time, or none.
+    Object.values(dialogStates).forEach(state => {
+      if (state.isOpen) state.setIsOpen(false);
+    });
+
+    if (hash === "dashboard") {
+      setActiveTab("dashboard");
+    } else {
+      const dialogKey = hash as keyof typeof dialogStates;
+      if (dialogStates[dialogKey]) {
+        dialogStates[dialogKey].setIsOpen(true);
+        setActiveTab(""); // No tab active when a dialog is open
+      } else {
+        // If hash is invalid or empty, default to dashboard and clear hash
+        setActiveTab("dashboard");
+        if (hash) { // Only clear if there was an invalid hash
+          navigate(location.pathname, { replace: true });
+        }
+      }
+    }
+  }, [location.hash, navigate, location.pathname]); // Dependencies for useEffect
+
   // Function to request a scan from a specific tool
   const requestScan = (callback: (scannedData: string) => void) => {
     setScanCallback(() => callback); // Store the tool's callback
@@ -94,7 +120,11 @@ const WarehouseOperationsPage: React.FC = () => {
       // If it was a global scan (from the main "Scan Item" button),
       // default to opening the Item Lookup dialog with the scanned data.
       setScannedDataForTool(decodedText); // Store data to pass to dialog
+      // Ensure other dialogs are closed before opening Item Lookup
+      Object.values(dialogStates).forEach(state => state.setIsOpen(false));
       dialogStates["item-lookup"].setIsOpen(true); // Open Item Lookup dialog
+      navigate(`${location.pathname}#item-lookup`, { replace: true }); // Update hash
+      setActiveTab(""); // No tab active when a dialog is open
       showSuccess(`Scanned: ${decodedText}. Opening Item Lookup.`);
     }
     setIsCameraScannerDialogOpen(false); // Close the camera dialog
@@ -108,6 +138,17 @@ const WarehouseOperationsPage: React.FC = () => {
   // Callback for tools to signal they've processed the scanned data
   const handleScannedDataProcessed = () => {
     setScannedDataForTool(null); // Clear the data once consumed
+  };
+
+  // Function to handle closing a dialog and clearing hash
+  const closeDialogAndClearHash = (dialogKey: keyof typeof dialogStates) => {
+    dialogStates[dialogKey].setIsOpen(false);
+    // Only clear the hash if it matches the dialog being closed
+    if (location.hash === `#${dialogKey}`) {
+      navigate(location.pathname, { replace: true });
+    }
+    // After closing a dialog, default back to the dashboard tab
+    setActiveTab("dashboard");
   };
 
   if (!isMobile) {
@@ -147,15 +188,29 @@ const WarehouseOperationsPage: React.FC = () => {
             variant="ghost"
             className={cn(
               "flex flex-col items-center justify-center h-24 w-full aspect-square py-3 px-2 text-sm font-medium rounded-lg transition-colors text-center",
-              op.value === activeTab // Only highlight dashboard if it's the active tab
+              op.type === "tab" && op.value === activeTab // Highlight active tab
                 ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-foreground hover:bg-muted/50 hover:text-primary"
+                : op.type === "dialog" && dialogStates[op.value as keyof typeof dialogStates]?.isOpen // Highlight open dialog
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-foreground hover:bg-muted/50 hover:text-primary"
             )}
             onClick={() => {
               if (op.type === "tab") {
                 setActiveTab(op.value);
+                navigate(`${location.pathname}#${op.value}`, { replace: true });
               } else if (op.type === "dialog") {
-                dialogStates[op.value as keyof typeof dialogStates].setIsOpen(true);
+                const dialogKey = op.value as keyof typeof dialogStates;
+                if (dialogStates[dialogKey]) {
+                  // Close all other dialogs before opening this one
+                  Object.values(dialogStates).forEach(state => {
+                    if (state.isOpen && state !== dialogStates[dialogKey]) {
+                      state.setIsOpen(false);
+                    }
+                  });
+                  dialogStates[dialogKey].setIsOpen(true);
+                  navigate(`${location.pathname}#${dialogKey}`, { replace: true });
+                  setActiveTab(""); // No tab active when a dialog is open
+                }
               } else if (op.type === "page-link") {
                 navigate(`/${op.value}`);
               }
@@ -177,71 +232,71 @@ const WarehouseOperationsPage: React.FC = () => {
       {/* Render all dialogs, their visibility controlled by state */}
       <ItemLookupDialog
         isOpen={isItemLookupDialogOpen}
-        onClose={() => dialogStates["item-lookup"].setIsOpen(false)}
+        onClose={() => closeDialogAndClearHash("item-lookup")}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <ReceiveInventoryDialog
         isOpen={isReceiveInventoryDialogOpen}
-        onClose={() => dialogStates["receive-inventory"].setIsOpen(false)}
+        onClose={() => closeDialogAndClearHash("receive-inventory")}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <FulfillOrderDialog
         isOpen={isFulfillOrderDialogOpen}
-        onClose={() => dialogStates["fulfill-order"].setIsOpen(false)}
+        onClose={() => closeDialogAndClearHash("fulfill-order")}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <ShipOrderDialog
         isOpen={isShipOrderDialogOpen}
-        onClose={() => dialogStates["ship-order"].setIsOpen(false)}
+        onClose={() => closeDialogAndClearHash("ship-order")}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <PickingWaveManagementDialog
         isOpen={isPickingWaveManagementDialogOpen}
-        onClose={() => dialogStates["picking-wave"].setIsOpen(false)}
+        onClose={() => closeDialogAndClearHash("picking-wave")}
       />
       <ReplenishmentManagementDialog
         isOpen={isReplenishmentManagementDialogOpen}
-        onClose={() => dialogStates["replenishment"].setIsOpen(false)}
+        onClose={() => closeDialogAndClearHash("replenishment")}
       />
       <ShippingVerificationDialog
         isOpen={isShippingVerificationDialogOpen}
-        onClose={() => dialogStates["shipping-verify"].setIsOpen(false)}
+        onClose={() => closeDialogAndClearHash("shipping-verify")}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <ReturnsProcessingDialog
         isOpen={isReturnsProcessingDialogOpen}
-        onClose={() => dialogStates["returns-process"].setIsOpen(false)}
+        onClose={() => closeDialogAndClearHash("returns-process")}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <StockTransferDialog
         isOpen={isStockTransferDialogOpen}
-        onClose={() => dialogStates["stock-transfer"].setIsOpen(false)}
+        onClose={() => closeDialogAndClearHash("stock-transfer")}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <CycleCountDialog
         isOpen={isCycleCountDialogOpen}
-        onClose={() => dialogStates["cycle-count"].setIsOpen(false)}
+        onClose={() => closeDialogAndClearHash("cycle-count")}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <IssueReportDialog
         isOpen={isIssueReportDialogOpen}
-        onClose={() => dialogStates["issue-report"].setIsOpen(false)}
+        onClose={() => closeDialogAndClearHash("issue-report")}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}

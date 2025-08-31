@@ -38,7 +38,7 @@ export interface NavItem {
   children?: NavItem[];
   adminOnly?: boolean;
   mobileOnly?: boolean;
-  action?: (dialogKey?: string) => void; // Optional action for items like Logout or opening dialogs
+  // action?: (dialogKey?: string) => void; // Removed action as href handles navigation
 }
 
 export const mainNavItems: NavItem[] = [
@@ -53,18 +53,18 @@ export const mainNavItems: NavItem[] = [
     icon: Warehouse,
     isParent: true,
     children: [
-      { title: "Dashboard", href: "/warehouse-operations", icon: LayoutDashboard, action: (key) => window.location.hash = key || "dashboard" }, // Still navigates to tab
-      { title: "Item Lookup", href: "#item-lookup", icon: Search, action: (key) => window.location.hash = key || "item-lookup" },
-      { title: "Receive Inventory", href: "#receive-inventory", icon: PackagePlus, action: (key) => window.location.hash = key || "receive-inventory" },
-      { title: "Fulfill Order", href: "#fulfill-order", icon: ShoppingCart, action: (key) => window.location.hash = key || "fulfill-order" },
-      { title: "Ship Order", href: "#ship-order", icon: Truck, action: (key) => window.location.hash = key || "ship-order" },
-      { title: "Picking Wave", href: "#picking-wave", icon: ListOrdered, action: (key) => window.location.hash = key || "picking-wave" },
-      { title: "Replenishment", href: "#replenishment", icon: Repeat, action: (key) => window.location.hash = key || "replenishment" },
-      { title: "Shipping Verify", href: "#shipping-verify", icon: CheckCircle, action: (key) => window.location.hash = key || "shipping-verify" },
-      { title: "Returns Process", href: "#returns-process", icon: Undo2, action: (key) => window.location.hash = key || "returns-process" },
-      { title: "Stock Transfer", href: "#stock-transfer", icon: Scan, action: (key) => window.location.hash = key || "stock-transfer" },
-      { title: "Cycle Count", href: "#cycle-count", icon: CheckCircle, action: (key) => window.location.hash = key || "cycle-count" },
-      { title: "Issue Report", href: "#issue-report", icon: AlertTriangle, action: (key) => window.location.hash = key || "issue-report" },
+      { title: "Dashboard", href: "/warehouse-operations#dashboard", icon: LayoutDashboard }, // Updated href
+      { title: "Item Lookup", href: "/warehouse-operations#item-lookup", icon: Search }, // Updated href
+      { title: "Receive Inventory", href: "/warehouse-operations#receive-inventory", icon: PackagePlus }, // Updated href
+      { title: "Fulfill Order", href: "/warehouse-operations#fulfill-order", icon: ShoppingCart }, // Updated href
+      { title: "Ship Order", href: "/warehouse-operations#ship-order", icon: Truck }, // Updated href
+      { title: "Picking Wave", href: "/warehouse-operations#picking-wave", icon: ListOrdered }, // Updated href
+      { title: "Replenishment", href: "/warehouse-operations#replenishment", icon: Repeat }, // Updated href
+      { title: "Shipping Verify", href: "/warehouse-operations#shipping-verify", icon: CheckCircle }, // Updated href
+      { title: "Returns Process", href: "/warehouse-operations#returns-process", icon: Undo2 }, // Updated href
+      { title: "Stock Transfer", href: "/warehouse-operations#stock-transfer", icon: Scan }, // Updated href
+      { title: "Cycle Count", href: "/warehouse-operations#cycle-count", icon: CheckCircle }, // Updated href
+      { title: "Issue Report", href: "/warehouse-operations#issue-report", icon: AlertTriangle }, // Updated href
       { title: "Location Management", href: "/location-management", icon: MapPin }, // This remains a page link
     ],
   },
