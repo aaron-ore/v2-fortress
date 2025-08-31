@@ -30,6 +30,10 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       formatsToSupport: [
         Html5QrcodeSupportedFormats.QR_CODE,
         Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.EAN_13, // Added EAN_13 for common product barcodes
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
       ],
       verbose: false,
     };
@@ -45,12 +49,11 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       if (html5QrCodeInstanceRef.current) {
         console.log("[QrScanner] Attempting to stop Html5Qrcode instance...");
         try {
-          // Only attempt to stop if the scanner is actually running
           if (html5QrCodeInstanceRef.current.isScanning) {
             await html5QrCodeInstanceRef.current.stop();
             console.log("[QrScanner] Html5Qrcode stopped successfully.");
           }
-          html5QrCodeInstanceRef.current.clear(); // Always try to clear resources
+          html5QrCodeInstanceRef.current.clear();
           console.log("[QrScanner] Html5Qrcode cleared successfully.");
         } catch (e) {
           console.warn("[QrScanner] Error stopping/clearing Html5Qrcode (might be already stopped or camera not found):", e);
@@ -76,17 +79,11 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       if (!isMounted.current) return false;
 
       console.log(`[QrScanner - ${strategyName}] Attempting to start Html5Qrcode with constraints:`, constraints);
-      // Ensure previous scanner is stopped before starting a new one
       await stopAndClearHtml5Qrcode(); 
 
       try {
         const newScanner = new Html5Qrcode(element.id, html5QrcodeConstructorConfig);
         html5QrCodeInstanceRef.current = newScanner;
-
-        if (!newScanner || typeof newScanner.start !== 'function') {
-          console.error(`[QrScanner - ${strategyName}] Html5Qrcode instance is invalid or 'start' method is missing.`);
-          return false;
-        }
 
         await newScanner.start(
           constraints,
@@ -130,7 +127,6 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         return;
       }
 
-      // Ensure all previous scanners are stopped before starting new attempts
       await stopAndClear(); 
 
       console.log("[QrScanner] Starting camera initialization strategies...");
@@ -141,44 +137,35 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       });
       console.log("[QrScanner] Available cameras:", cameras);
 
+      if (cameras.length === 0) {
+        onError("No cameras were detected on this device. Please ensure a camera is connected and enabled.");
+        setIsScannerReady(false);
+        return;
+      }
+
       const strategies = [
         {
-          name: "Html5Qrcode - Default (Short Delay)",
+          name: `Html5Qrcode - Preferred Facing Mode (${facingMode})`,
           exec: async () => await tryStartHtml5Qrcode(element, { facingMode: facingMode }, "Strategy 1")
         },
         {
-          name: "Html5Qrcode - Default (Longer Delay)",
+          name: `Html5Qrcode - Alternate Facing Mode (${facingMode === 'user' ? 'environment' : 'user'})`,
           exec: async () => {
-            await new Promise(resolve => setTimeout(resolve, 400));
-            return await tryStartHtml5Qrcode(element, { facingMode: facingMode }, "Strategy 2");
+            await new Promise(resolve => setTimeout(resolve, 500)); // Small delay
+            return await tryStartHtml5Qrcode(element, { facingMode: (facingMode === 'user' ? 'environment' : 'user') }, "Strategy 2");
           }
         },
         {
-          name: "Html5Qrcode - Explicit Environment Camera",
+          name: "Html5Qrcode - Any Camera (Fallback)",
           exec: async () => {
-            const environmentCamera = cameras.find(camera => camera.label.toLowerCase().includes('back') || camera.label.toLowerCase().includes('environment'));
-            if (environmentCamera) {
-              return await tryStartHtml5Qrcode(element, { deviceId: { exact: environmentCamera.id } }, "Strategy 3");
-            }
-            console.log("[QrScanner] No explicit 'environment' camera found for Strategy 3.");
-            return false;
-          }
-        },
-        {
-          name: "Html5Qrcode - Explicit User Camera",
-          exec: async () => {
-            const userCamera = cameras.find(camera => camera.label.toLowerCase().includes('front') || camera.label.toLowerCase().includes('user'));
-            if (userCamera) {
-              return await tryStartHtml5Qrcode(element, { deviceId: { exact: userCamera.id } }, "Strategy 4");
-            }
-            console.log("[QrScanner] No explicit 'user' camera found for Strategy 4.");
-            return false;
+            await new Promise(resolve => setTimeout(resolve, 500)); // Small delay
+            return await tryStartHtml5Qrcode(element, { }, "Strategy 3"); // No specific facing mode
           }
         },
         {
           name: "react-qr-reader Fallback",
           exec: async () => {
-            console.log("[QrScanner] Attempting Strategy 5: Fallback to react-qr-reader.");
+            console.log("[QrScanner] Attempting Strategy 4: Fallback to react-qr-reader.");
             setActiveScannerType('react-qr-reader');
             onReady();
             setIsScannerReady(true);
@@ -194,7 +181,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
 
         if (typeof result === 'string' && result === "NotReadableError" && i < strategies.length - 1) {
           console.warn(`[QrScanner] Strategy ${i + 1} failed with NotReadableError. Retrying once...`);
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          await new Promise(resolve => setTimeout(resolve, 1500)); // Longer retry delay
           result = await strategies[i].exec();
         }
 
@@ -230,13 +217,11 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       isMounted.current = true;
       console.log("[QrScanner] Component mounted or facingMode changed. Initiating strategy attempts...");
       
-      // Add a small delay before attempting to start the camera
       const startAttemptTimer = setTimeout(() => {
         if (scannerDivRef.current) {
           attemptStrategies();
         } else {
           console.warn("[QrScanner] scannerDivRef.current is null after initial timeout. Retrying strategy attempts.");
-          // Fallback retry if ref is not immediately available
           setTimeout(() => {
             if (scannerDivRef.current) {
               attemptStrategies();
@@ -245,7 +230,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
             }
           }, 500);
         }
-      }, 300); // Increased delay to 300ms
+      }, 300);
 
       return () => {
         isMounted.current = false;
