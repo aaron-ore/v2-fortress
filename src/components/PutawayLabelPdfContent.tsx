@@ -1,4 +1,5 @@
 import React from "react";
+import { format } from "date-fns";
 
 interface PutawayLabelPdfContentProps {
   itemName: string;
@@ -7,6 +8,7 @@ interface PutawayLabelPdfContentProps {
   suggestedLocation: string;
   lotNumber?: string;
   expirationDate?: string;
+  serialNumber?: string; // Added for future use, but not actively populated in this iteration
   qrCodeSvg: string; // SVG string for the QR code
   printDate: string;
 }
@@ -18,23 +20,24 @@ const PutawayLabelPdfContent: React.FC<PutawayLabelPdfContentProps> = ({
   suggestedLocation,
   lotNumber,
   expirationDate,
+  serialNumber,
   qrCodeSvg,
   printDate,
 }) => {
   return (
-    <div className="bg-white text-gray-900 font-sans text-xs p-2 w-[100mm] h-[50mm] border border-black flex flex-col">
+    <div className="bg-white text-gray-900 font-sans text-xs p-2 w-[50mm] h-[50mm] border border-black flex flex-col overflow-hidden">
       {/* QR Code at the top */}
-      <div className="flex justify-center mb-1">
-        <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-[30mm] h-[30mm] object-contain" />
+      <div className="flex justify-center mb-1 flex-shrink-0">
+        <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-[25mm] h-[25mm] object-contain" />
       </div>
 
       {/* Item Name */}
-      <p className="font-bold text-sm text-center mb-1 leading-tight">{itemName}</p>
+      <p className="font-bold text-sm text-center mb-1 leading-tight flex-shrink-0 truncate">{itemName}</p>
 
       {/* Details Grid */}
-      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[0.6rem] flex-grow">
+      <div className="grid grid-cols-2 gap-x-1 gap-y-0.5 text-[0.6rem] flex-grow overflow-hidden">
         <div>
-          <span className="font-bold">Code:</span> {itemSku}
+          <span className="font-bold">SKU:</span> {itemSku}
         </div>
         <div>
           <span className="font-bold">Qty:</span> {receivedQuantity}
@@ -49,13 +52,18 @@ const PutawayLabelPdfContent: React.FC<PutawayLabelPdfContentProps> = ({
             <span className="font-bold">Exp:</span> {expirationDate}
           </div>
         )}
+        {serialNumber && ( // Placeholder for serial number
+          <div>
+            <span className="font-bold">SN:</span> {serialNumber}
+          </div>
+        )}
         <div className="col-span-2">
-          <span className="font-bold">Location:</span> <span className="text-blue-700 font-extrabold">{suggestedLocation}</span>
+          <span className="font-bold">Loc:</span> <span className="text-blue-700 font-extrabold">{suggestedLocation}</span>
         </div>
       </div>
 
       {/* Footer Date */}
-      <div className="text-right text-[0.6rem] mt-1">
+      <div className="text-right text-[0.5rem] mt-1 flex-shrink-0">
         Date: {printDate}
       </div>
     </div>

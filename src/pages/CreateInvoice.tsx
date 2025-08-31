@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PlusCircle, Trash2, Printer, PackageOpen } from "lucide-react";
+import { PlusCircle, Trash2, Printer, PackageOpen, QrCode } from "lucide-react"; // Added QrCode
 import { showSuccess, showError } from "@/utils/toast";
 import InvoicePdfContent from "@/components/InvoicePdfContent";
 import { useOnboarding } from "@/context/OnboardingContext";
@@ -25,6 +25,7 @@ import { formatPhoneNumber } from "@/utils/formatters";
 import InventorySelectionDialog from "@/components/InventorySelectionDialog";
 import { InventoryItem } from "@/context/InventoryContext";
 import { usePrint } from "@/context/PrintContext";
+import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
 
 import {
   DndContext,
@@ -146,6 +147,7 @@ const CreateInvoice: React.FC = () => {
   const [dueDate, setDueDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<POItem[]>([]);
+  const [invoiceQrCodeSvg, setInvoiceQrCodeSvg] = useState<string | null>(null); // State for Invoice QR code
 
   const taxRate = 0.05;
 
@@ -155,6 +157,24 @@ const CreateInvoice: React.FC = () => {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor)
   );
+
+  // Generate QR code for Invoice number
+  React.useEffect(() => {
+    const generateQr = async () => {
+      if (invoiceNumber) {
+        try {
+          const svg = await generateQrCodeSvg(invoiceNumber, 80); // Smaller QR for display
+          setInvoiceQrCodeSvg(svg);
+        } catch (error) {
+          console.error("Error generating Invoice QR code:", error);
+          setInvoiceQrCodeSvg(null);
+        }
+      } else {
+        setInvoiceQrCodeSvg(null);
+      }
+    };
+    generateQr();
+  }, [invoiceNumber]);
 
   const handleAddItem = () => {
     setItems([
@@ -296,12 +316,17 @@ const CreateInvoice: React.FC = () => {
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="invoiceNumber">Invoice Number</Label>
-                <Input
-                  id="invoiceNumber"
-                  value={invoiceNumber}
-                  onChange={(e) => setInvoiceNumber(e.target.value)}
-                  placeholder="e.g., INV-2023-001"
-                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="invoiceNumber"
+                    value={invoiceNumber}
+                    onChange={(e) => setInvoiceNumber(e.target.value)}
+                    placeholder="e.g., INV-2023-001"
+                  />
+                  {invoiceQrCodeSvg && (
+                    <div dangerouslySetInnerHTML={{ __html: invoiceQrCodeSvg }} className="w-20 h-20 object-contain" />
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="customerName">Customer Name</Label>

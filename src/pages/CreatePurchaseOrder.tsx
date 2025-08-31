@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Trash2, Archive, Printer, PackageOpen } from "lucide-react"; // Added PackageOpen
+import { PlusCircle, Trash2, Archive, Printer, PackageOpen, QrCode } from "lucide-react"; // Added QrCode
 import { showSuccess, showError } from "@/utils/toast";
 import { useOrders, POItem } from "@/context/OrdersContext";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -32,6 +32,7 @@ import { generateSequentialNumber } from "@/utils/numberGenerator"; // Imported 
 import { formatPhoneNumber } from "@/utils/formatters"; // Imported formatPhoneNumber
 import InventorySelectionDialog from "@/components/InventorySelectionDialog"; // Imported InventorySelectionDialog
 import { InventoryItem } from "@/context/InventoryContext"; // Imported InventoryItem
+import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
 
 import {
   DndContext,
@@ -154,6 +155,7 @@ const CreatePurchaseOrder: React.FC = () => {
   const [dueDate, setDueDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<POItem[]>([]);
+  const [poQrCodeSvg, setPoQrCodeSvg] = useState<string | null>(null); // State for PO QR code
 
   const taxRate = 0.05;
 
@@ -163,6 +165,24 @@ const CreatePurchaseOrder: React.FC = () => {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor)
   );
+
+  // Generate QR code for PO number
+  React.useEffect(() => {
+    const generateQr = async () => {
+      if (poNumber) {
+        try {
+          const svg = await generateQrCodeSvg(poNumber, 80); // Smaller QR for display
+          setPoQrCodeSvg(svg);
+        } catch (error) {
+          console.error("Error generating PO QR code:", error);
+          setPoQrCodeSvg(null);
+        }
+      } else {
+        setPoQrCodeSvg(null);
+      }
+    };
+    generateQr();
+  }, [poNumber]);
 
   const handleAddItem = () => {
     setItems([
@@ -305,12 +325,17 @@ const CreatePurchaseOrder: React.FC = () => {
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="poNumber">PO Number</Label>
-                <Input
-                  id="poNumber"
-                  value={poNumber}
-                  onChange={(e) => setPoNumber(e.target.value)}
-                  placeholder="e.g., PO-2023-001"
-                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="poNumber"
+                    value={poNumber}
+                    onChange={(e) => setPoNumber(e.target.value)}
+                    placeholder="e.g., PO-2023-001"
+                  />
+                  {poQrCodeSvg && (
+                    <div dangerouslySetInnerHTML={{ __html: poQrCodeSvg }} className="w-20 h-20 object-contain" />
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="supplierName">Supplier Name</Label>

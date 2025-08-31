@@ -22,6 +22,7 @@ interface ReceivedItemDisplay extends POItem {
   suggestedPutawayLocation?: string;
   lotNumber?: string;
   expirationDate?: string;
+  serialNumber?: string; // Added for future use
 }
 
 interface ReceiveInventoryToolProps {
@@ -95,6 +96,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
           suggestedPutawayLocation: inventoryItem ? getSuggestedPutawayLocation(inventoryItem.category) : "Unassigned",
           lotNumber: undefined,
           expirationDate: undefined,
+          serialNumber: undefined,
         };
       });
       setReceivedItems(itemsWithDetails);
@@ -175,6 +177,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
         loc: item.suggestedPutawayLocation,
         lot: item.lotNumber,
         exp: item.expirationDate,
+        sn: item.serialNumber,
       });
       const qrCodeSvg = await generateQrCodeSvg(qrCodeValue, 128);
 
@@ -185,6 +188,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
         suggestedLocation: item.suggestedPutawayLocation,
         lotNumber: item.lotNumber,
         expirationDate: item.expirationDate,
+        serialNumber: item.serialNumber,
         qrCodeSvg: qrCodeSvg,
         printDate: format(new Date(), "MMM dd, yyyy HH:mm"),
       };

@@ -21,13 +21,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Trash2, Archive, Printer } from "lucide-react"; // Removed Eye icon
+import { PlusCircle, Trash2, Archive, Printer, QrCode } from "lucide-react"; // Added QrCode icon
 import { showSuccess, showError } from "@/utils/toast";
 import { useOrders, OrderItem, POItem } from "@/context/OrdersContext"; // Import POItem
 import ConfirmDialog from "@/components/ConfirmDialog"; // Import ConfirmDialog
 import PurchaseOrderPdfContent from "@/components/PurchaseOrderPdfContent"; // Corrected import path
 import { useOnboarding } from "@/context/OnboardingContext"; // Import useOnboarding for company profile
 import { usePrint } from "@/context/PrintContext"; // Import usePrint
+import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
 
 const EditPurchaseOrder: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,6 +51,7 @@ const EditPurchaseOrder: React.FC = () => {
   const [shippingMethod, setShippingMethod] = useState<OrderItem['shippingMethod']>("Standard"); // New field
   const [notes, setNotes] = useState(""); // New field
   const [items, setItems] = useState<POItem[]>([]); // Now managing items
+  const [poQrCodeSvg, setPoQrCodeSvg] = useState<string | null>(null); // State for PO QR code
 
   const [isConfirmArchiveDialogOpen, setIsConfirmArchiveDialogOpen] = useState(false); // New state for archive confirmation
 
@@ -83,6 +85,24 @@ const EditPurchaseOrder: React.FC = () => {
       }
     }
   }, [id, orders, navigate]);
+
+  // Generate QR code for PO number
+  React.useEffect(() => {
+    const generateQr = async () => {
+      if (poNumber) {
+        try {
+          const svg = await generateQrCodeSvg(poNumber, 80); // Smaller QR for display
+          setPoQrCodeSvg(svg);
+        } catch (error) {
+          console.error("Error generating PO QR code:", error);
+          setPoQrCodeSvg(null);
+        }
+      } else {
+        setPoQrCodeSvg(null);
+      }
+    };
+    generateQr();
+  }, [poNumber]);
 
   const handleAddItem = () => {
     setItems([
@@ -219,12 +239,17 @@ const EditPurchaseOrder: React.FC = () => {
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="poNumber">Order ID</Label>
-                <Input
-                  id="poNumber"
-                  value={poNumber}
-                  onChange={(e) => setPoNumber(e.target.value)}
-                  disabled // Order ID usually not editable
-                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="poNumber"
+                    value={poNumber}
+                    onChange={(e) => setPoNumber(e.target.value)}
+                    disabled // Order ID usually not editable
+                  />
+                  {poQrCodeSvg && (
+                    <div dangerouslySetInnerHTML={{ __html: poQrCodeSvg }} className="w-20 h-20 object-contain" />
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="supplier">Customer/Supplier</Label>
