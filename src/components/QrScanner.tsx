@@ -39,7 +39,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
 
     const html5QrcodeCameraScanConfig: Html5QrcodeCameraScanConfig = {
       fps: 10,
-      qrbox: { width: 250, height: 250 },
+      // Removed qrbox to allow full camera view for scanning
       aspectRatio: 1.0,
       disableFlip: false,
     };
