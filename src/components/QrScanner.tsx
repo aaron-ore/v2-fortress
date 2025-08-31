@@ -93,16 +93,16 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       await stopAndClear(); // Always start with a clean slate
       await new Promise(resolve => setTimeout(resolve, 500)); // Small delay for camera resource release
 
-      // Relax constraints: prefer 'environment' but allow fallback
-      const constraints: MediaTrackConstraints = { facingMode: { ideal: "environment" } };
+      // Use "environment" string directly for camera selection
+      const cameraSelection = "environment"; 
 
       // Always create a new Html5Qrcode instance for a fresh start
       html5QrCodeRef.current = new Html5Qrcode(QR_SCANNER_DIV_ID, html5QrcodeConstructorConfig);
 
-      console.log(`[QrScanner] Attempting to start scanner with constraints:`, constraints);
+      console.log(`[QrScanner] Attempting to start scanner with camera selection:`, cameraSelection);
       try {
         await html5QrCodeRef.current.start(
-          constraints,
+          cameraSelection, // Pass the string directly
           html5QrcodeCameraScanConfig,
           async (decodedText) => { // Made async to await stopScanner
             if (isMounted.current) {
