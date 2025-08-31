@@ -12,7 +12,7 @@ import CycleCountTool from "@/components/warehouse-operations/CycleCountTool";
 import IssueReportTool from "@/components/warehouse-operations/IssueReportTool";
 import WarehouseDashboard from "@/components/warehouse-operations/WarehouseDashboard";
 import FulfillOrderTool from "@/components/warehouse-operations/FulfillOrderTool";
-import CameraScannerDialog from "@/components/CameraScannerDialog";
+// REMOVED: import CameraScannerDialog from "@/components/CameraScannerDialog";
 import PickingWaveManagementTool from "@/components/warehouse-operations/PickingWaveManagementTool";
 import ReplenishmentManagementTool from "@/components/warehouse-operations/ReplenishmentManagementTool";
 import ShippingVerificationTool from "@/components/warehouse-operations/ShippingVerificationTool";
@@ -25,8 +25,8 @@ const WarehouseOperationsPage: React.FC = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate(); // NEW: Initialize useNavigate
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
-  const [onScanCallback, setOnScanCallback] = useState<((scannedData: string) => void) | null>(null);
+  // REMOVED: const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
+  // REMOVED: const [onScanCallback, setOnScanCallback] = useState<((scannedData: string) => void) | null>(null);
   const [scannedDataForTool, setScannedDataForTool] = useState<string | null>(null);
 
   const operationButtons = [
@@ -45,34 +45,38 @@ const WarehouseOperationsPage: React.FC = () => {
     // REMOVED: { value: "location-label-generator", label: "Labels", icon: QrCode },
   ];
 
-  const handleScanRequest = (callback: (scannedData: string) => void) => {
-    setOnScanCallback(() => callback);
-    setIsCameraScannerOpen(true);
-  };
+  // REMOVED: const handleScanRequest = (callback: (scannedData: string) => void) => {
+  // REMOVED:   setOnScanCallback(() => callback);
+  // REMOVED:   setIsCameraScannerOpen(true);
+  // REMOVED: };
 
-  const handleCameraScanResult = (scannedData: string) => {
-    setIsCameraScannerOpen(false);
-    if (onScanCallback) {
-      onScanCallback(scannedData);
-      setOnScanCallback(null);
-    } else {
-      // If no specific tool requested the scan, default to item lookup
-      setActiveTab("item-lookup");
-      setScannedDataForTool(scannedData);
-    }
-  };
+  // REMOVED: const handleCameraScanResult = (scannedData: string) => {
+  // REMOVED:   setIsCameraScannerOpen(false);
+  // REMOVED:   if (onScanCallback) {
+  // REMOVED:     onScanCallback(scannedData);
+  // REMOVED:     setOnScanCallback(null);
+  // REMOVED:   } else {
+  // REMOVED:     // If no specific tool requested the scan, default to item lookup
+  // REMOVED:     setActiveTab("item-lookup");
+  // REMOVED:     setScannedDataForTool(scannedData);
+  // REMOVED:   }
+  // REMOVED: };
 
-  const handleCameraScanError = (error: string) => {
-    setIsCameraScannerOpen(false);
-    setOnScanCallback(null);
-    showError(`Camera scan failed: ${error}`);
-  };
+  // REMOVED: const handleCameraScanError = (error: string) => {
+  // REMOVED:   setIsCameraScannerOpen(false);
+  // REMOVED:   setOnScanCallback(null);
+  // REMOVED:   showError(`Camera scan failed: ${error}`);
+  // REMOVED: };
 
   const handleGlobalScanClick = () => {
-    handleScanRequest((scannedData) => {
-      setActiveTab("item-lookup");
-      setScannedDataForTool(scannedData);
-    });
+    // Since CameraScannerDialog is removed, this will just show an error for now.
+    showError("Camera scanning is currently disabled.");
+    // If you want to re-enable scanning, you'll need to re-implement the CameraScannerDialog
+    // and its integration.
+    // handleScanRequest((scannedData) => {
+    //   setActiveTab("item-lookup");
+    //   setScannedDataForTool(scannedData);
+    // });
   };
 
   const handleScannedDataProcessed = () => {
@@ -150,16 +154,16 @@ const WarehouseOperationsPage: React.FC = () => {
             <WarehouseDashboard />
           </TabsContent>
           <TabsContent value="item-lookup" className="h-full min-h-0">
-            <ItemLookupTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <ItemLookupTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="receive-inventory" className="h-full min-h-0">
-            <ReceiveInventoryTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <ReceiveInventoryTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="fulfill-order" className="h-full min-h-0">
-            <FulfillOrderTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <FulfillOrderTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="ship-order" className="h-full min-h-0">
-            <ShipOrderTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <ShipOrderTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="picking-wave" className="h-full min-h-0">
             <PickingWaveManagementTool />
@@ -168,19 +172,19 @@ const WarehouseOperationsPage: React.FC = () => {
             <ReplenishmentManagementTool />
           </TabsContent>
           <TabsContent value="shipping-verify" className="h-full min-h-0">
-            <ShippingVerificationTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <ShippingVerificationTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="returns-process" className="h-full min-h-0">
-            <ReturnsProcessingTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <ReturnsProcessingTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="stock-transfer" className="h-full min-h-0">
-            <StockTransferTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <StockTransferTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="cycle-count" className="h-full min-h-0">
-            <CycleCountTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <CycleCountTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           <TabsContent value="issue-report" className="h-full min-h-0">
-            <IssueReportTool onScanRequest={handleScanRequest} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
+            <IssueReportTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
           {/* REMOVED: <TabsContent value="location-label-generator" className="h-full min-h-0">
             <LocationLabelGenerator />
@@ -188,12 +192,13 @@ const WarehouseOperationsPage: React.FC = () => {
         </div>
       </Tabs>
 
+      {/* REMOVED: CameraScannerDialog
       <CameraScannerDialog
         isOpen={isCameraScannerOpen}
         onClose={() => setIsCameraScannerOpen(false)}
         onScan={handleCameraScanResult}
         onError={handleCameraScanError}
-      />
+      /> */}
     </div>
   );
 };

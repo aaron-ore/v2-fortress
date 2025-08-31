@@ -51,6 +51,7 @@ import PutawayLabelPdfContent from "./components/PutawayLabelPdfContent";
 import LocationLabelPdfContent from "./components/LocationLabelPdfContent";
 import PickingWavePdfContent from "./components/PickingWavePdfContent";
 import { SidebarProvider } from "./context/SidebarContext"; // NEW: Import SidebarProvider
+// REMOVED: import CameraScannerDialog from "./components/CameraScannerDialog";
 
 const queryClient = new QueryClient();
 
