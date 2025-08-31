@@ -78,6 +78,8 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
     const stopAndClear = useCallback(async () => {
       console.log("[QrScanner] stopAndClear called.");
       await stopScanner(); // Ensure scanner is stopped first
+      // Add a small delay to allow camera resources to fully release before clearing
+      await new Promise(resolve => setTimeout(resolve, 200)); // 200ms delay
       clearScanner();    // Then clear the instance
     }, [stopScanner, clearScanner]);
 
