@@ -7,14 +7,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter, // NEW: Import DialogFooter
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Camera, XCircle, QrCode, Keyboard } from "lucide-react"; // NEW: Import Keyboard icon
+import { XCircle, QrCode, Keyboard } from "lucide-react";
 import QrScanner, { QrScannerRef } from "@/components/QrScanner";
-import { Input } from "@/components/ui/input"; // NEW: Import Input
-import { Label } from "@/components/ui/label"; // NEW: Import Label
-import { showSuccess, showError } from "@/utils/toast"; // NEW: Import showSuccess, showError
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { showSuccess, showError } from "@/utils/toast";
 import { cn } from "@/lib/utils";
 
 interface CameraScannerDialogProps {
@@ -33,17 +33,17 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   description = "Point your camera at a barcode or QR code to scan.",
 }) => {
   const qrScannerRef = useRef<QrScannerRef>(null);
-  const [scannerFacingMode, setScannerFacingMode] = useState<"user" | "environment">("environment");
+  // Removed scannerFacingMode state as we will only use 'environment'
   const [isScannerLoading, setIsScannerLoading] = useState(true);
   const [scannerError, setScannerError] = useState<string | null>(null);
-  const [manualInputMode, setManualInputMode] = useState(false); // NEW: State for manual input mode
-  const [manualInputValue, setManualInputValue] = useState(""); // NEW: State for manual input value
+  const [manualInputMode, setManualInputMode] = useState(false);
+  const [manualInputValue, setManualInputValue] = useState("");
 
   useEffect(() => {
     if (isOpen) {
       setIsScannerLoading(true);
       setScannerError(null);
-      setManualInputMode(false); // Reset to camera mode when dialog opens
+      setManualInputMode(false);
       setManualInputValue("");
     } else {
       qrScannerRef.current?.stopAndClear();
@@ -52,7 +52,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
 
   const handleScannerScan = (decodedText: string) => {
     onScanSuccess(decodedText);
-    // onClose(); // Let the parent decide to close
+    onClose();
   };
 
   const handleScannerError = (errorMessage: string) => {
@@ -65,16 +65,12 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
     setScannerError(null);
   };
 
-  const toggleFacingMode = async () => {
-    setScannerFacingMode((prevMode) => (prevMode === "user" ? "environment" : "user"));
-    setIsScannerLoading(true);
-    setScannerError(null);
-  };
+  // Removed toggleFacingMode as it's no longer needed
 
   const handleRetryScan = () => {
     setScannerError(null);
     setIsScannerLoading(true);
-    qrScannerRef.current?.retryStart(); // Call the new retry function
+    qrScannerRef.current?.retryStart();
   };
 
   const handleManualInputSubmit = () => {
@@ -128,7 +124,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
                   <XCircle className="h-8 w-8 mb-2" />
                   <p className="font-semibold">Camera Error:</p>
                   <p className="text-sm">{scannerError}</p>
-                  <p className="text-xs mt-2">Try switching cameras or closing other apps using the camera.</p>
+                  <p className="text-xs mt-2">Please ensure a back camera is available and permissions are granted.</p>
                   <Button onClick={handleRetryScan} className="mt-4" variant="secondary">Retry Camera</Button>
                 </div>
               )}
@@ -138,8 +134,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
                   onScan={handleScannerScan}
                   onError={handleScannerError}
                   onReady={handleScannerReady}
-                  facingMode={scannerFacingMode}
-                  isOpen={isOpen && !manualInputMode} // Only active when dialog is open AND not in manual input mode
+                  isOpen={isOpen && !manualInputMode}
                 />
               </div>
             </div>
@@ -150,7 +145,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
           <Button variant="secondary" onClick={() => setManualInputMode(prev => !prev)} className="w-full sm:w-auto">
             {manualInputMode ? (
               <>
-                <Camera className="h-4 w-4 mr-2" /> Use Camera
+                <QrCode className="h-4 w-4 mr-2" /> Use Camera
               </>
             ) : (
               <>
@@ -158,11 +153,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
               </>
             )}
           </Button>
-          {!manualInputMode && (
-            <Button variant="outline" onClick={toggleFacingMode} className="w-full sm:w-auto" disabled={isScannerLoading || !!scannerError}>
-              <Camera className="h-4 w-4 mr-2" /> Switch to {scannerFacingMode === "user" ? "Back" : "Front"} Camera
-            </Button>
-          )}
+          {/* Removed the "Switch Camera" button */}
           <Button variant="ghost" onClick={onClose} className="w-full sm:w-auto">
             Close
           </Button>

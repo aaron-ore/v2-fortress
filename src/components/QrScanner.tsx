@@ -1,18 +1,18 @@
 "use client";
 
 import React, { useRef, useEffect, useImperativeHandle, forwardRef, useState, useCallback } from "react";
-import { Html5Qrcode, Html5QrcodeSupportedFormats, Html5QrcodeFullConfig, Html5QrcodeCameraScanConfig, Html5QrcodeCamera } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeSupportedFormats, Html5QrcodeFullConfig, Html5QrcodeCamera } from "html5-qrcode";
 
 export interface QrScannerRef {
   stopAndClear: () => Promise<void>;
-  retryStart: () => Promise<void>; // NEW: Expose a retry function
+  retryStart: () => Promise<void>;
 }
 
 interface QrScannerProps {
   onScan: (decodedText: string) => void;
   onError: (errorMessage: string) => void;
   onReady: () => void;
-  facingMode: "user" | "environment";
+  // Removed facingMode prop as we will only use 'environment'
   isOpen: boolean;
 }
 
@@ -21,7 +21,7 @@ const RETRY_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 1000; // 1 second delay between retries
 
 const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
-  ({ onScan, onError, onReady, facingMode, isOpen }, ref) => {
+  ({ onScan, onError, onReady, isOpen }, ref) => { // Removed facingMode from props
     const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
     const isMounted = useRef(true);
     const [isScannerActive, setIsScannerActive] = useState(false);
@@ -83,7 +83,8 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       clearScanner();
     }, [stopScanner, clearScanner]);
 
-    const getCameraDeviceId = useCallback(async (preferredFacingMode: "user" | "environment"): Promise<string | null> => {
+    // Modified to only look for 'environment' camera
+    const getCameraDeviceId = useCallback(async (): Promise<string | null> => {
       try {
         const cameras = await Html5Qrcode.getCameras();
         if (cameras.length === 0) {
@@ -91,24 +92,23 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
           return null;
         }
 
-        // Prioritize the preferred facing mode
-        const preferredCamera = cameras.find(camera => camera.label.toLowerCase().includes(preferredFacingMode));
-        if (preferredCamera) {
-          console.log(`[QrScanner] Found preferred ${preferredFacingMode} camera: ${preferredCamera.label}`);
-          return preferredCamera.id;
+        // Prioritize 'environment' (back) camera
+        const environmentCamera = cameras.find(camera => camera.label.toLowerCase().includes("environment"));
+        if (environmentCamera) {
+          console.log(`[QrScanner] Found environment camera: ${environmentCamera.label}`);
+          return environmentCamera.id;
         }
 
-        // Fallback to the other facing mode
-        const alternateFacingMode = preferredFacingMode === "user" ? "environment" : "user";
-        const alternateCamera = cameras.find(camera => camera.label.toLowerCase().includes(alternateFacingMode));
-        if (alternateCamera) {
-          console.log(`[QrScanner] Found alternate ${alternateFacingMode} camera: ${alternateCamera.label}`);
-          return alternateCamera.id;
+        // Fallback to any camera if no specific 'environment' found in labels, but still prefer back
+        // This part is a compromise if 'environment' isn't explicitly labeled but a back camera exists.
+        // For strict 'environment' only, remove this fallback.
+        if (cameras.length > 0) {
+          console.log("[QrScanner] No explicit 'environment' camera found, falling back to first available camera.");
+          return cameras[0].id;
         }
 
-        // Fallback to any camera if no specific facing mode found in labels
-        console.log("[QrScanner] Falling back to first available camera.");
-        return cameras[0].id;
+        console.warn("[QrScanner] No suitable back camera found.");
+        return null;
 
       } catch (e) {
         console.error("[QrScanner] Error getting camera devices:", e);
@@ -125,10 +125,10 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       await stopAndClear();
       await new Promise(resolve => setTimeout(resolve, 300)); // Small delay for camera resource release
 
-      const deviceId = await getCameraDeviceId(facingMode);
+      const deviceId = await getCameraDeviceId(); // No longer passing facingMode
 
       if (!deviceId) {
-        onError("No suitable camera found or camera access denied. Please check permissions.");
+        onError("No suitable back camera found or camera access denied. Please check permissions.");
         return;
       }
 
@@ -173,7 +173,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
             } else if (err.name === "NotAllowedError") {
               errorMessage += "Camera access was denied. Please check your browser's site permissions for this page. ";
             } else if (err.name === "OverconstrainedError") {
-              errorMessage += "No camera found matching the requested constraints (e.g., front/back camera not available). ";
+              errorMessage += "No camera found matching the requested constraints (e.g., back camera not available). ";
             } else {
               errorMessage += "Please check camera permissions and try again. ";
             }
@@ -187,7 +187,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
           }
         }
       }
-    }, [isOpen, onScan, onReady, onError, stopAndClear, getCameraDeviceId, facingMode, html5QrcodeConstructorConfig, html5QrcodeCameraScanConfig]);
+    }, [isOpen, onScan, onReady, onError, stopAndClear, getCameraDeviceId, html5QrcodeConstructorConfig, html5QrcodeCameraScanConfig]);
 
     const retryStart = useCallback(async () => {
       console.log("[QrScanner] retryStart called.");
@@ -201,7 +201,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
 
     useEffect(() => {
       isMounted.current = true;
-      console.log("[QrScanner] Main effect running. isOpen:", isOpen, "facingMode:", facingMode);
+      console.log("[QrScanner] Main effect running. isOpen:", isOpen);
 
       if (isOpen) {
         startScanner();
@@ -214,7 +214,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         console.log("[QrScanner] Component unmounting or effect cleanup. Stopping and clearing scanner.");
         stopAndClear();
       };
-    }, [isOpen, facingMode, startScanner, stopAndClear]);
+    }, [isOpen, startScanner, stopAndClear]);
 
     return (
       <div id={QR_SCANNER_DIV_ID} className="w-full h-full" />
