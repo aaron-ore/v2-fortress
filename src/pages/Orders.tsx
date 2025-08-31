@@ -45,10 +45,10 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { DateRangePicker } from "@/components/DateRangePicker"; // NEW: Import DateRangePicker
-import { DateRange } from "react-day-picker"; // NEW: Import DateRange
-import OrderFulfillmentDialog from "@/components/orders/OrderFulfillmentDialog"; // RENAMED: Import OrderFulfillmentDialog
-import OrderReceiveShipmentDialog from "@/components/orders/OrderReceiveShipmentDialog"; // RENAMED: Import OrderReceiveShipmentDialog
+import { DateRangePicker } from "@/components/DateRangePicker";
+import { DateRange } from "react-day-picker";
+import OrderFulfillmentDialog from "@/components/orders/OrderFulfillmentDialog";
+import OrderReceiveShipmentDialog from "@/components/orders/OrderReceiveShipmentDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -107,14 +107,18 @@ const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
 
   const watchItems = form.watch("items");
   useEffect(() => {
-    const newTotalAmount = watchItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    const newTotalAmount = watchItems.reduce((sum, item) => {
+      const quantity = typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity || '0');
+      const unitPrice = typeof item.unitPrice === 'number' ? item.unitPrice : parseFloat(item.unitPrice || '0');
+      return sum + (isNaN(quantity) ? 0 : quantity) * (isNaN(unitPrice) ? 0 : unitPrice);
+    }, 0);
     form.setValue("totalAmount", newTotalAmount);
     form.setValue("itemCount", watchItems.length);
   }, [watchItems, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await addOrder(values as Omit<OrderItem, "id" | "organizationId">);
+      await addOrder(values as Omit<OrderItem, "organizationId">); // Pass values directly, let context generate ID
       onClose();
       form.reset();
     } catch (error: any) {
@@ -410,7 +414,7 @@ export const createOrderColumns = (updateOrder: (order: OrderItem) => void, arch
     accessorKey: "type",
     header: "Type",
     cell: ({ row }) => (
-      <Badge variant={row.original.type === "Sales" ? "info" : "default"}> {/* Using 'info' for Sales, 'default' for Purchase */}
+      <Badge variant={row.original.type === "Sales" ? "info" : "default"}>
         {row.original.type}
       </Badge>
     ),
@@ -434,22 +438,22 @@ export const createOrderColumns = (updateOrder: (order: OrderItem) => void, arch
       let variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" | "info" | "muted" = "info";
       switch (row.original.status) {
         case "New Order":
-          variant = "default"; // Primary color
+          variant = "default";
           break;
         case "Processing":
-          variant = "secondary"; // Secondary color
+          variant = "secondary";
           break;
         case "Packed":
-          variant = "outline"; // Greenish
+          variant = "outline";
           break;
         case "Shipped":
-          variant = "muted"; // Grayish
+          variant = "muted";
           break;
         case "On Hold / Problem":
-          variant = "warning"; // Yellow/Orange
+          variant = "warning";
           break;
         case "Archived":
-          variant = "destructive"; // Red
+          variant = "destructive";
           break;
       }
       return <Badge variant={variant}>{row.original.status}</Badge>;
@@ -498,19 +502,16 @@ const Orders: React.FC = () => {
   const { profile } = useProfile();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOrderDialogOpen, setIsAddOrderDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("all"); // State for active tab
+  const [activeTab, setActiveTab] = useState("all");
 
-  // NEW: State for date range filter
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  // NEW: States for new dialogs
-  const [isOrderFulfillmentDialogOpen, setIsOrderFulfillmentDialogOpen] = useState(false); // RENAMED
-  const [isOrderReceiveShipmentDialogOpen, setIsOrderReceiveShipmentDialogOpen] = useState(false); // RENAMED
+  const [isOrderFulfillmentDialogOpen, setIsOrderFulfillmentDialogOpen] = useState(false);
+  const [isOrderReceiveShipmentDialogOpen, setIsOrderReceiveShipmentDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
 
-  // NEW: Handler to clear date filter
   const handleClearDateFilter = () => {
     setDateRange(undefined);
   };
@@ -518,7 +519,6 @@ const Orders: React.FC = () => {
   const filteredOrders = useMemo(() => {
     let currentOrders = orders;
 
-    // Apply tab filter
     if (activeTab === "sales") {
       currentOrders = currentOrders.filter(order => order.type === "Sales");
     } else if (activeTab === "purchase") {
@@ -526,18 +526,15 @@ const Orders: React.FC = () => {
     } else if (activeTab === "archived") {
       currentOrders = currentOrders.filter(order => order.status === "Archived");
     } else {
-      // "all" tab, exclude archived by default unless explicitly filtered
       currentOrders = currentOrders.filter(order => order.status !== "Archived");
     }
 
-    // Apply search term filter
     const searchFiltered = currentOrders.filter(order =>
       order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customerSupplier.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.status.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // NEW: Apply date range filter
     if (dateRange?.from) {
       const fromDate = new Date(dateRange.from);
       fromDate.setHours(0, 0, 0, 0);
@@ -551,7 +548,7 @@ const Orders: React.FC = () => {
     }
 
     return searchFiltered;
-  }, [orders, searchTerm, activeTab, dateRange]); // NEW: Add dateRange to dependencies
+  }, [orders, searchTerm, activeTab, dateRange]);
 
   const columns = useMemo(() => createOrderColumns(updateOrder, archiveOrder), [updateOrder, archiveOrder]);
 
@@ -559,7 +556,6 @@ const Orders: React.FC = () => {
     <div className="flex flex-col space-y-6 p-6">
       <h1 className="text-3xl font-bold">Order Management</h1>
 
-      {/* First Row: Search and Date Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <Input
           placeholder="Search orders..."
@@ -577,7 +573,6 @@ const Orders: React.FC = () => {
         </div>
       </div>
 
-      {/* Second Row: Order Actions and Create Order */}
       <div className="flex flex-wrap items-center justify-end gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -622,33 +617,31 @@ const Orders: React.FC = () => {
           <TabsTrigger value="archived">Archived Orders</TabsTrigger>
         </TabsList>
         <TabsContent value="all">
-          <div className=""> {/* Removed rounded-md border */}
+          <div className="">
             <DataTable columns={columns} data={filteredOrders} />
           </div>
         </TabsContent>
         <TabsContent value="sales">
-          <div className=""> {/* Removed rounded-md border */}
+          <div className="">
             <DataTable columns={columns} data={filteredOrders} />
           </div>
         </TabsContent>
         <TabsContent value="purchase">
-          <div className=""> {/* Removed rounded-md border */}
+          <div className="">
             <DataTable columns={columns} data={filteredOrders} />
           </div>
         </TabsContent>
         <TabsContent value="archived">
-          <div className=""> {/* Removed rounded-md border */}
+          <div className="">
             <DataTable columns={columns} data={filteredOrders} />
           </div>
         </TabsContent>
       </Tabs>
 
-      {/* NEW: Fulfill Order Dialog */}
       <OrderFulfillmentDialog
         isOpen={isOrderFulfillmentDialogOpen}
         onClose={() => setIsOrderFulfillmentDialogOpen(false)}
       />
-      {/* NEW: Receive Shipment Dialog */}
       <OrderReceiveShipmentDialog
         isOpen={isOrderReceiveShipmentDialogOpen}
         onClose={() => setIsOrderReceiveShipmentDialogOpen(false)}

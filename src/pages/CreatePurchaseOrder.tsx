@@ -21,18 +21,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Trash2, Archive, Printer, PackageOpen, QrCode } from "lucide-react"; // Added QrCode
+import { PlusCircle, Trash2, Archive, Printer, PackageOpen, QrCode } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import { useOrders, POItem } from "@/context/OrdersContext";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PurchaseOrderPdfContent from "@/components/PurchaseOrderPdfContent";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { usePrint } from "@/context/PrintContext";
-import { generateSequentialNumber } from "@/utils/numberGenerator"; // Imported generateSequentialNumber
-import { formatPhoneNumber } from "@/utils/formatters"; // Imported formatPhoneNumber
-import InventorySelectionDialog from "@/components/InventorySelectionDialog"; // Imported InventorySelectionDialog
-import { InventoryItem } from "@/context/InventoryContext"; // Imported InventoryItem
-import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
+import { generateSequentialNumber } from "@/utils/numberGenerator";
+import { formatPhoneNumber } from "@/utils/formatters";
+import InventorySelectionDialog from "@/components/InventorySelectionDialog";
+import { InventoryItem } from "@/context/InventoryContext";
+import { generateQrCodeSvg } from "@/utils/qrCodeGenerator";
 
 import {
   DndContext,
@@ -72,7 +72,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 10 : 0,
-    position: 'relative' as const, // Corrected: Added 'as const'
+    position: 'relative' as const,
     opacity: isDragging ? 0.8 : 1,
   };
 
@@ -88,7 +88,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
             handleItemChange(item.id, "itemName", e.target.value)
           }
           placeholder="Product Name"
-          className="min-w-[120px]" // Ensure input is not too small
+          className="min-w-[120px]"
         />
       </TableCell>
       <TableCell className="text-right w-[100px]">
@@ -103,7 +103,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
             )
           }
           min="0"
-          className="min-w-[60px]" // Ensure input is not too small
+          className="min-w-[60px]"
         />
       </TableCell>
       <TableCell className="text-right w-[120px]">
@@ -119,7 +119,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
           }
           step="0.01"
           min="0"
-          className="min-w-[80px]" // Ensure input is not too small
+          className="min-w-[80px]"
         />
       </TableCell>
       <TableCell className="text-right font-semibold w-[120px]">
@@ -145,7 +145,7 @@ const CreatePurchaseOrder: React.FC = () => {
   const { addOrder } = useOrders();
   const { initiatePrint } = usePrint();
 
-  const [poNumber, setPoNumber] = useState(generateSequentialNumber("PO"));
+  const [poNumber, setPoNumber] = useState(""); // Removed initial generation, will be set after order creation
   const [supplierName, setSupplierName] = useState("");
   const [supplierEmail, setSupplierEmail] = useState("");
   const [supplierAddress, setSupplierAddress] = useState("");
@@ -155,7 +155,7 @@ const CreatePurchaseOrder: React.FC = () => {
   const [dueDate, setDueDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<POItem[]>([]);
-  const [poQrCodeSvg, setPoQrCodeSvg] = useState<string | null>(null); // State for PO QR code
+  const [poQrCodeSvg, setPoQrCodeSvg] = useState<string | null>(null);
 
   const taxRate = 0.05;
 
@@ -166,12 +166,12 @@ const CreatePurchaseOrder: React.FC = () => {
     useSensor(KeyboardSensor)
   );
 
-  // Generate QR code for PO number
+  // Generate QR code for PO number (only if poNumber is set, i.e., after order creation)
   React.useEffect(() => {
     const generateQr = async () => {
       if (poNumber) {
         try {
-          const svg = await generateQrCodeSvg(poNumber, 80); // Smaller QR for display
+          const svg = await generateQrCodeSvg(poNumber, 80);
           setPoQrCodeSvg(svg);
         } catch (error) {
           console.error("Error generating PO QR code:", error);
@@ -232,14 +232,14 @@ const CreatePurchaseOrder: React.FC = () => {
     });
   };
 
-  const handleSubmit = () => {
-    if (!supplierName || !poNumber || !dueDate || items.some(item => !item.itemName || isNaN(item.quantity) || item.quantity <= 0 || isNaN(item.unitPrice) || item.unitPrice <= 0)) {
+  const handleSubmit = async () => {
+    if (!supplierName || !dueDate || items.some(item => !item.itemName || isNaN(item.quantity) || item.quantity <= 0 || isNaN(item.unitPrice) || item.unitPrice <= 0)) {
       showError("Please fill in all required PO details and ensure all items have valid names, quantities, and prices.");
       return;
     }
 
     const newPurchaseOrder = {
-      id: poNumber,
+      // id: poNumber, // Let context generate ID
       type: "Purchase" as "Purchase",
       customerSupplier: supplierName,
       date: poDate,
@@ -251,11 +251,17 @@ const CreatePurchaseOrder: React.FC = () => {
       orderType: "Wholesale" as "Wholesale",
       shippingMethod: "Standard" as "Standard",
       items: items,
+      terms: terms,
     };
 
-    addOrder(newPurchaseOrder);
-    showSuccess(`Purchase Order ${poNumber} for ${supplierName} created successfully!`);
-    navigate("/orders");
+    try {
+      await addOrder(newPurchaseOrder);
+      // If addOrder is successful, it will show a success toast and navigate.
+      // The actual PO number will be generated by the context.
+      navigate("/orders");
+    } catch (error) {
+      // Error handling is already in addOrder context function
+    }
   };
 
   const handlePrintPdf = () => {
@@ -271,14 +277,14 @@ const CreatePurchaseOrder: React.FC = () => {
     const pdfProps = {
       poNumber,
       poDate,
-      supplierName: supplierName, // Use the 'supplierName' state
-      supplierEmail: supplierEmail, // Use the state variable
-      supplierAddress: supplierAddress, // Use the state variable
-      supplierContact: supplierContact, // Use the state variable
+      supplierName: supplierName,
+      supplierEmail: supplierEmail,
+      supplierAddress: supplierAddress,
+      supplierContact: supplierContact,
       recipientName: companyProfile.name,
       recipientAddress: companyProfile.address,
-      recipientContact: companyProfile.currency, // Assuming currency is used as a generic contact for company
-      terms, // Use the terms state
+      recipientContact: companyProfile.currency,
+      terms,
       dueDate,
       items,
       notes,
@@ -305,17 +311,16 @@ const CreatePurchaseOrder: React.FC = () => {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Create New Purchase Order</h1>
 
-      <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2"> {/* Adjusted for mobile stacking */}
+      <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
         <Button variant="outline" onClick={() => navigate("/orders")}>
           Cancel
         </Button>
         <Button onClick={handleSubmit}>Create Purchase Order</Button>
-        <Button variant="secondary" onClick={handlePrintPdf}>
+        <Button variant="secondary" onClick={handlePrintPdf} disabled={!poNumber}>
           <Printer className="h-4 w-4 mr-2" /> Print/PDF
         </Button>
       </div>
 
-      {/* Main content of the page */}
       <div className="main-page-content">
         <div className="space-y-6 p-6 bg-background rounded-lg">
           <Card className="bg-card border-border rounded-lg shadow-sm p-6">
@@ -330,7 +335,8 @@ const CreatePurchaseOrder: React.FC = () => {
                     id="poNumber"
                     value={poNumber}
                     onChange={(e) => setPoNumber(e.target.value)}
-                    placeholder="e.g., PO-2023-001"
+                    placeholder="Will be generated on creation"
+                    disabled // Disable direct editing, will be set after creation
                   />
                   {poQrCodeSvg && (
                     <div dangerouslySetInnerHTML={{ __html: poQrCodeSvg }} className="w-20 h-20 object-contain" />
@@ -408,9 +414,9 @@ const CreatePurchaseOrder: React.FC = () => {
           </Card>
 
           <Card className="bg-card border-border rounded-lg shadow-sm p-6">
-            <CardHeader className="pb-4 flex flex-row items-center justify-between flex-wrap gap-2"> {/* Added flex-wrap and gap */}
+            <CardHeader className="pb-4 flex flex-row items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-xl font-semibold">Items</CardTitle>
-              <div className="flex gap-2 flex-wrap"> {/* Added flex-wrap for mobile */}
+              <div className="flex gap-2 flex-wrap">
                 <Button variant="outline" size="sm" onClick={() => setIsInventorySelectionDialogOpen(true)}>
                   <PackageOpen className="h-4 w-4 mr-2" /> Add from Inventory
                 </Button>
@@ -425,12 +431,12 @@ const CreatePurchaseOrder: React.FC = () => {
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
               >
-                <div className="overflow-x-auto"> {/* Added overflow-x-auto for table */}
-                  <Table className="min-w-[600px]"> {/* Added min-w to ensure horizontal scroll */}
+                <div className="overflow-x-auto">
+                  <Table className="min-w-[600px]">
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[20px]"></TableHead>
-                        <TableHead>Item Name</TableHead> {/* Removed fixed width */}
+                        <TableHead>Item Name</TableHead>
                         <TableHead className="w-[100px] text-right">Quantity</TableHead>
                         <TableHead className="w-[120px] text-right">Unit Price</TableHead>
                         <TableHead className="w-[120px] text-right">Total</TableHead>

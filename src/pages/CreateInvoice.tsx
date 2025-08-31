@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PlusCircle, Trash2, Printer, PackageOpen, QrCode } from "lucide-react"; // Added QrCode
+import { PlusCircle, Trash2, Printer, PackageOpen, QrCode } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import InvoicePdfContent from "@/components/InvoicePdfContent";
 import { useOnboarding } from "@/context/OnboardingContext";
@@ -25,7 +25,7 @@ import { formatPhoneNumber } from "@/utils/formatters";
 import InventorySelectionDialog from "@/components/InventorySelectionDialog";
 import { InventoryItem } from "@/context/InventoryContext";
 import { usePrint } from "@/context/PrintContext";
-import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
+import { generateQrCodeSvg } from "@/utils/qrCodeGenerator";
 
 import {
   DndContext,
@@ -65,7 +65,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 10 : 0,
-    position: 'relative' as const, // Corrected: Added 'as const'
+    position: 'relative' as const,
     opacity: isDragging ? 0.8 : 1,
   };
 
@@ -81,7 +81,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
             handleItemChange(item.id, "itemName", e.target.value)
           }
           placeholder="Product Name"
-          className="min-w-[120px]" // Ensure input is not too small
+          className="min-w-[120px]"
         />
       </TableCell>
       <TableCell className="text-right w-[100px]">
@@ -96,7 +96,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
             )
           }
           min="0"
-          className="min-w-[60px]" // Ensure input is not too small
+          className="min-w-[60px]"
         />
       </TableCell>
       <TableCell className="text-right w-[120px]">
@@ -112,7 +112,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
           }
           step="0.01"
           min="0"
-          className="min-w-[80px]" // Ensure input is not too small
+          className="min-w-[80px]"
         />
       </TableCell>
       <TableCell className="text-right font-semibold w-[120px]">
@@ -137,7 +137,7 @@ const CreateInvoice: React.FC = () => {
   const { addOrder } = useOrders();
   const { initiatePrint } = usePrint();
 
-  const [invoiceNumber, setInvoiceNumber] = useState(generateSequentialNumber("INV"));
+  const [invoiceNumber, setInvoiceNumber] = useState(""); // Removed initial generation, will be set after order creation
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
@@ -147,7 +147,7 @@ const CreateInvoice: React.FC = () => {
   const [dueDate, setDueDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<POItem[]>([]);
-  const [invoiceQrCodeSvg, setInvoiceQrCodeSvg] = useState<string | null>(null); // State for Invoice QR code
+  const [invoiceQrCodeSvg, setInvoiceQrCodeSvg] = useState<string | null>(null);
 
   const taxRate = 0.05;
 
@@ -158,12 +158,12 @@ const CreateInvoice: React.FC = () => {
     useSensor(KeyboardSensor)
   );
 
-  // Generate QR code for Invoice number
+  // Generate QR code for Invoice number (only if invoiceNumber is set, i.e., after order creation)
   React.useEffect(() => {
     const generateQr = async () => {
       if (invoiceNumber) {
         try {
-          const svg = await generateQrCodeSvg(invoiceNumber, 80); // Smaller QR for display
+          const svg = await generateQrCodeSvg(invoiceNumber, 80);
           setInvoiceQrCodeSvg(svg);
         } catch (error) {
           console.error("Error generating Invoice QR code:", error);
@@ -224,14 +224,14 @@ const CreateInvoice: React.FC = () => {
     });
   };
 
-  const handleSubmit = () => {
-    if (!customerName || !invoiceNumber || !dueDate || items.some(item => !item.itemName || isNaN(item.quantity) || item.quantity <= 0 || isNaN(item.unitPrice) || item.unitPrice <= 0)) {
+  const handleSubmit = async () => {
+    if (!customerName || !dueDate || items.some(item => !item.itemName || isNaN(item.quantity) || item.quantity <= 0 || isNaN(item.unitPrice) || item.unitPrice <= 0)) {
       showError("Please fill in all required invoice details and ensure all items have valid names, quantities, and prices.");
       return;
     }
 
     const newSalesOrder = {
-      id: invoiceNumber,
+      // id: invoiceNumber, // Let context generate ID
       type: "Sales" as "Sales",
       customerSupplier: customerName,
       date: invoiceDate,
@@ -245,9 +245,14 @@ const CreateInvoice: React.FC = () => {
       items: items,
     };
 
-    addOrder(newSalesOrder);
-    showSuccess(`Invoice ${invoiceNumber} for ${customerName} created successfully!`);
-    navigate("/orders");
+    try {
+      await addOrder(newSalesOrder);
+      // If addOrder is successful, it will show a success toast and navigate.
+      // The actual Invoice number will be generated by the context.
+      navigate("/orders");
+    } catch (error) {
+      // Error handling is already in addOrder context function
+    }
   };
 
   const handlePrintPdf = () => {
@@ -302,7 +307,7 @@ const CreateInvoice: React.FC = () => {
           Cancel
         </Button>
         <Button onClick={handleSubmit}>Create Invoice</Button>
-        <Button variant="secondary" onClick={handlePrintPdf}>
+        <Button variant="secondary" onClick={handlePrintPdf} disabled={!invoiceNumber}>
           <Printer className="h-4 w-4 mr-2" /> Print/PDF
         </Button>
       </div>
@@ -321,7 +326,8 @@ const CreateInvoice: React.FC = () => {
                     id="invoiceNumber"
                     value={invoiceNumber}
                     onChange={(e) => setInvoiceNumber(e.target.value)}
-                    placeholder="e.g., INV-2023-001"
+                    placeholder="Will be generated on creation"
+                    disabled // Disable direct editing, will be set after creation
                   />
                   {invoiceQrCodeSvg && (
                     <div dangerouslySetInnerHTML={{ __html: invoiceQrCodeSvg }} className="w-20 h-20 object-contain" />

@@ -21,41 +21,41 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Trash2, Archive, Printer, QrCode } from "lucide-react"; // Added QrCode icon
+import { PlusCircle, Trash2, Archive, Printer, QrCode } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
-import { useOrders, OrderItem, POItem } from "@/context/OrdersContext"; // Import POItem
-import ConfirmDialog from "@/components/ConfirmDialog"; // Import ConfirmDialog
-import PurchaseOrderPdfContent from "@/components/PurchaseOrderPdfContent"; // Corrected import path
-import { useOnboarding } from "@/context/OnboardingContext"; // Import useOnboarding for company profile
-import { usePrint } from "@/context/PrintContext"; // Import usePrint
-import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
+import { useOrders, OrderItem, POItem } from "@/context/OrdersContext";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import PurchaseOrderPdfContent from "@/components/PurchaseOrderPdfContent";
+import { useOnboarding } from "@/context/OnboardingContext";
+import { usePrint } from "@/context/PrintContext";
+import { generateQrCodeSvg } from "@/utils/qrCodeGenerator";
 
 const EditPurchaseOrder: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { orders, updateOrder, archiveOrder } = useOrders();
-  const { companyProfile } = useOnboarding(); // Get company profile
-  const { initiatePrint } = usePrint(); // Use initiatePrint from context
+  const { companyProfile } = useOnboarding();
+  const { initiatePrint } = usePrint();
   const [order, setOrder] = useState<OrderItem | null>(null);
 
   const [poNumber, setPoNumber] = useState("");
   const [supplier, setSupplier] = useState("");
-  const [supplierEmail, setSupplierEmail] = useState(""); // Added for PDF
-  const [supplierAddress, setSupplierAddress] = useState(""); // Added for PDF
-  const [supplierContact, setSupplierContact] = useState(""); // Added for PDF
+  const [supplierEmail, setSupplierEmail] = useState("");
+  const [supplierAddress, setSupplierAddress] = useState("");
+  const [supplierContact, setSupplierContact] = useState("");
   const [poDate, setPoDate] = useState("");
-  const [status, setStatus] = useState<OrderItem['status']>("New Order"); // Now a dropdown
-  const [terms, setTerms] = useState("Net 30"); // Added for PDF
-  const [dueDate, setDueDate] = useState(""); // New field
-  const [orderType, setOrderType] = useState<OrderItem['orderType']>("Wholesale"); // New field
-  const [shippingMethod, setShippingMethod] = useState<OrderItem['shippingMethod']>("Standard"); // New field
-  const [notes, setNotes] = useState(""); // New field
-  const [items, setItems] = useState<POItem[]>([]); // Now managing items
-  const [poQrCodeSvg, setPoQrCodeSvg] = useState<string | null>(null); // State for PO QR code
+  const [status, setStatus] = useState<OrderItem['status']>("New Order");
+  const [terms, setTerms] = useState("Net 30");
+  const [dueDate, setDueDate] = useState("");
+  const [orderType, setOrderType] = useState<OrderItem['orderType']>("Wholesale");
+  const [shippingMethod, setShippingMethod] = useState<OrderItem['shippingMethod']>("Standard");
+  const [notes, setNotes] = useState("");
+  const [items, setItems] = useState<POItem[]>([]);
+  const [poQrCodeSvg, setPoQrCodeSvg] = useState<string | null>(null);
 
-  const [isConfirmArchiveDialogOpen, setIsConfirmArchiveDialogOpen] = useState(false); // New state for archive confirmation
+  const [isConfirmArchiveDialogOpen, setIsConfirmArchiveDialogOpen] = useState(false);
 
-  const taxRate = 0.05; // Example tax rate (5%)
+  const taxRate = 0.05;
 
   useEffect(() => {
     if (id) {
@@ -66,32 +66,27 @@ const EditPurchaseOrder: React.FC = () => {
         setSupplier(foundOrder.customerSupplier);
         setPoDate(foundOrder.date);
         setStatus(foundOrder.status);
-        setDueDate(foundOrder.dueDate); // Set new field
-        setOrderType(foundOrder.orderType); // Set new field
-        setShippingMethod(foundOrder.shippingMethod); // Set new field
-        setNotes(foundOrder.notes); // Set new field
-        setItems(foundOrder.items || []); // Load items from the found order
-        // For PDF content, we need more supplier details, which are not in OrderItem directly.
-        // In a real app, you'd fetch these from a dedicated supplier context/DB.
-        // For now, we'll use placeholders or derive from customerSupplier if possible.
-        // For this demo, we'll leave them as empty strings for existing orders unless explicitly added.
+        setDueDate(foundOrder.dueDate);
+        setOrderType(foundOrder.orderType);
+        setShippingMethod(foundOrder.shippingMethod);
+        setNotes(foundOrder.notes);
+        setItems(foundOrder.items || []);
         setSupplierEmail("");
         setSupplierAddress("");
         setSupplierContact("");
-        setTerms(foundOrder.terms || "Net 30"); // Load terms
+        setTerms(foundOrder.terms || "Net 30");
       } else {
         showError("Purchase Order not found.");
-        navigate("/orders"); // Redirect if order not found
+        navigate("/orders");
       }
     }
   }, [id, orders, navigate]);
 
-  // Generate QR code for PO number
   React.useEffect(() => {
     const generateQr = async () => {
       if (poNumber) {
         try {
-          const svg = await generateQrCodeSvg(poNumber, 80); // Smaller QR for display
+          const svg = await generateQrCodeSvg(poNumber, 80);
           setPoQrCodeSvg(svg);
         } catch (error) {
           console.error("Error generating PO QR code:", error);
@@ -139,7 +134,7 @@ const EditPurchaseOrder: React.FC = () => {
     }
 
     const updatedOrder: OrderItem = {
-      ...order!, // Use non-null assertion as we check for order existence above
+      ...order!,
       id: poNumber,
       customerSupplier: supplier,
       date: poDate,
@@ -148,10 +143,10 @@ const EditPurchaseOrder: React.FC = () => {
       orderType: orderType,
       shippingMethod: shippingMethod,
       notes: notes,
-      totalAmount: calculateTotalAmount(), // Recalculate based on current items
-      itemCount: items.length, // Update item count
-      items: items, // Save the updated items
-      terms: terms, // Save terms
+      totalAmount: calculateTotalAmount(),
+      itemCount: items.length,
+      items: items,
+      terms: terms,
     };
     updateOrder(updatedOrder);
     showSuccess(`Updated Purchase Order ${poNumber}!`);
@@ -184,14 +179,14 @@ const EditPurchaseOrder: React.FC = () => {
     const pdfProps = {
       poNumber,
       poDate,
-      supplierName: supplier, // Use the 'supplier' state from EditPurchaseOrder
-      supplierEmail: supplierEmail, // Use the state variable
-      supplierAddress: supplierAddress, // Use the state variable
-      supplierContact: supplierContact, // Use the state variable
+      supplierName: supplier,
+      supplierEmail: supplierEmail,
+      supplierAddress: supplierAddress,
+      supplierContact: supplierContact,
       recipientName: companyProfile.name,
       recipientAddress: companyProfile.address,
-      recipientContact: companyProfile.currency, // Assuming currency is used as a generic contact for company
-      terms, // Use the terms state
+      recipientContact: companyProfile.currency,
+      terms,
       dueDate,
       items,
       notes,
@@ -199,7 +194,7 @@ const EditPurchaseOrder: React.FC = () => {
       companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
     };
 
-    initiatePrint({ type: "purchase-order", props: pdfProps }); // Use initiatePrint
+    initiatePrint({ type: "purchase-order", props: pdfProps });
   };
 
   if (!order) {
@@ -214,7 +209,7 @@ const EditPurchaseOrder: React.FC = () => {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Edit Purchase Order: {order.id}</h1>
 
-      <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2"> {/* Adjusted for mobile stacking */}
+      <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
         <Button variant="outline" onClick={() => navigate("/orders")}>
           Cancel
         </Button>
@@ -229,7 +224,6 @@ const EditPurchaseOrder: React.FC = () => {
         )}
       </div>
 
-      {/* Main content of the page */}
       <div className="main-page-content">
         <div className="space-y-6 p-6 bg-background rounded-lg">
           <Card className="bg-card border-border rounded-lg shadow-sm p-6">
@@ -244,7 +238,7 @@ const EditPurchaseOrder: React.FC = () => {
                     id="poNumber"
                     value={poNumber}
                     onChange={(e) => setPoNumber(e.target.value)}
-                    disabled // Order ID usually not editable
+                    disabled
                   />
                   {poQrCodeSvg && (
                     <div dangerouslySetInnerHTML={{ __html: poQrCodeSvg }} className="w-20 h-20 object-contain" />
@@ -289,7 +283,7 @@ const EditPurchaseOrder: React.FC = () => {
                     <SelectItem value="Packed">Packed</SelectItem>
                     <SelectItem value="Shipped">Shipped</SelectItem>
                     <SelectItem value="On Hold / Problem">On Hold / Problem</SelectItem>
-                    <SelectItem value="Archived">Archived</SelectItem> {/* New status option */}
+                    <SelectItem value="Archived">Archived</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -332,7 +326,7 @@ const EditPurchaseOrder: React.FC = () => {
                   id="totalAmount"
                   type="number"
                   value={calculateTotalAmount().toFixed(2)}
-                  disabled // Derived from items
+                  disabled
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
@@ -349,19 +343,19 @@ const EditPurchaseOrder: React.FC = () => {
           </Card>
 
           <Card className="bg-card border-border rounded-lg shadow-sm p-6">
-            <CardHeader className="pb-4 flex flex-row items-center justify-between flex-wrap gap-2"> {/* Added flex-wrap and gap */}
+            <CardHeader className="pb-4 flex flex-row items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-xl font-semibold">Items</CardTitle>
-              <Button variant="outline" size="sm" onClick={handleAddItem}> {/* Added size="sm" */}
+              <Button variant="outline" size="sm" onClick={handleAddItem}>
                 <PlusCircle className="h-4 w-4 mr-2" /> Add Item
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto"> {/* Added overflow-x-auto for table */}
-                <Table className="min-w-[600px]"> {/* Added min-w to ensure horizontal scroll */}
+              <div className="overflow-x-auto">
+                <Table className="min-w-[600px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[20px]"></TableHead>
-                      <TableHead>Item Name</TableHead> {/* Removed fixed width */}
+                      <TableHead>Item Name</TableHead>
                       <TableHead className="w-[100px] text-right">Quantity</TableHead>
                       <TableHead className="w-[120px] text-right">Unit Price</TableHead>
                       <TableHead className="w-[120px] text-right">Total</TableHead>
