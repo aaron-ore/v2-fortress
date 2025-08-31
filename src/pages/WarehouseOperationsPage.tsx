@@ -192,7 +192,7 @@ const WarehouseOperationsPage: React.FC = () => {
                   <QrCode className="h-5 w-5 text-primary" /> Live Scanner
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex-grow flex flex-col items-center justify-center bg-black rounded-md overflow-hidden relative my-4">
+              <CardContent className="flex-grow flex flex-col items-center justify-center bg-black rounded-md overflow-hidden relative p-4 min-h-[300px]">
                 {isScannerLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/70 text-white text-lg z-10">
                     Loading camera...
@@ -215,7 +215,7 @@ const WarehouseOperationsPage: React.FC = () => {
                   facingMode={scannerFacingMode}
                 />
               </CardContent>
-              <div className="flex justify-center mt-auto p-4">
+              <div className="flex justify-center mt-4 p-4">
                 <Button variant="secondary" onClick={toggleFacingMode} className="w-full">
                   <Camera className="h-4 w-4 mr-2" /> Switch to {scannerFacingMode === "user" ? "Back" : "Front"} Camera
                 </Button>
