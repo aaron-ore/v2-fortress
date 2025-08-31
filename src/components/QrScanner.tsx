@@ -16,13 +16,12 @@ interface QrScannerProps {
 }
 
 const QR_SCANNER_DIV_ID = "qr-code-full-region"; // Consistent ID
-const RETRY_DELAY_MS = 2000; // Increased delay to 2 seconds
 
 const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
   ({ onScan, onError, onReady, isOpen }, ref) => {
     const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
     const isMounted = useRef(true);
-    const [isScannerActive, setIsScannerActive] = useState(false);
+    const isCameraStartedRef = useRef(false); // Tracks if html5QrCode.start() is active
 
     const html5QrcodeConstructorConfig: Html5QrcodeFullConfig = {
       formatsToSupport: [
@@ -44,7 +43,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
     };
 
     const stopScanner = useCallback(async () => {
-      if (html5QrCodeRef.current) {
+      if (html5QrCodeRef.current && isCameraStartedRef.current) {
         console.log("[QrScanner] Attempting to stop scanner...");
         try {
           await html5QrCodeRef.current.stop();
@@ -52,10 +51,10 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         } catch (e) {
           console.warn("[QrScanner] Error during scanner stop (might be already stopped or camera not found):", e);
         } finally {
-          setIsScannerActive(false);
+          isCameraStartedRef.current = false;
         }
       } else {
-        console.log("[QrScanner] No scanner instance to stop.");
+        console.log("[QrScanner] No active scanner instance to stop.");
       }
     }, []);
 
@@ -79,7 +78,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       console.log("[QrScanner] stopAndClear called.");
       await stopScanner(); // Ensure scanner is stopped first
       // Add a small delay to allow camera resources to fully release before clearing
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Increased delay to 1000ms
+      await new Promise(resolve => setTimeout(resolve, 500)); // Reduced delay to 500ms for faster cleanup
       clearScanner();    // Then clear the instance
     }, [stopScanner, clearScanner]);
 
@@ -89,21 +88,59 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         return;
       }
 
-      // Ensure any previous scanner is fully stopped and cleared before starting a new one
+      // Always start with a clean slate
+      console.log("[QrScanner] Calling stopAndClear before attempting to start.");
       await stopAndClear();
-      await new Promise(resolve => setTimeout(resolve, 500)); // Small delay for camera resource release
+      await new Promise(resolve => setTimeout(resolve, 500)); // Delay before starting
 
-      // Rely on html5-qrcode's start method to handle camera selection and permissions
-      // Use facingMode constraint directly for the back camera
-      const cameraTarget: MediaTrackConstraints = { facingMode: { exact: "environment" } };
+      // --- Logic to select camera by device ID ---
+      let cameraSelection: string | undefined = undefined;
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+        if (cameras && cameras.length > 0) {
+          console.log("[QrScanner] Available cameras:", cameras);
+          // Try to find an 'environment' camera. Heuristic: often contains 'back'/'rear' in label.
+          let environmentCamera = cameras.find(camera => camera.label.toLowerCase().includes('back') || camera.label.toLowerCase().includes('rear'));
+          
+          if (!environmentCamera && cameras.length === 1) {
+            environmentCamera = cameras[0]; // If only one, assume it's the primary one
+          } else if (!environmentCamera && cameras.length > 1) {
+            // Fallback: if no explicit 'back'/'rear' label, try the last one as it's often the main rear camera
+            environmentCamera = cameras[cameras.length - 1];
+          }
 
-      // Always create a new Html5Qrcode instance for a fresh start
-      html5QrCodeRef.current = new Html5Qrcode(QR_SCANNER_DIV_ID, html5QrcodeConstructorConfig);
+          if (environmentCamera) {
+            cameraSelection = environmentCamera.id;
+            console.log("[QrScanner] Selected camera device ID:", cameraSelection, "Label:", environmentCamera.label);
+          } else {
+            console.warn("[QrScanner] No explicit 'environment' camera found by label. Falling back to generic 'environment' string.");
+            cameraSelection = "environment"; // Fallback to generic string
+          }
+        } else {
+          console.warn("[QrScanner] No cameras found by Html5Qrcode.getCameras(). Falling back to generic 'environment' string.");
+          cameraSelection = "environment"; // Fallback to generic string
+        }
+      } catch (err: any) {
+        console.error("[QrScanner] Error enumerating cameras:", err);
+        onError("Failed to list cameras. " + err.message);
+        return;
+      }
+      // --- End camera selection logic ---
 
-      console.log(`[QrScanner] Attempting to start scanner with target:`, cameraTarget);
+      if (!cameraSelection) {
+        onError("No camera could be selected for scanning.");
+        return;
+      }
+
+      // Instantiate Html5Qrcode only if it's null
+      if (!html5QrCodeRef.current) {
+        html5QrCodeRef.current = new Html5Qrcode(QR_SCANNER_DIV_ID, html5QrcodeConstructorConfig);
+      }
+
+      console.log(`[QrScanner] Attempting to start scanner with selection:`, cameraSelection);
       try {
         await html5QrCodeRef.current.start(
-          cameraTarget, // Pass MediaTrackConstraints object
+          cameraSelection, // Pass the string (device ID or "environment")
           html5QrcodeCameraScanConfig,
           async (decodedText) => { // Made async to await stopScanner
             if (isMounted.current) {
@@ -121,20 +158,20 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         );
         if (isMounted.current) {
           console.log("[QrScanner] Scanner started and ready.");
+          isCameraStartedRef.current = true; // Mark camera as started
           onReady();
-          setIsScannerActive(true);
         }
       } catch (err: any) {
         if (isMounted.current) {
           console.error(`[QrScanner] Error starting scanner:`, err);
-          setIsScannerActive(false);
+          isCameraStartedRef.current = false; // Ensure state is reset on error
           let errorMessage = "Failed to start camera. ";
           if (err.name === "NotReadableError") {
             errorMessage += "The camera might be in use by another application, or there's a temporary hardware issue. Please try closing other camera apps. ";
           } else if (err.name === "NotAllowedError") {
             errorMessage += "Camera access was denied. Please check your browser's site permissions for this page and grant camera access. ";
           } else if (err.name === "OverconstrainedError") {
-            errorMessage += "No suitable back camera found or it's not available on your device. Try restarting your device or closing other camera apps. ";
+            errorMessage += "The camera could not be activated with the requested settings (e.g., back camera not found or available). Try restarting your device or closing other camera apps. ";
           } else if (err.name === "NotFoundError") {
             errorMessage += "No camera devices were found. ";
           } else {
