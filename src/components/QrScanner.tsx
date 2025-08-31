@@ -44,7 +44,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
     };
 
     const stopScanner = useCallback(async () => {
-      if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+      if (html5QrCodeRef.current) { // Only check if instance exists, always attempt to stop
         console.log("[QrScanner] Attempting to stop scanner...");
         try {
           await html5QrCodeRef.current.stop();
@@ -55,7 +55,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
           setIsScannerActive(false);
         }
       } else {
-        console.log("[QrScanner] Scanner not active or already stopped. No need to stop.");
+        console.log("[QrScanner] No scanner instance to stop.");
       }
     }, []);
 
@@ -89,18 +89,12 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         return;
       }
 
+      // Ensure any previous scanner is fully stopped and cleared before starting a new one
       await stopAndClear(); // Always start with a clean slate
       await new Promise(resolve => setTimeout(resolve, 500)); // Small delay for camera resource release
 
-      // Explicitly request the 'environment' (back) camera
-      const constraints: MediaTrackConstraints = { facingMode: { exact: "environment" } };
-
-      if (!html5QrCodeRef.current) {
-        console.log("[QrScanner] Creating new Html5Qrcode instance.");
-        html5QrCodeRef.current = new Html5Qrcode(QR_SCANNER_DIV_ID, html5QrcodeConstructorConfig);
-      } else {
-        console.log("[QrScanner] Reusing existing Html5Qrcode instance.");
-      }
+      // Always create a new Html5Qrcode instance for a fresh start
+      html5QrCodeRef.current = new Html5Qrcode(QR_SCANNER_DIV_ID, html5QrcodeConstructorConfig);
 
       console.log(`[QrScanner] Attempting to start scanner with constraints:`, constraints);
       try {
