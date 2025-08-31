@@ -90,8 +90,34 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       }
 
       // Ensure any previous scanner is fully stopped and cleared before starting a new one
-      await stopAndClear(); // Always start with a clean slate
+      await stopAndClear();
       await new Promise(resolve => setTimeout(resolve, 500)); // Small delay for camera resource release
+
+      // --- NEW: Explicitly request camera permission first ---
+      try {
+        console.log("[QrScanner] Requesting camera permissions...");
+        // Request video stream to trigger permission prompt for the environment camera
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        // If successful, stop the temporary stream immediately to release resources
+        stream.getTracks().forEach(track => track.stop());
+        console.log("[QrScanner] Camera permissions granted.");
+      } catch (err: any) {
+        console.error("[QrScanner] Error requesting camera permissions:", err);
+        setIsScannerActive(false);
+        let permissionErrorMessage = "Camera access was denied or no suitable camera found. ";
+        if (err.name === "NotAllowedError") {
+          permissionErrorMessage += "Please grant camera access in your browser's site settings.";
+        } else if (err.name === "NotFoundError") {
+          permissionErrorMessage += "No camera devices were found on your device.";
+        } else if (err.name === "NotReadableError") {
+          permissionErrorMessage += "The camera might be in use by another application.";
+        } else {
+          permissionErrorMessage += "An unknown error occurred during permission request.";
+        }
+        onError(permissionErrorMessage);
+        return; // Stop here if permissions are not granted
+      }
+      // --- END NEW: Explicitly request camera permission first ---
 
       // Use "environment" string directly for camera selection
       const cameraSelection = "environment"; 
@@ -127,11 +153,9 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         if (isMounted.current) {
           console.error(`[QrScanner] Error starting scanner:`, err);
           setIsScannerActive(false);
-          let errorMessage = "Failed to start camera. ";
+          let errorMessage = "Failed to initialize scanner after permissions. ";
           if (err.name === "NotReadableError") {
             errorMessage += "The camera might be in use by another application, or there's a temporary hardware issue. Please try closing other camera apps. ";
-          } else if (err.name === "NotAllowedError") {
-            errorMessage += "Camera access was denied. Please check your browser's site permissions for this page and grant camera access. ";
           } else if (err.name === "OverconstrainedError") {
             errorMessage += "No suitable back camera found or it's not available on your device. ";
           } else if (err.name === "NotFoundError") {
