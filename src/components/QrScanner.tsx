@@ -12,16 +12,17 @@ interface QrScannerProps {
   onScan: (decodedText: string) => void;
   onError: (errorMessage: string) => void;
   onReady: () => void;
+  onLoading: (loading: boolean) => void; // New prop to indicate loading state
   isOpen: boolean;
 }
 
 const QR_SCANNER_DIV_ID = "qr-code-full-region"; // Consistent ID
 
 const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
-  ({ onScan, onError, onReady, isOpen }, ref) => {
+  ({ onScan, onError, onReady, onLoading, isOpen }, ref) => {
     const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
     const isMounted = useRef(true);
-    const isCameraStartedRef = useRef(false); // Tracks if html5QrCode.start() is active
+    const [isScannerActive, setIsScannerActive] = useState(false); // Tracks if html5QrCode.start() is active
 
     const html5QrcodeConstructorConfig: Html5QrcodeFullConfig = {
       formatsToSupport: [
@@ -43,7 +44,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
     };
 
     const stopScanner = useCallback(async () => {
-      if (html5QrCodeRef.current && isCameraStartedRef.current) {
+      if (html5QrCodeRef.current && isScannerActive) { // Only attempt to stop if it's marked as active
         console.log("[QrScanner] Attempting to stop scanner...");
         try {
           await html5QrCodeRef.current.stop();
@@ -51,12 +52,12 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         } catch (e) {
           console.warn("[QrScanner] Error during scanner stop (might be already stopped or camera not found):", e);
         } finally {
-          isCameraStartedRef.current = false;
+          setIsScannerActive(false);
         }
       } else {
         console.log("[QrScanner] No active scanner instance to stop.");
       }
-    }, []);
+    }, [isScannerActive]);
 
     const clearScanner = useCallback(() => {
       if (html5QrCodeRef.current) {
@@ -78,7 +79,7 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       console.log("[QrScanner] stopAndClear called.");
       await stopScanner(); // Ensure scanner is stopped first
       // Add a small delay to allow camera resources to fully release before clearing
-      await new Promise(resolve => setTimeout(resolve, 500)); // Reduced delay to 500ms for faster cleanup
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Increased delay to 1500ms for better resource release
       clearScanner();    // Then clear the instance
     }, [stopScanner, clearScanner]);
 
@@ -87,6 +88,9 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         console.log("[QrScanner] Not starting scanner: component unmounted or dialog closed.");
         return;
       }
+
+      onLoading(true); // Indicate loading has started
+      onError(null); // Clear previous errors
 
       // Always start with a clean slate
       console.log("[QrScanner] Calling stopAndClear before attempting to start.");
@@ -123,12 +127,14 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       } catch (err: any) {
         console.error("[QrScanner] Error enumerating cameras:", err);
         onError("Failed to list cameras. " + err.message);
+        onLoading(false); // Stop loading on error
         return;
       }
       // --- End camera selection logic ---
 
       if (!cameraSelection) {
         onError("No camera could be selected for scanning.");
+        onLoading(false); // Stop loading on error
         return;
       }
 
@@ -158,13 +164,14 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         );
         if (isMounted.current) {
           console.log("[QrScanner] Scanner started and ready.");
-          isCameraStartedRef.current = true; // Mark camera as started
+          setIsScannerActive(true); // Mark camera as started
           onReady();
+          onLoading(false); // Stop loading on success
         }
       } catch (err: any) {
         if (isMounted.current) {
           console.error(`[QrScanner] Error starting scanner:`, err);
-          isCameraStartedRef.current = false; // Ensure state is reset on error
+          setIsScannerActive(false); // Ensure state is reset on error
           let errorMessage = "Failed to start camera. ";
           if (err.name === "NotReadableError") {
             errorMessage += "The camera might be in use by another application, or there's a temporary hardware issue. Please try closing other camera apps. ";
@@ -178,9 +185,10 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
             errorMessage += "An unknown error occurred. Please ensure your device has a working camera and try again. ";
           }
           onError(errorMessage); // Report error, but don't retry automatically
+          onLoading(false); // Stop loading on error
         }
       }
-    }, [isOpen, onScan, onReady, onError, stopAndClear, html5QrcodeConstructorConfig, html5QrcodeCameraScanConfig, stopScanner]);
+    }, [isOpen, onScan, onReady, onError, onLoading, stopAndClear, html5QrcodeConstructorConfig, html5QrcodeCameraScanConfig, stopScanner]);
 
     const retryStart = useCallback(async () => {
       console.log("[QrScanner] retryStart called.");

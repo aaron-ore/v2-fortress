@@ -33,18 +33,20 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   description = "Point your camera at a barcode or QR code to scan.",
 }) => {
   const qrScannerRef = useRef<QrScannerRef>(null);
-  const [isScannerLoading, setIsScannerLoading] = useState(true);
-  const [scannerError, setScannerError] = useState<string | null>(null);
+  const [isScannerLoading, setIsScannerLoading] = useState(true); // Managed by QrScanner's onLoading
+  const [scannerError, setScannerError] = useState<string | null>(null); // Managed by QrScanner's onError
   const [manualInputMode, setManualInputMode] = useState(false);
   const [manualInputValue, setManualInputValue] = useState("");
 
   useEffect(() => {
     if (isOpen) {
+      // Reset states when dialog opens
       setIsScannerLoading(true);
       setScannerError(null);
       setManualInputMode(false);
       setManualInputValue("");
     } else {
+      // Ensure scanner is stopped and cleared when dialog closes
       qrScannerRef.current?.stopAndClear();
     }
   }, [isOpen]);
@@ -56,17 +58,21 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
 
   const handleScannerError = (errorMessage: string) => {
     setScannerError(errorMessage);
-    setIsScannerLoading(false);
+    setIsScannerLoading(false); // Stop loading on error
   };
 
   const handleScannerReady = () => {
-    setIsScannerLoading(false);
-    setScannerError(null);
+    setScannerError(null); // Clear any previous error on ready
+    setIsScannerLoading(false); // Stop loading on ready
+  };
+
+  const handleScannerLoadingChange = (loading: boolean) => {
+    setIsScannerLoading(loading);
   };
 
   const handleRetryScan = () => {
-    setScannerError(null);
-    setIsScannerLoading(true);
+    setScannerError(null); // Clear error before retrying
+    setIsScannerLoading(true); // Set loading state
     qrScannerRef.current?.retryStart();
   };
 
@@ -111,7 +117,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
             </div>
           ) : (
             <div className="relative w-full pb-[100%]">
-              {isScannerLoading && (
+              {isScannerLoading && !scannerError && ( // Show loading only if no error
                 <div className="absolute inset-0 flex items-center justify-center bg-black/70 text-white text-lg z-10">
                   Loading camera...
                 </div>
@@ -131,6 +137,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
                   onScan={handleScannerScan}
                   onError={handleScannerError}
                   onReady={handleScannerReady}
+                  onLoading={handleScannerLoadingChange} // Pass the new loading handler
                   isOpen={isOpen && !manualInputMode}
                 />
               </div>
