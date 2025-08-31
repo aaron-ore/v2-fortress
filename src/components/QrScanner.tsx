@@ -93,6 +93,9 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       await stopAndClear(); // Always start with a clean slate
       await new Promise(resolve => setTimeout(resolve, 500)); // Small delay for camera resource release
 
+      // Relax constraints: prefer 'environment' but allow fallback
+      const constraints: MediaTrackConstraints = { facingMode: { ideal: "environment" } };
+
       // Always create a new Html5Qrcode instance for a fresh start
       html5QrCodeRef.current = new Html5Qrcode(QR_SCANNER_DIV_ID, html5QrcodeConstructorConfig);
 
@@ -126,13 +129,15 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
           setIsScannerActive(false);
           let errorMessage = "Failed to start camera. ";
           if (err.name === "NotReadableError") {
-            errorMessage += "The camera might be in use by another application, or there's a temporary hardware issue. ";
+            errorMessage += "The camera might be in use by another application, or there's a temporary hardware issue. Please try closing other camera apps. ";
           } else if (err.name === "NotAllowedError") {
-            errorMessage += "Camera access was denied. Please check your browser's site permissions for this page. ";
+            errorMessage += "Camera access was denied. Please check your browser's site permissions for this page and grant camera access. ";
           } else if (err.name === "OverconstrainedError") {
-            errorMessage += "No back camera found or it's not available. ";
+            errorMessage += "No suitable back camera found or it's not available on your device. ";
+          } else if (err.name === "NotFoundError") {
+            errorMessage += "No camera devices were found. ";
           } else {
-            errorMessage += "Please check camera permissions and try again. ";
+            errorMessage += "An unknown error occurred. Please ensure your device has a working camera and try again. ";
           }
           onError(errorMessage); // Report error, but don't retry automatically
         }
