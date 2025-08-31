@@ -16,7 +16,6 @@ interface QrScannerProps {
 }
 
 const QR_SCANNER_DIV_ID = "qr-code-full-region"; // Consistent ID
-const RETRY_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 2000; // Increased delay to 2 seconds
 
 const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
@@ -101,54 +100,45 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
         console.log("[QrScanner] Reusing existing Html5Qrcode instance.");
       }
 
-      for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt++) {
-        console.log(`[QrScanner] Attempt ${attempt}/${RETRY_ATTEMPTS} to start scanner with constraints:`, constraints);
-        try {
-          await html5QrCodeRef.current.start(
-            constraints,
-            html5QrcodeCameraScanConfig,
-            async (decodedText) => { // Made async to await stopScanner
-              if (isMounted.current) {
-                console.log("[QrScanner] Scan successful:", decodedText);
-                await stopScanner(); // Immediately stop scanner after a successful scan
-                await new Promise(resolve => setTimeout(resolve, 100)); // Small delay before callback
-                onScan(decodedText);
-              }
-            },
-            (errorMessage) => {
-              if (isMounted.current && !errorMessage.includes("No QR code found")) {
-                console.warn("[QrScanner] Scan error (not 'No QR code found'):", errorMessage);
-              }
+      console.log(`[QrScanner] Attempting to start scanner with constraints:`, constraints);
+      try {
+        await html5QrCodeRef.current.start(
+          constraints,
+          html5QrcodeCameraScanConfig,
+          async (decodedText) => { // Made async to await stopScanner
+            if (isMounted.current) {
+              console.log("[QrScanner] Scan successful:", decodedText);
+              await stopScanner(); // Immediately stop scanner after a successful scan
+              await new Promise(resolve => setTimeout(resolve, 100)); // Small delay before callback
+              onScan(decodedText);
             }
-          );
-          if (isMounted.current) {
-            console.log("[QrScanner] Scanner started and ready.");
-            onReady();
-            setIsScannerActive(true);
-            return; // Success, exit loop
-          }
-        } catch (err: any) {
-          if (isMounted.current) {
-            console.error(`[QrScanner] Error starting scanner on attempt ${attempt}:`, err);
-            setIsScannerActive(false);
-            let errorMessage = "Failed to start camera. ";
-            if (err.name === "NotReadableError") {
-              errorMessage += "The camera might be in use by another application, or there's a temporary hardware issue. ";
-            } else if (err.name === "NotAllowedError") {
-              errorMessage += "Camera access was denied. Please check your browser's site permissions for this page. ";
-            } else if (err.name === "OverconstrainedError") {
-              errorMessage += "No back camera found or it's not available. ";
-            } else {
-              errorMessage += "Please check camera permissions and try again. ";
-            }
-            onError(errorMessage + (attempt < RETRY_ATTEMPTS ? `Retrying in ${RETRY_DELAY_MS / 1000}s...` : "No more retries."));
-
-            if (attempt < RETRY_ATTEMPTS && err.name === "NotReadableError") {
-              await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
-            } else {
-              return; // Stop trying if not NotReadableError or no more retries
+          },
+          (errorMessage) => {
+            if (isMounted.current && !errorMessage.includes("No QR code found")) {
+              console.warn("[QrScanner] Scan error (not 'No QR code found'):", errorMessage);
             }
           }
+        );
+        if (isMounted.current) {
+          console.log("[QrScanner] Scanner started and ready.");
+          onReady();
+          setIsScannerActive(true);
+        }
+      } catch (err: any) {
+        if (isMounted.current) {
+          console.error(`[QrScanner] Error starting scanner:`, err);
+          setIsScannerActive(false);
+          let errorMessage = "Failed to start camera. ";
+          if (err.name === "NotReadableError") {
+            errorMessage += "The camera might be in use by another application, or there's a temporary hardware issue. ";
+          } else if (err.name === "NotAllowedError") {
+            errorMessage += "Camera access was denied. Please check your browser's site permissions for this page. ";
+          } else if (err.name === "OverconstrainedError") {
+            errorMessage += "No back camera found or it's not available. ";
+          } else {
+            errorMessage += "Please check camera permissions and try again. ";
+          }
+          onError(errorMessage); // Report error, but don't retry automatically
         }
       }
     }, [isOpen, onScan, onReady, onError, stopAndClear, html5QrcodeConstructorConfig, html5QrcodeCameraScanConfig, stopScanner]);
