@@ -12,7 +12,7 @@ interface QrScannerProps {
   onError: (errorMessage: string) => void;
   onReady: () => void;
   facingMode: "user" | "environment";
-  isOpen: boolean; // NEW: Pass isOpen to control internal lifecycle
+  isOpen: boolean; // Pass isOpen to control internal lifecycle
 }
 
 const QR_SCANNER_DIV_ID = "qr-code-full-region"; // Consistent ID
@@ -42,41 +42,68 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
       disableFlip: false,
     };
 
+    // Function to stop the scanner gracefully
     const stopScanner = useCallback(async () => {
       if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
-        console.log("[QrScanner] Stopping scanner...");
+        console.log("[QrScanner] Attempting to stop scanner...");
         try {
           await html5QrCodeRef.current.stop();
-          console.log("[QrScanner] Scanner stopped.");
+          console.log("[QrScanner] Scanner stopped successfully.");
         } catch (e) {
-          console.warn("[QrScanner] Error stopping scanner (might be already stopped or camera not found):", e);
+          console.warn("[QrScanner] Error during scanner stop (might be already stopped or camera not found):", e);
         } finally {
           setIsScannerActive(false);
         }
+      } else {
+        console.log("[QrScanner] Scanner not active or already stopped. No need to stop.");
       }
     }, []);
 
+    // Function to clear the Html5Qrcode instance
     const clearScanner = useCallback(() => {
       if (html5QrCodeRef.current) {
-        console.log("[QrScanner] Clearing scanner...");
-        html5QrCodeRef.current.clear();
-        html5QrCodeRef.current = null; // Clear instance reference
+        console.log("[QrScanner] Attempting to clear scanner instance...");
+        try {
+          html5QrCodeRef.current.clear();
+          console.log("[QrScanner] Scanner instance cleared.");
+        } catch (e) {
+          console.warn("[QrScanner] Error during scanner clear:", e);
+        } finally {
+          html5QrCodeRef.current = null; // Ensure instance reference is nullified
+        }
+      } else {
+        console.log("[QrScanner] No scanner instance to clear.");
       }
     }, []);
 
+    // Combined function to stop and clear, exposed via ref
     const stopAndClear = useCallback(async () => {
-      await stopScanner();
-      clearScanner();
+      console.log("[QrScanner] stopAndClear called.");
+      await stopScanner(); // Ensure scanner is stopped first
+      clearScanner();     // Then clear the instance
     }, [stopScanner, clearScanner]);
 
-    const startScanner = useCallback(async (constraints: MediaTrackConstraints) => {
-      if (!isMounted.current || !isOpen) return; // Only start if mounted and dialog is open
+    // Expose stopAndClear via imperative handle
+    useImperativeHandle(ref, () => ({
+      stopAndClear: stopAndClear,
+    }));
 
-      await stopScanner(); // Ensure any existing scanner is stopped first
+    // Function to start the scanner
+    const startScanner = useCallback(async (constraints: MediaTrackConstraints) => {
+      if (!isMounted.current || !isOpen) {
+        console.log("[QrScanner] Not starting scanner: component unmounted or dialog closed.");
+        return;
+      }
+
+      // Ensure a clean slate before starting
+      await stopAndClear(); 
       await new Promise(resolve => setTimeout(resolve, 300)); // Small delay for camera resource release
 
       if (!html5QrCodeRef.current) {
+        console.log("[QrScanner] Creating new Html5Qrcode instance.");
         html5QrCodeRef.current = new Html5Qrcode(QR_SCANNER_DIV_ID, html5QrcodeConstructorConfig);
+      } else {
+        console.log("[QrScanner] Reusing existing Html5Qrcode instance.");
       }
 
       console.log("[QrScanner] Starting scanner with constraints:", constraints);
@@ -118,21 +145,18 @@ const QrScanner = forwardRef<QrScannerRef, QrScannerProps>(
           onError(errorMessage);
         }
       }
-    }, [isOpen, onScan, onReady, onError, stopScanner, html5QrcodeConstructorConfig, html5QrcodeCameraScanConfig]);
+    }, [isOpen, onScan, onReady, onError, stopAndClear, html5QrcodeConstructorConfig, html5QrcodeCameraScanConfig]);
 
-    useImperativeHandle(ref, () => ({
-      stopAndClear: stopAndClear,
-    }));
-
-    // Effect to manage scanner lifecycle based on isOpen and facingMode
+    // Main effect to manage scanner lifecycle based on isOpen and facingMode
     useEffect(() => {
       isMounted.current = true;
-      console.log("[QrScanner] Effect running. isOpen:", isOpen, "facingMode:", facingMode);
+      console.log("[QrScanner] Main effect running. isOpen:", isOpen, "facingMode:", facingMode);
 
       if (isOpen) {
         const constraints: MediaTrackConstraints = { facingMode: facingMode };
         startScanner(constraints);
       } else {
+        // If dialog is closed, ensure scanner is stopped and cleared
         stopAndClear();
       }
 
