@@ -192,30 +192,35 @@ const WarehouseOperationsPage: React.FC = () => {
                   <QrCode className="h-5 w-5 text-primary" /> Live Scanner
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex-grow flex flex-col items-center justify-center bg-black rounded-md overflow-hidden relative p-4 min-h-[300px]">
-                {isScannerLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/70 text-white text-lg z-10">
-                    Loading camera...
+              <CardContent className="flex-grow flex flex-col items-center justify-center bg-black rounded-md overflow-hidden relative p-0"> {/* Removed my-4, added p-0 */}
+                {/* Fixed aspect ratio container for the scanner */}
+                <div className="relative w-full pb-[100%]"> {/* pb-[100%] creates a square aspect ratio */}
+                  {isScannerLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/70 text-white text-lg z-10">
+                      Loading camera...
+                    </div>
+                  )}
+                  {scannerError && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-900/70 text-white text-center p-4 z-10">
+                      <XCircle className="h-8 w-8 mb-2" />
+                      <p className="font-semibold">Camera Error:</p>
+                      <p className="text-sm">{scannerError}</p>
+                      <p className="text-xs mt-2">Try switching cameras or refreshing the page.</p>
+                    </div>
+                  )}
+                  <div className="absolute inset-0"> {/* This div ensures QrScanner fills the aspect ratio container */}
+                    <QrScanner
+                      key={scannerFacingMode} // Key changes when facingMode changes, forcing remount
+                      ref={qrScannerRef}
+                      onScan={handleScannerScan}
+                      onError={handleScannerError}
+                      onReady={handleScannerReady}
+                      facingMode={scannerFacingMode}
+                    />
                   </div>
-                )}
-                {scannerError && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-900/70 text-white text-center p-4 z-10">
-                    <XCircle className="h-8 w-8 mb-2" />
-                    <p className="font-semibold">Camera Error:</p>
-                    <p className="text-sm">{scannerError}</p>
-                    <p className="text-xs mt-2">Try switching cameras or refreshing the page.</p>
-                  </div>
-                )}
-                <QrScanner
-                  key={scannerFacingMode} // Key changes when facingMode changes, forcing remount
-                  ref={qrScannerRef}
-                  onScan={handleScannerScan}
-                  onError={handleScannerError}
-                  onReady={handleScannerReady}
-                  facingMode={scannerFacingMode}
-                />
+                </div>
               </CardContent>
-              <div className="flex justify-center mt-4 p-4">
+              <div className="flex justify-center mt-4 p-4"> {/* Added mt-4 for spacing */}
                 <Button variant="secondary" onClick={toggleFacingMode} className="w-full">
                   <Camera className="h-4 w-4 mr-2" /> Switch to {scannerFacingMode === "user" ? "Back" : "Front"} Camera
                 </Button>
