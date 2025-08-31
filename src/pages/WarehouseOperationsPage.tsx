@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Package, Scan, Truck, CheckCircle, AlertTriangle, LayoutDashboard, Search as SearchIcon, ShoppingCart, QrCode, ListOrdered, Undo2, MapPin } from "lucide-react"; // NEW: Import MapPin
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import TabsList and TabsTrigger
+import { Package, Scan, Truck, CheckCircle, AlertTriangle, LayoutDashboard, Search as SearchIcon, ShoppingCart, QrCode, ListOrdered, Undo2, MapPin, Camera } from "lucide-react"; // NEW: Import Camera icon
 import { useIsMobile } from "@/hooks/use-mobile";
 import ItemLookupTool from "@/components/warehouse-operations/ItemLookupTool";
 import ReceiveInventoryTool from "@/components/warehouse-operations/ReceiveInventoryTool";
@@ -12,22 +12,24 @@ import CycleCountTool from "@/components/warehouse-operations/CycleCountTool";
 import IssueReportTool from "@/components/warehouse-operations/IssueReportTool";
 import WarehouseDashboard from "@/components/warehouse-operations/WarehouseDashboard";
 import FulfillOrderTool from "@/components/warehouse-operations/FulfillOrderTool";
-// REMOVED: import CameraScannerDialog from "@/components/CameraScannerDialog";
 import PickingWaveManagementTool from "@/components/warehouse-operations/PickingWaveManagementTool";
 import ReplenishmentManagementTool from "@/components/warehouse-operations/ReplenishmentManagementTool";
 import ShippingVerificationTool from "@/components/warehouse-operations/ShippingVerificationTool";
 import ReturnsProcessingTool from "@/components/warehouse-operations/ReturnsProcessingTool";
+import QrScanner, { QrScannerRef } from "@/components/QrScanner"; // NEW: Import QrScanner
 import { cn } from "@/lib/utils";
-import { showError } from "@/utils/toast";
-import { useNavigate } from "react-router-dom"; // NEW: Import useNavigate
+import { showError, showSuccess } from "@/utils/toast";
+import { useNavigate } from "react-router-dom";
 
 const WarehouseOperationsPage: React.FC = () => {
   const isMobile = useIsMobile();
-  const navigate = useNavigate(); // NEW: Initialize useNavigate
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
-  // REMOVED: const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
-  // REMOVED: const [onScanCallback, setOnScanCallback] = useState<((scannedData: string) => void) | null>(null);
   const [scannedDataForTool, setScannedDataForTool] = useState<string | null>(null);
+  const [scannerFacingMode, setScannerFacingMode] = useState<"user" | "environment">("environment"); // Default to back camera
+  const [isScannerLoading, setIsScannerLoading] = useState(true);
+  const [scannerError, setScannerError] = useState<string | null>(null);
+  const qrScannerRef = useRef<QrScannerRef>(null);
 
   const operationButtons = [
     { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -42,45 +44,47 @@ const WarehouseOperationsPage: React.FC = () => {
     { value: "stock-transfer", label: "Transfer", icon: Scan },
     { value: "cycle-count", label: "Count", icon: CheckCircle },
     { value: "issue-report", label: "Report Issue", icon: AlertTriangle },
-    // REMOVED: { value: "location-label-generator", label: "Labels", icon: QrCode },
+    { value: "scanner", label: "Scan", icon: QrCode }, // NEW: Add scanner tab
   ];
 
-  // REMOVED: const handleScanRequest = (callback: (scannedData: string) => void) => {
-  // REMOVED:   setOnScanCallback(() => callback);
-  // REMOVED:   setIsCameraScannerOpen(true);
-  // REMOVED: };
-
-  // REMOVED: const handleCameraScanResult = (scannedData: string) => {
-  // REMOVED:   setIsCameraScannerOpen(false);
-  // REMOVED:   if (onScanCallback) {
-  // REMOVED:     onScanCallback(scannedData);
-  // REMOVED:     setOnScanCallback(null);
-  // REMOVED:   } else {
-  // REMOVED:     // If no specific tool requested the scan, default to item lookup
-  // REMOVED:     setActiveTab("item-lookup");
-  // REMOVED:     setScannedDataForTool(scannedData);
-  // REMOVED:   }
-  // REMOVED: };
-
-  // REMOVED: const handleCameraScanError = (error: string) => {
-  // REMOVED:   setIsCameraScannerOpen(false);
-  // REMOVED:   setOnScanCallback(null);
-  // REMOVED:   showError(`Camera scan failed: ${error}`);
-  // REMOVED: };
+  // Effect to stop scanner when leaving the scanner tab
+  useEffect(() => {
+    if (activeTab !== "scanner" && qrScannerRef.current) {
+      qrScannerRef.current.stopAndClear();
+      setIsScannerLoading(true);
+      setScannerError(null);
+    }
+  }, [activeTab]);
 
   const handleGlobalScanClick = () => {
-    // Since CameraScannerDialog is removed, this will just show an error for now.
-    showError("Camera scanning is currently disabled.");
-    // If you want to re-enable scanning, you'll need to re-implement the CameraScannerDialog
-    // and its integration.
-    // handleScanRequest((scannedData) => {
-    //   setActiveTab("item-lookup");
-    //   setScannedDataForTool(scannedData);
-    // });
+    setActiveTab("scanner");
+    setScannedDataForTool(null); // Clear previous scanned data
   };
 
   const handleScannedDataProcessed = () => {
     setScannedDataForTool(null);
+  };
+
+  const handleScannerScan = (decodedText: string) => {
+    setScannedDataForTool(decodedText);
+    setActiveTab("item-lookup"); // Automatically switch to item lookup after a scan
+    showSuccess(`Scanned: ${decodedText}. Switching to Item Lookup.`);
+  };
+
+  const handleScannerError = (errorMessage: string) => {
+    setScannerError(errorMessage);
+    showError(`Scanner error: ${errorMessage}`);
+  };
+
+  const handleScannerReady = () => {
+    setIsScannerLoading(false);
+    setScannerError(null);
+  };
+
+  const toggleFacingMode = () => {
+    setScannerFacingMode((prevMode) => (prevMode === "user" ? "environment" : "user"));
+    setIsScannerLoading(true);
+    setScannerError(null);
   };
 
   if (!isMobile) {
@@ -116,29 +120,28 @@ const WarehouseOperationsPage: React.FC = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-grow flex flex-col">
         {/* Grid of buttons for navigation */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-4 p-1 bg-muted rounded-lg">
+        <TabsList className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 mb-4 p-1 bg-muted rounded-lg overflow-x-auto"> {/* Added overflow-x-auto */}
           {operationButtons.map((op) => (
-            <Button
+            <TabsTrigger
               key={op.value}
-              variant="ghost"
+              value={op.value}
               className={cn(
                 "flex flex-col items-center justify-center h-auto py-3 px-2 text-sm font-medium rounded-md transition-colors text-center",
                 activeTab === op.value
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-foreground hover:bg-muted/50 hover:text-primary"
               )}
-              onClick={() => setActiveTab(op.value)}
             >
               <op.icon className="h-4 w-4 sm:h-5 sm:w-5 mb-1" />
               <span className="text-xs sm:text-sm">{op.label}</span>
-            </Button>
+            </TabsTrigger>
           ))}
-          {/* NEW: Button to navigate to Location Management Page */}
+          {/* Button to navigate to Location Management Page */}
           <Button
             variant="ghost"
             className={cn(
               "flex flex-col items-center justify-center h-auto py-3 px-2 text-sm font-medium rounded-md transition-colors text-center",
-              location.pathname === "/location-management" // Check if on the new page
+              location.pathname === "/location-management"
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-foreground hover:bg-muted/50 hover:text-primary"
             )}
@@ -147,7 +150,7 @@ const WarehouseOperationsPage: React.FC = () => {
             <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mb-1" />
             <span className="text-xs sm:text-sm">Locations</span>
           </Button>
-        </div>
+        </TabsList>
 
         <div className="flex-grow overflow-hidden">
           <TabsContent value="dashboard" className="h-full min-h-0">
@@ -186,19 +189,46 @@ const WarehouseOperationsPage: React.FC = () => {
           <TabsContent value="issue-report" className="h-full min-h-0">
             <IssueReportTool onScanRequest={handleGlobalScanClick} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
           </TabsContent>
-          {/* REMOVED: <TabsContent value="location-label-generator" className="h-full min-h-0">
-            <LocationLabelGenerator />
-          </TabsContent> */}
+          {/* NEW: Scanner Tab Content */}
+          <TabsContent value="scanner" className="h-full min-h-0 flex flex-col">
+            <Card className="flex-grow flex flex-col bg-card border-border shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <QrCode className="h-5 w-5 text-primary" /> Live Scanner
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex-grow flex flex-col items-center justify-center bg-black rounded-md overflow-hidden relative my-4">
+                {isScannerLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/70 text-white text-lg z-10">
+                    Loading camera...
+                  </div>
+                )}
+                {scannerError && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-900/70 text-white text-center p-4 z-10">
+                    <XCircle className="h-8 w-8 mb-2" />
+                    <p className="font-semibold">Camera Error:</p>
+                    <p className="text-sm">{scannerError}</p>
+                    <p className="text-xs mt-2">Try switching cameras or refreshing the page.</p>
+                  </div>
+                )}
+                <QrScanner
+                  key={scannerFacingMode} // Key changes when facingMode changes, forcing remount
+                  ref={qrScannerRef}
+                  onScan={handleScannerScan}
+                  onError={handleScannerError}
+                  onReady={handleScannerReady}
+                  facingMode={scannerFacingMode}
+                />
+              </CardContent>
+              <div className="flex justify-center mt-auto p-4">
+                <Button variant="secondary" onClick={toggleFacingMode} className="w-full">
+                  <Camera className="h-4 w-4 mr-2" /> Switch to {scannerFacingMode === "user" ? "Back" : "Front"} Camera
+                </Button>
+              </div>
+            </Card>
+          </TabsContent>
         </div>
       </Tabs>
-
-      {/* REMOVED: CameraScannerDialog
-      <CameraScannerDialog
-        isOpen={isCameraScannerOpen}
-        onClose={() => setIsCameraScannerOpen(false)}
-        onScan={handleCameraScanResult}
-        onError={handleCameraScanError}
-      /> */}
     </div>
   );
 };
