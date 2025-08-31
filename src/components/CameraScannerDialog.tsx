@@ -33,15 +33,16 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   const [isScannerLoading, setIsScannerLoading] = useState(true);
   const [scannerError, setScannerError] = useState<string | null>(null);
 
-  // Effect to manage scanner lifecycle with dialog open/close
+  // When dialog opens, reset states and try to start scanner
   useEffect(() => {
-    if (!isOpen && qrScannerRef.current) {
-      // When dialog closes, stop the scanner
-      qrScannerRef.current.stopAndClear();
-      setIsScannerLoading(true); // Reset loading state
-      setScannerError(null); // Clear any previous errors
+    if (isOpen) {
+      setIsScannerLoading(true);
+      setScannerError(null);
+      // QrScanner's internal useEffect will handle starting based on isOpen and facingMode
+    } else {
+      // When dialog closes, ensure scanner is stopped and cleared
+      qrScannerRef.current?.stopAndClear();
     }
-    // When dialog opens, the QrScanner component will mount/remount and start itself
   }, [isOpen]);
 
   const handleScannerScan = (decodedText: string) => {
@@ -51,7 +52,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
 
   const handleScannerError = (errorMessage: string) => {
     setScannerError(errorMessage);
-    // Do not close dialog on error, let user try again or switch camera
+    setIsScannerLoading(false); // Stop loading on error
   };
 
   const handleScannerReady = () => {
@@ -59,10 +60,11 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
     setScannerError(null);
   };
 
-  const toggleFacingMode = () => {
+  const toggleFacingMode = async () => {
     setScannerFacingMode((prevMode) => (prevMode === "user" ? "environment" : "user"));
     setIsScannerLoading(true); // Indicate loading while camera switches
     setScannerError(null); // Clear error when switching
+    // QrScanner's internal useEffect will handle stopping and restarting with new facingMode
   };
 
   return (
@@ -93,19 +95,19 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
             )}
             <div className="absolute inset-0"> {/* This div ensures QrScanner fills the aspect ratio container */}
               <QrScanner
-                // Removed key={scannerFacingMode}
                 ref={qrScannerRef}
                 onScan={handleScannerScan}
                 onError={handleScannerError}
                 onReady={handleScannerReady}
                 facingMode={scannerFacingMode}
+                isOpen={isOpen} // Pass isOpen prop
               />
             </div>
           </div>
         </div>
 
         <div className="flex justify-center mt-auto p-4 pt-2">
-          <Button variant="secondary" onClick={toggleFacingMode} className="w-full">
+          <Button variant="secondary" onClick={toggleFacingMode} className="w-full" disabled={isScannerLoading}>
             <Camera className="h-4 w-4 mr-2" /> Switch to {scannerFacingMode === "user" ? "Back" : "Front"} Camera
           </Button>
         </div>
