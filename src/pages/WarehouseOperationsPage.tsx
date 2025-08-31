@@ -2,76 +2,112 @@ import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Package, Scan, Truck, CheckCircle, AlertTriangle, LayoutDashboard, Search as SearchIcon, ShoppingCart, ListOrdered, Undo2, MapPin } from "lucide-react";
+import { Package, Scan, Truck, CheckCircle, AlertTriangle, LayoutDashboard, Search as SearchIcon, ShoppingCart, ListOrdered, Undo2, MapPin, Repeat } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import ItemLookupTool from "@/components/warehouse-operations/ItemLookupTool";
-import ReceiveInventoryTool from "@/components/warehouse-operations/ReceiveInventoryTool";
-import ShipOrderTool from "@/components/warehouse-operations/ShipOrderTool";
-import StockTransferTool from "@/components/warehouse-operations/StockTransferTool";
-import CycleCountTool from "@/components/warehouse-operations/CycleCountTool";
-import IssueReportTool from "@/components/warehouse-operations/IssueReportTool";
 import WarehouseDashboard from "@/components/warehouse-operations/WarehouseDashboard";
-import FulfillOrderTool from "@/components/warehouse-operations/FulfillOrderTool";
-import PickingWaveManagementTool from "@/components/warehouse-operations/PickingWaveManagementTool";
-import ReplenishmentManagementTool from "@/components/warehouse-operations/ReplenishmentManagementTool";
-import ShippingVerificationTool from "@/components/warehouse-operations/ShippingVerificationTool";
-import ReturnsProcessingTool from "@/components/warehouse-operations/ReturnsProcessingTool";
 import CameraScannerDialog from "@/components/CameraScannerDialog";
 import { cn } from "@/lib/utils";
 import { showError, showSuccess } from "@/utils/toast";
 import { useNavigate, useLocation } from "react-router-dom";
 
+// Import new dialog wrappers
+import ItemLookupDialog from "@/components/warehouse-operations/dialogs/ItemLookupDialog";
+import ReceiveInventoryDialog from "@/components/warehouse-operations/dialogs/ReceiveInventoryDialog";
+import FulfillOrderDialog from "@/components/warehouse-operations/dialogs/FulfillOrderDialog";
+import ShipOrderDialog from "@/components/warehouse-operations/dialogs/ShipOrderDialog";
+import PickingWaveManagementDialog from "@/components/warehouse-operations/dialogs/PickingWaveManagementDialog";
+import ReplenishmentManagementDialog from "@/components/warehouse-operations/dialogs/ReplenishmentManagementDialog";
+import ShippingVerificationDialog from "@/components/warehouse-operations/dialogs/ShippingVerificationDialog";
+import ReturnsProcessingDialog from "@/components/warehouse-operations/dialogs/ReturnsProcessingDialog";
+import StockTransferDialog from "@/components/warehouse-operations/dialogs/StockTransferDialog";
+import CycleCountDialog from "@/components/warehouse-operations/dialogs/CycleCountDialog";
+import IssueReportDialog from "@/components/warehouse-operations/dialogs/IssueReportDialog";
+
 const WarehouseOperationsPage: React.FC = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState("dashboard");
-  const [scannedDataForTool, setScannedDataForTool] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("dashboard"); // Only dashboard remains a tab
+
+  // State for CameraScannerDialog
   const [isCameraScannerDialogOpen, setIsCameraScannerDialogOpen] = useState(false);
   const [scanCallback, setScanCallback] = useState<((scannedData: string) => void) | null>(null);
+  const [scannedDataForTool, setScannedDataForTool] = useState<string | null>(null); // Data to pass to a tool's dialog
 
-  const operationButtons = [
-    { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { value: "item-lookup", label: "Lookup", icon: SearchIcon },
-    { value: "receive-inventory", label: "Receive", icon: Package },
-    { value: "fulfill-order", label: "Fulfill", icon: ShoppingCart },
-    { value: "ship-order", label: "Ship", icon: Truck },
-    { value: "picking-wave", label: "Pick Wave", icon: ListOrdered },
-    { value: "replenishment", label: "Replenish", icon: CheckCircle },
-    { value: "shipping-verify", label: "Verify Ship", icon: Truck },
-    { value: "returns-process", label: "Returns", icon: Undo2 },
-    { value: "stock-transfer", label: "Transfer", icon: Scan },
-    { value: "cycle-count", label: "Count", icon: CheckCircle },
-    { value: "issue-report", label: "Report Issue", icon: AlertTriangle },
-    { value: "location-management", label: "Locations", icon: MapPin, isPageLink: true },
-  ];
+  // States for each tool's dialog visibility
+  const [isItemLookupDialogOpen, setIsItemLookupDialogOpen] = useState(false);
+  const [isReceiveInventoryDialogOpen, setIsReceiveInventoryDialogOpen] = useState(false);
+  const [isFulfillOrderDialogOpen, setIsFulfillOrderDialogOpen] = useState(false);
+  const [isShipOrderDialogOpen, setIsShipOrderDialogOpen] = useState(false);
+  const [isPickingWaveManagementDialogOpen, setIsPickingWaveManagementDialogOpen] = useState(false);
+  const [isReplenishmentManagementDialogOpen, setIsReplenishmentManagementDialogOpen] = useState(false);
+  const [isShippingVerificationDialogOpen, setIsShippingVerificationDialogOpen] = useState(false);
+  const [isReturnsProcessingDialogOpen, setIsReturnsProcessingDialogOpen] = useState(false);
+  const [isStockTransferDialogOpen, setIsStockTransferDialogOpen] = useState(false);
+  const [isCycleCountDialogOpen, setIsCycleCountDialogOpen] = useState(false);
+  const [isIssueReportDialogOpen, setIsIssueReportDialogOpen] = useState(false);
 
-  const requestScan = (callback: (scannedData: string) => void) => {
-    setScanCallback(() => callback);
-    setIsCameraScannerDialogOpen(true);
+  // Map tool values to their dialog open/close states
+  const dialogStates = {
+    "item-lookup": { isOpen: isItemLookupDialogOpen, setIsOpen: setIsItemLookupDialogOpen },
+    "receive-inventory": { isOpen: isReceiveInventoryDialogOpen, setIsOpen: setIsReceiveInventoryDialogOpen },
+    "fulfill-order": { isOpen: isFulfillOrderDialogOpen, setIsOpen: setIsFulfillOrderDialogOpen },
+    "ship-order": { isOpen: isShipOrderDialogOpen, setIsOpen: setIsShipOrderDialogOpen },
+    "picking-wave": { isOpen: isPickingWaveManagementDialogOpen, setIsOpen: setIsPickingWaveManagementDialogOpen },
+    "replenishment": { isOpen: isReplenishmentManagementDialogOpen, setIsOpen: setIsReplenishmentManagementDialogOpen },
+    "shipping-verify": { isOpen: isShippingVerificationDialogOpen, setIsOpen: setIsShippingVerificationDialogOpen },
+    "returns-process": { isOpen: isReturnsProcessingDialogOpen, setIsOpen: setIsReturnsProcessingDialogOpen },
+    "stock-transfer": { isOpen: isStockTransferDialogOpen, setIsOpen: setIsStockTransferDialogOpen },
+    "cycle-count": { isOpen: isCycleCountDialogOpen, setIsOpen: setIsCycleCountDialogOpen },
+    "issue-report": { isOpen: isIssueReportDialogOpen, setIsOpen: setIsIssueReportDialogOpen },
   };
 
+  const operationButtons = [
+    { value: "dashboard", label: "Dashboard", icon: LayoutDashboard, type: "tab" },
+    { value: "item-lookup", label: "Lookup", icon: SearchIcon, type: "dialog" },
+    { value: "receive-inventory", label: "Receive", icon: Package, type: "dialog" },
+    { value: "fulfill-order", label: "Fulfill", icon: ShoppingCart, type: "dialog" },
+    { value: "ship-order", label: "Ship", icon: Truck, type: "dialog" },
+    { value: "picking-wave", label: "Pick Wave", icon: ListOrdered, type: "dialog" },
+    { value: "replenishment", label: "Replenish", icon: Repeat, type: "dialog" },
+    { value: "shipping-verify", label: "Verify Ship", icon: CheckCircle, type: "dialog" },
+    { value: "returns-process", label: "Returns", icon: Undo2, type: "dialog" },
+    { value: "stock-transfer", label: "Transfer", icon: Scan, type: "dialog" },
+    { value: "cycle-count", label: "Count", icon: CheckCircle, type: "dialog" },
+    { value: "issue-report", label: "Report Issue", icon: AlertTriangle, type: "dialog" },
+    { value: "location-management", label: "Locations", icon: MapPin, type: "page-link" },
+  ];
+
+  // Function to request a scan from a specific tool
+  const requestScan = (callback: (scannedData: string) => void) => {
+    setScanCallback(() => callback); // Store the tool's callback
+    setIsCameraScannerDialogOpen(true); // Open the camera dialog
+  };
+
+  // Handler for when CameraScannerDialog successfully scans a barcode
   const handleScanSuccessFromDialog = (decodedText: string) => {
     if (scanCallback) {
-      scanCallback(decodedText); // Call the tool-specific callback
+      // If a specific tool requested the scan, call its callback
+      scanCallback(decodedText);
       setScanCallback(null); // Clear the callback
     } else {
-      // If no specific tool requested (e.g., global scan button),
-      // route to item lookup and pass the data.
-      setScannedDataForTool(decodedText);
-      setActiveTab("item-lookup");
-      showSuccess(`Scanned: ${decodedText}. Switching to Item Lookup.`);
+      // If it was a global scan (from the main "Scan Item" button),
+      // default to opening the Item Lookup dialog with the scanned data.
+      setScannedDataForTool(decodedText); // Store data to pass to dialog
+      dialogStates["item-lookup"].setIsOpen(true); // Open Item Lookup dialog
+      showSuccess(`Scanned: ${decodedText}. Opening Item Lookup.`);
     }
-    setIsCameraScannerDialogOpen(false);
+    setIsCameraScannerDialogOpen(false); // Close the camera dialog
   };
 
   const handleCameraScannerDialogClose = () => {
     setIsCameraScannerDialogOpen(false);
-    setScanCallback(null);
+    setScanCallback(null); // Clear any pending callback
   };
 
+  // Callback for tools to signal they've processed the scanned data
   const handleScannedDataProcessed = () => {
-    setScannedDataForTool(null); // Clear the scanned data after the tool has processed it
+    setScannedDataForTool(null); // Clear the data once consumed
   };
 
   if (!isMobile) {
@@ -98,77 +134,118 @@ const WarehouseOperationsPage: React.FC = () => {
 
       <Button
         className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-3 flex items-center justify-center gap-2 mb-4"
-        onClick={() => requestScan(() => {})} // Pass a dummy callback for global scan
+        onClick={() => requestScan(() => {})} // Global scan button
       >
         <Scan className="h-6 w-6" />
         Scan Item
       </Button>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-grow flex flex-col">
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mb-4 p-1 bg-muted rounded-lg overflow-x-auto">
-          {operationButtons.map((op) => (
-            <Button
-              key={op.value}
-              variant="ghost"
-              className={cn(
-                "flex flex-col items-center justify-center h-24 w-full aspect-square py-3 px-2 text-sm font-medium rounded-lg transition-colors text-center",
-                op.value === activeTab || (op.isPageLink && location.pathname === `/${op.value}`)
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-foreground hover:bg-muted/50 hover:text-primary"
-              )}
-              onClick={() => {
-                if (op.isPageLink) {
-                  navigate(`/${op.value}`);
-                } else {
-                  setActiveTab(op.value);
-                }
-              }}
-            >
-              <op.icon className="h-6 w-6 sm:h-7 sm:w-7 mb-1" />
-              <span className="text-xs sm:text-sm font-semibold">{op.label}</span>
-            </Button>
-          ))}
-        </div>
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mb-4 p-1 bg-muted rounded-lg overflow-x-auto">
+        {operationButtons.map((op) => (
+          <Button
+            key={op.value}
+            variant="ghost"
+            className={cn(
+              "flex flex-col items-center justify-center h-24 w-full aspect-square py-3 px-2 text-sm font-medium rounded-lg transition-colors text-center",
+              op.value === activeTab // Only highlight dashboard if it's the active tab
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-foreground hover:bg-muted/50 hover:text-primary"
+            )}
+            onClick={() => {
+              if (op.type === "tab") {
+                setActiveTab(op.value);
+              } else if (op.type === "dialog") {
+                dialogStates[op.value as keyof typeof dialogStates].setIsOpen(true);
+              } else if (op.type === "page-link") {
+                navigate(`/${op.value}`);
+              }
+            }}
+          >
+            <op.icon className="h-6 w-6 sm:h-7 sm:w-7 mb-1" />
+            <span className="text-xs sm:text-sm font-semibold">{op.label}</span>
+          </Button>
+        ))}
+      </div>
 
-        <div className="flex-grow overflow-hidden">
-          <TabsContent value="dashboard" className="h-full min-h-0">
-            <WarehouseDashboard />
-          </TabsContent>
-          <TabsContent value="item-lookup" className="h-full min-h-0">
-            <ItemLookupTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
-          </TabsContent>
-          <TabsContent value="receive-inventory" className="h-full min-h-0">
-            <ReceiveInventoryTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
-          </TabsContent>
-          <TabsContent value="fulfill-order" className="h-full min-h-0">
-            <FulfillOrderTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
-          </TabsContent>
-          <TabsContent value="ship-order" className="h-full min-h-0">
-            <ShipOrderTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
-          </TabsContent>
-          <TabsContent value="picking-wave" className="h-full min-h-0">
-            <PickingWaveManagementTool />
-          </TabsContent>
-          <TabsContent value="replenishment" className="h-full min-h-0">
-            <ReplenishmentManagementTool />
-          </TabsContent>
-          <TabsContent value="shipping-verify" className="h-full min-h-0">
-            <ShippingVerificationTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
-          </TabsContent>
-          <TabsContent value="returns-process" className="h-full min-h-0">
-            <ReturnsProcessingTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
-          </TabsContent>
-          <TabsContent value="stock-transfer" className="h-full min-h-0">
-            <StockTransferTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
-          </TabsContent>
-          <TabsContent value="cycle-count" className="h-full min-h-0">
-            <CycleCountTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
-          </TabsContent>
-          <TabsContent value="issue-report" className="h-full min-h-0">
-            <IssueReportTool onScanRequest={requestScan} scannedDataFromGlobal={scannedDataForTool} onScannedDataProcessed={handleScannedDataProcessed} />
-          </TabsContent>
-        </div>
+      {/* Only Dashboard remains as a TabsContent */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-grow flex flex-col">
+        <TabsContent value="dashboard" className="h-full min-h-0">
+          <WarehouseDashboard />
+        </TabsContent>
       </Tabs>
+
+      {/* Render all dialogs, their visibility controlled by state */}
+      <ItemLookupDialog
+        isOpen={isItemLookupDialogOpen}
+        onClose={() => dialogStates["item-lookup"].setIsOpen(false)}
+        onScanRequest={requestScan}
+        scannedDataFromGlobal={scannedDataForTool}
+        onScannedDataProcessed={handleScannedDataProcessed}
+      />
+      <ReceiveInventoryDialog
+        isOpen={isReceiveInventoryDialogOpen}
+        onClose={() => dialogStates["receive-inventory"].setIsOpen(false)}
+        onScanRequest={requestScan}
+        scannedDataFromGlobal={scannedDataForTool}
+        onScannedDataProcessed={handleScannedDataProcessed}
+      />
+      <FulfillOrderDialog
+        isOpen={isFulfillOrderDialogOpen}
+        onClose={() => dialogStates["fulfill-order"].setIsOpen(false)}
+        onScanRequest={requestScan}
+        scannedDataFromGlobal={scannedDataForTool}
+        onScannedDataProcessed={handleScannedDataProcessed}
+      />
+      <ShipOrderDialog
+        isOpen={isShipOrderDialogOpen}
+        onClose={() => dialogStates["ship-order"].setIsOpen(false)}
+        onScanRequest={requestScan}
+        scannedDataFromGlobal={scannedDataForTool}
+        onScannedDataProcessed={handleScannedDataProcessed}
+      />
+      <PickingWaveManagementDialog
+        isOpen={isPickingWaveManagementDialogOpen}
+        onClose={() => dialogStates["picking-wave"].setIsOpen(false)}
+      />
+      <ReplenishmentManagementDialog
+        isOpen={isReplenishmentManagementDialogOpen}
+        onClose={() => dialogStates["replenishment"].setIsOpen(false)}
+      />
+      <ShippingVerificationDialog
+        isOpen={isShippingVerificationDialogOpen}
+        onClose={() => dialogStates["shipping-verify"].setIsOpen(false)}
+        onScanRequest={requestScan}
+        scannedDataFromGlobal={scannedDataForTool}
+        onScannedDataProcessed={handleScannedDataProcessed}
+      />
+      <ReturnsProcessingDialog
+        isOpen={isReturnsProcessingDialogOpen}
+        onClose={() => dialogStates["returns-process"].setIsOpen(false)}
+        onScanRequest={requestScan}
+        scannedDataFromGlobal={scannedDataForTool}
+        onScannedDataProcessed={handleScannedDataProcessed}
+      />
+      <StockTransferDialog
+        isOpen={isStockTransferDialogOpen}
+        onClose={() => dialogStates["stock-transfer"].setIsOpen(false)}
+        onScanRequest={requestScan}
+        scannedDataFromGlobal={scannedDataForTool}
+        onScannedDataProcessed={handleScannedDataProcessed}
+      />
+      <CycleCountDialog
+        isOpen={isCycleCountDialogOpen}
+        onClose={() => dialogStates["cycle-count"].setIsOpen(false)}
+        onScanRequest={requestScan}
+        scannedDataFromGlobal={scannedDataForTool}
+        onScannedDataProcessed={handleScannedDataProcessed}
+      />
+      <IssueReportDialog
+        isOpen={isIssueReportDialogOpen}
+        onClose={() => dialogStates["issue-report"].setIsOpen(false)}
+        onScanRequest={requestScan}
+        scannedDataFromGlobal={scannedDataForTool}
+        onScannedDataProcessed={handleScannedDataProcessed}
+      />
 
       <CameraScannerDialog
         isOpen={isCameraScannerDialogOpen}

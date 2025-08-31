@@ -47,8 +47,8 @@ import {
 } from "@/components/ui/tabs";
 import { DateRangePicker } from "@/components/DateRangePicker"; // NEW: Import DateRangePicker
 import { DateRange } from "react-day-picker"; // NEW: Import DateRange
-import FulfillOrderDialog from "@/components/orders/FulfillOrderDialog"; // NEW: Import FulfillOrderDialog
-import ReceiveShipmentDialog from "@/components/orders/ReceiveShipmentDialog"; // NEW: Import ReceiveShipmentDialog
+import OrderFulfillmentDialog from "@/components/orders/OrderFulfillmentDialog"; // RENAMED: Import OrderFulfillmentDialog
+import OrderReceiveShipmentDialog from "@/components/orders/OrderReceiveShipmentDialog"; // RENAMED: Import OrderReceiveShipmentDialog
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -503,8 +503,8 @@ const Orders: React.FC = () => {
   // NEW: State for date range filter
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   // NEW: States for new dialogs
-  const [isFulfillOrderDialogOpen, setIsFulfillOrderDialogOpen] = useState(false);
-  const [isReceiveShipmentDialogOpen, setIsReceiveShipmentDialogOpen] = useState(false);
+  const [isOrderFulfillmentDialogOpen, setIsOrderFulfillmentDialogOpen] = useState(false); // RENAMED
+  const [isOrderReceiveShipmentDialogOpen, setIsOrderReceiveShipmentDialogOpen] = useState(false); // RENAMED
 
   useEffect(() => {
     fetchOrders();
@@ -588,10 +588,10 @@ const Orders: React.FC = () => {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setIsReceiveShipmentDialogOpen(true)}>
+            <DropdownMenuItem onClick={() => setIsOrderReceiveShipmentDialogOpen(true)}>
               <PackagePlus className="h-4 w-4 mr-2" /> Receive Shipment
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setIsFulfillOrderDialogOpen(true)}>
+            <DropdownMenuItem onClick={() => setIsOrderFulfillmentDialogOpen(true)}>
               <PackageCheck className="h-4 w-4 mr-2" /> Fulfill Order
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -644,14 +644,14 @@ const Orders: React.FC = () => {
       </Tabs>
 
       {/* NEW: Fulfill Order Dialog */}
-      <FulfillOrderDialog
-        isOpen={isFulfillOrderDialogOpen}
-        onClose={() => setIsFulfillOrderDialogOpen(false)}
+      <OrderFulfillmentDialog
+        isOpen={isOrderFulfillmentDialogOpen}
+        onClose={() => setIsOrderFulfillmentDialogOpen(false)}
       />
       {/* NEW: Receive Shipment Dialog */}
-      <ReceiveShipmentDialog
-        isOpen={isReceiveShipmentDialogOpen}
-        onClose={() => setIsReceiveShipmentDialogOpen(false)}
+      <OrderReceiveShipmentDialog
+        isOpen={isOrderReceiveShipmentDialogOpen}
+        onClose={() => setIsOrderReceiveShipmentDialogOpen(false)}
       />
     </div>
   );
