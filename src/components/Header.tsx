@@ -4,14 +4,14 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Search, Bell, User, LogOut, Flag } from "lucide-react"; // Removed MoreVertical
+import { Search, Bell, User, LogOut, Flag } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import CurrentDateTime from "./CurrentDateTime";
 import { useNotifications } from "@/context/NotificationContext";
 import { useProfile } from "@/context/ProfileContext";
 import { supabase } from "@/lib/supabaseClient";
 import { useIsMobile } from "@/hooks/use-mobile";
-import MobileNav from "./mobile/MobileNav"; // Keep MobileNav for the sheet trigger
+import MobileNav from "./mobile/MobileNav";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,14 +21,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { userAndSettingsNavItems, supportAndResourcesNavItems, NavItem } from "@/lib/navigation";
-import { Input } from "@/components/ui/input"; // Import Input for search bar
+import { Input } from "@/components/ui/input";
 
 interface HeaderProps {
   setIsNotificationSheetOpen: (isOpen: boolean) => void;
   setIsGlobalSearchDialogOpen: (isOpen: boolean) => void;
+  setIsFeedbackDialogOpen: (isOpen: boolean) => void; // NEW: Add setIsFeedbackDialogOpen prop
 }
 
-const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobalSearchDialogOpen }) => {
+const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobalSearchDialogOpen, setIsFeedbackDialogOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
@@ -139,7 +140,7 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
 
       <div className="flex items-center space-x-4">
         <CurrentDateTime /> {/* Date/Time on desktop header */}
-        <Button variant="ghost" size="icon"> {/* Placeholder for flag */}
+        <Button variant="ghost" size="icon" onClick={() => setIsFeedbackDialogOpen(true)}> {/* NEW: Make Flag button open FeedbackDialog */}
           <Flag className="h-5 w-5 text-muted-foreground" />
         </Button>
         <Button

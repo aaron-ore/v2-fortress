@@ -9,11 +9,13 @@ import NotificationSheet from "./NotificationSheet";
 import GlobalSearchDialog from "./GlobalSearchDialog";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/context/SidebarContext"; // NEW: Import useSidebar
+import FeedbackDialog from "./FeedbackDialog"; // NEW: Import FeedbackDialog
 
 const Layout: React.FC = () => {
   const isMobile = useIsMobile();
   const [isNotificationSheetOpen, setIsNotificationSheetOpen] = useState(false);
   const [isGlobalSearchDialogOpen, setIsGlobalSearchDialogOpen] = useState(false);
+  const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false); // NEW: State for FeedbackDialog
   const { isCollapsed } = useSidebar(); // NEW: Use isCollapsed from SidebarContext
 
   const sidebarWidthCollapsed = 80; // Matches Sidebar.tsx collapsed width
@@ -26,6 +28,7 @@ const Layout: React.FC = () => {
           <Header
             setIsNotificationSheetOpen={setIsNotificationSheetOpen}
             setIsGlobalSearchDialogOpen={setIsGlobalSearchDialogOpen}
+            setIsFeedbackDialogOpen={setIsFeedbackDialogOpen} // NEW: Pass setIsFeedbackDialogOpen
           />
           <AnnouncementBar
             message="Welcome to Fortress. Let's Get You Set Up."
@@ -55,6 +58,7 @@ const Layout: React.FC = () => {
             <Header
               setIsNotificationSheetOpen={setIsNotificationSheetOpen}
               setIsGlobalSearchDialogOpen={setIsGlobalSearchDialogOpen}
+              setIsFeedbackDialogOpen={setIsFeedbackDialogOpen} // NEW: Pass setIsFeedbackDialogOpen
             />
             <AnnouncementBar
               message="Welcome to Fortress. Let's Get You Set Up."
@@ -79,6 +83,10 @@ const Layout: React.FC = () => {
       <GlobalSearchDialog
         isOpen={isGlobalSearchDialogOpen}
         onClose={() => setIsGlobalSearchDialogOpen(false)}
+      />
+      <FeedbackDialog
+        isOpen={isFeedbackDialogOpen}
+        onClose={() => setIsFeedbackDialogOpen(false)}
       />
     </div>
   );
