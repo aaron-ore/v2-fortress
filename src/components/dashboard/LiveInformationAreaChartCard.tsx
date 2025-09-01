@@ -13,9 +13,6 @@ interface LiveInformationAreaChartCardProps {
 }
 
 const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> = ({ dateRange }) => {
-  const { orders } = useOrders();
-  const { stockMovements } = useStockMovement();
-
   const data = useMemo(() => {
     const dataPoints = [];
     const today = new Date();
@@ -75,7 +72,7 @@ const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> 
         <CardTitle className="text-2xl font-bold text-foreground">Total Daily Activity</CardTitle>
         <p className="text-sm text-muted-foreground">Overall inventory movement in real-time</p>
       </CardHeader>
-      <CardContent className="h-[257px] p-4 pt-0 flex flex-col justify-between">
+      <CardContent className="h-[290px] p-4 pt-0 flex flex-col justify-between">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={data}

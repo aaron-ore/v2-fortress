@@ -127,7 +127,7 @@ const LocationStockHealthCard: React.FC = () => {
         </CardTitle>
         <p className="text-sm text-muted-foreground">Top locations by stock movement</p>
       </CardHeader>
-      <CardContent className="flex flex-col justify-between h-[257px] relative p-4 pt-0"> {/* Adjusted height to 257px */}
+      <CardContent className="flex flex-col justify-between h-[290px] relative p-4 pt-0">
         {displayData.length > 0 ? (
           <>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 justify-items-center items-center flex-grow">
