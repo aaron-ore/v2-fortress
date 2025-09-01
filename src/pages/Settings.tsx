@@ -50,8 +50,8 @@ const Settings: React.FC = () => {
   };
 
   const handleConnectQuickBooks = () => {
-    if (!profile?.organizationId) {
-      showError("You must have an organization set up to connect to QuickBooks.");
+    if (!profile?.id) { // Changed to profile.id
+      showError("You must be logged in to connect to QuickBooks.");
       return;
     }
 
@@ -74,7 +74,7 @@ const Settings: React.FC = () => {
     
     const scope = "com.intuit.quickbooks.accounting openid profile email address phone"; // Required scopes
     const responseType = "code";
-    const state = profile.organizationId; // Use organizationId as state for security and context
+    const state = profile.id; // Use profile.id as state to identify the user
 
     const authUrl = `https://appcenter.intuit.com/app/connect/oauth2?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=${responseType}&state=${state}`;
     
@@ -190,12 +190,12 @@ const Settings: React.FC = () => {
               <p className="text-muted-foreground">
                 Connect your QuickBooks account to enable automatic syncing of orders, inventory, and more.
               </p>
-              <Button onClick={handleConnectQuickBooks} disabled={!profile?.organizationId}>
+              <Button onClick={handleConnectQuickBooks} disabled={!profile?.id}> {/* Changed to profile.id */}
                 Connect to QuickBooks
               </Button>
-              {!profile?.organizationId && (
+              {!profile?.id && ( {/* Changed to profile.id */}
                 <p className="text-sm text-red-500">
-                  Please set up your company profile and organization first.
+                  Please log in to connect to QuickBooks.
                 </p>
               )}
             </div>

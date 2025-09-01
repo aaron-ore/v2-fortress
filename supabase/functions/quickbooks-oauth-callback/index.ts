@@ -1,5 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0';
-import { corsHeaders } from './cors.ts'; // Updated import path
+
+// Inlined corsHeaders to avoid module resolution issues
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 Deno.serve(async (req) => {
   // Handle CORS preflight request
@@ -10,7 +15,7 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
-    const state = url.searchParams.get('state'); // This should be the organizationId
+    const state = url.searchParams.get('state'); // This should now be the user.id
     const error = url.searchParams.get('error');
     const errorDescription = url.searchParams.get('error_description');
 
@@ -73,15 +78,9 @@ Deno.serve(async (req) => {
     const refreshToken = tokens.refresh_token;
     const realmId = tokens.realmId; // This is the QuickBooks company ID
 
-    // Get the authenticated user from the request (the one who initiated the OAuth flow)
-    const authHeader = req.headers.get('Authorization');
+    // Use the 'state' parameter (which is the user.id) to update the profile
+    const userId = state;
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { data: { user } } = await supabaseAdmin.auth.getUser(authHeader);
-
-    if (!user) {
-      console.error('User not authenticated during QuickBooks OAuth callback.');
-      return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent('User session not found.')}`, 302);
-    }
 
     // Store tokens and realmId in the user's profile in Supabase
     const { error: updateError } = await supabaseAdmin
@@ -91,15 +90,14 @@ Deno.serve(async (req) => {
         quickbooks_refresh_token: refreshToken,
         quickbooks_realm_id: realmId, // Store the realmId
       })
-      .eq('id', user.id)
-      .eq('organization_id', state); // Ensure we update the correct user within the correct organization
+      .eq('id', userId); // Update the profile for the user who initiated the OAuth flow
 
     if (updateError) {
       console.error('Error updating user profile with QuickBooks tokens:', updateError);
       return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent('Failed to save QuickBooks tokens.')}`, 302);
     }
 
-    console.log('QuickBooks tokens and Realm ID successfully stored for user:', user.id);
+    console.log('QuickBooks tokens and Realm ID successfully stored for user:', userId);
     return Response.redirect(`${url.origin}/settings?quickbooks_success=true`, 302);
 
   } catch (error) {

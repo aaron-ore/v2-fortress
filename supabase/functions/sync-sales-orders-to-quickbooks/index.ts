@@ -1,5 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0';
-import { corsHeaders } from './cors.ts';
+
+// Inlined corsHeaders to avoid module resolution issues
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 // QuickBooks API endpoints
 const QUICKBOOKS_OAUTH_URL = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
