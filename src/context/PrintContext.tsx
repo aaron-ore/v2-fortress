@@ -3,7 +3,8 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback } from "react";
 
 export interface PrintContentData { // Exported interface
-  type: "purchase-order" | "invoice" | "dashboard-summary" | "advanced-demand-forecast" | "putaway-label" | "location-label" | "picking-wave";
+  type: "purchase-order" | "invoice" | "dashboard-summary" | "advanced-demand-forecast" | "putaway-label" | "location-label" | "picking-wave" |
+        "inventory-valuation-report" | "low-stock-report" | "inventory-movement-report" | "sales-by-customer-report" | "sales-by-product-report" | "purchase-order-status-report" | "profitability-report" | "discrepancy-report"; // NEW: Added report types
   props: any; // The actual props for the respective PDF content component
 }
 

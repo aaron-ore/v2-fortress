@@ -1,0 +1,223 @@
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DateRange } from "react-day-picker";
+import { useProfile } from "@/context/ProfileContext";
+import { useOnboarding } from "@/context/OnboardingContext";
+import { supabase } from "@/lib/supabaseClient";
+import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { Loader2, AlertTriangle, Scale, User, Clock } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { showError } from "@/utils/toast";
+
+interface DiscrepancyLog {
+  id: string;
+  timestamp: string;
+  userId: string;
+  organizationId: string;
+  itemId: string;
+  itemName: string;
+  locationString: string;
+  locationType: string;
+  originalQuantity: number;
+  countedQuantity: number;
+  difference: number;
+  reason: string;
+  status: string;
+}
+
+interface DiscrepancyReportProps {
+  dateRange: DateRange | undefined;
+  onGenerateReport: (data: { pdfProps: any; printType: string }) => void;
+  isLoading: boolean;
+  reportContentRef: React.RefObject<HTMLDivElement>;
+}
+
+const DiscrepancyReport: React.FC<DiscrepancyReportProps> = ({
+  dateRange,
+  onGenerateReport,
+  isLoading,
+  reportContentRef,
+}) => {
+  const { profile, allProfiles, fetchAllProfiles } = useProfile();
+  const { companyProfile } = useOnboarding();
+
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "resolved">("all");
+  const [reportGenerated, setReportGenerated] = useState(false);
+  const [currentReportData, setCurrentReportData] = useState<any>(null);
+
+  const fetchDiscrepancies = useCallback(async () => {
+    if (!profile?.organizationId) {
+      return [];
+    }
+
+    let query = supabase
+      .from('discrepancies')
+      .select('*')
+      .eq('organization_id', profile.organizationId)
+      .order('timestamp', { ascending: false });
+
+    if (statusFilter !== "all") {
+      query = query.eq('status', statusFilter);
+    }
+
+    if (dateRange?.from) {
+      const from = startOfDay(dateRange.from).toISOString();
+      const to = dateRange.to ? endOfDay(dateRange.to).toISOString() : endOfDay(new Date()).toISOString();
+      query = query.gte('timestamp', from).lte('timestamp', to);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Error fetching discrepancies:", error);
+      showError("Failed to load discrepancies.");
+      return [];
+    } else {
+      const fetchedDiscrepancies: DiscrepancyLog[] = data.map((log: any) => ({
+        id: log.id,
+        timestamp: log.timestamp,
+        userId: log.user_id,
+        organizationId: log.organization_id,
+        itemId: log.item_id,
+        itemName: log.item_name,
+        locationString: log.location_string,
+        locationType: log.location_type,
+        originalQuantity: log.original_quantity,
+        countedQuantity: log.counted_quantity,
+        difference: log.difference,
+        reason: log.reason,
+        status: log.status,
+      }));
+      return fetchedDiscrepancies;
+    }
+  }, [profile?.organizationId, statusFilter, dateRange]);
+
+  const generateReport = useCallback(async () => {
+    const itemsToDisplay = await fetchDiscrepancies();
+    await fetchAllProfiles(); // Ensure user profiles are loaded for names
+
+    const reportProps = {
+      companyName: companyProfile?.name || "Fortress Inventory",
+      companyAddress: companyProfile?.address || "N/A",
+      companyContact: companyProfile?.currency || "N/A",
+      companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
+      reportDate: format(new Date(), "MMM dd, yyyy HH:mm"),
+      discrepancies: itemsToDisplay,
+      statusFilter,
+      dateRange,
+      allProfiles, // Pass all profiles to resolve user names in PDF
+    };
+
+    setCurrentReportData(reportProps);
+    onGenerateReport({ pdfProps: reportProps, printType: "discrepancy-report" });
+    setReportGenerated(true);
+  }, [fetchDiscrepancies, companyProfile, statusFilter, dateRange, onGenerateReport, allProfiles, fetchAllProfiles]);
+
+  useEffect(() => {
+    generateReport();
+  }, [generateReport]);
+
+  const getUserName = (userId: string) => {
+    const user = allProfiles.find(p => p.id === userId);
+    return user?.fullName || user?.email || "Unknown User";
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Generating report...</span>
+      </div>
+    );
+  }
+
+  if (!reportGenerated || !currentReportData) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+        <FileText className="h-16 w-16 mb-4" />
+        <p className="text-lg">Configure filters and click "Generate Report".</p>
+        <Button onClick={generateReport} className="mt-4">Generate Report</Button>
+      </div>
+    );
+  }
+
+  const { discrepancies: itemsToDisplay, statusFilter: currentStatusFilter } = currentReportData;
+
+  return (
+    <div ref={reportContentRef} className="space-y-6">
+      <Card className="bg-card border-border shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold flex items-center gap-2">
+            <AlertTriangle className="h-6 w-6 text-destructive" /> Stock Discrepancy Report
+          </CardTitle>
+          <p className="text-muted-foreground">
+            Detailed list of reported stock discrepancies.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4">
+            <Label htmlFor="statusFilter">Filter Status:</Label>
+            <Select value={statusFilter} onValueChange={(value: "all" | "pending" | "resolved") => setStatusFilter(value)}>
+              <SelectTrigger id="statusFilter" className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="resolved">Resolved</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={generateReport}>Refresh Report</Button>
+          </div>
+
+          <h3 className="font-semibold text-xl mt-6">
+            {currentStatusFilter === "pending" ? "Pending Discrepancies" :
+             currentStatusFilter === "resolved" ? "Resolved Discrepancies" :
+             "All Discrepancies"} ({itemsToDisplay.length})
+          </h3>
+          {itemsToDisplay.length > 0 ? (
+            <ScrollArea className="h-[400px] border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Item Name</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead className="text-right">Original Qty</TableHead>
+                    <TableHead className="text-right">Counted Qty</TableHead>
+                    <TableHead className="text-right">Difference</TableHead>
+                    <TableHead>Reason</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Reported By</TableHead>
+                    <TableHead>Timestamp</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {itemsToDisplay.map((discrepancy) => (
+                    <TableRow key={discrepancy.id}>
+                      <TableCell className="font-medium">{discrepancy.itemName}</TableCell>
+                      <TableCell>{discrepancy.locationString} ({discrepancy.locationType.replace('_', ' ')})</TableCell>
+                      <TableCell className="text-right">{discrepancy.originalQuantity}</TableCell>
+                      <TableCell className="text-right">{discrepancy.countedQuantity}</TableCell>
+                      <TableCell className="text-right text-destructive">{discrepancy.difference}</TableCell>
+                      <TableCell>{discrepancy.reason}</TableCell>
+                      <TableCell>{discrepancy.status}</TableCell>
+                      <TableCell>{getUserName(discrepancy.userId)}</TableCell>
+                      <TableCell>{format(new Date(discrepancy.timestamp), "MMM dd, HH:mm")}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          ) : (
+            <p className="text-center text-muted-foreground py-8">No discrepancies found for the selected criteria. Great job!</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default DiscrepancyReport;

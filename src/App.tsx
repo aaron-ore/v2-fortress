@@ -25,9 +25,8 @@ import CreateInvoice from "./pages/CreateInvoice";
 import SetupInstructions from "./pages/SetupInstructions";
 import WarehouseOperationsPage from "./pages/WarehouseOperationsPage";
 import ResetPassword from "./pages/ResetPassword";
-// REMOVED: import LocationManagementPage from "./pages/LocationManagementPage";
-import Locations from "./pages/Locations"; // NEW: Import Locations page
-import Customers from "./pages/Customers"; // NEW: Import Customers page
+import Locations from "./pages/Locations";
+import Customers from "./pages/Customers";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { InventoryProvider } from "./context/InventoryContext";
 import { OrdersProvider } from "./context/OrdersContext";
@@ -35,7 +34,7 @@ import { OnboardingProvider, useOnboarding } from "./context/OnboardingContext";
 import { CategoryProvider } from "./context/CategoryContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { VendorProvider } from "./context/VendorContext";
-import { CustomerProvider } from "./context/CustomerContext"; // NEW: Import CustomerProvider
+import { CustomerProvider } from "./context/CustomerContext";
 import { ProfileProvider, useProfile } from "./context/ProfileContext";
 import { StockMovementProvider } from "./context/StockMovementContext";
 import { ReplenishmentProvider } from "./context/ReplenishmentContext";
@@ -55,6 +54,17 @@ import LocationLabelPdfContent from "./components/LocationLabelPdfContent";
 import PickingWavePdfContent from "./components/PickingWavePdfContent";
 import { SidebarProvider } from "./context/SidebarContext";
 
+// NEW: Import all new PDF content components
+import InventoryValuationPdfContent from "./components/reports/pdf/InventoryValuationPdfContent";
+import LowStockPdfContent from "./components/reports/pdf/LowStockPdfContent";
+import InventoryMovementPdfContent from "./components/reports/pdf/InventoryMovementPdfContent";
+import SalesByCustomerPdfContent from "./components/reports/pdf/SalesByCustomerPdfContent";
+import SalesByProductPdfContent from "./components/reports/pdf/SalesByProductPdfContent";
+import PurchaseOrderStatusPdfContent from "./components/reports/pdf/PurchaseOrderStatusPdfContent";
+import ProfitabilityPdfContent from "./components/reports/pdf/ProfitabilityPdfContent";
+import DiscrepancyPdfContent from "./components/reports/pdf/DiscrepancyPdfContent";
+
+
 const queryClient = new QueryClient();
 
 const AuthenticatedApp = () => {
@@ -62,7 +72,7 @@ const AuthenticatedApp = () => {
     <SidebarProvider>
       <OrdersProvider>
         <VendorProvider>
-          <CustomerProvider> {/* NEW: Wrap with CustomerProvider */}
+          <CustomerProvider>
             <CategoryProvider>
               <NotificationProvider>
                 <StockMovementProvider>
@@ -86,12 +96,11 @@ const AuthenticatedApp = () => {
                           <Route path="help" element={<HelpCenter />} />
                           <Route path="whats-new" element={<WhatsNew />} />
                           <Route path="vendors" element={<Vendors />} />
-                          <Route path="customers" element={<Customers />} /> {/* NEW: Add Customers route */}
+                          <Route path="customers" element={<Customers />} />
                           <Route path="users" element={<Users />} />
                           <Route path="setup-instructions" element={<SetupInstructions />} />
                           <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
-                          {/* REMOVED: <Route path="location-management" element={<LocationManagementPage />} /> */}
-                          <Route path="locations" element={<Locations />} /> {/* NEW: Add Locations route */}
+                          <Route path="locations" element={<Locations />} />
                           <Route path="*" element={<NotFound />} />
                         </Route>
                       </Routes>
@@ -100,7 +109,7 @@ const AuthenticatedApp = () => {
                 </StockMovementProvider>
               </NotificationProvider>
             </CategoryProvider>
-          </CustomerProvider> {/* NEW: Close CustomerProvider */}
+          </CustomerProvider>
         </VendorProvider>
       </OrdersProvider>
     </SidebarProvider>
@@ -191,6 +200,31 @@ const AppContent = () => {
           )}
           {printContentData.type === "picking-wave" && (
             <PickingWavePdfContent {...printContentData.props} />
+          )}
+          {/* NEW: Add new report PDF content components */}
+          {printContentData.type === "inventory-valuation-report" && (
+            <InventoryValuationPdfContent {...printContentData.props} />
+          )}
+          {printContentData.type === "low-stock-report" && (
+            <LowStockPdfContent {...printContentData.props} />
+          )}
+          {printContentData.type === "inventory-movement-report" && (
+            <InventoryMovementPdfContent {...printContentData.props} />
+          )}
+          {printContentData.type === "sales-by-customer-report" && (
+            <SalesByCustomerPdfContent {...printContentData.props} />
+          )}
+          {printContentData.type === "sales-by-product-report" && (
+            <SalesByProductPdfContent {...printContentData.props} />
+          )}
+          {printContentData.type === "purchase-order-status-report" && (
+            <PurchaseOrderStatusPdfContent {...printContentData.props} />
+          )}
+          {printContentData.type === "profitability-report" && (
+            <ProfitabilityPdfContent {...printContentData.props} />
+          )}
+          {printContentData.type === "discrepancy-report" && (
+            <DiscrepancyPdfContent {...printContentData.props} />
           )}
         </PrintWrapper>
       )}
