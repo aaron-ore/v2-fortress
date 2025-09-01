@@ -23,6 +23,7 @@ import { useVendors } from "@/context/VendorContext";
 import ManageLocationsDialog from "@/components/ManageLocationsDialog";
 import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
 import { supabase } from "@/lib/supabaseClient"; // Import supabase client
+import { useProfile } from "@/context/ProfileContext"; // NEW: Import useProfile
 
 interface AddInventoryDialogProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   const { locations } = useOnboarding();
   const { categories } = useCategories();
   const { vendors } = useVendors();
+  const { profile } = useProfile(); // NEW: Get profile to access organizationId
 
   const [itemName, setItemName] = useState("");
   const [description, setDescription] = useState("");
@@ -165,15 +167,22 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       return;
     }
 
+    // NEW: Check for organizationId before making Supabase calls
+    if (!profile?.organizationId) {
+      showError("Organization ID not found. Please ensure your company profile is set up.");
+      return;
+    }
+
     // Check for duplicate SKU before adding
     const { data: existingItem, error: fetchError } = await supabase
       .from('inventory_items')
       .select('sku')
       .eq('sku', sku.trim())
+      .eq('organization_id', profile.organizationId) // NEW: Filter by organization_id
       .single();
 
     if (existingItem) {
-      showError(`An item with SKU '${sku.trim()}' already exists. Please use a unique SKU.`);
+      showError(`An item with SKU '${sku.trim()}' already exists in your organization. Please use a unique SKU.`);
       return;
     }
     if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means "no rows found", which is fine
