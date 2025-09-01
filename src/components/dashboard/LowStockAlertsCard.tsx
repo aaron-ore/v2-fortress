@@ -6,7 +6,7 @@ import { showSuccess } from "@/utils/toast";
 import SupplierInfoDialog from "@/components/SupplierInfoDialog";
 import { useNotifications } from "@/context/NotificationContext";
 import { useInventory } from "@/context/InventoryContext";
-import { ScrollArea } from "@/components/ui/scroll-area"; // Import ScrollArea
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const LowStockAlertsCard: React.FC = () => {
   const { addNotification } = useNotifications();
@@ -34,7 +34,7 @@ const LowStockAlertsCard: React.FC = () => {
         {lowStockItems.length > 0 ? (
           <ScrollArea className="flex-grow max-h-[180px] pr-2">
             <ul className="text-sm space-y-2">
-              {lowStockItems.slice(0, 5).map(item => ( {/* Show up to 5 items */}
+              {lowStockItems.slice(0, 5).map(item => (
                 <li key={item.id} className="flex items-center justify-between">
                   <span>{item.name} <span className="text-yellow-400">({item.quantity} units)</span></span>
                   <Button variant="link" size="sm" onClick={() => handleReorder(item.name, item.sku)} className="text-primary">Reorder</Button>
