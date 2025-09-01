@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
@@ -16,16 +18,16 @@ const TopSellingProductsCard: React.FC = () => {
       }))
       .filter(product => product.unitsSold > 0) // Filter out items with 0 units sold
       .sort((a, b) => b.unitsSold - a.unitsSold)
-      .slice(0, 4);
+      .slice(0, 5); // Display top 5 items
   }, [inventoryItems]);
 
   return (
-    <Card className="bg-card border-border rounded-lg shadow-sm p-4">
+    <Card className="bg-card border-border rounded-lg shadow-sm p-4 flex flex-col h-[310px]">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg font-bold text-foreground">Top-Selling Products (Last 30 Days)</CardTitle>
+        <CardTitle className="text-lg font-bold text-foreground">Top 5 Selling Products (Last 30 Days)</CardTitle>
         <TrendingUp className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
-      <CardContent className="p-4 pt-0 flex flex-col justify-between h-full">
+      <CardContent className="p-4 pt-0 flex-grow flex flex-col justify-between">
         {topSellingProducts.length > 0 ? (
           <ul className="text-sm space-y-2">
             {topSellingProducts.map((product, index) => (

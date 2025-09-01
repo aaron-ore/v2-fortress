@@ -14,12 +14,18 @@ import OrderFulfillmentRateCard from "@/components/dashboard/OrderFulfillmentRat
 import Last3MonthSalesCard from "@/components/dashboard/Last3MonthSalesCard";
 import IssuesCard from "@/components/dashboard/IssuesCard";
 import LiveInformationAreaChartCard from "@/components/dashboard/LiveInformationAreaChartCard";
-import StockDiscrepancyCard from "@/components/dashboard/StockDiscrepancyCard"; // NEW: Import StockDiscrepancyCard
+import StockDiscrepancyCard from "@/components/dashboard/StockDiscrepancyCard";
 import LocationStockHealthCard from "@/components/dashboard/LocationStockHealthCard";
 import MonthlyOverviewChartCard from "@/components/dashboard/MonthlyOverviewChartCard";
-import ProfitabilityMetricsCard from "@/components/dashboard/ProfitabilityMetricsCard";
+import TopSellingProductsCard from "@/components/dashboard/TopSellingProductsCard"; // Replaced ProfitabilityMetricsCard
 import GenerateReportButton from "@/components/dashboard/GenerateReportButton";
 import { Button } from "@/components/ui/button";
+
+// NEW: Import the new cards for the 4th row
+import OpenPurchaseOrdersCard from "@/components/dashboard/OpenPurchaseOrdersCard";
+import PendingInvoicesCard from "@/components/dashboard/PendingInvoicesCard";
+import LowStockAlertsCard from "@/components/dashboard/LowStockAlertsCard"; // Moved from 1st row
+import RecentShipmentsCard from "@/components/dashboard/RecentShipmentsCard";
 
 const DefaultDashboardContent: React.FC = () => {
   const [isAddInventoryDialogOpen, setIsAddInventoryDialogOpen] = useState(false);
@@ -50,7 +56,7 @@ const DefaultDashboardContent: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {/* Top Row: 3 cards + 1 column of 3 small cards */}
+        {/* Row 1: 3 cards + 1 column of 3 small cards */}
         <div className="col-span-full md:col-span-1">
           <OrderFulfillmentRateCard />
         </div>
@@ -67,23 +73,31 @@ const DefaultDashboardContent: React.FC = () => {
           <GenerateReportButton />
         </div>
 
-        {/* Middle Row: 1 wide card + 2 regular cards */}
+        {/* Row 2: 1 wide card + 2 regular cards */}
         <div className="col-span-full md:col-span-2 lg:col-span-2 xl:col-span-2">
           <LiveInformationAreaChartCard dateRange={dateRange} />
         </div>
         <div className="col-span-full md:col-span-1">
-          <StockDiscrepancyCard dateRange={dateRange} /> {/* NEW: Replace RiskRadarChartCard with StockDiscrepancyCard */}
+          <StockDiscrepancyCard dateRange={dateRange} />
         </div>
         <div className="col-span-full md:col-span-1">
           <LocationStockHealthCard />
         </div>
 
-        {/* Bottom Row: 1 very wide card + 1 regular card */}
+        {/* Row 3: 1 very wide card + 1 regular card */}
         <div className="col-span-full md:col-span-2 lg:col-span-3 xl:col-span-3">
           <MonthlyOverviewChartCard dateRange={dateRange} />
         </div>
         <div className="col-span-full md:col-span-1">
-          <ProfitabilityMetricsCard />
+          <TopSellingProductsCard /> {/* Replaced ProfitabilityMetricsCard */}
+        </div>
+
+        {/* NEW Row 4: Operational Overview Cards */}
+        <div className="col-span-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <OpenPurchaseOrdersCard />
+          <PendingInvoicesCard />
+          <LowStockAlertsCard /> {/* Moved from Row 1 */}
+          <RecentShipmentsCard />
         </div>
       </div>
 
