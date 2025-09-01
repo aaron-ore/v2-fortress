@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
     }
 
     // Construct the redirectUri explicitly using the full function path
-    const redirectUri = `${url.origin}/functions/v1/quickbooks-oauth-callback`;
+    const redirectUri = `https://${url.host}/functions/v1/quickbooks-oauth-callback`;
     console.log('Using redirectUri for token exchange:', redirectUri);
 
     // Exchange authorization code for tokens
