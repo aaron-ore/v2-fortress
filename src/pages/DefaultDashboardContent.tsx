@@ -12,9 +12,9 @@ import LossesCard from "@/components/dashboard/LossesCard";
 import IncomeCard from "@/components/dashboard/IncomeCard";
 import OrderFulfillmentRateCard from "@/components/dashboard/OrderFulfillmentRateCard";
 import Last3MonthSalesCard from "@/components/dashboard/Last3MonthSalesCard";
-import IssuesCard from "@/components/dashboard/IssuesCard"; // NEW: Import IssuesCard
+import IssuesCard from "@/components/dashboard/IssuesCard";
 import LiveInformationAreaChartCard from "@/components/dashboard/LiveInformationAreaChartCard";
-import RiskRadarChartCard from "@/components/dashboard/RiskRadarChartCard";
+import StockDiscrepancyCard from "@/components/dashboard/StockDiscrepancyCard"; // NEW: Import StockDiscrepancyCard
 import LocationStockHealthCard from "@/components/dashboard/LocationStockHealthCard";
 import MonthlyOverviewChartCard from "@/components/dashboard/MonthlyOverviewChartCard";
 import ProfitabilityMetricsCard from "@/components/dashboard/ProfitabilityMetricsCard";
@@ -55,10 +55,10 @@ const DefaultDashboardContent: React.FC = () => {
           <OrderFulfillmentRateCard />
         </div>
         <div className="col-span-full md:col-span-1">
-          <Last3MonthSalesCard dateRange={dateRange} /> {/* NEW: Pass dateRange */}
+          <Last3MonthSalesCard dateRange={dateRange} />
         </div>
         <div className="col-span-full md:col-span-1">
-          <IssuesCard dateRange={dateRange} /> {/* NEW: Replace LiveMetricsCard with IssuesCard */}
+          <IssuesCard dateRange={dateRange} />
         </div>
         <div className="col-span-full md:col-span-1 flex flex-col gap-4">
           <WalletCard />
@@ -69,10 +69,10 @@ const DefaultDashboardContent: React.FC = () => {
 
         {/* Middle Row: 1 wide card + 2 regular cards */}
         <div className="col-span-full md:col-span-2 lg:col-span-2 xl:col-span-2">
-          <LiveInformationAreaChartCard dateRange={dateRange} /> {/* NEW: Pass dateRange */}
+          <LiveInformationAreaChartCard dateRange={dateRange} />
         </div>
         <div className="col-span-full md:col-span-1">
-          <RiskRadarChartCard />
+          <StockDiscrepancyCard dateRange={dateRange} /> {/* NEW: Replace RiskRadarChartCard with StockDiscrepancyCard */}
         </div>
         <div className="col-span-full md:col-span-1">
           <LocationStockHealthCard />
@@ -80,7 +80,7 @@ const DefaultDashboardContent: React.FC = () => {
 
         {/* Bottom Row: 1 very wide card + 1 regular card */}
         <div className="col-span-full md:col-span-2 lg:col-span-3 xl:col-span-3">
-          <MonthlyOverviewChartCard dateRange={dateRange} /> {/* NEW: Pass dateRange */}
+          <MonthlyOverviewChartCard dateRange={dateRange} />
         </div>
         <div className="col-span-full md:col-span-1">
           <ProfitabilityMetricsCard />
