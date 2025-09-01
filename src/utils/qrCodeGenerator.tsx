@@ -17,7 +17,7 @@ export const generateQrCodeSvg = async (value: string, size: number = 128): Prom
       type: 'svg',
       width: size,
       height: size,
-      margin: 0,
+      margin: 4, // Added a margin of 4 modules for better scanability
       color: {
         dark: '#000000', // Black dots
         light: '#FFFFFF' // White background
