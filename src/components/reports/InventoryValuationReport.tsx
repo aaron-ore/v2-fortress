@@ -10,6 +10,7 @@ import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { Loader2, DollarSign, Package, MapPin, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label"; // Added Label import
 
 interface InventoryValuationReportProps {
   dateRange: DateRange | undefined;
