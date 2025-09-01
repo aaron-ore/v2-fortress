@@ -7,7 +7,8 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-  
+    // NEW LOGGING: Log the full incoming request URL
+  console.log('Full incoming request URL:', req.url);
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
