@@ -1,8 +1,10 @@
+"use client";
+
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Search, Bell, User, LogOut, MoreVertical, Flag } from "lucide-react"; // Added Flag icon
+import { Search, Bell, User, LogOut, Flag } from "lucide-react"; // Removed MoreVertical
 import { showSuccess, showError } from "@/utils/toast";
 import CurrentDateTime from "./CurrentDateTime";
 import { useNotifications } from "@/context/NotificationContext";
@@ -160,7 +162,7 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
             >
               <User className="h-5 w-5 mr-3" />
               <span className="truncate">{profile?.fullName || "My Profile"}</span>
-              <MoreVertical className="ml-auto h-4 w-4" />
+              {/* Removed MoreVertical icon */}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end">
