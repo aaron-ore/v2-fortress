@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { useOrders } from "@/context/OrdersContext"; // Import useOrders
+import { useOrders } from "@/context/OrdersContext";
 import { useStockMovement } from "@/context/StockMovementContext";
 import { format, subDays, isValid, startOfDay, endOfDay } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -13,7 +13,7 @@ interface LiveInformationAreaChartCardProps {
 }
 
 const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> = ({ dateRange }) => {
-  const { orders } = useOrders(); // Destructure orders from useOrders
+  const { orders } = useOrders();
   const { stockMovements } = useStockMovement();
 
   const data = useMemo(() => {
@@ -70,12 +70,12 @@ const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> 
   }, [orders, stockMovements, dateRange]);
 
   return (
-    <Card className="bg-card border-border rounded-lg shadow-sm p-4">
+    <Card className="bg-card border-border rounded-lg shadow-sm p-4 flex flex-col h-[310px]">
       <CardHeader className="pb-2">
         <CardTitle className="text-2xl font-bold text-foreground">Total Daily Activity</CardTitle>
         <p className="text-sm text-muted-foreground">Overall inventory movement in real-time</p>
       </CardHeader>
-      <CardContent className="h-[290px] p-4 pt-0 flex flex-col justify-between">
+      <CardContent className="flex-grow p-4 pt-0 flex flex-col justify-between">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={data}

@@ -117,17 +117,17 @@ const LocationStockHealthCard: React.FC = () => {
     return healthData.sort((a, b) => b.movementScore - a.movementScore).slice(0, 4);
   }, [inventoryItems, stockMovements]);
 
-  const displayData = locationStockHealthData; // No longer using default data
+  const displayData = locationStockHealthData;
 
   return (
-    <Card className="bg-card border-border rounded-lg shadow-sm p-4">
+    <Card className="bg-card border-border rounded-lg shadow-sm p-4 flex flex-col h-[310px]">
       <CardHeader className="pb-2">
         <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-2">
           <MapPin className="h-6 w-6 text-primary" /> Location Stock
         </CardTitle>
         <p className="text-sm text-muted-foreground">Top locations by stock movement</p>
       </CardHeader>
-      <CardContent className="flex flex-col justify-between h-[290px] relative p-4 pt-0">
+      <CardContent className="flex-grow p-4 pt-0 flex flex-col justify-between">
         {displayData.length > 0 ? (
           <>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 justify-items-center items-center flex-grow">
@@ -136,11 +136,11 @@ const LocationStockHealthCard: React.FC = () => {
                   key={index}
                   percentage={data.percentage}
                   isPositive={data.isPositive}
-                  color={LOCATION_COLORS[index % LOCATION_COLORS.length]} // Use defined colors
+                  color={LOCATION_COLORS[index % LOCATION_COLORS.length]}
                 />
               ))}
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1 text-sm"> {/* Legend */}
+            <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
               {displayData.map((data, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <span className="h-3 w-3 rounded-full" style={{ backgroundColor: LOCATION_COLORS[index % LOCATION_COLORS.length] }}></span>
