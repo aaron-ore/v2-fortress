@@ -7,7 +7,7 @@ import { useInventory } from "@/context/InventoryContext";
 import { useOrders } from "@/context/OrdersContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
-import { Loader2, Package, Receipt, AlertTriangle, DollarSign } from "lucide-react";
+import { Loader2, Package, Receipt, AlertTriangle, DollarSign, FileText } from "lucide-react"; // Added FileText
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface DashboardSummaryReportProps {
@@ -99,7 +99,7 @@ const DashboardSummaryReport: React.FC<DashboardSummaryReportProps> = ({
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
         <FileText className="h-16 w-16 mb-4" />
-        <p className="text-lg">Click "Generate Report" to view the summary.</p>
+        <p className="text-lg">Configure filters and click "Generate Report".</p>
         <Button onClick={generateReport} className="mt-4">Generate Report</Button>
       </div>
     );
