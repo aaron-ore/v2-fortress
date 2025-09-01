@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { useOrders } from "@/context/OrdersContext";
+import { useOrders } from "@/context/OrdersContext"; // Import useOrders
 import { useStockMovement } from "@/context/StockMovementContext";
 import { format, subDays, isValid, startOfDay, endOfDay } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -13,6 +13,9 @@ interface LiveInformationAreaChartCardProps {
 }
 
 const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> = ({ dateRange }) => {
+  const { orders } = useOrders(); // Destructure orders from useOrders
+  const { stockMovements } = useStockMovement();
+
   const data = useMemo(() => {
     const dataPoints = [];
     const today = new Date();
