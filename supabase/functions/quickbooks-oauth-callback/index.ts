@@ -1,10 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0';
-// REMOVED: import { corsHeaders } from '../_shared/cors.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsHeaders } from '../_shared/cors.ts';
 
 Deno.serve(async (req) => {
   // Handle CORS preflight request
@@ -49,9 +44,8 @@ Deno.serve(async (req) => {
     }
 
     // Construct the redirectUri explicitly using the full function path
-    // url.origin is typically https://<project-ref>.supabase.co
     const redirectUri = `${url.origin}/functions/v1/quickbooks-oauth-callback`;
-    console.log('Using redirectUri for token exchange:', redirectUri); // Added logging
+    console.log('Using redirectUri for token exchange:', redirectUri);
 
     // Exchange authorization code for tokens
     const tokenResponse = await fetch('https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer', {
@@ -95,8 +89,7 @@ Deno.serve(async (req) => {
       .update({
         quickbooks_access_token: accessToken,
         quickbooks_refresh_token: refreshToken,
-        // You might also want to store realmId (QuickBooks company ID) if needed
-        // quickbooks_realm_id: realmId,
+        quickbooks_realm_id: realmId, // Store the realmId
       })
       .eq('id', user.id)
       .eq('organization_id', state); // Ensure we update the correct user within the correct organization
@@ -106,7 +99,7 @@ Deno.serve(async (req) => {
       return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent('Failed to save QuickBooks tokens.')}`, 302);
     }
 
-    console.log('QuickBooks tokens successfully stored for user:', user.id);
+    console.log('QuickBooks tokens and Realm ID successfully stored for user:', user.id);
     return Response.redirect(`${url.origin}/settings?quickbooks_success=true`, 302);
 
   } catch (error) {
