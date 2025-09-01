@@ -1,7 +1,8 @@
+// src/App.tsx
 import { Toaster as SonnerToaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom"; // Import useLocation
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
@@ -53,7 +54,7 @@ import PutawayLabelPdfContent from "./components/PutawayLabelPdfContent";
 import LocationLabelPdfContent from "./components/LocationLabelPdfContent";
 import PickingWavePdfContent from "./components/PickingWavePdfContent";
 import { SidebarProvider } from "./context/SidebarContext";
-import { showSuccess, showError } from "./utils/toast"; // Ensure toast functions are imported
+import { showSuccess, showError } from "./utils/toast";
 
 // NEW: Import all new PDF content components
 import InventoryValuationPdfContent from "./components/reports/pdf/InventoryValuationPdfContent";
@@ -121,8 +122,8 @@ const AppContent = () => {
   const [session, setSession] = useState<any>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const navigate = useNavigate();
-  const location = useLocation(); // Use useLocation hook
-  const { isLoadingProfile } = useProfile();
+  const location = useLocation();
+  const { isLoadingProfile, fetchProfile } = useProfile(); // Get fetchProfile from context
   const { isPrinting, printContentData, resetPrintState } = usePrint();
 
   useEffect(() => {
@@ -140,7 +141,7 @@ const AppContent = () => {
       // If no session and not on auth or reset-password page, go to auth
       if (!session && !["/auth", "/reset-password"].includes(window.location.pathname)) {
         navigate("/auth");
-      } 
+      }
       // If session exists and on auth or reset-password page, go to home
       else if (session && ["/auth", "/reset-password"].includes(window.location.pathname)) {
         navigate("/");
@@ -150,7 +151,7 @@ const AppContent = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // NEW: Handle QuickBooks OAuth callback messages
+  // Handle QuickBooks OAuth callback messages
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const quickbooksSuccess = params.get('quickbooks_success');
@@ -158,12 +159,16 @@ const AppContent = () => {
 
     if (quickbooksSuccess) {
       showSuccess("QuickBooks connected successfully!");
+      // Explicitly refresh the session and then the profile
+      supabase.auth.refreshSession().then(() => {
+        fetchProfile(); // Fetch the profile to get the updated QuickBooks tokens
+      });
       navigate(location.pathname, { replace: true }); // Clear query params
     } else if (quickbooksError) {
       showError(`QuickBooks connection failed: ${quickbooksError}`);
       navigate(location.pathname, { replace: true }); // Clear query params
     }
-  }, [location.search, navigate]);
+  }, [location.search, navigate, fetchProfile]); // Added fetchProfile to dependencies
 
 
   if (loadingAuth || isLoadingProfile) {
@@ -184,7 +189,7 @@ const AppContent = () => {
     <Routes>
       <Route path="/auth" element={<Auth />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      {/* NEW: Add a route for the QuickBooks OAuth callback to prevent 404 */}
+      {/* Add a route for the QuickBooks OAuth callback to prevent 404 */}
       <Route path="/quickbooks-oauth-callback" element={<QuickBooksOAuthCallbackHandler />} />
       {!session && <Route path="*" element={<Auth />} />}
     </Routes>
@@ -252,7 +257,7 @@ const AppContent = () => {
   );
 };
 
-// NEW: Component to handle QuickBooks OAuth callback redirect
+// Component to handle QuickBooks OAuth callback redirect
 const QuickBooksOAuthCallbackHandler: React.FC = () => {
   const navigate = useNavigate();
   useEffect(() => {
