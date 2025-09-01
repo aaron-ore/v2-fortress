@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import AddInventoryDialog from "@/components/AddInventoryDialog";
 import ScanItemDialog from "@/components/ScanItemDialog";
@@ -10,7 +12,7 @@ import LossesCard from "@/components/dashboard/LossesCard";
 import IncomeCard from "@/components/dashboard/IncomeCard";
 import OrderFulfillmentRateCard from "@/components/dashboard/OrderFulfillmentRateCard";
 import Last3MonthSalesCard from "@/components/dashboard/Last3MonthSalesCard";
-import LiveMetricsCard from "@/components/dashboard/LiveMetricsCard";
+import IssuesCard from "@/components/dashboard/IssuesCard"; // NEW: Import IssuesCard
 import LiveInformationAreaChartCard from "@/components/dashboard/LiveInformationAreaChartCard";
 import RiskRadarChartCard from "@/components/dashboard/RiskRadarChartCard";
 import LocationStockHealthCard from "@/components/dashboard/LocationStockHealthCard";
@@ -53,10 +55,10 @@ const DefaultDashboardContent: React.FC = () => {
           <OrderFulfillmentRateCard />
         </div>
         <div className="col-span-full md:col-span-1">
-          <Last3MonthSalesCard />
+          <Last3MonthSalesCard dateRange={dateRange} /> {/* NEW: Pass dateRange */}
         </div>
         <div className="col-span-full md:col-span-1">
-          <LiveMetricsCard />
+          <IssuesCard dateRange={dateRange} /> {/* NEW: Replace LiveMetricsCard with IssuesCard */}
         </div>
         <div className="col-span-full md:col-span-1 flex flex-col gap-4">
           <WalletCard />
@@ -67,7 +69,7 @@ const DefaultDashboardContent: React.FC = () => {
 
         {/* Middle Row: 1 wide card + 2 regular cards */}
         <div className="col-span-full md:col-span-2 lg:col-span-2 xl:col-span-2">
-          <LiveInformationAreaChartCard />
+          <LiveInformationAreaChartCard dateRange={dateRange} /> {/* NEW: Pass dateRange */}
         </div>
         <div className="col-span-full md:col-span-1">
           <RiskRadarChartCard />
@@ -78,7 +80,7 @@ const DefaultDashboardContent: React.FC = () => {
 
         {/* Bottom Row: 1 very wide card + 1 regular card */}
         <div className="col-span-full md:col-span-2 lg:col-span-3 xl:col-span-3">
-          <MonthlyOverviewChartCard />
+          <MonthlyOverviewChartCard dateRange={dateRange} /> {/* NEW: Pass dateRange */}
         </div>
         <div className="col-span-full md:col-span-1">
           <ProfitabilityMetricsCard />

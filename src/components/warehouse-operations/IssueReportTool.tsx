@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +12,8 @@ import { AlertTriangle, Package, MapPin, MessageSquare, Barcode } from "lucide-r
 import { showError, showSuccess } from "@/utils/toast";
 import { useInventory } from "@/context/InventoryContext";
 import { useNotifications } from "@/context/NotificationContext";
+import { supabase } from "@/lib/supabaseClient";
+import { useProfile } from "@/context/ProfileContext";
 
 interface IssueReportToolProps {
   onScanRequest: (callback: (scannedData: string) => void) => void;
@@ -20,6 +24,7 @@ interface IssueReportToolProps {
 const IssueReportTool: React.FC<IssueReportToolProps> = ({ onScanRequest, scannedDataFromGlobal, onScannedDataProcessed }) => {
   const { inventoryItems } = useInventory();
   const { addNotification } = useNotifications();
+  const { profile } = useProfile();
 
   const [issueType, setIssueType] = useState("");
   const [itemId, setItemId] = useState("");
@@ -60,7 +65,7 @@ const IssueReportTool: React.FC<IssueReportToolProps> = ({ onScanRequest, scanne
     onScanRequest(handleScannedBarcode);
   };
 
-  const handleSubmitReport = () => {
+  const handleSubmitReport = async () => {
     if (!issueType || !description || !contactInfo) {
       showError("Please fill in all required fields (Issue Type, Description, Contact Info).");
       return;
@@ -79,6 +84,26 @@ const IssueReportTool: React.FC<IssueReportToolProps> = ({ onScanRequest, scanne
     console.log("Issue Report Submitted:", reportDetails);
     addNotification(`New Issue Reported: ${issueType} for ${selectedItem?.name || 'N/A'}`, "warning");
     showSuccess("Issue report submitted successfully! A manager has been notified.");
+
+    // NEW: Log to activity_logs table
+    if (profile?.organizationId && profile?.id) {
+      const { error: logError } = await supabase
+        .from('activity_logs')
+        .insert({
+          user_id: profile.id,
+          organization_id: profile.organizationId,
+          activity_type: "Issue Reported",
+          description: `Issue: ${issueType} - ${selectedItem?.name || 'N/A'}`,
+          details: reportDetails, // Store full details in JSONB
+        });
+
+      if (logError) {
+        console.error("Error logging issue to activity_logs:", logError);
+        showError("Failed to log issue internally.");
+      }
+    } else {
+      console.warn("Cannot log issue: User profile or organization ID missing.");
+    }
 
     // Reset form
     setIssueType("");

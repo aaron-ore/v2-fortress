@@ -1,0 +1,161 @@
+"use client";
+
+import React, { useState, useEffect, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertTriangle, ArrowUp, ArrowDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabaseClient";
+import { useProfile } from "@/context/ProfileContext";
+import { showError } from "@/utils/toast";
+import { format, startOfDay, endOfDay, subDays } from "date-fns";
+import { DateRange } from "react-day-picker";
+import DailyIssuesDialog from "./DailyIssuesDialog";
+
+interface IssuesCardProps {
+  dateRange: DateRange | undefined;
+}
+
+const IssuesCard: React.FC<IssuesCardProps> = ({ dateRange }) => {
+  const { profile } = useProfile();
+  const [dailyIssuesCount, setDailyIssuesCount] = useState(0);
+  const [previousPeriodIssuesCount, setPreviousPeriodIssuesCount] = useState(0);
+  const [isDailyIssuesDialogOpen, setIsDailyIssuesDialogOpen] = useState(false);
+
+  const fetchIssuesCounts = async () => {
+    if (!profile?.organizationId) {
+      setDailyIssuesCount(0);
+      setPreviousPeriodIssuesCount(0);
+      return;
+    }
+
+    const today = new Date();
+    let currentPeriodStart: Date;
+    let currentPeriodEnd: Date;
+    let previousPeriodStart: Date;
+    let previousPeriodEnd: Date;
+
+    if (dateRange?.from) {
+      currentPeriodStart = startOfDay(dateRange.from);
+      currentPeriodEnd = dateRange.to ? endOfDay(dateRange.to) : endOfDay(today);
+
+      const durationMs = currentPeriodEnd.getTime() - currentPeriodStart.getTime();
+      previousPeriodEnd = subDays(currentPeriodStart, 1);
+      previousPeriodStart = new Date(previousPeriodEnd.getTime() - durationMs);
+    } else {
+      // Default to today
+      currentPeriodStart = startOfDay(today);
+      currentPeriodEnd = endOfDay(today);
+      previousPeriodStart = startOfDay(subDays(today, 1));
+      previousPeriodEnd = endOfDay(subDays(today, 1));
+    }
+
+    const fetchCount = async (start: Date, end: Date) => {
+      const { count, error } = await supabase
+        .from('activity_logs')
+        .select('id', { count: 'exact' })
+        .eq('organization_id', profile.organizationId)
+        .eq('activity_type', 'Issue Reported')
+        .gte('timestamp', start.toISOString())
+        .lte('timestamp', end.toISOString());
+
+      if (error) {
+        console.error("Error fetching issues count:", error);
+        showError("Failed to load issues count.");
+        return 0;
+      }
+      return count || 0;
+    };
+
+    const currentCount = await fetchCount(currentPeriodStart, currentPeriodEnd);
+    const prevCount = await fetchCount(previousPeriodStart, previousPeriodEnd);
+
+    setDailyIssuesCount(currentCount);
+    setPreviousPeriodIssuesCount(prevCount);
+  };
+
+  useEffect(() => {
+    fetchIssuesCounts();
+    // Set up real-time listener for new issues
+    const channel = supabase
+      .channel('daily_issues_channel')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'activity_logs',
+          filter: `organization_id=eq.${profile?.organizationId}&activity_type=eq.Issue Reported`,
+        },
+        (payload) => {
+          const newIssueDate = new Date(payload.new.timestamp);
+          const today = new Date();
+          let currentPeriodStart: Date;
+          let currentPeriodEnd: Date;
+
+          if (dateRange?.from) {
+            currentPeriodStart = startOfDay(dateRange.from);
+            currentPeriodEnd = dateRange.to ? endOfDay(dateRange.to) : endOfDay(today);
+          } else {
+            currentPeriodStart = startOfDay(today);
+            currentPeriodEnd = endOfDay(today);
+          }
+
+          const isWithinCurrentPeriod = (newIssueDate >= currentPeriodStart && newIssueDate <= currentPeriodEnd);
+
+          if (isWithinCurrentPeriod) {
+            setDailyIssuesCount((prev) => prev + 1);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.organizationId, dateRange]);
+
+  const percentageChange = useMemo(() => {
+    if (previousPeriodIssuesCount === 0) {
+      return dailyIssuesCount > 0 ? "100.0" : "0.0";
+    }
+    const change = ((dailyIssuesCount - previousPeriodIssuesCount) / previousPeriodIssuesCount) * 100;
+    return change.toFixed(1);
+  }, [dailyIssuesCount, previousPeriodIssuesCount]);
+
+  const isPositiveChange = dailyIssuesCount >= previousPeriodIssuesCount;
+
+  return (
+    <>
+      <Card className="bg-card border-border rounded-lg shadow-sm p-4 flex flex-col h-[310px]">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-2xl font-bold text-foreground">Issues Reported</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {dateRange?.from ? `For ${format(dateRange.from, "MMM dd")} - ${dateRange.to ? format(dateRange.to, "MMM dd") : format(new Date(), "MMM dd")}` : "Today's operational issues"}
+          </p>
+        </CardHeader>
+        <CardContent className="flex-grow flex flex-col items-center justify-center relative p-4 pt-0">
+          <div className="text-6xl font-bold text-destructive">
+            {dailyIssuesCount}
+          </div>
+          <p className={`text-sm ${isPositiveChange ? "text-red-500" : "text-green-500"} flex items-center justify-center mt-2`}>
+            {isPositiveChange ? <ArrowUp className="h-4 w-4 mr-1" /> : <ArrowDown className="h-4 w-4 mr-1" />} {percentageChange}% from previous period
+          </p>
+          <Button
+            className="mt-auto w-full"
+            onClick={() => setIsDailyIssuesDialogOpen(true)}
+            disabled={dailyIssuesCount === 0}
+          >
+            <AlertTriangle className="h-4 w-4 mr-2" /> View Issues
+          </Button>
+        </CardContent>
+      </Card>
+      <DailyIssuesDialog
+        isOpen={isDailyIssuesDialogOpen}
+        onClose={() => setIsDailyIssuesDialogOpen(false)}
+        dateRange={dateRange}
+      />
+    </>
+  );
+};
+
+export default IssuesCard;

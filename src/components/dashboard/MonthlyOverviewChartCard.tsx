@@ -1,11 +1,18 @@
+"use client";
+
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { useOrders } from "@/context/OrdersContext";
 import { useInventory } from "@/context/InventoryContext";
-import { format, subMonths, isValid } from "date-fns";
+import { format, subMonths, isValid, startOfMonth, endOfMonth, startOfDay, endOfDay } from "date-fns";
+import { DateRange } from "react-day-picker";
 
-const MonthlyOverviewChartCard: React.FC = () => {
+interface MonthlyOverviewChartCardProps {
+  dateRange: DateRange | undefined;
+}
+
+const MonthlyOverviewChartCard: React.FC<MonthlyOverviewChartCardProps> = ({ dateRange }) => {
   const { orders } = useOrders();
   const { inventoryItems } = useInventory();
 
@@ -13,52 +20,53 @@ const MonthlyOverviewChartCard: React.FC = () => {
     const today = new Date();
     const monthlyData: { [key: string]: { salesRevenue: number; inventoryValue: number; purchaseVolume: number } } = {};
 
-    // Initialize for last 12 months
-    for (let i = 11; i >= 0; i--) {
-      const month = subMonths(today, i);
-      const monthName = format(month, "MMM");
-      monthlyData[monthName] = { salesRevenue: 0, inventoryValue: 0, purchaseVolume: 0 };
+    let startDate = dateRange?.from ? startOfMonth(dateRange.from) : subMonths(today, 11);
+    let endDate = dateRange?.to ? endOfMonth(dateRange.to) : endOfMonth(today);
+
+    if (startDate.getTime() > endDate.getTime()) {
+      [startDate, endDate] = [endDate, startDate];
     }
 
-    // Aggregate sales revenue and purchase volume
+    let currentDate = new Date(startDate);
+    while (currentDate.getTime() <= endDate.getTime()) {
+      const monthKey = format(currentDate, "MMM yyyy");
+      monthlyData[monthKey] = { salesRevenue: 0, inventoryValue: 0, purchaseVolume: 0 };
+      currentDate = subMonths(currentDate, -1);
+    }
+
     orders.forEach(order => {
       const orderDate = new Date(order.date);
       if (!isValid(orderDate)) return;
-      const monthName = format(orderDate, "MMM");
-      if (monthlyData[monthName]) {
+      const monthKey = format(orderDate, "MMM yyyy");
+      if (monthlyData[monthKey] && orderDate >= startDate && orderDate <= endDate) {
         if (order.type === "Sales") {
-          monthlyData[monthName].salesRevenue += order.totalAmount;
+          monthlyData[monthKey].salesRevenue += order.totalAmount;
         } else if (order.type === "Purchase") {
-          monthlyData[monthName].purchaseVolume += order.itemCount; // Using item count for purchase volume
+          monthlyData[monthKey].purchaseVolume += order.itemCount;
         }
       }
     });
 
-    // Aggregate inventory value (simulated for past months, actual for current)
-    // This is a simplified simulation. In a real app, you'd track inventory value over time.
     const totalCurrentInventoryValue = inventoryItems.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
 
-    Object.keys(monthlyData).forEach((monthName, index) => {
-      // For the current month, use actual inventory value
-      if (index === Object.keys(monthlyData).length - 1) {
-        monthlyData[monthName].inventoryValue = totalCurrentInventoryValue;
+    Object.keys(monthlyData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime()).forEach((monthKey, index, array) => {
+      const monthName = format(new Date(monthKey), "MMM");
+      if (monthKey === format(endDate, "MMM yyyy")) {
+        monthlyData[monthKey].inventoryValue = totalCurrentInventoryValue;
       } else {
-        // For past months, simulate inventory value with some fluctuation around a trend
-        const trendFactor = (index + 1) / 12; // Increases from 1/12 to 12/12
+        const trendFactor = (index + 1) / array.length;
         const baseValue = totalCurrentInventoryValue * (0.7 + (0.3 * trendFactor));
-        monthlyData[monthName].inventoryValue = totalCurrentInventoryValue > 0 ? Math.max(0, baseValue + (Math.random() - 0.5) * (totalCurrentInventoryValue * 0.1)) : 0;
+        monthlyData[monthKey].inventoryValue = totalCurrentInventoryValue > 0 ? Math.max(0, baseValue + (Math.random() - 0.5) * (totalCurrentInventoryValue * 0.1)) : 0;
       }
     });
 
-
-    // Convert to array for Recharts
-    return Object.keys(monthlyData).map(monthName => ({
-      name: monthName,
-      "Sales Revenue": parseFloat(monthlyData[monthName].salesRevenue.toFixed(0)),
-      "Inventory Value": parseFloat(monthlyData[monthName].inventoryValue.toFixed(0)),
-      "Purchase Volume": parseFloat(monthlyData[monthName].purchaseVolume.toFixed(0)),
+    return Object.keys(monthlyData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime()).map(monthKey => ({
+      name: format(new Date(monthKey), "MMM"),
+      "Sales Revenue": parseFloat(monthlyData[monthKey].salesRevenue.toFixed(0)),
+      "Inventory Value": parseFloat(monthlyData[monthKey].inventoryValue.toFixed(0)),
+      "Purchase Volume": parseFloat(monthlyData[monthKey].purchaseVolume.toFixed(0)),
     }));
-  }, [orders, inventoryItems]);
+  }, [orders, inventoryItems, dateRange]);
 
   return (
     <Card className="bg-card border-border rounded-lg shadow-sm p-4 col-span-full">
@@ -96,9 +104,9 @@ const MonthlyOverviewChartCard: React.FC = () => {
               labelStyle={{ color: "hsl(var(--muted-foreground))", fontSize: "0.75rem" }}
             />
             <Legend wrapperStyle={{ color: "hsl(var(--muted-foreground))", fontSize: 10 }} />
-            <Bar dataKey="Sales Revenue" stackId="a" fill="#00C49F" /> {/* Green */}
-            <Bar dataKey="Inventory Value" stackId="a" fill="#00BFD8" /> {/* Teal */}
-            <Bar dataKey="Purchase Volume" stackId="a" fill="#0088FE" /> {/* Blue */}
+            <Bar dataKey="Sales Revenue" stackId="a" fill="#00C49F" />
+            <Bar dataKey="Inventory Value" stackId="a" fill="#00BFD8" />
+            <Bar dataKey="Purchase Volume" stackId="a" fill="#0088FE" />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

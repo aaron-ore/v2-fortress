@@ -1,11 +1,18 @@
+"use client";
+
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { useOrders } from "@/context/OrdersContext";
 import { useStockMovement } from "@/context/StockMovementContext";
-import { format, subDays, isValid } from "date-fns";
+import { format, subDays, isValid, startOfDay, endOfDay } from "date-fns";
+import { DateRange } from "react-day-picker";
 
-const LiveInformationAreaChartCard: React.FC = () => {
+interface LiveInformationAreaChartCardProps {
+  dateRange: DateRange | undefined;
+}
+
+const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> = ({ dateRange }) => {
   const { orders } = useOrders();
   const { stockMovements } = useStockMovement();
 
@@ -13,20 +20,27 @@ const LiveInformationAreaChartCard: React.FC = () => {
     const dataPoints = [];
     const today = new Date();
 
-    // Aggregate data for the last 7 days
+    let startDate = dateRange?.from ? startOfDay(dateRange.from) : subDays(today, 6);
+    let endDate = dateRange?.to ? endOfDay(dateRange.to) : endOfDay(today);
+
+    if (startDate.getTime() > endDate.getTime()) {
+      [startDate, endDate] = [endDate, startDate];
+    }
+
     const dailyMetrics: { [key: string]: { salesVolume: number; purchaseVolume: number; adjustments: number } } = {};
 
-    for (let i = 6; i >= 0; i--) {
-      const date = subDays(today, i);
-      const dateKey = format(date, "MMM dd");
+    let currentDate = new Date(startDate);
+    while (currentDate.getTime() <= endDate.getTime()) {
+      const dateKey = format(currentDate, "MMM dd");
       dailyMetrics[dateKey] = { salesVolume: 0, purchaseVolume: 0, adjustments: 0 };
+      currentDate = subDays(currentDate, -1);
     }
 
     orders.forEach(order => {
       const orderDate = new Date(order.date);
       if (!isValid(orderDate)) return;
       const dateKey = format(orderDate, "MMM dd");
-      if (dailyMetrics[dateKey]) {
+      if (dailyMetrics[dateKey] && orderDate >= startDate && orderDate <= endDate) {
         if (order.type === "Sales") {
           dailyMetrics[dateKey].salesVolume += order.itemCount;
         } else if (order.type === "Purchase") {
@@ -39,13 +53,12 @@ const LiveInformationAreaChartCard: React.FC = () => {
       const moveDate = new Date(movement.timestamp);
       if (!isValid(moveDate)) return;
       const dateKey = format(moveDate, "MMM dd");
-      if (dailyMetrics[dateKey]) {
+      if (dailyMetrics[dateKey] && moveDate >= startDate && moveDate <= endDate) {
         dailyMetrics[dateKey].adjustments += movement.amount;
       }
     });
 
-    // Convert to array for Recharts, calculating Total Daily Activity
-    Object.keys(dailyMetrics).forEach(dateKey => {
+    Object.keys(dailyMetrics).sort((a, b) => new Date(a).getTime() - new Date(b).getTime()).forEach(dateKey => {
       const totalDailyActivity = dailyMetrics[dateKey].salesVolume + dailyMetrics[dateKey].purchaseVolume + dailyMetrics[dateKey].adjustments;
       dataPoints.push({
         name: dateKey,
@@ -54,13 +67,13 @@ const LiveInformationAreaChartCard: React.FC = () => {
     });
 
     return dataPoints;
-  }, [orders, stockMovements]);
+  }, [orders, stockMovements, dateRange]);
 
   return (
     <Card className="bg-card border-border rounded-lg shadow-sm p-4">
       <CardHeader className="pb-2">
-        <CardTitle className="text-2xl font-bold text-foreground">Total Daily Activity</CardTitle> {/* Updated title */}
-        <p className="text-sm text-muted-foreground">Overall inventory movement in real-time</p> {/* Updated subtitle */}
+        <CardTitle className="text-2xl font-bold text-foreground">Total Daily Activity</CardTitle>
+        <p className="text-sm text-muted-foreground">Overall inventory movement in real-time</p>
       </CardHeader>
       <CardContent className="h-[257px] p-4 pt-0 flex flex-col justify-between">
         <ResponsiveContainer width="100%" height="100%">
@@ -74,19 +87,17 @@ const LiveInformationAreaChartCard: React.FC = () => {
             }}
           >
             <defs>
-              {/* Horizontal gradient for the line stroke (blue to green) */}
               <linearGradient id="strokeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#0088FE" /> {/* Blue start */}
-                <stop offset="100%" stopColor="#00C49F" /> {/* Green end */}
+                <stop offset="0%" stopColor="#0088FE" />
+                <stop offset="100%" stopColor="#00C49F" />
               </linearGradient>
-              {/* Vertical gradient for the fill (green to blue with opacity) */}
               <linearGradient id="fillGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#00C49F" stopOpacity={0.8}/> {/* Green top */}
-                <stop offset="95%" stopColor="#0088FE" stopOpacity={0}/> {/* Blue bottom */}
+                <stop offset="5%" stopColor="#00C49F" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#0088FE" stopOpacity={0}/>
               </linearGradient>
             </defs>
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} /> {/* Y-axis now visible */}
+            <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
             <Tooltip
               contentStyle={{
                 backgroundColor: "hsl(var(--card))",
@@ -100,8 +111,8 @@ const LiveInformationAreaChartCard: React.FC = () => {
             <Area
               type="monotone"
               dataKey="Total Daily Activity"
-              stroke="url(#strokeGradient)" // Apply horizontal gradient to stroke
-              fill="url(#fillGradient)"    // Apply vertical gradient to fill
+              stroke="url(#strokeGradient)"
+              fill="url(#fillGradient)"
               strokeWidth={3}
               dot={false}
               activeDot={{ r: 4 }}
