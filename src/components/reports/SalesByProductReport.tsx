@@ -8,7 +8,7 @@ import { useInventory } from "@/context/InventoryContext";
 import { useCategories } from "@/context/CategoryContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
-import { Loader2, Package, Receipt, BarChart } from "lucide-react";
+import { Loader2, Package, Receipt, BarChart, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ProductSalesData {
@@ -100,7 +100,7 @@ const SalesByProductReport: React.FC<SalesByProductReportProps> = ({
   if (!reportGenerated || !currentReportData) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-        <BarChart className="h-16 w-16 mb-4" />
+        <FileText className="h-16 w-16 mb-4" />
         <p className="text-lg">Configure filters and click "Generate Report".</p>
         <Button onClick={generateReport} className="mt-4">Generate Report</Button>
       </div>

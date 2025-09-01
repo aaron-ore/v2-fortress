@@ -7,7 +7,7 @@ import { useStockMovement, StockMovement } from "@/context/StockMovementContext"
 import { useOnboarding } from "@/context/OnboardingContext";
 import { useProfile } from "@/context/ProfileContext";
 import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
-import { Loader2, Scale, User, Clock } from "lucide-react";
+import { Loader2, Scale, User, Clock, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { showError } from "@/utils/toast";
@@ -85,7 +85,7 @@ const InventoryMovementReport: React.FC<InventoryMovementReportProps> = ({
   if (!reportGenerated || !currentReportData) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-        <Scale className="h-16 w-16 mb-4" />
+        <FileText className="h-16 w-16 mb-4" />
         <p className="text-lg">Configure filters and click "Generate Report".</p>
         <Button onClick={generateReport} className="mt-4">Generate Report</Button>
       </div>

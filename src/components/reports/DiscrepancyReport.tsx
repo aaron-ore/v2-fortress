@@ -7,7 +7,7 @@ import { useProfile } from "@/context/ProfileContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { supabase } from "@/lib/supabaseClient";
 import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
-import { Loader2, AlertTriangle, Scale, User, Clock } from "lucide-react";
+import { Loader2, AlertTriangle, Scale, User, Clock, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { showError } from "@/utils/toast";
@@ -212,7 +212,7 @@ const DiscrepancyReport: React.FC<DiscrepancyReportProps> = ({
               </Table>
             </ScrollArea>
           ) : (
-            <p className="text-center text-muted-foreground py-8">No discrepancies found for the selected criteria. Great job!</p>
+            <p className="text-center text-muted-foreground py-8">No discrepancies found for the selected criteria.</p>
           )}
         </CardContent>
       </Card>

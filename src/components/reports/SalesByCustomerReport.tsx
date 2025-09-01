@@ -6,7 +6,7 @@ import { DateRange } from "react-day-picker";
 import { useOrders, OrderItem } from "@/context/OrdersContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
-import { Loader2, Users, DollarSign, Receipt } from "lucide-react";
+import { Loader2, Users, DollarSign, Receipt, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CustomerSalesData {
@@ -97,7 +97,7 @@ const SalesByCustomerReport: React.FC<SalesByCustomerReportProps> = ({
   if (!reportGenerated || !currentReportData) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-        <Receipt className="h-16 w-16 mb-4" />
+        <FileText className="h-16 w-16 mb-4" />
         <p className="text-lg">Configure filters and click "Generate Report".</p>
         <Button onClick={generateReport} className="mt-4">Generate Report</Button>
       </div>
