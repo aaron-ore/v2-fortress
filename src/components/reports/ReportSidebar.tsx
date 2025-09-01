@@ -19,53 +19,12 @@ interface ReportItem {
   icon: React.ElementType;
 }
 
-const reportCategories: ReportCategory[] = [
-  {
-    title: "Overview",
-    icon: LayoutDashboard,
-    reports: [
-      { id: "dashboard-summary", title: "Dashboard Summary", description: "High-level overview of key metrics.", icon: LayoutDashboard },
-    ],
-  },
-  {
-    title: "Inventory Reports",
-    icon: Package,
-    reports: [
-      { id: "inventory-valuation", title: "Inventory Valuation", description: "Value of all stock by category/location.", icon: DollarSign },
-      { id: "low-stock-out-of-stock", title: "Low/Out of Stock", description: "Items needing replenishment.", icon: AlertTriangle },
-      { id: "inventory-movement", title: "Inventory Movement", description: "Detailed log of stock changes.", icon: Scale },
-      { id: "stock-discrepancy", title: "Stock Discrepancy", description: "Reported differences in stock counts.", icon: AlertTriangle },
-    ],
-  },
-  {
-    title: "Sales Reports",
-    icon: Receipt,
-    reports: [
-      { id: "sales-by-customer", title: "Sales by Customer", description: "Revenue generated per customer.", icon: Users },
-      { id: "sales-by-product", title: "Sales by Product", description: "Top-selling items by quantity/revenue.", icon: BarChart },
-    ],
-  },
-  {
-    title: "Purchase Reports",
-    icon: Truck,
-    reports: [
-      { id: "purchase-order-status", title: "Purchase Order Status", description: "Overview of all purchase orders.", icon: FileText },
-    ],
-  },
-  {
-    title: "Financial Reports",
-    icon: DollarSign,
-    reports: [
-      { id: "profitability", title: "Profitability (Gross Margin)", description: "Gross profit by product or category.", icon: DollarSign },
-    ],
-  },
-];
-
 interface ReportSidebarProps {
   onReportSelect: (reportId: string) => void;
+  reportCategories: ReportCategory[]; // Now passed as a prop
 }
 
-const ReportSidebar: React.FC<ReportSidebarProps> = ({ onReportSelect }) => {
+const ReportSidebar: React.FC<ReportSidebarProps> = ({ onReportSelect, reportCategories }) => {
   const location = useLocation();
   const activeReportId = location.hash.replace("#", "");
 
