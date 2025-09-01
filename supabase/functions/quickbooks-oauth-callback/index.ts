@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
     }
 
     console.log('QuickBooks tokens and Realm ID successfully stored for user:', userId);
-    return Response.redirect(`${url.origin}/settings?quickbooks_success=true`, 302);
+    return Response.redirect(`https://${url.host}/settings?quickbooks_success=true`, 302);
 
   } catch (error) {
     console.error('QuickBooks OAuth callback Edge Function error:', error);
