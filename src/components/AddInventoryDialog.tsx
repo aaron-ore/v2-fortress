@@ -186,9 +186,14 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       autoReorderQuantity: parsedAutoReorderQuantity,
     };
 
-    await addInventoryItem(newItem);
-    showSuccess(`Added ${parsedPickingBinQuantity + parsedOverstockQuantity} of ${itemName} to inventory!`);
-    onClose();
+    try {
+      await addInventoryItem(newItem);
+      showSuccess(`Added ${parsedPickingBinQuantity + parsedOverstockQuantity} of ${itemName} to inventory!`);
+      onClose();
+    } catch (error: any) {
+      console.error("Failed to add inventory item:", error);
+      showError("Failed to add item: " + (error.message || "Unknown error. Please check console for details."));
+    }
   };
 
   const isFormInvalid =
