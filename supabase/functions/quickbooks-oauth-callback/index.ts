@@ -1,10 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0';
-// REMOVED: import { corsHeaders } from '../_shared/cors.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsHeaders } from '../_shared/cors.ts';
 
 Deno.serve(async (req) => {
   // Handle CORS preflight request
@@ -35,12 +30,23 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!QUICKBOOKS_CLIENT_ID || !QUICKBOOKS_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('Missing Supabase or QuickBooks environment variables.');
-      return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent('Server configuration error.')}`, 302);
+    if (!QUICKBOOKS_CLIENT_ID) {
+      console.error('Missing QUICKBOOKS_CLIENT_ID environment variable.');
+      return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent('QuickBooks Client ID is missing in Supabase secrets.')}`, 302);
+    }
+    if (!QUICKBOOKS_CLIENT_SECRET) {
+      console.error('Missing QUICKBOOKS_CLIENT_SECRET environment variable.');
+      return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent('QuickBooks Client Secret is missing in Supabase secrets.')}`, 302);
+    }
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Missing Supabase environment variables.');
+      return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent('Server configuration error: Supabase URL or Service Role Key missing.')}`, 302);
     }
 
-    const redirectUri = `${url.origin}/quickbooks-oauth-callback`; // Must match the one registered in QuickBooks app
+    // Construct the redirectUri explicitly using the full function path
+    // url.origin is typically https://<project-ref>.supabase.co
+    const redirectUri = `${url.origin}/functions/v1/quickbooks-oauth-callback`;
+    console.log('Using redirectUri for token exchange:', redirectUri); // Added logging
 
     // Exchange authorization code for tokens
     const tokenResponse = await fetch('https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer', {
@@ -100,9 +106,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('QuickBooks OAuth callback Edge Function error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
-    });
+    return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent('An unexpected error occurred.')}`, 302);
   }
 });
