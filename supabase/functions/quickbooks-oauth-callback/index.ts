@@ -1,5 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0';
-import { corsHeaders } from '../_shared/cors.ts';
+// REMOVED: import { corsHeaders } from '../_shared/cors.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 Deno.serve(async (req) => {
   // Handle CORS preflight request
@@ -95,6 +100,9 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('QuickBooks OAuth callback Edge Function error:', error);
-    return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent('An unexpected error occurred.')}`, 302);
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 400,
+    });
   }
 });
