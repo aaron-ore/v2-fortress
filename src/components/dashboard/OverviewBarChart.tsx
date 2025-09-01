@@ -71,7 +71,7 @@ const OverviewBarChart: React.FC = () => {
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" strokeOpacity={0.3} />
         <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-        <YAxis stroke="hsl(var(--muted-foreground))" />
+        <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(value) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`} />
         <Tooltip
           contentStyle={{
             backgroundColor: "hsl(var(--card))",
@@ -79,6 +79,7 @@ const OverviewBarChart: React.FC = () => {
             borderRadius: "0.5rem",
           }}
           itemStyle={{ color: "hsl(var(--foreground))" }}
+          formatter={(value: number) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
         />
         <Legend wrapperStyle={{ color: "hsl(var(--muted-foreground))" }} />
         <Area yAxisId="left" type="monotone" dataKey="Sales" stroke="hsl(var(--primary))" fill="url(#colorSales)" name="Sales" strokeWidth={3} activeDot={{ r: 8 }} /> {/* Changed to Area, added fill, increased strokeWidth */}

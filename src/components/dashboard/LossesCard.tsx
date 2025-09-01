@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
@@ -46,7 +48,7 @@ const LossesCard: React.FC = () => {
       </CardHeader>
       <CardContent className="flex-1 flex items-center justify-between p-0">
         <div className="text-sm font-bold text-foreground">
-          ${totalLosses.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+          ${totalLosses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </div>
         <LineChart width={80} height={15} data={data}>
           <Line type="monotone" dataKey="value" stroke="hsl(var(--destructive))" strokeWidth={2} dot={false} />

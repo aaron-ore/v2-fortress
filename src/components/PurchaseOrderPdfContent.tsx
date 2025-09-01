@@ -119,8 +119,8 @@ const PurchaseOrderPdfContent: React.FC<PurchaseOrderPdfContentProps> = ({
             <tr key={item.id} className="border-b border-gray-200">
               <td className="py-2 px-4 border-r border-gray-200">{item.itemName}</td>
               <td className="py-2 px-4 text-right border-r border-gray-200">{item.quantity}</td>
-              <td className="py-2 px-4 text-right border-r border-gray-200">${item.unitPrice.toFixed(2)}</td>
-              <td className="py-2 px-4 text-right">${(item.quantity * item.unitPrice).toFixed(2)}</td>
+              <td className="py-2 px-4 text-right border-r border-gray-200">${item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              <td className="py-2 px-4 text-right">${(item.quantity * item.unitPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
             </tr>
           ))}
           {/* Add empty rows to fill space if needed, similar to the screenshot */}
@@ -150,15 +150,15 @@ const PurchaseOrderPdfContent: React.FC<PurchaseOrderPdfContentProps> = ({
           <div className="w-full max-w-xs"> {/* Constrain width for totals block */}
             <div className="flex justify-between py-1">
               <span className="font-bold">Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             <div className="flex justify-between py-1">
               <span className="font-bold">Tax ({taxRate * 100}%)</span>
-              <span>${taxAmount.toFixed(2)}</span>
+              <span>${taxAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             <div className="flex justify-between py-2 border-t border-gray-300 mt-2">
               <span className="font-bold text-lg">BALANCE DUE</span>
-              <span className="font-bold text-lg">${totalAmount.toFixed(2)}</span>
+              <span className="font-bold text-lg">${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           </div>
         </div>

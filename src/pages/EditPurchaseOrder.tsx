@@ -325,7 +325,7 @@ const EditPurchaseOrder: React.FC = () => {
                 <Input
                   id="totalAmount"
                   type="number"
-                  value={calculateTotalAmount().toFixed(2)}
+                  value={calculateTotalAmount().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   disabled
                 />
               </div>
@@ -408,7 +408,7 @@ const EditPurchaseOrder: React.FC = () => {
                           />
                         </TableCell>
                         <TableCell className="text-right font-semibold w-[120px]">
-                          ${(item.quantity * item.unitPrice).toFixed(2)}
+                          ${(item.quantity * item.unitPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </TableCell>
                         <TableCell className="w-[50px]">
                           <Button
@@ -425,7 +425,7 @@ const EditPurchaseOrder: React.FC = () => {
                 </Table>
               </div>
               <div className="flex justify-end items-center mt-4 text-lg font-bold">
-                Total Amount: ${calculateTotalAmount().toFixed(2)}
+                Total Amount: ${calculateTotalAmount().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </CardContent>
           </Card>

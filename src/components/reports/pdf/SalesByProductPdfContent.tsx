@@ -73,7 +73,7 @@ const SalesByProductPdfContent: React.FC<SalesByProductPdfContentProps> = ({
           <div className="bg-gray-50 p-3 border border-gray-200 rounded space-y-2">
             <div className="flex justify-between">
               <span className="font-semibold">Total Sales Revenue:</span>
-              <span>${totalOverallRevenue.toFixed(2)}</span>
+              <span>${totalOverallRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             <div className="flex justify-between">
               <span className="font-semibold">Total Units Sold:</span>
@@ -108,7 +108,7 @@ const SalesByProductPdfContent: React.FC<SalesByProductPdfContentProps> = ({
                   <td className="py-2 px-4 border-r border-gray-200">{data.sku}</td>
                   <td className="py-2 px-4 border-r border-gray-200">{data.category}</td>
                   <td className="py-2 px-4 text-right border-r border-gray-200">{data.unitsSold.toLocaleString()}</td>
-                  <td className="py-2 px-4 text-right">${data.totalRevenue.toFixed(2)}</td>
+                  <td className="py-2 px-4 text-right">${data.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 </tr>
               ))
             ) : (

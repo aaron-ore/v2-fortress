@@ -123,7 +123,7 @@ const PurchaseOrderStatusReport: React.FC<PurchaseOrderStatusReportProps> = ({
             </div>
             <div className="space-y-2">
               <h3 className="font-semibold text-lg">Total Value of Orders</h3>
-              <p className="text-3xl font-bold">${totalAmount.toFixed(2)}</p>
+              <p className="text-3xl font-bold">${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
           </div>
 
@@ -151,7 +151,7 @@ const PurchaseOrderStatusReport: React.FC<PurchaseOrderStatusReportProps> = ({
                       <TableCell>{format(new Date(order.date), "MMM dd, yyyy")}</TableCell>
                       <TableCell>{format(new Date(order.dueDate), "MMM dd, yyyy")}</TableCell>
                       <TableCell>{order.status}</TableCell>
-                      <TableCell className="text-right">${order.totalAmount.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">${order.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

@@ -40,7 +40,7 @@ const InventoryValueByLocationBarChart: React.FC = () => {
           >
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
             <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-            <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(value) => `$${value}`} width={100} /> {/* Increased YAxis width */}
+            <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(value) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`} width={100} /> {/* Increased YAxis width */}
             <Tooltip
               contentStyle={{
                 backgroundColor: "hsl(var(--card))",
@@ -48,7 +48,7 @@ const InventoryValueByLocationBarChart: React.FC = () => {
                 borderRadius: "0.5rem",
               }}
               itemStyle={{ color: "hsl(var(--foreground))" }}
-              formatter={(value: number) => `$${value.toFixed(2)}`}
+              formatter={(value: number) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             />
             <Legend wrapperStyle={{ color: "hsl(var(--muted-foreground))" }} />
             <Bar dataKey="Inventory Value" fill="hsl(var(--primary))" />

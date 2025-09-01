@@ -93,6 +93,7 @@ const SalesInventoryTrendCard: React.FC = () => {
                   borderRadius: "0.5rem",
                 }}
                 itemStyle={{ color: "hsl(var(--foreground))" }}
+                formatter={(value: number) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               />
               <Legend wrapperStyle={{ color: "hsl(var(--muted-foreground))" }} />
               <Area yAxisId="left" type="monotone" dataKey="Sales Revenue" stroke="hsl(var(--primary))" fill="url(#colorSalesRevenue)" strokeWidth={3} activeDot={{ r: 8 }} />

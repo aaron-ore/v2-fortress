@@ -62,8 +62,8 @@ const MonthlyOverviewChartCard: React.FC<MonthlyOverviewChartCardProps> = ({ dat
 
     return Object.keys(monthlyData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime()).map(monthKey => ({
       name: format(new Date(monthKey), "MMM"),
-      "Sales Revenue": parseFloat(monthlyData[monthKey].salesRevenue.toFixed(0)),
-      "Inventory Value": parseFloat(monthlyData[monthKey].inventoryValue.toFixed(0)),
+      "Sales Revenue": parseFloat(monthlyData[monthKey].salesRevenue.toFixed(2)),
+      "Inventory Value": parseFloat(monthlyData[monthKey].inventoryValue.toFixed(2)),
       "Purchase Volume": parseFloat(monthlyData[monthKey].purchaseVolume.toFixed(0)),
     }));
   }, [orders, inventoryItems, dateRange]);
@@ -87,7 +87,7 @@ const MonthlyOverviewChartCard: React.FC<MonthlyOverviewChartCardProps> = ({ dat
           >
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
             <YAxis
-              tickFormatter={(value) => `$${value}`}
+              tickFormatter={(value) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
               domain={[0, 'auto']}
               axisLine={{ stroke: 'hsl(var(--muted-foreground))' }}
               tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
@@ -102,6 +102,12 @@ const MonthlyOverviewChartCard: React.FC<MonthlyOverviewChartCardProps> = ({ dat
               }}
               itemStyle={{ color: "hsl(var(--foreground))", fontSize: "0.75rem" }}
               labelStyle={{ color: "hsl(var(--muted-foreground))", fontSize: "0.75rem" }}
+              formatter={(value: number, name: string) => {
+                if (name === "Sales Revenue" || name === "Inventory Value") {
+                  return [`$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, name];
+                }
+                return [value.toLocaleString('en-US'), name];
+              }}
             />
             <Legend wrapperStyle={{ color: "hsl(var(--muted-foreground))", fontSize: 10 }} />
             <Bar dataKey="Sales Revenue" stackId="a" fill="#00C49F" />

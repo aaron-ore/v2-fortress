@@ -109,7 +109,7 @@ const ProfitabilityReport: React.FC<ProfitabilityReportProps> = ({
   if (!reportGenerated || !currentReportData) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-        <DollarSign className="h-16 w-16 mb-4" />
+        <FileText className="h-16 w-16 mb-4" />
         <p className="text-lg">Configure filters and click "Generate Report".</p>
         <Button onClick={generateReport} className="mt-4">Generate Report</Button>
       </div>
@@ -138,15 +138,15 @@ const ProfitabilityReport: React.FC<ProfitabilityReportProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <h3 className="font-semibold text-lg">Total Sales Revenue</h3>
-              <p className="text-3xl font-bold text-green-500">${totalSalesRevenue.toFixed(2)}</p>
+              <p className="text-3xl font-bold text-green-500">${totalSalesRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
             <div className="space-y-2">
               <h3 className="font-semibold text-lg">Total Cost of Goods Sold</h3>
-              <p className="text-3xl font-bold">${totalCostOfGoodsSold.toFixed(2)}</p>
+              <p className="text-3xl font-bold">${totalCostOfGoodsSold.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
             <div className="space-y-2">
               <h3 className="font-semibold text-lg">Gross Profit</h3>
-              <p className="text-3xl font-bold">${grossProfit.toFixed(2)}</p>
+              <p className="text-3xl font-bold">${grossProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
           </div>
 

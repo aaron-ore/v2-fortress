@@ -82,7 +82,7 @@ const WeeklyRevenueBarChart: React.FC = () => {
           axisLine={false} // Hide axis line
           tickMargin={10} // Add margin between labels and bars
         />
-        <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(value) => `$${value}`} />
+        <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(value) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`} />
         <Tooltip
           contentStyle={{
             backgroundColor: "hsl(var(--card))",
@@ -90,7 +90,7 @@ const WeeklyRevenueBarChart: React.FC = () => {
             borderRadius: "0.5rem",
           }}
           itemStyle={{ color: "hsl(var(--foreground))" }}
-          formatter={(value: number) => `$${value.toFixed(0)}`}
+          formatter={(value: number) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
         />
         <Legend wrapperStyle={{ color: "hsl(var(--muted-foreground))" }} />
         <Bar dataKey="This Week" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />

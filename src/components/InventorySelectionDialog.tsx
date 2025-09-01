@@ -157,7 +157,7 @@ const InventorySelectionDialog: React.FC<InventorySelectionDialogProps> = ({
                       <TableCell>{item.category}</TableCell>
                       <TableCell className="text-right">{item.quantity}</TableCell>
                       <TableCell className="text-right">
-                        ${itemType === "purchase" ? item.unitCost.toFixed(2) : item.retailPrice.toFixed(2)}
+                        ${itemType === "purchase" ? item.unitCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : item.retailPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </TableCell>
                     </TableRow>
                   ))

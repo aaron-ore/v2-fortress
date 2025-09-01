@@ -95,6 +95,12 @@ const SalesOverviewChart: React.FC = () => {
             borderRadius: "0.5rem",
           }}
           itemStyle={{ color: "hsl(var(--foreground))" }}
+          formatter={(value: number, name: string) => {
+            if (name === "Sales Revenue") {
+              return [`$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, name];
+            }
+            return [value.toLocaleString('en-US'), name];
+          }}
         />
         <Legend wrapperStyle={{ color: "hsl(var(--muted-foreground))" }} />
         <Area yAxisId="left" type="monotone" dataKey="Sales Revenue" stroke="hsl(var(--primary))" fill="url(#colorSalesRevenue)" strokeWidth={3} activeDot={{ r: 8 }} />

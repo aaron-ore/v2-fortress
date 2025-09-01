@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, ArrowUp, ArrowDown } from "lucide-react";
@@ -57,7 +59,7 @@ const TotalStockValueCard: React.FC = () => {
       </CardHeader>
       <CardContent className="text-center p-4 pt-0 flex flex-col justify-between h-full">
         <div>
-          <div className="text-2xl font-bold">${totalStockValue.toFixed(2)}</div>
+          <div className="text-2xl font-bold">${totalStockValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
           <p className={`text-xs ${isPositiveChange ? "text-green-500" : "text-red-500"} flex items-center justify-center`}>
             {isPositiveChange ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />} {percentageChange}% from last month
           </p>

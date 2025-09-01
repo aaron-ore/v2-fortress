@@ -396,7 +396,7 @@ const AddOrderForm: React.FC<AddOrderFormProps> = ({ onClose }) => {
         />
         <div className="flex justify-between items-center font-bold text-lg">
           <span>Total Amount:</span>
-          <span>${form.watch("totalAmount").toFixed(2)}</span>
+          <span>${form.watch("totalAmount").toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
         </div>
         <Button type="submit" className="w-full">Add Order</Button>
       </form>
@@ -462,7 +462,7 @@ export const createOrderColumns = (updateOrder: (order: OrderItem) => void, arch
   {
     accessorKey: "totalAmount",
     header: "Total Amount",
-    cell: ({ row }) => `$${parseFloat(row.original.totalAmount.toString() || '0').toFixed(2)}`,
+    cell: ({ row }) => `$${parseFloat(row.original.totalAmount.toString() || '0').toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
   },
   {
     accessorKey: "itemCount",

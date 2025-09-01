@@ -60,7 +60,7 @@ const WalletCard: React.FC = () => {
             <CardTitle className="text-sm font-bold text-foreground">Wallet</CardTitle>
           </div>
           <p className="text-xl font-bold text-foreground">
-            ${totalWalletValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            ${totalWalletValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
         <div className="flex flex-col justify-center items-center bg-blue-500/80 p-1 space-y-1">

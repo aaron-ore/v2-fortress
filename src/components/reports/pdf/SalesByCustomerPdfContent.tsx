@@ -72,7 +72,7 @@ const SalesByCustomerPdfContent: React.FC<SalesByCustomerPdfContentProps> = ({
           <div className="bg-gray-50 p-3 border border-gray-200 rounded space-y-2">
             <div className="flex justify-between">
               <span className="font-semibold">Total Sales Revenue:</span>
-              <span>${totalOverallSales.toFixed(2)}</span>
+              <span>${totalOverallSales.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             <div className="flex justify-between">
               <span className="font-semibold">Total Items Sold:</span>
@@ -103,7 +103,7 @@ const SalesByCustomerPdfContent: React.FC<SalesByCustomerPdfContentProps> = ({
               customerSales.map((data, index) => (
                 <tr key={index} className="border-b border-gray-200">
                   <td className="py-2 px-4 border-r border-gray-200">{data.customerName}</td>
-                  <td className="py-2 px-4 text-right border-r border-gray-200">${data.totalSales.toFixed(2)}</td>
+                  <td className="py-2 px-4 text-right border-r border-gray-200">${data.totalSales.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   <td className="py-2 px-4 text-right border-r border-gray-200">{data.totalItems.toLocaleString()}</td>
                   <td className="py-2 px-4">{data.lastOrderDate}</td>
                 </tr>

@@ -56,7 +56,7 @@ const SalesByCategoryPieChart: React.FC = () => {
                 borderRadius: "0.5rem",
               }}
               itemStyle={{ color: "hsl(var(--foreground))" }}
-              formatter={(value: number, name: string) => [`$${value.toFixed(2)}`, name]}
+              formatter={(value: number, name: string) => [`$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, name]}
             />
             <Legend
               wrapperStyle={{ color: "hsl(var(--muted-foreground))", paddingTop: '10px' }}

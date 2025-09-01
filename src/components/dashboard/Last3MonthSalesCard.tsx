@@ -55,7 +55,7 @@ const Last3MonthSalesCard: React.FC<Last3MonthSalesCardProps> = ({ dateRange }) 
 
     return Object.keys(monthlyData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime()).map(monthKey => ({
       name: format(new Date(monthKey), "MMM"),
-      "Sales Revenue": parseFloat(monthlyData[monthKey].salesRevenue.toFixed(0)),
+      "Sales Revenue": parseFloat(monthlyData[monthKey].salesRevenue.toFixed(2)),
       "New Inventory Added": parseFloat(monthlyData[monthKey].newInventory.toFixed(0)),
       "Items Shipped": parseFloat(monthlyData[monthKey].itemsShipped.toFixed(0)),
     }));
@@ -90,6 +90,12 @@ const Last3MonthSalesCard: React.FC<Last3MonthSalesCardProps> = ({ dateRange }) 
               }}
               itemStyle={{ color: "hsl(var(--foreground))", fontSize: "0.75rem" }}
               labelStyle={{ color: "hsl(var(--muted-foreground))", fontSize: "0.75rem" }}
+              formatter={(value: number, name: string) => {
+                if (name === "Sales Revenue") {
+                  return [`$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, name];
+                }
+                return [value.toLocaleString('en-US'), name];
+              }}
             />
             <Bar dataKey="Sales Revenue" stackId="a" fill="#00C49F" />
             <Bar dataKey="New Inventory Added" stackId="a" fill="#00BFD8" />

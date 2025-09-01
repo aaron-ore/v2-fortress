@@ -107,6 +107,7 @@ const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> 
               }}
               itemStyle={{ color: "hsl(var(--foreground))", fontSize: "0.75rem" }}
               labelStyle={{ color: "hsl(var(--muted-foreground))", fontSize: "0.75rem" }}
+              formatter={(value: number) => value.toLocaleString('en-US')}
             />
             <Area
               type="monotone"

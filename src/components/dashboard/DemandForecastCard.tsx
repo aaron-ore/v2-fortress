@@ -82,7 +82,7 @@ const DemandForecastCard: React.FC = () => {
             >
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" strokeOpacity={0.3} />
               <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-              <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(value) => `$${value.toFixed(0)}`} />
+              <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(value) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`} />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "hsl(var(--card))",
@@ -90,7 +90,7 @@ const DemandForecastCard: React.FC = () => {
                   borderRadius: "0.5rem",
                 }}
                 itemStyle={{ color: "hsl(var(--foreground))" }}
-                formatter={(value: number) => `$${value.toFixed(2)}`}
+                formatter={(value: number) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               />
               <Legend wrapperStyle={{ color: "hsl(var(--muted-foreground))" }} />
               <Line type="monotone" dataKey="Actual Sales" stroke="hsl(var(--primary))" strokeWidth={3} dot={false} />

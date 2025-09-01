@@ -130,7 +130,7 @@ const SalesByProductReport: React.FC<SalesByProductReportProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <h3 className="font-semibold text-lg">Total Sales Revenue</h3>
-              <p className="text-3xl font-bold text-green-500">${totalOverallRevenue.toFixed(2)}</p>
+              <p className="text-3xl font-bold text-green-500">${totalOverallRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
             <div className="space-y-2">
               <h3 className="font-semibold text-lg">Total Units Sold</h3>
@@ -158,7 +158,7 @@ const SalesByProductReport: React.FC<SalesByProductReportProps> = ({
                       <TableCell>{data.sku}</TableCell>
                       <TableCell>{data.category}</TableCell>
                       <TableCell className="text-right">{data.unitsSold.toLocaleString()}</TableCell>
-                      <TableCell className="text-right">${data.totalRevenue.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">${data.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

@@ -76,7 +76,7 @@ const PurchaseOrderStatusPdfContent: React.FC<PurchaseOrderStatusPdfContentProps
             </div>
             <div className="flex justify-between">
               <span className="font-semibold">Total Value of Orders:</span>
-              <span>${totalAmount.toFixed(2)}</span>
+              <span>${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           </div>
         </div>
@@ -105,7 +105,7 @@ const PurchaseOrderStatusPdfContent: React.FC<PurchaseOrderStatusPdfContentProps
                   <td className="py-2 px-4 border-r border-gray-200">{format(new Date(order.date), "MMM dd, yyyy")}</td>
                   <td className="py-2 px-4 border-r border-gray-200">{format(new Date(order.dueDate), "MMM dd, yyyy")}</td>
                   <td className="py-2 px-4 border-r border-gray-200">{order.status}</td>
-                  <td className="py-2 px-4 text-right">${order.totalAmount.toFixed(2)}</td>
+                  <td className="py-2 px-4 text-right">${order.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 </tr>
               ))
             ) : (

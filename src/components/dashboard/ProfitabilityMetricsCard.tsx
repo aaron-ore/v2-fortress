@@ -84,6 +84,7 @@ const ProfitabilityMetricsCard: React.FC = () => {
                   }}
                   itemStyle={{ color: "hsl(var(--foreground))", fontSize: "0.75rem" }}
                   labelStyle={{ color: "hsl(var(--muted-foreground))", fontSize: "0.75rem" }}
+                  formatter={(value: number) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 />
                 <Bar dataKey="value" fill={({ color }) => color} radius={[4, 4, 0, 0]} label={{ position: 'insideRight', formatter: (value: number) => `${value}%`, fill: 'white', fontSize: 10 }} />
               </BarChart>

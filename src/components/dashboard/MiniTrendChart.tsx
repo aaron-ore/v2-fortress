@@ -50,7 +50,7 @@ const MiniTrendChart: React.FC<MiniTrendChartProps> = ({
           stroke="hsl(var(--muted-foreground))"
           domain={[0, roundedMax]}
           // ticks={yAxisTicks} // Removed for now
-          tickFormatter={(value) => `$${value}`}
+          tickFormatter={(value) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
           tickLine={false}
           axisLine={false}
           width={40}
@@ -65,7 +65,7 @@ const MiniTrendChart: React.FC<MiniTrendChartProps> = ({
           }}
           itemStyle={{ color: "hsl(var(--foreground))", fontSize: "0.75rem" }}
           labelStyle={{ color: "hsl(var(--muted-foreground))", fontSize: "0.75rem" }}
-          formatter={(value: number) => valueFormatter(value)}
+          formatter={(value: number) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
         />
         <Area
           type="monotone"

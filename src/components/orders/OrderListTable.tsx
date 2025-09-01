@@ -93,7 +93,7 @@ const OrderListTable: React.FC<OrderListTableProps> = ({ filteredOrders, onOrder
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">{order.itemCount}</TableCell>
-                      <TableCell className="text-right font-semibold">${order.totalAmount.toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-semibold">${order.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     </TableRow>
                   );
                 })}

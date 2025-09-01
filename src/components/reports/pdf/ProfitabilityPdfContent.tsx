@@ -74,15 +74,15 @@ const ProfitabilityPdfContent: React.FC<ProfitabilityPdfContentProps> = ({
           <div className="bg-gray-50 p-3 border border-gray-200 rounded space-y-2">
             <div className="flex justify-between">
               <span className="font-semibold">Total Sales Revenue:</span>
-              <span>${totalSalesRevenue.toFixed(2)}</span>
+              <span>${totalSalesRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             <div className="flex justify-between">
               <span className="font-semibold">Total Cost of Goods Sold:</span>
-              <span>${totalCostOfGoodsSold.toFixed(2)}</span>
+              <span>${totalCostOfGoodsSold.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             <div className="flex justify-between">
               <span className="font-semibold">Gross Profit:</span>
-              <span>${grossProfit.toFixed(2)}</span>
+              <span>${grossProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
             {metricsData.map((metric, index) => (
               <div key={index} className="flex justify-between">

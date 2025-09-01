@@ -67,13 +67,13 @@ const DashboardSummaryReport: React.FC<DashboardSummaryReportProps> = ({
       companyAddress: companyProfile?.address || "N/A",
       companyContact: companyProfile?.currency || "N/A",
       companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
+      reportDate: format(new Date(), "MMM dd, yyyy HH:mm"),
       totalStockValue,
       totalUnitsOnHand,
       lowStockItems,
       outOfStockItems,
       recentSalesOrders,
       recentPurchaseOrders,
-      reportDate: format(new Date(), "MMM dd, yyyy HH:mm"),
     };
 
     setCurrentReportData(reportProps);
@@ -126,7 +126,7 @@ const DashboardSummaryReport: React.FC<DashboardSummaryReportProps> = ({
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <h3 className="font-semibold text-lg flex items-center gap-2"><DollarSign className="h-5 w-5 text-green-500" /> Inventory Value</h3>
-            <p className="text-3xl font-bold">${totalStockValue.toFixed(2)}</p>
+            <p className="text-3xl font-bold">${totalStockValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
           <div className="space-y-2">
             <h3 className="font-semibold text-lg flex items-center gap-2"><Package className="h-5 w-5 text-primary" /> Total Units On Hand</h3>
@@ -163,7 +163,7 @@ const DashboardSummaryReport: React.FC<DashboardSummaryReportProps> = ({
                     <TableRow key={order.id}>
                       <TableCell>{order.id}</TableCell>
                       <TableCell>{order.customerSupplier}</TableCell>
-                      <TableCell className="text-right">${order.totalAmount.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">${order.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -195,7 +195,7 @@ const DashboardSummaryReport: React.FC<DashboardSummaryReportProps> = ({
                     <TableRow key={order.id}>
                       <TableCell>{order.id}</TableCell>
                       <TableCell>{order.customerSupplier}</TableCell>
-                      <TableCell className="text-right">${order.totalAmount.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">${order.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

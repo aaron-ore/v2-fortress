@@ -100,7 +100,7 @@ const ClassicDashboard: React.FC = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalStockValue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">${totalStockValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <p className="text-xs text-muted-foreground">Value of all items in stock</p>
           </CardContent>
         </Card>
