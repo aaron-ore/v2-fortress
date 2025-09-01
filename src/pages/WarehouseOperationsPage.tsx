@@ -75,7 +75,7 @@ const WarehouseOperationsPage: React.FC = () => {
     { value: "stock-transfer", label: "Transfer", icon: Scan, type: "dialog" },
     { value: "cycle-count", label: "Count", icon: CheckCircle, type: "dialog" },
     { value: "issue-report", label: "Report Issue", icon: AlertTriangle, type: "dialog" },
-    { value: "location-management", label: "Locations", icon: MapPin, type: "page-link" },
+    // REMOVED: { value: "location-management", label: "Locations", icon: MapPin, type: "page-link" },
   ];
 
   // Effect to handle URL hash changes for opening tabs/dialogs
@@ -121,7 +121,11 @@ const WarehouseOperationsPage: React.FC = () => {
       // default to opening the Item Lookup dialog with the scanned data.
       setScannedDataForTool(decodedText); // Store data to pass to dialog
       // Ensure other dialogs are closed before opening Item Lookup
-      Object.values(dialogStates).forEach(state => state.setIsOpen(false));
+      Object.values(dialogStates).forEach(state => {
+        if (state.isOpen && state !== dialogStates["item-lookup"]) { // Exclude item-lookup itself
+          state.setIsOpen(false);
+        }
+      });
       dialogStates["item-lookup"].setIsOpen(true); // Open Item Lookup dialog
       navigate(`${location.pathname}#item-lookup`, { replace: true }); // Update hash
       setActiveTab(""); // No tab active when a dialog is open

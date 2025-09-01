@@ -21,7 +21,7 @@ const Settings: React.FC = () => {
   const [companyName, setCompanyName] = useState(companyProfile?.name || "");
   const [companyAddress, setCompanyAddress] = useState(companyProfile?.address || "");
   const [companyCurrency, setCompanyCurrency] = useState(companyProfile?.currency || "USD");
-  const [newLocation, setNewLocation] = useState("");
+  // REMOVED: const [newLocation, setNewLocation] = useState("");
   const [isSavingCompanyProfile, setIsSavingCompanyProfile] = useState(false);
 
   useEffect(() => {
@@ -48,20 +48,7 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleAddLocation = () => {
-    if (newLocation.trim() && !locations.includes(newLocation.trim())) {
-      addLocation(newLocation.trim());
-      setNewLocation("");
-      showSuccess(`Location "${newLocation.trim()}" added.`);
-    } else if (locations.includes(newLocation.trim())) {
-      showError(`Location "${newLocation.trim()}" already exists.`);
-    }
-  };
-
-  const handleRemoveLocation = (locationToRemove: string) => {
-    removeLocation(locationToRemove);
-    showSuccess(`Location "${locationToRemove}" removed.`);
-  };
+  // REMOVED: handleAddLocation and handleRemoveLocation as they are moved to Locations.tsx
 
   const hasCompanyProfileChanges =
     companyName !== (companyProfile?.name || "") ||
@@ -125,44 +112,7 @@ const Settings: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Inventory Locations</CardTitle>
-          <CardDescription>Manage the physical locations where your inventory is stored.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex space-x-2">
-            <Input
-              placeholder="Add new location"
-              value={newLocation}
-              onChange={(e) => setNewLocation(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleAddLocation();
-                }
-              }}
-            />
-            <Button onClick={handleAddLocation}>Add Location</Button>
-          </div>
-          <div className="space-y-2">
-            {locations.length === 0 ? (
-              <p className="text-muted-foreground">No locations added yet.</p>
-            ) : (
-              <ul className="list-disc pl-5 space-y-1">
-                {locations.map((loc, index) => (
-                  <li key={index} className="flex items-center justify-between">
-                    {loc}
-                    <Button variant="ghost" size="sm" onClick={() => handleRemoveLocation(loc)}>
-                      Remove
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* REMOVED: Inventory Locations Card */}
 
       {/* Other settings sections can go here */}
     </div>

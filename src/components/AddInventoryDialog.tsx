@@ -20,10 +20,11 @@ import { useInventory } from "@/context/InventoryContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
-import ManageLocationsDialog from "@/components/ManageLocationsDialog";
+// REMOVED: import ManageLocationsDialog from "@/components/ManageLocationsDialog";
 import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
 import { supabase } from "@/lib/supabaseClient"; // Import supabase client
 import { useProfile } from "@/context/ProfileContext"; // NEW: Import useProfile
+import { Link } from "react-router-dom"; // NEW: Import Link
 
 interface AddInventoryDialogProps {
   isOpen: boolean;
@@ -60,7 +61,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   const [autoReorderEnabled, setAutoReorderEnabled] = useState(false);
   const [autoReorderQuantity, setAutoReorderQuantity] = useState("");
 
-  const [isManageLocationsDialogOpen, setIsManageLocationsDialogOpen] = useState(false);
+  // REMOVED: const [isManageLocationsDialogOpen, setIsManageLocationsDialogOpen] = useState(false);
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -239,9 +240,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     categories.length === 0 ||
     (autoReorderEnabled && (parseInt(autoReorderQuantity || '0') <= 0 || isNaN(parseInt(autoReorderQuantity || '0'))));
 
-  const handleOpenManageLocations = () => {
-    setIsManageLocationsDialogOpen(true);
-  };
+  // REMOVED: handleOpenManageLocations as it's no longer needed here
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -325,8 +324,8 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
             {locations.length === 0 && (
               <p className="text-sm text-muted-foreground mt-2">
                 You need to set up inventory locations first.
-                <Button variant="link" size="sm" onClick={handleOpenManageLocations} className="p-0 h-auto ml-1">
-                  Manage Locations
+                <Button variant="link" size="sm" asChild className="p-0 h-auto ml-1">
+                  <Link to="/locations">Manage Locations</Link>
                 </Button>
               </p>
             )}
@@ -502,10 +501,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
           </Button>
         </DialogFooter>
       </DialogContent>
-      <ManageLocationsDialog
-        isOpen={isManageLocationsDialogOpen}
-        onClose={() => setIsManageLocationsDialogOpen(false)}
-      />
+      {/* REMOVED: ManageLocationsDialog */}
     </Dialog>
   );
 };

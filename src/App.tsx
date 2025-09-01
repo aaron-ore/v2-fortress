@@ -25,7 +25,8 @@ import CreateInvoice from "./pages/CreateInvoice";
 import SetupInstructions from "./pages/SetupInstructions";
 import WarehouseOperationsPage from "./pages/WarehouseOperationsPage";
 import ResetPassword from "./pages/ResetPassword";
-import LocationManagementPage from "./pages/LocationManagementPage";
+// REMOVED: import LocationManagementPage from "./pages/LocationManagementPage";
+import Locations from "./pages/Locations"; // NEW: Import Locations page
 import Customers from "./pages/Customers"; // NEW: Import Customers page
 import { ThemeProvider } from "./components/ThemeProvider";
 import { InventoryProvider } from "./context/InventoryContext";
@@ -89,7 +90,8 @@ const AuthenticatedApp = () => {
                           <Route path="users" element={<Users />} />
                           <Route path="setup-instructions" element={<SetupInstructions />} />
                           <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
-                          <Route path="location-management" element={<LocationManagementPage />} />
+                          {/* REMOVED: <Route path="location-management" element={<LocationManagementPage />} /> */}
+                          <Route path="locations" element={<Locations />} /> {/* NEW: Add Locations route */}
                           <Route path="*" element={<NotFound />} />
                         </Route>
                       </Routes>

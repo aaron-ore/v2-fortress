@@ -47,6 +47,7 @@ export const mainNavItems: NavItem[] = [
   { title: "Orders", href: "/orders", icon: Receipt },
   { title: "Customers", href: "/customers", icon: UserRound }, // NEW: Add Customers NavItem
   { title: "Vendors", href: "/vendors", icon: Truck },
+  { title: "Locations", href: "/locations", icon: MapPin }, // NEW: Add Locations NavItem
   { title: "Reports", href: "/reports", icon: BarChart },
   {
     title: "Warehouse Operations",
@@ -66,7 +67,7 @@ export const mainNavItems: NavItem[] = [
       { title: "Stock Transfer", href: "/warehouse-operations#stock-transfer", icon: Scan },
       { title: "Cycle Count", href: "/warehouse-operations#cycle-count", icon: CheckCircle },
       { title: "Issue Report", href: "/warehouse-operations#issue-report", icon: AlertTriangle },
-      { title: "Location Management", href: "/location-management", icon: MapPin },
+      // REMOVED: { title: "Location Management", href: "/location-management", icon: MapPin },
     ],
   },
 ];
