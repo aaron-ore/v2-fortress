@@ -30,7 +30,9 @@ import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { showError, showSuccess } from "@/utils/toast";
-import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
+import { generateQrCodeSvg } from "@/utils/qrCodeGenerator";
+import { useOnboarding } from "@/context/OnboardingContext"; // NEW: Import useOnboarding
+import { parseLocationString, buildLocationString, getUniqueLocationParts, LocationParts } from "@/utils/locationParser"; // NEW
 
 const formSchema = z.object({
   name: z.string().min(1, "Item name is required"),
@@ -45,8 +47,8 @@ const formSchema = z.object({
   incomingStock: z.number().min(0, "Must be non-negative"),
   unitCost: z.number().min(0, "Must be non-negative"),
   retailPrice: z.number().min(0, "Must be non-negative"),
-  location: z.string().min(1, "Location is required"),
-  pickingBinLocation: z.string().min(1, "Picking bin location is required"),
+  location: z.string().min(1, "Location is required"), // Keep as string for schema, handle parts in UI
+  pickingBinLocation: z.string().min(1, "Picking bin location is required"), // Keep as string for schema, handle parts in UI
   imageUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   vendorId: z.string().optional().or(z.literal("null-vendor")),
   autoReorderEnabled: z.boolean().default(false),
@@ -59,13 +61,21 @@ const EditInventoryItem: React.FC = () => {
   const { inventoryItems, updateInventoryItem } = useInventory();
   const { categories, addCategory } = useCategories();
   const { vendors } = useVendors();
+  const { locations: savedLocations } = useOnboarding(); // NEW: Get saved locations
   const [itemNotFound, setItemNotFound] = useState(false);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [qrCodeSvg, setQrCodeSvg] = useState<string | undefined>(undefined); // State for QR code SVG
+  const [qrCodeSvg, setQrCodeSvg] = useState<string | undefined>(undefined);
 
   const item = useMemo(() => inventoryItems.find((i) => i.id === id), [inventoryItems, id]);
+
+  // Derived unique options for dropdowns
+  const uniqueAreas = getUniqueLocationParts(savedLocations, 'area');
+  const uniqueRows = getUniqueLocationParts(savedLocations, 'row');
+  const uniqueBays = getUniqueLocationParts(savedLocations, 'bay');
+  const uniqueLevels = getUniqueLocationParts(savedLocations, 'level');
+  const uniquePositions = getUniqueLocationParts(savedLocations, 'pos');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -168,14 +178,13 @@ const EditInventoryItem: React.FC = () => {
     }
     setIsSaving(true);
     try {
-      // Store the raw SKU value in barcodeUrl, not the SVG
       const finalBarcodeValue = values.sku || undefined;
 
       await updateInventoryItem({
         ...item,
         ...values,
         vendorId: values.vendorId === "null-vendor" ? undefined : values.vendorId,
-        barcodeUrl: finalBarcodeValue, // Store raw SKU value
+        barcodeUrl: finalBarcodeValue,
       });
       showSuccess("Inventory item updated successfully!");
       navigate("/inventory");
@@ -477,33 +486,101 @@ const EditInventoryItem: React.FC = () => {
                   )}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Primary Location</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="pickingBinLocation"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Picking Bin Location</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* NEW: Main Location Dropdowns */}
+              <div className="space-y-2 col-span-2">
+                <FormLabel>Primary Location</FormLabel>
+                <div className="grid grid-cols-3 gap-2">
+                  <FormField
+                    control={form.control}
+                    name="location"
+                    render={({ field }) => {
+                      const parsed = parseLocationString(field.value);
+                      return (
+                        <>
+                          <Select value={parsed.area} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, area: val }))} disabled={savedLocations.length === 0}>
+                            <SelectTrigger><SelectValue placeholder="Area" /></SelectTrigger>
+                            <SelectContent>
+                              {uniqueAreas.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <Select value={parsed.row} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, row: val }))} disabled={savedLocations.length === 0}>
+                            <SelectTrigger><SelectValue placeholder="Row" /></SelectTrigger>
+                            <SelectContent>
+                              {uniqueRows.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <Select value={parsed.bay} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, bay: val }))} disabled={savedLocations.length === 0}>
+                            <SelectTrigger><SelectValue placeholder="Bay" /></SelectTrigger>
+                            <SelectContent>
+                              {uniqueBays.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <Select value={parsed.level} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, level: val }))} disabled={savedLocations.length === 0}>
+                            <SelectTrigger><SelectValue placeholder="Level" /></SelectTrigger>
+                            <SelectContent>
+                              {uniqueLevels.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <Select value={parsed.pos} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, pos: val }))} disabled={savedLocations.length === 0}>
+                            <SelectTrigger><SelectValue placeholder="Pos" /></SelectTrigger>
+                            <SelectContent>
+                              {uniquePositions.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </>
+                      );
+                    }}
+                  />
+                  <FormMessage />
+                </div>
+              </div>
+              {/* NEW: Picking Bin Location Dropdowns */}
+              <div className="space-y-2 col-span-2">
+                <FormLabel>Picking Bin Location</FormLabel>
+                <div className="grid grid-cols-3 gap-2">
+                  <FormField
+                    control={form.control}
+                    name="pickingBinLocation"
+                    render={({ field }) => {
+                      const parsed = parseLocationString(field.value);
+                      return (
+                        <>
+                          <Select value={parsed.area} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, area: val }))} disabled={savedLocations.length === 0}>
+                            <SelectTrigger><SelectValue placeholder="Area" /></SelectTrigger>
+                            <SelectContent>
+                              {uniqueAreas.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <Select value={parsed.row} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, row: val }))} disabled={savedLocations.length === 0}>
+                            <SelectTrigger><SelectValue placeholder="Row" /></SelectTrigger>
+                            <SelectContent>
+                              {uniqueRows.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <Select value={parsed.bay} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, bay: val }))} disabled={savedLocations.length === 0}>
+                            <SelectTrigger><SelectValue placeholder="Bay" /></SelectTrigger>
+                            <SelectContent>
+                              {uniqueBays.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <Select value={parsed.level} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, level: val }))} disabled={savedLocations.length === 0}>
+                            <SelectTrigger><SelectValue placeholder="Level" /></SelectTrigger>
+                            <SelectContent>
+                              {uniqueLevels.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <Select value={parsed.pos} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, pos: val }))} disabled={savedLocations.length === 0}>
+                            <SelectTrigger><SelectValue placeholder="Pos" /></SelectTrigger>
+                            <SelectContent>
+                              {uniquePositions.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </>
+                      );
+                    }}
+                  />
+                  <FormMessage />
+                </div>
               </div>
               <FormField
                 control={form.control}

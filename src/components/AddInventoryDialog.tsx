@@ -20,11 +20,11 @@ import { useInventory } from "@/context/InventoryContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
-// REMOVED: import ManageLocationsDialog from "@/components/ManageLocationsDialog";
-import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
-import { supabase } from "@/lib/supabaseClient"; // Import supabase client
-import { useProfile } from "@/context/ProfileContext"; // NEW: Import useProfile
-import { Link } from "react-router-dom"; // NEW: Import Link
+import { generateQrCodeSvg } from "@/utils/qrCodeGenerator";
+import { supabase } from "@/lib/supabaseClient";
+import { useProfile } from "@/context/ProfileContext";
+import { Link } from "react-router-dom";
+import { parseLocationString, buildLocationString, getUniqueLocationParts, LocationParts } from "@/utils/locationParser"; // NEW
 
 interface AddInventoryDialogProps {
   isOpen: boolean;
@@ -39,7 +39,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   const { locations } = useOnboarding();
   const { categories } = useCategories();
   const { vendors } = useVendors();
-  const { profile } = useProfile(); // NEW: Get profile to access organizationId
+  const { profile } = useProfile();
 
   const [itemName, setItemName] = useState("");
   const [description, setDescription] = useState("");
@@ -51,17 +51,26 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   const [pickingReorderLevel, setPickingReorderLevel] = useState("");
   const [unitCost, setUnitCost] = useState("");
   const [retailPrice, setRetailPrice] = useState("");
-  const [location, setLocation] = useState("");
-  const [pickingBinLocation, setPickingBinLocation] = useState("");
+  
+  // NEW: States for main location parts
+  const [mainLocationParts, setMainLocationParts] = useState<LocationParts>({ area: '', row: '', bay: '', level: '', pos: '' });
+  // NEW: States for picking bin location parts
+  const [pickingBinLocationParts, setPickingBinLocationParts] = useState<LocationParts>({ area: '', row: '', bay: '', level: '', pos: '' });
+
   const [selectedVendorId, setSelectedVendorId] = useState("none");
-  const [barcodeValue, setBarcodeValue] = useState(""); // This will store the raw data for QR code
-  const [qrCodeSvgPreview, setQrCodeSvgPreview] = useState<string | null>(null); // For displaying the generated QR
+  const [barcodeValue, setBarcodeValue] = useState("");
+  const [qrCodeSvgPreview, setQrCodeSvgPreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrlPreview, setImageUrlPreview] = useState<string | null>(null);
   const [autoReorderEnabled, setAutoReorderEnabled] = useState(false);
   const [autoReorderQuantity, setAutoReorderQuantity] = useState("");
 
-  // REMOVED: const [isManageLocationsDialogOpen, setIsManageLocationsDialogOpen] = useState(false);
+  // Derived unique options for dropdowns
+  const uniqueAreas = getUniqueLocationParts(locations, 'area');
+  const uniqueRows = getUniqueLocationParts(locations, 'row');
+  const uniqueBays = getUniqueLocationParts(locations, 'bay');
+  const uniqueLevels = getUniqueLocationParts(locations, 'level');
+  const uniquePositions = getUniqueLocationParts(locations, 'pos');
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -76,8 +85,8 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       setPickingReorderLevel("");
       setUnitCost("");
       setRetailPrice("");
-      setLocation("");
-      setPickingBinLocation("");
+      setMainLocationParts({ area: '', row: '', bay: '', level: '', pos: '' }); // NEW
+      setPickingBinLocationParts({ area: '', row: '', bay: '', level: '', pos: '' }); // NEW
       setSelectedVendorId("none");
       setBarcodeValue("");
       setQrCodeSvgPreview(null);
@@ -130,6 +139,10 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   };
 
   const handleSubmit = async () => {
+    // NEW: Build full location strings from parts
+    const mainLocation = buildLocationString(mainLocationParts);
+    const pickingBinLocation = buildLocationString(pickingBinLocationParts);
+
     if (
       !itemName.trim() ||
       !sku.trim() ||
@@ -140,8 +153,8 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       !pickingReorderLevel ||
       !unitCost ||
       !retailPrice ||
-      !location ||
-      !pickingBinLocation
+      !mainLocation || // NEW: Validate full location string
+      !pickingBinLocation // NEW: Validate full picking bin location string
     ) {
       showError("Please fill in all required fields.");
       return;
@@ -168,25 +181,23 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       return;
     }
 
-    // NEW: Check for organizationId before making Supabase calls
     if (!profile?.organizationId) {
       showError("Organization ID not found. Please ensure your company profile is set up.");
       return;
     }
 
-    // Check for duplicate SKU before adding
     const { data: existingItem, error: fetchError } = await supabase
       .from('inventory_items')
       .select('sku')
       .eq('sku', sku.trim())
-      .eq('organization_id', profile.organizationId) // NEW: Filter by organization_id
+      .eq('organization_id', profile.organizationId)
       .single();
 
     if (existingItem) {
       showError(`An item with SKU '${sku.trim()}' already exists in your organization. Please use a unique SKU.`);
       return;
     }
-    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means "no rows found", which is fine
+    if (fetchError && fetchError.code !== 'PGRST116') {
       console.error("Error checking for duplicate SKU:", fetchError);
       showError("Failed to check for duplicate SKU. Please try again.");
       return;
@@ -205,11 +216,11 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       incomingStock: 0,
       unitCost: parsedUnitCost,
       retailPrice: parsedRetailPrice,
-      location: location,
-      pickingBinLocation: pickingBinLocation,
+      location: mainLocation, // NEW
+      pickingBinLocation: pickingBinLocation, // NEW
       imageUrl: imageUrlPreview || undefined,
       vendorId: selectedVendorId === "none" ? undefined : selectedVendorId,
-      barcodeUrl: barcodeValue || undefined, // Store the raw barcode value
+      barcodeUrl: barcodeValue || undefined,
       autoReorderEnabled: autoReorderEnabled,
       autoReorderQuantity: parsedAutoReorderQuantity,
     };
@@ -224,6 +235,10 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     }
   };
 
+  // NEW: Check if any location parts are missing
+  const areMainLocationPartsMissing = !mainLocationParts.area || !mainLocationParts.row || !mainLocationParts.bay || !mainLocationParts.level || !mainLocationParts.pos;
+  const arePickingBinLocationPartsMissing = !pickingBinLocationParts.area || !pickingBinLocationParts.row || !pickingBinLocationParts.bay || !pickingBinLocationParts.level || !pickingBinLocationParts.pos;
+
   const isFormInvalid =
     !itemName.trim() ||
     !sku.trim() ||
@@ -234,13 +249,11 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     !pickingReorderLevel ||
     !unitCost ||
     !retailPrice ||
-    !location ||
-    !pickingBinLocation ||
+    areMainLocationPartsMissing || // NEW
+    arePickingBinLocationPartsMissing || // NEW
     locations.length === 0 ||
     categories.length === 0 ||
     (autoReorderEnabled && (parseInt(autoReorderQuantity || '0') <= 0 || isNaN(parseInt(autoReorderQuantity || '0'))));
-
-  // REMOVED: handleOpenManageLocations as it's no longer needed here
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -301,26 +314,41 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
               </SelectContent>
             </Select>
           </div>
+          {/* NEW: Main Storage Location Dropdowns */}
           <div className="space-y-2">
-            <Label htmlFor="location">Main Storage Location <span className="text-red-500">*</span></Label>
-            <Select value={location} onValueChange={setLocation} disabled={locations.length === 0}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a location" />
-              </SelectTrigger>
-              <SelectContent>
-                {locations.length > 0 ? (
-                  locations.map((loc) => (
-                    <SelectItem key={loc} value={loc}>
-                      {loc}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no-locations" disabled>
-                    No locations set up.
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+            <Label>Main Storage Location <span className="text-red-500">*</span></Label>
+            <div className="grid grid-cols-3 gap-2">
+              <Select value={mainLocationParts.area} onValueChange={(val) => setMainLocationParts(prev => ({ ...prev, area: val }))} disabled={locations.length === 0}>
+                <SelectTrigger><SelectValue placeholder="Area" /></SelectTrigger>
+                <SelectContent>
+                  {uniqueAreas.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={mainLocationParts.row} onValueChange={(val) => setMainLocationParts(prev => ({ ...prev, row: val }))} disabled={locations.length === 0}>
+                <SelectTrigger><SelectValue placeholder="Row" /></SelectTrigger>
+                <SelectContent>
+                  {uniqueRows.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={mainLocationParts.bay} onValueChange={(val) => setMainLocationParts(prev => ({ ...prev, bay: val }))} disabled={locations.length === 0}>
+                <SelectTrigger><SelectValue placeholder="Bay" /></SelectTrigger>
+                <SelectContent>
+                  {uniqueBays.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={mainLocationParts.level} onValueChange={(val) => setMainLocationParts(prev => ({ ...prev, level: val }))} disabled={locations.length === 0}>
+                <SelectTrigger><SelectValue placeholder="Level" /></SelectTrigger>
+                <SelectContent>
+                  {uniqueLevels.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={mainLocationParts.pos} onValueChange={(val) => setMainLocationParts(prev => ({ ...prev, pos: val }))} disabled={locations.length === 0}>
+                <SelectTrigger><SelectValue placeholder="Pos" /></SelectTrigger>
+                <SelectContent>
+                  {uniquePositions.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             {locations.length === 0 && (
               <p className="text-sm text-muted-foreground mt-2">
                 You need to set up inventory locations first.
@@ -330,26 +358,41 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
               </p>
             )}
           </div>
+          {/* NEW: Picking Bin Location Dropdowns */}
           <div className="space-y-2">
-            <Label htmlFor="pickingBinLocation">Picking Bin Location <span className="text-red-500">*</span></Label>
-            <Select value={pickingBinLocation} onValueChange={setPickingBinLocation} disabled={locations.length === 0}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a picking bin location" />
-              </SelectTrigger>
-              <SelectContent>
-                {locations.length > 0 ? (
-                  locations.map((loc) => (
-                    <SelectItem key={loc} value={loc}>
-                      {loc}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no-locations" disabled>
-                    No locations set up.
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+            <Label>Picking Bin Location <span className="text-red-500">*</span></Label>
+            <div className="grid grid-cols-3 gap-2">
+              <Select value={pickingBinLocationParts.area} onValueChange={(val) => setPickingBinLocationParts(prev => ({ ...prev, area: val }))} disabled={locations.length === 0}>
+                <SelectTrigger><SelectValue placeholder="Area" /></SelectTrigger>
+                <SelectContent>
+                  {uniqueAreas.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={pickingBinLocationParts.row} onValueChange={(val) => setPickingBinLocationParts(prev => ({ ...prev, row: val }))} disabled={locations.length === 0}>
+                <SelectTrigger><SelectValue placeholder="Row" /></SelectTrigger>
+                <SelectContent>
+                  {uniqueRows.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={pickingBinLocationParts.bay} onValueChange={(val) => setPickingBinLocationParts(prev => ({ ...prev, bay: val }))} disabled={locations.length === 0}>
+                <SelectTrigger><SelectValue placeholder="Bay" /></SelectTrigger>
+                <SelectContent>
+                  {uniqueBays.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={pickingBinLocationParts.level} onValueChange={(val) => setPickingBinLocationParts(prev => ({ ...prev, level: val }))} disabled={locations.length === 0}>
+                <SelectTrigger><SelectValue placeholder="Level" /></SelectTrigger>
+                <SelectContent>
+                  {uniqueLevels.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={pickingBinLocationParts.pos} onValueChange={(val) => setPickingBinLocationParts(prev => ({ ...prev, pos: val }))} disabled={locations.length === 0}>
+                <SelectTrigger><SelectValue placeholder="Pos" /></SelectTrigger>
+                <SelectContent>
+                  {uniquePositions.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="pickingBinQuantity">Picking Bin Quantity <span className="text-red-500">*</span></Label>
@@ -440,9 +483,9 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
             <Input
               id="barcodeValue"
               value={barcodeValue}
-              onChange={(e) => setSku(e.target.value)} // Update SKU, which triggers QR generation
+              onChange={(e) => setSku(e.target.value)}
               placeholder="Enter SKU or custom value"
-              disabled // Disable direct editing, it's tied to SKU
+              disabled
             />
             {qrCodeSvgPreview && (
               <div className="mt-2 p-2 border border-border rounded-md bg-muted/20 flex justify-center">
@@ -501,7 +544,6 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
           </Button>
         </DialogFooter>
       </DialogContent>
-      {/* REMOVED: ManageLocationsDialog */}
     </Dialog>
   );
 };

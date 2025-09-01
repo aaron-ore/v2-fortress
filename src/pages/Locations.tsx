@@ -10,6 +10,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { usePrint, PrintContentData } from "@/context/PrintContext";
 import LocationLabelGenerator from "@/components/LocationLabelGenerator"; // Import the new component
+import { parseLocationString } from "@/utils/locationParser"; // NEW: Import parseLocationString
 
 const Locations: React.FC = () => {
   const { locations, addLocation, removeLocation } = useOnboarding();
@@ -22,16 +23,17 @@ const Locations: React.FC = () => {
   const [selectedLocationForLabel, setSelectedLocationForLabel] = useState<string | null>(null);
 
   // Parse location string into its components for the label generator
-  const parseLocationString = (locationStr: string) => {
-    const parts = locationStr.split('-');
-    return {
-      area: parts[0] || "A",
-      row: parts[1] || "01",
-      bay: parts[2] || "01",
-      level: parts[3] || "1",
-      pos: parts[4] || "A",
-    };
-  };
+  // MOVED: This function is now imported from locationParser.ts
+  // const parseLocationString = (locationStr: string) => {
+  //   const parts = locationStr.split('-');
+  //   return {
+  //     area: parts[0] || "A",
+  //     row: parts[1] || "01",
+  //     bay: parts[2] || "01",
+  //     level: parts[3] || "1",
+  //     pos: parts[4] || "A",
+  //   };
+  // };
 
   const handleAddLocation = () => {
     if (newLocationName.trim() === "") {
