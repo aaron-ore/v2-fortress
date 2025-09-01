@@ -14,6 +14,7 @@ import { Loader2 } from "lucide-react";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { Link } from "react-router-dom"; // Import Link for navigation
 import { FileText, Plug, CheckCircle, RefreshCw } from "lucide-react"; // NEW: Import RefreshCw icon
+import { supabase } from "@/lib/supabaseClient";
 
 const Settings: React.FC = () => {
   const { theme, setTheme } = useTheme();
