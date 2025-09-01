@@ -13,7 +13,7 @@ import { showError, showSuccess } from "@/utils/toast";
 import { Loader2 } from "lucide-react";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { Link } from "react-router-dom"; // Import Link for navigation
-import { FileText, Plug } from "lucide-react"; // NEW: Import Plug icon
+import { FileText, Plug, CheckCircle } from "lucide-react"; // NEW: Import Plug and CheckCircle icon
 
 const Settings: React.FC = () => {
   const { theme, setTheme } = useTheme();
@@ -23,7 +23,6 @@ const Settings: React.FC = () => {
   const [companyName, setCompanyName] = useState(companyProfile?.name || "");
   const [companyAddress, setCompanyAddress] = useState(companyProfile?.address || "");
   const [companyCurrency, setCompanyCurrency] = useState(companyProfile?.currency || "USD");
-  // REMOVED: const [newLocation, setNewLocation] = useState("");
   const [isSavingCompanyProfile, setIsSavingCompanyProfile] = useState(false);
 
   useEffect(() => {
@@ -55,9 +54,24 @@ const Settings: React.FC = () => {
       showError("You must have an organization set up to connect to QuickBooks.");
       return;
     }
-    // Construct the OAuth 2.0 authorization URL
+
     const clientId = import.meta.env.VITE_QUICKBOOKS_CLIENT_ID;
-    const redirectUri = `${window.location.origin}/quickbooks-oauth-callback`; // This will be our Edge Function endpoint
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+
+    if (!clientId) {
+      showError("QuickBooks Client ID is not configured. Please add VITE_QUICKBOOKS_CLIENT_ID to your .env file.");
+      return;
+    }
+    if (!supabaseUrl) {
+      showError("Supabase URL is not configured. Please add VITE_SUPABASE_URL to your .env file.");
+      return;
+    }
+
+    // Construct the OAuth 2.0 authorization URL
+    // The redirect URI MUST match the one registered in your QuickBooks Developer Portal
+    // and the one used in the Edge Function.
+    const redirectUri = `${supabaseUrl}/functions/v1/quickbooks-oauth-callback`;
+    
     const scope = "com.intuit.quickbooks.accounting openid profile email address phone"; // Required scopes
     const responseType = "code";
     const state = profile.organizationId; // Use organizationId as state for security and context
@@ -73,14 +87,14 @@ const Settings: React.FC = () => {
       return;
     }
 
-    // In a real scenario, you'd revoke the token with QuickBooks API.
-    // For this demo, we'll just clear the tokens from the profile.
     try {
-      await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({ quickbooks_access_token: null, quickbooks_refresh_token: null })
         .eq('id', profile.id);
       
+      if (updateError) throw updateError;
+
       await fetchProfile(); // Refresh profile context
       showSuccess("Disconnected from QuickBooks.");
     } catch (error: any) {
@@ -97,8 +111,6 @@ const Settings: React.FC = () => {
   return (
     <div className="flex flex-col space-y-6 p-6">
       <h1 className="text-3xl font-bold">Settings</h1>
-
-      {/* Removed the Theme Settings card */}
 
       <Card>
         <CardHeader>
@@ -151,7 +163,6 @@ const Settings: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* NEW: QuickBooks Integration Card */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -191,10 +202,6 @@ const Settings: React.FC = () => {
           )}
         </CardContent>
       </Card>
-
-      {/* REMOVED: Inventory Locations Card */}
-
-      {/* Other settings sections can go here */}
     </div>
   );
 };
