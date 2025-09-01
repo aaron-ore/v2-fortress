@@ -114,6 +114,9 @@ const Settings: React.FC = () => {
     setIsSyncingQuickBooks(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
+       console.log("Client-side session before sync:", session);
+      console.log("Client-side access token before sync:", session?.access_token);
+      
       if (!session) {
         showError("You must be logged in to sync with QuickBooks.");
         return;
