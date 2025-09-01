@@ -22,6 +22,7 @@ import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
 import ManageLocationsDialog from "@/components/ManageLocationsDialog";
 import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
+import { supabase } from "@/lib/supabaseClient"; // Import supabase client
 
 interface AddInventoryDialogProps {
   isOpen: boolean;
@@ -161,6 +162,23 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       (autoReorderEnabled && (isNaN(parsedAutoReorderQuantity) || parsedAutoReorderQuantity <= 0))
     ) {
       showError("Please enter valid positive numbers for all quantity and price fields, and Auto-Reorder Quantity (if enabled).");
+      return;
+    }
+
+    // Check for duplicate SKU before adding
+    const { data: existingItem, error: fetchError } = await supabase
+      .from('inventory_items')
+      .select('sku')
+      .eq('sku', sku.trim())
+      .single();
+
+    if (existingItem) {
+      showError(`An item with SKU '${sku.trim()}' already exists. Please use a unique SKU.`);
+      return;
+    }
+    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means "no rows found", which is fine
+      console.error("Error checking for duplicate SKU:", fetchError);
+      showError("Failed to check for duplicate SKU. Please try again.");
       return;
     }
 
