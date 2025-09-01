@@ -336,11 +336,8 @@ const CreatePurchaseOrder: React.FC = () => {
                     value={poNumber}
                     onChange={(e) => setPoNumber(e.target.value)}
                     placeholder="Will be generated on creation"
-                    disabled // Disable direct editing, will be set after creation
+                    disabled
                   />
-                  {poQrCodeSvg && (
-                    <div dangerouslySetInnerHTML={{ __html: poQrCodeSvg }} className="w-20 h-20 object-contain" />
-                  )}
                 </div>
               </div>
               <div className="space-y-2">
@@ -464,7 +461,7 @@ const CreatePurchaseOrder: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border rounded-lg shadow-sm p-6">
+          <Card className="bg-card border-border rounded-lg shadow-sm p-6 relative"> {/* Added relative for QR positioning */}
             <CardHeader className="pb-4">
               <CardTitle className="text-xl font-semibold">Notes</CardTitle>
             </CardHeader>
@@ -475,6 +472,11 @@ const CreatePurchaseOrder: React.FC = () => {
                 placeholder="Add any additional notes or instructions here..."
                 rows={4}
               />
+              {poQrCodeSvg && (
+                <div className="absolute bottom-4 right-4 w-20 h-20 object-contain">
+                  <div dangerouslySetInnerHTML={{ __html: poQrCodeSvg }} />
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

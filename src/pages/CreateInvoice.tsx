@@ -355,9 +355,6 @@ const CreateInvoice: React.FC = () => {
                     placeholder="Will be generated on creation"
                     disabled
                   />
-                  {invoiceQrCodeSvg && (
-                    <div dangerouslySetInnerHTML={{ __html: invoiceQrCodeSvg }} className="w-20 h-20 object-contain" />
-                  )}
                 </div>
               </div>
               <div className="space-y-2">
@@ -497,7 +494,7 @@ const CreateInvoice: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border rounded-lg shadow-sm p-6">
+          <Card className="bg-card border-border rounded-lg shadow-sm p-6 relative"> {/* Added relative for QR positioning */}
             <CardHeader className="pb-4">
               <CardTitle className="text-xl font-semibold">Notes</CardTitle>
             </CardHeader>
@@ -508,6 +505,11 @@ const CreateInvoice: React.FC = () => {
                 placeholder="Add any additional notes or instructions here..."
                 rows={4}
               />
+              {invoiceQrCodeSvg && (
+                <div className="absolute bottom-4 right-4 w-20 h-20 object-contain">
+                  <div dangerouslySetInnerHTML={{ __html: invoiceQrCodeSvg }} />
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
