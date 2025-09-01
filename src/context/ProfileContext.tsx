@@ -15,13 +15,15 @@ export interface UserProfile {
   organizationId: string | null;
   organizationCode?: string; // NEW: Add organizationCode
   createdAt: string;
+  quickbooksAccessToken?: string; // NEW: Add QuickBooks Access Token
+  quickbooksRefreshToken?: string; // NEW: Add QuickBooks Refresh Token
 }
 
 interface ProfileContextType {
   profile: UserProfile | null;
   allProfiles: UserProfile[];
   isLoadingProfile: boolean;
-  updateProfile: (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode">>) => Promise<void>;
+  updateProfile: (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "quickbooksAccessToken" | "quickbooksRefreshToken">>) => Promise<void>;
   updateUserRole: (userId: string, newRole: string, organizationId: string | null) => Promise<void>;
   fetchProfile: () => Promise<void>;
   fetchAllProfiles: () => Promise<void>;
@@ -54,7 +56,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code)") // NEW: Select unique_code from organizations
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code), quickbooks_access_token, quickbooks_refresh_token") // NEW: Select unique_code from organizations and QuickBooks tokens
       .eq("id", session.user.id)
       .single();
 
@@ -89,6 +91,8 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         organizationId: userProfileData.organization_id,
         organizationCode: userProfileData.organizations?.unique_code || undefined, // NEW: Set organizationCode
         createdAt: userProfileData.created_at,
+        quickbooksAccessToken: userProfileData.quickbooks_access_token || undefined, // NEW
+        quickbooksRefreshToken: userProfileData.quickbooks_refresh_token || undefined, // NEW
       });
     }
     setIsLoadingProfile(false);
@@ -106,7 +110,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email")
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, quickbooks_access_token, quickbooks_refresh_token") // NEW: Select QuickBooks tokens
       .eq("organization_id", profile.organizationId);
 
     if (error) {
@@ -124,6 +128,8 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         role: p.role,
         organizationId: p.organization_id,
         createdAt: p.created_at,
+        quickbooksAccessToken: p.quickbooks_access_token || undefined, // NEW
+        quickbooksRefreshToken: p.quickbooks_refresh_token || undefined, // NEW
       }));
       setAllProfiles(fetchedProfiles); // Set fetched data, could be empty
     }
@@ -158,7 +164,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   }, [profile?.role, profile?.organizationId, fetchAllProfiles]);
 
-  const updateProfile = async (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode">>) => {
+  const updateProfile = async (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "quickbooksAccessToken" | "quickbooksRefreshToken">>) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       showError("You must be logged in to update your profile.");
@@ -195,6 +201,8 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         organizationId: data.organization_id,
         organizationCode: profile?.organizationCode, // Keep existing organizationCode
         createdAt: data.created_at,
+        quickbooksAccessToken: data.quickbooks_access_token || undefined, // NEW
+        quickbooksRefreshToken: data.quickbooks_refresh_token || undefined, // NEW
       });
       // REMOVED: addActivity("Profile Updated", `Updated own profile details.`, { oldProfile: oldProfile, newProfile: data });
       showSuccess("Profile updated successfully!");
@@ -245,6 +253,8 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
             avatarUrl: updatedProfileData.avatar_url,
             email: updatedProfileData.email,
             organizationCode: profile?.organizationCode, // Keep existing organizationCode
+            quickbooksAccessToken: updatedProfileData.quickbooks_access_token || undefined, // NEW
+            quickbooksRefreshToken: updatedProfileData.quickbooks_refresh_token || undefined, // NEW
           } : p
         )
       );

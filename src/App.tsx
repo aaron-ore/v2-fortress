@@ -1,7 +1,7 @@
 import { Toaster as SonnerToaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom"; // Import useLocation
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
@@ -53,6 +53,7 @@ import PutawayLabelPdfContent from "./components/PutawayLabelPdfContent";
 import LocationLabelPdfContent from "./components/LocationLabelPdfContent";
 import PickingWavePdfContent from "./components/PickingWavePdfContent";
 import { SidebarProvider } from "./context/SidebarContext";
+import { showSuccess, showError } from "./utils/toast"; // Ensure toast functions are imported
 
 // NEW: Import all new PDF content components
 import InventoryValuationPdfContent from "./components/reports/pdf/InventoryValuationPdfContent";
@@ -120,6 +121,7 @@ const AppContent = () => {
   const [session, setSession] = useState<any>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation(); // Use useLocation hook
   const { isLoadingProfile } = useProfile();
   const { isPrinting, printContentData, resetPrintState } = usePrint();
 
@@ -148,6 +150,22 @@ const AppContent = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // NEW: Handle QuickBooks OAuth callback messages
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const quickbooksSuccess = params.get('quickbooks_success');
+    const quickbooksError = params.get('quickbooks_error');
+
+    if (quickbooksSuccess) {
+      showSuccess("QuickBooks connected successfully!");
+      navigate(location.pathname, { replace: true }); // Clear query params
+    } else if (quickbooksError) {
+      showError(`QuickBooks connection failed: ${quickbooksError}`);
+      navigate(location.pathname, { replace: true }); // Clear query params
+    }
+  }, [location.search, navigate]);
+
+
   if (loadingAuth || isLoadingProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
@@ -166,6 +184,8 @@ const AppContent = () => {
     <Routes>
       <Route path="/auth" element={<Auth />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      {/* NEW: Add a route for the QuickBooks OAuth callback to prevent 404 */}
+      <Route path="/quickbooks-oauth-callback" element={<QuickBooksOAuthCallbackHandler />} />
       {!session && <Route path="*" element={<Auth />} />}
     </Routes>
   );
@@ -229,6 +249,21 @@ const AppContent = () => {
         </PrintWrapper>
       )}
     </>
+  );
+};
+
+// NEW: Component to handle QuickBooks OAuth callback redirect
+const QuickBooksOAuthCallbackHandler: React.FC = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    // The Edge Function has already processed the tokens and redirected with success/error params.
+    // We just need to redirect to the settings page.
+    navigate('/settings', { replace: true });
+  }, [navigate]);
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+      Processing QuickBooks connection...
+    </div>
   );
 };
 

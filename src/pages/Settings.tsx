@@ -12,10 +12,12 @@ import { useProfile } from "@/context/ProfileContext";
 import { showError, showSuccess } from "@/utils/toast";
 import { Loader2 } from "lucide-react";
 import { useOnboarding } from "@/context/OnboardingContext";
+import { Link } from "react-router-dom"; // Import Link for navigation
+import { FileText, Plug } from "lucide-react"; // NEW: Import Plug icon
 
 const Settings: React.FC = () => {
   const { theme, setTheme } = useTheme();
-  const { profile, updateProfile, isLoadingProfile } = useProfile();
+  const { profile, updateProfile, isLoadingProfile, fetchProfile } = useProfile();
   const { companyProfile, setCompanyProfile, locations, addLocation, removeLocation } = useOnboarding();
 
   const [companyName, setCompanyName] = useState(companyProfile?.name || "");
@@ -48,7 +50,44 @@ const Settings: React.FC = () => {
     }
   };
 
-  // REMOVED: handleAddLocation and handleRemoveLocation as they are moved to Locations.tsx
+  const handleConnectQuickBooks = () => {
+    if (!profile?.organizationId) {
+      showError("You must have an organization set up to connect to QuickBooks.");
+      return;
+    }
+    // Construct the OAuth 2.0 authorization URL
+    const clientId = import.meta.env.VITE_QUICKBOOKS_CLIENT_ID;
+    const redirectUri = `${window.location.origin}/quickbooks-oauth-callback`; // This will be our Edge Function endpoint
+    const scope = "com.intuit.quickbooks.accounting openid profile email address phone"; // Required scopes
+    const responseType = "code";
+    const state = profile.organizationId; // Use organizationId as state for security and context
+
+    const authUrl = `https://appcenter.intuit.com/app/connect/oauth2?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=${responseType}&state=${state}`;
+    
+    window.location.href = authUrl;
+  };
+
+  const handleDisconnectQuickBooks = async () => {
+    if (!profile?.quickbooksAccessToken) {
+      showError("Not connected to QuickBooks.");
+      return;
+    }
+
+    // In a real scenario, you'd revoke the token with QuickBooks API.
+    // For this demo, we'll just clear the tokens from the profile.
+    try {
+      await supabase
+        .from('profiles')
+        .update({ quickbooks_access_token: null, quickbooks_refresh_token: null })
+        .eq('id', profile.id);
+      
+      await fetchProfile(); // Refresh profile context
+      showSuccess("Disconnected from QuickBooks.");
+    } catch (error: any) {
+      console.error("Error disconnecting QuickBooks:", error);
+      showError(`Failed to disconnect from QuickBooks: ${error.message}`);
+    }
+  };
 
   const hasCompanyProfileChanges =
     companyName !== (companyProfile?.name || "") ||
@@ -109,6 +148,47 @@ const Settings: React.FC = () => {
               "Save Company Profile"
             )}
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* NEW: QuickBooks Integration Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Plug className="h-6 w-6 text-primary" /> QuickBooks Integration
+          </CardTitle>
+          <CardDescription>
+            Connect your Fortress account with QuickBooks for seamless accounting synchronization.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {profile?.quickbooksAccessToken ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-green-500 font-semibold">
+                <CheckCircle className="inline h-4 w-4 mr-2" /> Connected to QuickBooks!
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Your Fortress account is linked. You can now synchronize data.
+              </p>
+              <Button variant="destructive" onClick={handleDisconnectQuickBooks}>
+                Disconnect QuickBooks
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <p className="text-muted-foreground">
+                Connect your QuickBooks account to enable automatic syncing of orders, inventory, and more.
+              </p>
+              <Button onClick={handleConnectQuickBooks} disabled={!profile?.organizationId}>
+                Connect to QuickBooks
+              </Button>
+              {!profile?.organizationId && (
+                <p className="text-sm text-red-500">
+                  Please set up your company profile and organization first.
+                </p>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
