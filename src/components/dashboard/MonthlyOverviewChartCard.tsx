@@ -69,12 +69,12 @@ const MonthlyOverviewChartCard: React.FC<MonthlyOverviewChartCardProps> = ({ dat
   }, [orders, inventoryItems, dateRange]);
 
   return (
-    <Card className="bg-card border-border rounded-lg shadow-sm p-4 col-span-full">
+    <Card className="bg-card border-border rounded-lg shadow-sm p-4 col-span-full flex flex-col h-[310px]">
       <CardHeader className="pb-2">
         <CardTitle className="text-2xl font-bold text-foreground">Monthly Activity Overview</CardTitle>
         <p className="text-sm text-muted-foreground">Sales, Inventory & Purchase Trends (Last 12 Months)</p>
       </CardHeader>
-      <CardContent className="h-[250px] p-4 pt-0 flex flex-col justify-between">
+      <CardContent className="flex-grow p-4 pt-0 flex flex-col justify-between">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}

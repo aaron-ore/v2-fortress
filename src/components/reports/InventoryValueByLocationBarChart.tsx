@@ -34,13 +34,13 @@ const InventoryValueByLocationBarChart: React.FC = () => {
             margin={{
               top: 20,
               right: 30,
-              left: 20,
+              left: 0, // Adjusted left margin to 0, YAxis will handle its own width
               bottom: 5,
             }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" />
             <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-            <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(value) => `$${value}`} />
+            <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(value) => `$${value}`} width={100} /> {/* Increased YAxis width */}
             <Tooltip
               contentStyle={{
                 backgroundColor: "hsl(var(--card))",

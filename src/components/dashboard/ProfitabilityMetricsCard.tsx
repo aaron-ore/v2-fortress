@@ -49,12 +49,12 @@ const ProfitabilityMetricsCard: React.FC = () => {
   }, [orders, inventoryItems]);
 
   return (
-    <Card className="bg-card border-border rounded-lg shadow-sm p-4">
+    <Card className="bg-card border-border rounded-lg shadow-sm p-4 flex flex-col h-[310px]">
       <CardHeader className="pb-2">
         <CardTitle className="text-2xl font-bold text-foreground">Profitability Metrics</CardTitle>
         <p className="text-sm text-muted-foreground">Key financial performance indicators</p>
       </CardHeader>
-      <CardContent className="flex flex-col items-center justify-between h-[257px] p-4 pt-0">
+      <CardContent className="flex-grow flex flex-col items-center justify-between p-4 pt-0">
         <div className="flex items-center w-full flex-grow">
           {/* Left side: Colored boxes with values */}
           <div className="w-1/3 flex flex-col items-center justify-around h-full">

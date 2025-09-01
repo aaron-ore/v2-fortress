@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Header from "./Header";
-import { MadeWithDyad } from "./made-with-dyad";
+// REMOVED: import { MadeWithDyad } from "./made-with-dyad";
 import AnnouncementBar from "./AnnouncementBar";
 import Sidebar from "./Sidebar"; // Import the new Sidebar
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -38,9 +38,9 @@ const Layout: React.FC = () => {
           <main className="flex-grow p-4 container mx-auto">
             <Outlet />
           </main>
-          <div className="mt-auto">
+          {/* REMOVED: <div className="mt-auto">
             <MadeWithDyad />
-          </div>
+          </div> */}
         </div>
       ) : (
         <>
@@ -68,9 +68,9 @@ const Layout: React.FC = () => {
             <main className="flex-grow bg-card rounded-lg shadow-sm p-6">
               <Outlet />
             </main>
-            <div className="mt-auto">
+            {/* REMOVED: <div className="mt-auto">
               <MadeWithDyad />
-            </div>
+            </div> */}
           </div>
         </>
       )}
