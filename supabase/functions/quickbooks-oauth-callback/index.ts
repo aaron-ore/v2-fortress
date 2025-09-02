@@ -20,6 +20,7 @@ Deno.serve(async (req) => {
     const state = url.searchParams.get('state'); // This should now be the user.id
     const error = url.searchParams.get('error');
     const errorDescription = url.searchParams.get('error_description');
+    const realmIdFromUrl = url.searchParams.get('realmId'); // CORRECT: Extract realmId from URL params
 
     // Define the client application's base URL for redirection
     // This should be the URL where your frontend app is hosted, e.g., on Vercel
@@ -31,9 +32,9 @@ Deno.serve(async (req) => {
       return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent(errorDescription || error)}`, 302);
     }
 
-    if (!code || !state) {
-      console.error('Missing code or state in QuickBooks OAuth callback.');
-      return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent('Missing authorization code or state.')}`, 302);
+    if (!code || !state || !realmIdFromUrl) { // IMPORTANT: realmIdFromUrl is now required
+      console.error('Missing code, state, or realmId in QuickBooks OAuth callback.');
+      return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent('Missing authorization code, state, or QuickBooks company ID (realmId).')}`, 302);
     }
 
     const QUICKBOOKS_CLIENT_ID = Deno.env.get('QUICKBOOKS_CLIENT_ID');
@@ -84,11 +85,11 @@ Deno.serve(async (req) => {
 
     const accessToken = tokens.access_token;
     const refreshToken = tokens.refresh_token;
-    const realmId = tokens.realmId; // This is the QuickBooks company ID
+    // const realmId = tokens.realmId; // REMOVED: Incorrectly trying to get from tokens object
 
     console.log('QuickBooks OAuth Callback: Received Access Token (first 10 chars):', accessToken ? accessToken.substring(0, 10) : 'N/A');
     console.log('QuickBooks OAuth Callback: Received Refresh Token (first 10 chars):', refreshToken ? refreshToken.substring(0, 10) : 'N/A');
-    console.log('QuickBooks OAuth Callback: Received Realm ID:', realmId);
+    console.log('QuickBooks OAuth Callback: Received Realm ID (from URL):', realmIdFromUrl); // Log the correctly extracted realmId
 
     // Use the 'state' parameter (which is the user.id) to update the profile
     const userId = state;
@@ -101,7 +102,7 @@ Deno.serve(async (req) => {
       .update({
         quickbooks_access_token: accessToken,
         quickbooks_refresh_token: refreshToken,
-        quickbooks_realm_id: realmId, // Store the realmId
+        quickbooks_realm_id: realmIdFromUrl, // CORRECT: Use realmIdFromUrl
       })
       .eq('id', userId); // Update the profile for the user who initiated the OAuth flow
 
