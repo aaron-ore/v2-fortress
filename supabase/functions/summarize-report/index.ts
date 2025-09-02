@@ -12,17 +12,42 @@ Deno.serve(async (req) => {
   }
 
   let textToSummarize;
+  let rawRequestBody = '';
 
   try {
     console.log('Edge Function: Incoming request method:', req.method);
     console.log('Edge Function: Content-Type header:', req.headers.get('Content-Type'));
     console.log('Edge Function: Content-Length header:', req.headers.get('Content-Length'));
 
-    const jsonBody = await req.json();
-    textToSummarize = jsonBody.textToSummarize;
+    // Log all headers for debugging
+    console.log('Edge Function: All incoming headers:');
+    for (const [key, value] of req.headers.entries()) {
+      console.log(`  ${key}: ${value}`);
+    }
 
-    console.log('Edge Function: Parsed textToSummarize (first 100 chars):', textToSummarize ? textToSummarize.substring(0, 100) + '...' : 'null');
-    console.log('Edge Function: Length of textToSummarize:', textToSummarize ? textToSummarize.length : 0);
+    // Attempt to read the raw request body as text first
+    try {
+      rawRequestBody = await req.text();
+      console.log('Edge Function: Raw request body (as text):', `"${rawRequestBody}"`, 'length:', rawRequestBody.length);
+    } catch (readError) {
+      console.error('Edge Function: Error reading raw request body as text:', readError);
+      rawRequestBody = 'Error reading body';
+    }
+
+    // Now attempt to parse the JSON body
+    let jsonBody;
+    try {
+      jsonBody = JSON.parse(rawRequestBody); // Parse the already read text
+      textToSummarize = jsonBody.textToSummarize;
+      console.log('Edge Function: Parsed textToSummarize (first 100 chars):', textToSummarize ? textToSummarize.substring(0, 100) + '...' : 'null');
+      console.log('Edge Function: Length of textToSummarize:', textToSummarize ? textToSummarize.length : 0);
+    } catch (parseError) {
+      console.error('Edge Function: Error parsing JSON from raw body:', parseError);
+      return new Response(JSON.stringify({ error: `Failed to parse JSON request body. Raw body: "${rawRequestBody}". Error: ${parseError.message}` }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      });
+    }
 
     if (!textToSummarize) {
       console.error('Edge Function: textToSummarize is empty or null after parsing.');
@@ -40,7 +65,7 @@ Deno.serve(async (req) => {
 
     // Get the authenticated user's session (optional, for logging/RLS if needed)
     const authHeader = req.headers.get('Authorization');
-    console.log('Edge Function: Authorization header:', authHeader);
+    console.log('Edge Function: Authorization header for user auth:', authHeader);
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(authHeader);
 
     if (userError) {
