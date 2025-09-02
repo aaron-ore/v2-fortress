@@ -5,32 +5,44 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import FloorPlanToolbar from "@/components/floor-plan/FloorPlanToolbar";
 import FloorPlanEditor from "@/components/floor-plan/FloorPlanEditor";
 import ElementPropertiesPanel from "@/components/floor-plan/ElementPropertiesPanel";
-import { FloorPlanElement } from "@/context/FloorPlanContext";
+import { FloorPlanElement, useFloorPlans } from "@/context/FloorPlanContext"; // Import useFloorPlans
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { nanoid } from "nanoid";
-import { showError } from "@/utils/toast";
+import { showError, showSuccess } from "@/utils/toast";
 
 const FloorPlanPage: React.FC = () => {
+  const { currentFloorPlan, setCurrentFloorPlan, updateFloorPlan, deleteFloorPlan } = useFloorPlans(); // Use context
+  const [elements, setElements] = useState<FloorPlanElement[]>([]); // Manage elements here
   const [selectedElement, setSelectedElement] = useState<FloorPlanElement | null>(null);
+
+  // Sync elements from context when currentFloorPlan changes
+  useEffect(() => {
+    if (currentFloorPlan) {
+      setElements(currentFloorPlan.layoutData);
+    } else {
+      setElements([]); // Clear elements if no plan is selected
+    }
+    setSelectedElement(null); // Clear selection when plan changes
+  }, [currentFloorPlan]);
 
   const handleElementSelect = useCallback((element: FloorPlanElement | null) => {
     setSelectedElement(element);
   }, []);
 
-  const handleUpdateSelectedElement = useCallback((updatedElement: FloorPlanElement) => {
-    setSelectedElement(updatedElement);
+  const handleUpdateElement = useCallback((updatedElement: FloorPlanElement) => {
+    setElements(prev => prev.map(el => el.id === updatedElement.id ? updatedElement : el));
+    setSelectedElement(updatedElement); // Keep selected element updated
   }, []);
 
-  const handleDeleteSelectedElement = useCallback((id: string) => {
-    setSelectedElement(null);
+  const handleDeleteElement = useCallback((id: string) => {
+    setElements(prev => prev.filter(el => el.id !== id));
+    setSelectedElement(null); // Clear selection after deletion
+    showSuccess("Element deleted.");
   }, []);
 
   const handleAddCustomElement = () => {
-    // This function is called from the toolbar to add a generic custom element
-    // The actual addition to the canvas happens in FloorPlanEditor's onDragEnd
-    // For now, this can just be a placeholder or trigger a specific drag action
     showError("Drag a shape from the toolbar to add it to the canvas. Custom shape creation is a future enhancement.");
   };
 
@@ -54,20 +66,20 @@ const FloorPlanPage: React.FC = () => {
         <ResizablePanel defaultSize={65} minSize={40}>
           <div className="flex h-full flex-col p-4">
             <FloorPlanEditor
+              elements={elements} // Pass elements state
+              setElements={setElements} // Pass setter for elements
               onElementSelect={handleElementSelect}
               selectedElement={selectedElement}
-              onUpdateSelectedElement={handleUpdateSelectedElement}
-              onDeleteSelectedElement={handleDeleteSelectedElement}
             />
           </div>
         </ResizablePanel>
-        <ResizableHandle withHandle />
+        <ResizableHandle />
         <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
           <div className="flex h-full flex-col p-4">
             <ElementPropertiesPanel
               selectedElement={selectedElement}
-              onUpdateElement={handleUpdateSelectedElement}
-              onDeleteElement={onDeleteSelectedElement}
+              onUpdateElement={handleUpdateElement} // Use the new handler
+              onDeleteElement={handleDeleteElement} // Use the new handler
               onClose={() => setSelectedElement(null)}
             />
           </div>

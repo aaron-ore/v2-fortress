@@ -15,11 +15,12 @@ import { showError, showSuccess } from "@/utils/toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface FloorPlanEditorProps {
-  initialFloorPlanId?: string;
+  initialFloorPlanId?: string; // Keep this for initial loading logic if needed
+  elements: FloorPlanElement[]; // NEW: Receive elements as prop
+  setElements: React.Dispatch<React.SetStateAction<FloorPlanElement[]>>; // NEW: Receive setter as prop
   onElementSelect: (element: FloorPlanElement | null) => void;
   selectedElement: FloorPlanElement | null;
-  onUpdateSelectedElement: (updatedElement: FloorPlanElement) => void;
-  onDeleteSelectedElement: (id: string) => void;
+  // REMOVED: onUpdateSelectedElement and onDeleteSelectedElement as they are handled by parent
 }
 
 const CANVAS_WIDTH = 1000;
@@ -27,10 +28,10 @@ const CANVAS_HEIGHT = 600;
 
 const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
   initialFloorPlanId,
+  elements, // Destructure new props
+  setElements, // Destructure new props
   onElementSelect,
   selectedElement,
-  onUpdateSelectedElement,
-  onDeleteSelectedElement,
 }) => {
   const {
     floorPlans,
@@ -44,7 +45,7 @@ const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
     setCurrentFloorPlan,
   } = useFloorPlans();
 
-  const [elements, setElements] = useState<FloorPlanElement[]>([]);
+  // REMOVED: [elements, setElements] = useState<FloorPlanElement[]>([]); // No longer internal state
   const [floorPlanName, setFloorPlanName] = useState("New Floor Plan");
   const [isSaving, setIsSaving] = useState(false);
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
@@ -67,32 +68,32 @@ const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
       const plan = floorPlans.find(fp => fp.id === initialFloorPlanId);
       if (plan) {
         setCurrentFloorPlan(plan);
-        setElements(plan.layoutData);
+        setElements(plan.layoutData); // Use prop setter
         setFloorPlanName(plan.name);
       } else {
         showError("Initial floor plan not found.");
         setCurrentFloorPlan(null);
-        setElements([]);
+        setElements([]); // Use prop setter
         setFloorPlanName("New Floor Plan");
       }
     } else if (!initialFloorPlanId && !isLoadingFloorPlans && !currentFloorPlan) {
       // If no initial ID and no current plan, start fresh
-      setElements([]);
+      setElements([]); // Use prop setter
       setFloorPlanName("New Floor Plan");
       setCurrentFloorPlan(null);
     }
-  }, [initialFloorPlanId, isLoadingFloorPlans, floorPlans, setCurrentFloorPlan]);
+  }, [initialFloorPlanId, isLoadingFloorPlans, floorPlans, setCurrentFloorPlan, setElements, currentFloorPlan]); // Added setElements to dependencies
 
   // Update local elements state if currentFloorPlan changes externally
   useEffect(() => {
     if (currentFloorPlan) {
-      setElements(currentFloorPlan.layoutData);
+      setElements(currentFloorPlan.layoutData); // Use prop setter
       setFloorPlanName(currentFloorPlan.name);
     } else {
-      setElements([]);
+      setElements([]); // Use prop setter
       setFloorPlanName("New Floor Plan");
     }
-  }, [currentFloorPlan]);
+  }, [currentFloorPlan, setElements]); // Added setElements to dependencies
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over, delta } = event;
@@ -118,11 +119,11 @@ const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
         height: 100,
         color: color,
       };
-      setElements((prev) => [...prev, newElement]);
+      setElements((prev) => [...prev, newElement]); // Use prop setter
       onElementSelect(newElement); // Select the newly added element
     } else if (active.data.current?.type === 'existingElement') {
       // Move existing element
-      setElements((prev) =>
+      setElements((prev) => // Use prop setter
         prev.map((el) =>
           el.id === active.id
             ? { ...el, x: el.x + delta.x, y: el.y + delta.y }
@@ -131,7 +132,10 @@ const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
       );
       // Update selected element's position if it was the one moved
       if (selectedElement?.id === active.id) {
-        onUpdateSelectedElement({ ...selectedElement, x: selectedElement.x + delta.x, y: selectedElement.y + delta.y });
+        // This should ideally call onUpdateElement from parent, but for now, direct update is fine
+        // as selectedElement is just a reference to an element in the `elements` array.
+        // The `elements` array itself is updated via setElements.
+        onElementSelect({ ...selectedElement, x: selectedElement.x + delta.x, y: selectedElement.y + delta.y });
       }
     }
   };
@@ -158,7 +162,7 @@ const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
     const plan = floorPlans.find(fp => fp.id === id);
     if (plan) {
       setCurrentFloorPlan(plan);
-      setElements(plan.layoutData);
+      setElements(plan.layoutData); // Use prop setter
       setFloorPlanName(plan.name);
       onElementSelect(null); // Deselect any element when loading a new plan
       showSuccess(`Floor plan "${plan.name}" loaded.`);
@@ -179,7 +183,7 @@ const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
     const newPlan = await addFloorPlan(newFloorPlanName.trim(), []);
     if (newPlan) {
       setCurrentFloorPlan(newPlan);
-      setElements([]);
+      setElements([]); // Use prop setter
       setFloorPlanName(newPlan.name);
       onElementSelect(null);
       setNewFloorPlanName("");
@@ -200,25 +204,15 @@ const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
       // If the deleted plan was the current one, clear current
       if (currentFloorPlan?.id === floorPlanToDelete.id) {
         setCurrentFloorPlan(null);
-        setElements([]);
+        setElements([]); // Use prop setter
         setFloorPlanName("New Floor Plan");
         onElementSelect(null);
       }
     }
   };
 
-  // Handle updates from properties panel
-  const handleUpdateElementFromPanel = useCallback((updatedElement: FloorPlanElement) => {
-    setElements(prev => prev.map(el => el.id === updatedElement.id ? updatedElement : el));
-    onUpdateSelectedElement(updatedElement); // Also update the selected element in parent state
-  }, [onUpdateSelectedElement]);
-
-  // Handle delete from properties panel
-  const handleDeleteElementFromPanel = useCallback((id: string) => {
-    setElements(prev => prev.filter(el => el.id !== id));
-    onDeleteSelectedElement(id); // Also clear selected element in parent state
-    showSuccess("Element deleted.");
-  }, [onDeleteSelectedElement]);
+  // REMOVED: handleUpdateElementFromPanel and handleDeleteElementFromPanel
+  // These are now handled directly by FloorPlanPage and passed to ElementPropertiesPanel
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
