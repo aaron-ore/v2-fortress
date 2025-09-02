@@ -104,7 +104,8 @@ const AccountSettings: React.FC = () => {
                 <SelectItem value="ocean-breeze">Ocean Breeze</SelectItem>
                 <SelectItem value="sunset-glow">Sunset Glow</SelectItem>
                 <SelectItem value="forest-whisper">Forest Whisper</SelectItem>
-                <SelectItem value="emerald">Emerald</SelectItem> {/* NEW: Emerald Theme */}
+                <SelectItem value="emerald">Emerald</SelectItem>
+                <SelectItem value="deep-forest">Deep Forest</SelectItem> {/* NEW: Deep Forest Theme */}
               </SelectContent>
             </Select>
           </div>

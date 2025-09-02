@@ -230,6 +230,45 @@
     --sidebar-border: var(--border);
     --sidebar-toggle-background: var(--secondary);
   }
+
+  /* NEW: Deep Forest Theme Palette */
+  html.deep-forest {
+    --background: 240 9% 11%; /* Almost black */
+    --foreground: 0 0% 100%; /* White */
+
+    --card: 180 25% 16%; /* Very dark green-blue */
+    --card-foreground: 0 0% 100%;
+
+    --popover: 180 25% 16%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 168 43% 27%; /* Dark teal */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 6% 37%; /* Muted purple-grey */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 240 5% 25%; /* Darker grey for muted elements */
+    --muted-foreground: 240 5% 50%; /* Dark grey for muted text */
+
+    --accent: 270 29% 35%; /* Dark purple */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 80% 60%; /* Standard red */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 5% 20%; /* Dark border */
+    --input: 180 25% 16%; /* Same as card */
+    --ring: 168 43% 27%; /* Primary color */
+
+    /* Sidebar specific colors for Deep Forest theme */
+    --sidebar-background: var(--background);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-active-background: var(--secondary);
+    --sidebar-active-foreground: var(--primary-foreground);
+    --sidebar-border: var(--border);
+    --sidebar-toggle-background: var(--secondary);
+  }
 }
 
 @layer base {
