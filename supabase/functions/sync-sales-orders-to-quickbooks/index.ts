@@ -78,7 +78,6 @@ Deno.serve(async (req) => {
 
     if (profileError || !profile?.quickbooks_access_token || !profile?.quickbooks_refresh_token || !profile?.quickbooks_realm_id) {
       console.error('QuickBooks credentials missing for user:', user.id, profileError);
-      // NEW: More specific error message if realmId is missing
       const errorMessage = !profile?.quickbooks_realm_id 
         ? 'QuickBooks company (realmId) is missing. Please re-connect QuickBooks and ensure you select a company during authorization.'
         : 'QuickBooks integration not fully set up for this user (tokens or realmId missing).';
@@ -94,6 +93,7 @@ Deno.serve(async (req) => {
 
     const QUICKBOOKS_CLIENT_ID = Deno.env.get('QUICKBOOKS_CLIENT_ID');
     const QUICKBOOKS_CLIENT_SECRET = Deno.env.get('QUICKBOOKS_CLIENT_SECRET');
+    const QUICKBOOKS_ENVIRONMENT = Deno.env.get('QUICKBOOKS_ENVIRONMENT') || 'sandbox'; // 'sandbox' or 'production'
 
     if (!QUICKBOOKS_CLIENT_ID || !QUICKBOOKS_CLIENT_SECRET) {
       return new Response(JSON.stringify({ error: 'QuickBooks API credentials (Client ID/Secret) are missing in Supabase secrets.' }), {
@@ -101,6 +101,10 @@ Deno.serve(async (req) => {
         status: 500,
       });
     }
+
+    const QUICKBOOKS_API_BASE_URL = QUICKBOOKS_ENVIRONMENT === 'production'
+      ? 'https://quickbooks.api.intuit.com/v3/company'
+      : 'https://sandbox-quickbooks.api.intuit.com/v3/company';
 
     const refreshQuickBooksToken = async () => {
       console.log('Refreshing QuickBooks token...');
@@ -142,6 +146,106 @@ Deno.serve(async (req) => {
       console.log('QuickBooks token refreshed and saved.');
     };
 
+    const makeQuickBooksApiCall = async (url: string, options: RequestInit, retryOnAuth = true) => {
+      let response = await fetch(url, options);
+
+      if (response.status === 401 && retryOnAuth) {
+        console.log('QuickBooks API call failed with 401, attempting token refresh...');
+        await refreshQuickBooksToken();
+        options.headers = { ...options.headers, 'Authorization': `Bearer ${accessToken}` };
+        response = await fetch(url, options);
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error(`QuickBooks API error for URL ${url}:`, errorData);
+        throw new Error(`QuickBooks API error: ${errorData.Fault?.Error?.[0]?.Detail || response.statusText}`);
+      }
+      return response.json();
+    };
+
+    const getOrCreateQuickBooksCustomer = async (customerName: string, customerEmail?: string) => {
+      // Search for customer
+      const queryUrl = `${QUICKBOOKS_API_BASE_URL}/${realmId}/query?query=${encodeURIComponent(`SELECT * FROM Customer WHERE DisplayName = '${customerName}'`)}&minorversion=69`;
+      const searchResult = await makeQuickBooksApiCall(queryUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      if (searchResult.QueryResponse.Customer && searchResult.QueryResponse.Customer.length > 0) {
+        console.log(`Found existing QuickBooks customer: ${customerName} (ID: ${searchResult.QueryResponse.Customer[0].Id})`);
+        return searchResult.QueryResponse.Customer[0].Id;
+      }
+
+      // Create new customer if not found
+      console.log(`QuickBooks customer ${customerName} not found, creating new...`);
+      const newCustomerPayload = {
+        DisplayName: customerName,
+        PrimaryEmailAddr: customerEmail ? { Address: customerEmail } : undefined,
+      };
+      const createUrl = `${QUICKBOOKS_API_BASE_URL}/${realmId}/customer?minorversion=69`;
+      const createResult = await makeQuickBooksApiCall(createUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newCustomerPayload),
+      });
+      console.log(`Created new QuickBooks customer: ${customerName} (ID: ${createResult.Customer.Id})`);
+      return createResult.Customer.Id;
+    };
+
+    const getOrCreateQuickBooksItem = async (itemName: string, unitPrice: number) => {
+      // Search for item
+      const queryUrl = `${QUICKBOOKS_API_BASE_URL}/${realmId}/query?query=${encodeURIComponent(`SELECT * FROM Item WHERE Name = '${itemName}'`)}&minorversion=69`;
+      const searchResult = await makeQuickBooksApiCall(queryUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      if (searchResult.QueryResponse.Item && searchResult.QueryResponse.Item.length > 0) {
+        console.log(`Found existing QuickBooks item: ${itemName} (ID: ${searchResult.QueryResponse.Item[0].Id})`);
+        return searchResult.QueryResponse.Item[0].Id;
+      }
+
+      // Create new service item if not found
+      console.log(`QuickBooks item ${itemName} not found, creating new service item...`);
+      const newItemPayload = {
+        Name: itemName,
+        Type: 'Service', // For simplicity, create as a Service item
+        Active: true,
+        UnitPrice: unitPrice,
+        IncomeAccountRef: {
+          // This needs to be a valid QuickBooks Income Account ID.
+          // For a demo, we can try to find a default 'Sales' or 'Services' account,
+          // or use a hardcoded ID if one is known to exist in the sandbox.
+          // A more robust solution would query available accounts.
+          // For now, let's use a placeholder name and hope QuickBooks can resolve it.
+          name: 'Sales', // Common default income account name
+        },
+      };
+      const createUrl = `${QUICKBOOKS_API_BASE_URL}/${realmId}/item?minorversion=69`;
+      const createResult = await makeQuickBooksApiCall(createUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newItemPayload),
+      });
+      console.log(`Created new QuickBooks item: ${itemName} (ID: ${createResult.Item.Id})`);
+      return createResult.Item.Id;
+    };
+
     const { data: ordersToSync, error: ordersError } = await supabaseAdmin
       .from('orders')
       .select('*')
@@ -168,64 +272,55 @@ Deno.serve(async (req) => {
 
     for (const order of ordersToSync) {
       try {
-        const salesReceipt = {
-          CustomerRef: {
-            name: order.customer_supplier,
-          },
-          Line: order.items.map((item: any) => ({
+        console.log(`Processing order ${order.id} for QuickBooks sync...`);
+
+        // 1. Get or Create Customer in QuickBooks
+        const customerId = await getOrCreateQuickBooksCustomer(order.customer_supplier, order.customer_email); // Assuming customer_email might be available
+
+        // 2. Get or Create Items in QuickBooks
+        const qbLineItems = [];
+        for (const item of order.items) {
+          const qbItemId = await getOrCreateQuickBooksItem(item.itemName, item.unitPrice);
+          qbLineItems.push({
             DetailType: 'SalesItemLineDetail',
             SalesItemLineDetail: {
               ItemRef: {
+                value: qbItemId,
                 name: item.itemName,
               },
               UnitPrice: item.unitPrice,
               Qty: item.quantity,
             },
             Amount: item.quantity * item.unitPrice,
-          })),
+          });
+        }
+
+        // 3. Create SalesReceipt in QuickBooks
+        const salesReceipt = {
+          CustomerRef: {
+            value: customerId,
+            name: order.customer_supplier,
+          },
+          Line: qbLineItems,
           TxnDate: order.date,
           PrivateNote: `Fortress Order ID: ${order.id}. Notes: ${order.notes || ''}`,
           TotalAmt: order.total_amount,
         };
 
-        let qbResponse;
-        try {
-          qbResponse = await fetch(`${QUICKBOOKS_API_BASE_URL}/${realmId}/salesreceipt?minorversion=69`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(salesReceipt),
-          });
-        } catch (fetchError) {
-          if (fetchError instanceof Response && fetchError.status === 401) {
-            console.log('QuickBooks API call failed with 401, attempting token refresh...');
-            await refreshQuickBooksToken();
-            qbResponse = await fetch(`${QUICKBOOKS_API_BASE_URL}/${realmId}/salesreceipt?minorversion=69`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(salesReceipt),
-            });
-          } else {
-            throw fetchError;
-          }
-        }
-
-        if (!qbResponse.ok) {
-          const errorData = await qbResponse.json();
-          console.error(`QuickBooks API error for order ${order.id}:`, errorData);
-          throw new Error(`QuickBooks API error: ${errorData.Fault?.Error?.[0]?.Detail || qbResponse.statusText}`);
-        }
-
-        const qbData = await qbResponse.json();
+        console.log(`Creating SalesReceipt in QuickBooks for order ${order.id} with payload:`, JSON.stringify(salesReceipt, null, 2));
+        const qbData = await makeQuickBooksApiCall(`${QUICKBOOKS_API_BASE_URL}/${realmId}/salesreceipt?minorversion=69`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(salesReceipt),
+        });
         const quickbooksId = qbData.SalesReceipt.Id;
+        console.log(`SalesReceipt created in QuickBooks for order ${order.id}. QuickBooks ID: ${quickbooksId}`);
 
+        // 4. Update Supabase order status
         const { error: updateOrderError } = await supabaseAdmin
           .from('orders')
           .update({
