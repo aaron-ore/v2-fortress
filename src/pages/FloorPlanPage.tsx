@@ -42,9 +42,7 @@ const FloorPlanPage: React.FC = () => {
     showSuccess("Element deleted.");
   }, []);
 
-  const handleAddCustomElement = () => {
-    showError("Drag a shape from the toolbar to add it to the canvas. Custom shape creation is a future enhancement.");
-  };
+  // Removed handleAddCustomElement as it's no longer needed.
 
   return (
     <div className="flex flex-col h-full">
@@ -59,7 +57,7 @@ const FloorPlanPage: React.FC = () => {
       >
         <ResizablePanel defaultSize={15} minSize={10} maxSize={25}>
           <div className="flex h-full flex-col p-4">
-            <FloorPlanToolbar onAddCustomElement={handleAddCustomElement} />
+            <FloorPlanToolbar /> {/* Removed onAddCustomElement prop */}
           </div>
         </ResizablePanel>
         <ResizableHandle withHandle />

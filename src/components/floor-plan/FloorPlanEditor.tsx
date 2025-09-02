@@ -104,7 +104,11 @@ const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
     }
 
     if (active.data.current?.type === 'newElement') {
-      // Add new element to canvas
+      // Calculate position relative to the droppable canvas
+      const canvasRect = over.rect.current;
+      const newElementX = (active.rect.current.translated?.left || 0) - (canvasRect.left || 0);
+      const newElementY = (active.rect.current.translated?.top || 0) - (canvasRect.top || 0);
+
       const elementType = active.data.current.elementType as FloorPlanElement['type'];
       const label = active.data.current.label as string;
       const color = active.data.current.color as string;
@@ -113,8 +117,8 @@ const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
         id: nanoid(),
         type: elementType,
         name: label,
-        x: active.rect.current.translated?.left || 0,
-        y: active.rect.current.translated?.top || 0,
+        x: newElementX,
+        y: newElementY,
         width: 100,
         height: 100,
         color: color,

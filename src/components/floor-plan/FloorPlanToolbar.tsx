@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useDraggable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
-import { Box, LayoutGrid, Table, Monitor, PlusCircle } from "lucide-react"; // Changed Desk to Monitor
+import { Box, LayoutGrid, Table, Monitor, PlusCircle, Square } from "lucide-react"; // Added Square icon for custom shape
 import { FloorPlanElement } from "@/context/FloorPlanContext";
 
 interface FloorPlanToolbarProps {
-  onAddCustomElement: () => void;
+  // Removed onAddCustomElement prop
 }
 
 interface DraggableShapeProps {
@@ -50,7 +50,7 @@ const DraggableShape: React.FC<DraggableShapeProps> = ({ id, type, label, icon: 
   );
 };
 
-const FloorPlanToolbar: React.FC<FloorPlanToolbarProps> = ({ onAddCustomElement }) => {
+const FloorPlanToolbar: React.FC<FloorPlanToolbarProps> = () => { // Removed onAddCustomElement from props
   return (
     <Card className="h-full bg-card border-border shadow-sm flex flex-col">
       <CardHeader className="pb-2">
@@ -60,11 +60,10 @@ const FloorPlanToolbar: React.FC<FloorPlanToolbarProps> = ({ onAddCustomElement 
         <DraggableShape id="shelf" type="shelf" label="Shelf" icon={Box} color="#2196F3" />
         <DraggableShape id="aisle" type="aisle" label="Aisle" icon={LayoutGrid} color="#4CAF50" />
         <DraggableShape id="bin" type="bin" label="Bin" icon={Table} color="#FF9800" />
-        <DraggableShape id="desk" type="desk" label="Desk" icon={Monitor} color="#9C27B0" /> {/* Changed Desk to Monitor */}
+        <DraggableShape id="desk" type="desk" label="Desk" icon={Monitor} color="#9C27B0" />
         
-        <Button onClick={onAddCustomElement} className="col-span-2 flex items-center justify-center gap-2">
-          <PlusCircle className="h-4 w-4" /> Add Custom Shape
-        </Button>
+        {/* NEW: Draggable Custom Shape */}
+        <DraggableShape id="custom" type="custom" label="Custom Shape" icon={Square} color="#60A5FA" />
       </CardContent>
     </Card>
   );
