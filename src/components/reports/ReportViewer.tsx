@@ -14,7 +14,7 @@ import { useProfile } from "@/context/ProfileContext";
 
 // Import all report components (will be created in subsequent steps)
 import InventoryValuationReport from "./InventoryValuationReport";
-import LowStockReport from "./Components/reports/LowStockReport";
+import LowStockReport from "./LowStockReport";
 import InventoryMovementReport from "./InventoryMovementReport";
 import SalesByCustomerReport from "./SalesByCustomerReport";
 import SalesByProductReport from "./SalesByProductReport";
