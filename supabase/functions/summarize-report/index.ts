@@ -12,13 +12,34 @@ Deno.serve(async (req) => {
   }
 
   let textToSummarize;
-  let requestBody = ''; // Initialize requestBody to an empty string
+  let requestBody = '';
 
   try {
-    requestBody = await req.text(); // Read raw body once
-    console.log('Edge Function: Raw request body:', requestBody);
+    console.log('Edge Function: Incoming request method:', req.method);
+    console.log('Edge Function: Content-Type header:', req.headers.get('Content-Type'));
+    console.log('Edge Function: Content-Length header:', req.headers.get('Content-Length'));
 
-    const jsonBody = JSON.parse(requestBody); // Parse the raw text
+    // Check if the request has a body and it's readable
+    if (req.body) {
+      requestBody = await req.text(); // Read raw body once
+      console.log('Edge Function: Raw request body:', requestBody);
+    } else {
+      console.log('Edge Function: Request body is null or not readable.');
+      return new Response(JSON.stringify({ error: 'Request body is empty or unreadable.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      });
+    }
+
+    if (!requestBody.trim()) {
+      console.error('Edge Function: requestBody is empty after reading. This means the client sent an empty body or it was stripped.');
+      return new Response(JSON.stringify({ error: 'Received empty request body. Please ensure content is sent.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      });
+    }
+
+    const jsonBody = JSON.parse(requestBody);
     textToSummarize = jsonBody.textToSummarize;
 
     console.log('Edge Function: Parsed textToSummarize:', textToSummarize);
@@ -39,7 +60,7 @@ Deno.serve(async (req) => {
 
     // Get the authenticated user's session (optional, for logging/RLS if needed)
     const authHeader = req.headers.get('Authorization');
-    console.log('Edge Function: Authorization header:', authHeader); // Log auth header
+    console.log('Edge Function: Authorization header:', authHeader);
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(authHeader);
 
     if (userError) {
@@ -61,7 +82,7 @@ Deno.serve(async (req) => {
     // Fetch the Gemini API key from Supabase Secrets
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     if (!geminiApiKey) {
-      console.error('Edge Function: Gemini API key not configured.'); // Log missing key
+      console.error('Edge Function: Gemini API key not configured.');
       return new Response(JSON.stringify({ error: 'Gemini API key not configured.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
@@ -85,7 +106,7 @@ Deno.serve(async (req) => {
           temperature: 0.7,
           topP: 0.95,
           topK: 64,
-          maxOutputTokens: 500, // Limit summary length
+          maxOutputTokens: 500,
         },
       }),
     });
@@ -109,7 +130,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Edge Function error during request parsing or processing:', error);
-    console.error('Problematic request body:', requestBody); // Log the problematic body
+    console.error('Problematic request body:', requestBody);
     return new Response(JSON.stringify({ error: `Failed to parse request body: ${error.message}. Raw body: ${requestBody}` }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
