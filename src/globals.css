@@ -41,6 +41,8 @@
     --sidebar-border: var(--border);
     --sidebar-toggle-background: var(--secondary);
 
+    --scrollbar-background: 220 5% 40%; /* Lighter scrollbar for dark themes */
+
     --radius: 0.75rem; /* Increased default radius for more rounded corners */
   }
 
@@ -73,6 +75,8 @@
     --sidebar-active-foreground: var(--primary-foreground);
     --sidebar-border: var(--border);
     --sidebar-toggle-background: var(--secondary);
+
+    --scrollbar-background: 220 5% 40%; /* Lighter scrollbar for dark themes */
   }
 
   /* Ocean Breeze Palette */
@@ -112,6 +116,8 @@
     --sidebar-active-foreground: var(--primary-foreground);
     --sidebar-border: var(--border);
     --sidebar-toggle-background: var(--secondary);
+
+    --scrollbar-background: 210 20% 80%; /* Lighter scrollbar for light themes */
   }
 
   /* Sunset Glow Palette */
@@ -151,6 +157,8 @@
     --sidebar-active-foreground: var(--primary-foreground);
     --sidebar-border: var(--border);
     --sidebar-toggle-background: var(--secondary);
+
+    --scrollbar-background: 210 20% 80%; /* Lighter scrollbar for light themes */
   }
 
   /* Forest Whisper Palette */
@@ -190,6 +198,8 @@
     --sidebar-active-foreground: var(--primary-foreground);
     --sidebar-border: var(--border);
     --sidebar-toggle-background: var(--secondary);
+
+    --scrollbar-background: 210 20% 80%; /* Lighter scrollbar for light themes */
   }
 
   /* NEW: Emerald Theme Palette */
@@ -229,6 +239,8 @@
     --sidebar-active-foreground: var(--primary-foreground);
     --sidebar-border: var(--border);
     --sidebar-toggle-background: var(--secondary);
+
+    --scrollbar-background: 160 15% 40%; /* Lighter scrollbar for emerald theme */
   }
 
   /* NEW: Deep Forest Theme Palette */
@@ -249,7 +261,7 @@
     --secondary-foreground: 0 0% 100%;
 
     --muted: 240 5% 25%; /* Darker grey for muted elements */
-    --muted-foreground: 240 5% 50%; /* Dark grey for muted text */
+    --muted-foreground: 240 5% 50%;
 
     --accent: 270 29% 35%; /* Dark purple */
     --accent-foreground: 0 0% 100%;
@@ -268,6 +280,8 @@
     --sidebar-active-foreground: var(--primary-foreground);
     --sidebar-border: var(--border);
     --sidebar-toggle-background: var(--secondary);
+
+    --scrollbar-background: 240 5% 40%; /* Lighter scrollbar for deep-forest theme */
   }
 }
 
