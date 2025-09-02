@@ -76,16 +76,19 @@ Deno.serve(async (req) => {
     }
 
     const tokens = await tokenResponse.json();
+    console.log('QuickBooks OAuth Callback: Full tokens object received:', JSON.stringify(tokens, null, 2)); // NEW LOG
+
     const accessToken = tokens.access_token;
     const refreshToken = tokens.refresh_token;
     const realmId = tokens.realmId; // This is the QuickBooks company ID
 
-    console.log('QuickBooks OAuth Callback: Received Access Token (first 10 chars):', accessToken ? accessToken.substring(0, 10) : 'N/A'); // NEW LOG
-    console.log('QuickBooks OAuth Callback: Received Refresh Token (first 10 chars):', refreshToken ? refreshToken.substring(0, 10) : 'N/A'); // NEW LOG
-    console.log('QuickBooks OAuth Callback: Received Realm ID:', realmId); // NEW LOG
+    console.log('QuickBooks OAuth Callback: Received Access Token (first 10 chars):', accessToken ? accessToken.substring(0, 10) : 'N/A');
+    console.log('QuickBooks OAuth Callback: Received Refresh Token (first 10 chars):', refreshToken ? refreshToken.substring(0, 10) : 'N/A');
+    console.log('QuickBooks OAuth Callback: Received Realm ID:', realmId);
 
     // Use the 'state' parameter (which is the user.id) to update the profile
     const userId = state;
+    console.log('QuickBooks OAuth Callback: Attempting to update profile for userId:', userId); // NEW LOG
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Store tokens and realmId in the user's profile in Supabase
@@ -100,6 +103,7 @@ Deno.serve(async (req) => {
 
     if (updateError) {
       console.error('Error updating user profile with QuickBooks tokens:', updateError);
+      console.error('Full updateError object:', JSON.stringify(updateError, null, 2)); // NEW LOG
       return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent('Failed to save QuickBooks tokens.')}`, 302);
     }
 
