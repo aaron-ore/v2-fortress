@@ -67,7 +67,7 @@ const Settings: React.FC = () => {
     const redirectUri = `https://nojumocxivfjsbqnnkqe.supabase.co/functions/v1/quickbooks-oauth-callback`;
     
     const scope = "com.intuit.quickbooks.accounting openid profile email address phone";
-    const responseType = "code";
+    const responseType = "code id_token"; // CHANGED: Added id_token to responseType
     
     // NEW: Encode both userId and redirectToFrontend into the state parameter
     const statePayload = {
