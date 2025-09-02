@@ -140,6 +140,10 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
         return;
       }
 
+      // NEW: Log the session and access_token before the fetch call
+      console.log("Client-side: Session object before fetch:", session);
+      console.log("Client-side: Access token before fetch:", session.access_token);
+
       // NEW: Direct fetch request to the Edge Function
       const edgeFunctionUrl = `https://nojumocxivfjsbqnnkqe.supabase.co/functions/v1/summarize-report`;
       console.log("Client-side: Making direct fetch request to:", edgeFunctionUrl);
