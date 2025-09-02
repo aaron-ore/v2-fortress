@@ -140,20 +140,29 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
         return;
       }
 
-      const response = await supabase.functions.invoke('summarize-report', {
-        body: JSON.stringify({ textToSummarize }), // Explicitly stringify the body
+      // NEW: Direct fetch request to the Edge Function
+      const edgeFunctionUrl = `https://nojumocxivfjsbqnnkqe.supabase.co/functions/v1/summarize-report`;
+      console.log("Client-side: Making direct fetch request to:", edgeFunctionUrl);
+
+      const response = await fetch(edgeFunctionUrl, {
+        method: 'POST',
         headers: {
-          'Content-Type': 'application/json', // Explicitly set Content-Type
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
+        body: JSON.stringify({ textToSummarize }),
       });
 
-      if (response.error) {
-        throw new Error(response.error.message);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Client-side: Direct fetch to Edge Function failed. Status:", response.status, "Error data:", errorData);
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
-      if (response.data && response.data.summary) {
-        setAiSummary(response.data.summary);
+      const data = await response.json();
+
+      if (data && data.summary) {
+        setAiSummary(data.summary);
         showSuccess("Report summarized successfully!");
       } else {
         showError("Failed to get a summary from the AI. Please try again.");
