@@ -85,6 +85,8 @@ Deno.serve(async (req) => {
       .eq('id', user.id)
       .single();
 
+    console.log('Edge Function: Fetched profile for user:', user.id, 'Profile data:', profile); // NEW LOG
+
     if (profileError || !profile?.quickbooks_access_token || !profile?.quickbooks_refresh_token || !profile?.quickbooks_realm_id) {
       console.error('QuickBooks credentials missing for user:', user.id, profileError);
       return new Response(JSON.stringify({ error: 'QuickBooks integration not set up for this user.' }), {
