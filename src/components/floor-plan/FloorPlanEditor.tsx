@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { DndContext, DragEndEvent, useDroppable, useSensor, useSensors, PointerSensor, KeyboardSensor } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, useDroppable, useSensor, useSensors, PointerSensor, KeyboardSensor, closestCorners } from "@dnd-kit/core";
 import { nanoid } from "nanoid"; // For unique IDs
 import { FloorPlanElement, useFloorPlans } from "@/context/FloorPlanContext";
 import DraggableFloorPlanElement from "./DraggableFloorPlanElement";
@@ -23,8 +23,7 @@ interface FloorPlanEditorProps {
   // REMOVED: onUpdateSelectedElement and onDeleteSelectedElement as they are handled by parent
 }
 
-const CANVAS_WIDTH = 1000;
-const CANVAS_HEIGHT = 600;
+// Removed CANVAS_WIDTH and CANVAS_HEIGHT as they are no longer hardcoded
 
 const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
   initialFloorPlanId,
@@ -219,7 +218,7 @@ const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
   // These are now handled directly by FloorPlanPage and passed to ElementPropertiesPanel
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd} onDragStart={() => {}} collisionDetection={closestCorners}>
       <div className="flex flex-col h-full">
         <Card className="mb-4 bg-card border-border shadow-sm">
           <CardHeader className="pb-2">
@@ -268,7 +267,7 @@ const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
         <div
           ref={setDroppableNodeRef}
           className="relative flex-grow border-2 border-dashed border-muted-foreground/50 rounded-lg bg-muted/10 overflow-hidden"
-          style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
+          // Removed fixed width and height styles
         >
           {elements.map((element) => (
             <DraggableFloorPlanElement
