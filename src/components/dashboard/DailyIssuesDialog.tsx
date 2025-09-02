@@ -15,7 +15,7 @@ import { AlertTriangle, User, Clock, MapPin, Package } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useProfile, UserProfile } from "@/context/ProfileContext";
 import { showError } from "@/utils/toast";
-import { format, startOfDay, endOfDay } from "date-fns";
+import { format, startOfDay, endOfDay, isValid } from "date-fns";
 import { DateRange } from "react-day-picker";
 
 interface DailyIssuesDialogProps {
@@ -57,16 +57,11 @@ const DailyIssuesDialog: React.FC<DailyIssuesDialogProps> = ({ isOpen, onClose, 
           .eq('activity_type', 'Issue Reported')
           .order('timestamp', { ascending: false });
 
-        const todayStart = startOfDay(new Date()).toISOString();
-        const todayEnd = endOfDay(new Date()).toISOString();
+        const today = new Date();
+        const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : startOfDay(today);
+        const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : endOfDay(today);
 
-        if (dateRange?.from) {
-          const from = startOfDay(dateRange.from).toISOString();
-          const to = dateRange.to ? endOfDay(dateRange.to).toISOString() : todayEnd;
-          query = query.gte('timestamp', from).lte('timestamp', to);
-        } else {
-          query = query.gte('timestamp', todayStart).lte('timestamp', todayEnd);
-        }
+        query = query.gte('timestamp', filterFrom.toISOString()).lte('timestamp', filterTo.toISOString());
 
         const { data, error } = await query;
 
@@ -100,12 +95,13 @@ const DailyIssuesDialog: React.FC<DailyIssuesDialogProps> = ({ isOpen, onClose, 
   };
 
   const getDisplayDateRange = () => {
-    if (dateRange?.from) {
-      const from = format(dateRange.from, "MMM dd, yyyy");
-      const to = dateRange.to ? format(dateRange.to, "MMM dd, yyyy") : "";
-      return to ? `${from} - ${to}` : from;
-    }
-    return format(new Date(), "MMM dd, yyyy");
+    const today = new Date();
+    const effectiveFrom = dateRange?.from && isValid(dateRange.from) ? dateRange.from : today;
+    const effectiveTo = dateRange?.to && isValid(dateRange.to) ? dateRange.to : today;
+
+    const from = format(effectiveFrom, "MMM dd, yyyy");
+    const to = format(effectiveTo, "MMM dd, yyyy");
+    return from === to ? from : `${from} - ${to}`;
   };
 
   return (

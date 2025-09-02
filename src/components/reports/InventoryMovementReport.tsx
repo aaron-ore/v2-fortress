@@ -6,7 +6,7 @@ import { DateRange } from "react-day-picker";
 import { useStockMovement, StockMovement } from "@/context/StockMovementContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { useProfile } from "@/context/ProfileContext";
-import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { Loader2, Scale, User, Clock, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -38,15 +38,17 @@ const InventoryMovementReport: React.FC<InventoryMovementReportProps> = ({
     await fetchStockMovements(); // Ensure latest movements are fetched
     await fetchAllProfiles(); // Ensure user profiles are loaded for names
 
+    const today = new Date();
+    const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : null;
+    const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (filterFrom ? endOfDay(filterFrom) : null);
+
     const filteredMovements = stockMovements.filter(movement => {
       if (movementTypeFilter !== "all" && movement.type !== movementTypeFilter) {
         return false;
       }
-      if (!dateRange?.from) return true;
+      if (!filterFrom || !filterTo) return true;
       const movementDate = new Date(movement.timestamp);
-      const from = startOfDay(dateRange.from);
-      const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(new Date());
-      return isWithinInterval(movementDate, { start: from, end: to });
+      return isValid(movementDate) && isWithinInterval(movementDate, { start: filterFrom, end: filterTo });
     });
 
     const reportProps = {

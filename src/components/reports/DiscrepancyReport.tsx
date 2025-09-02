@@ -6,7 +6,7 @@ import { DateRange } from "react-day-picker";
 import { useProfile } from "@/context/ProfileContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { supabase } from "@/lib/supabaseClient";
-import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { Loader2, AlertTriangle, Scale, User, Clock, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -64,10 +64,12 @@ const DiscrepancyReport: React.FC<DiscrepancyReportProps> = ({
       query = query.eq('status', statusFilter);
     }
 
-    if (dateRange?.from) {
-      const from = startOfDay(dateRange.from).toISOString();
-      const to = dateRange.to ? endOfDay(dateRange.to).toISOString() : endOfDay(new Date()).toISOString();
-      query = query.gte('timestamp', from).lte('timestamp', to);
+    const today = new Date();
+    const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : null;
+    const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (filterFrom ? endOfDay(filterFrom) : null);
+
+    if (filterFrom && filterTo) {
+      query = query.gte('timestamp', filterFrom.toISOString()).lte('timestamp', filterTo.toISOString());
     }
 
     const { data, error } = await query;

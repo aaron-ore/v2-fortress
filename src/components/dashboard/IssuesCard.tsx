@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient";
 import { useProfile } from "@/context/ProfileContext";
 import { showError } from "@/utils/toast";
-import { format, startOfDay, endOfDay, subDays } from "date-fns";
+import { format, startOfDay, endOfDay, subDays, isValid } from "date-fns";
 import { DateRange } from "react-day-picker";
 import DailyIssuesDialog from "./DailyIssuesDialog";
 
@@ -34,20 +34,16 @@ const IssuesCard: React.FC<IssuesCardProps> = ({ dateRange }) => {
     let previousPeriodStart: Date;
     let previousPeriodEnd: Date;
 
-    if (dateRange?.from) {
-      currentPeriodStart = startOfDay(dateRange.from);
-      currentPeriodEnd = dateRange.to ? endOfDay(dateRange.to) : endOfDay(today);
+    // Ensure dateRange.from and dateRange.to are valid Date objects or fall back to defaults
+    const effectiveFrom = dateRange?.from && isValid(dateRange.from) ? dateRange.from : today;
+    const effectiveTo = dateRange?.to && isValid(dateRange.to) ? dateRange.to : today;
 
-      const durationMs = currentPeriodEnd.getTime() - currentPeriodStart.getTime();
-      previousPeriodEnd = subDays(currentPeriodStart, 1);
-      previousPeriodStart = new Date(previousPeriodEnd.getTime() - durationMs);
-    } else {
-      // Default to today
-      currentPeriodStart = startOfDay(today);
-      currentPeriodEnd = endOfDay(today);
-      previousPeriodStart = startOfDay(subDays(today, 1));
-      previousPeriodEnd = endOfDay(subDays(today, 1));
-    }
+    currentPeriodStart = startOfDay(effectiveFrom);
+    currentPeriodEnd = endOfDay(effectiveTo);
+
+    const durationMs = currentPeriodEnd.getTime() - currentPeriodStart.getTime();
+    previousPeriodEnd = subDays(currentPeriodStart, 1);
+    previousPeriodStart = new Date(previousPeriodEnd.getTime() - durationMs);
 
     const fetchCount = async (start: Date, end: Date) => {
       const { count, error } = await supabase
@@ -92,15 +88,13 @@ const IssuesCard: React.FC<IssuesCardProps> = ({ dateRange }) => {
           let currentPeriodStart: Date;
           let currentPeriodEnd: Date;
 
-          if (dateRange?.from) {
-            currentPeriodStart = startOfDay(dateRange.from);
-            currentPeriodEnd = dateRange.to ? endOfDay(dateRange.to) : endOfDay(today);
-          } else {
-            currentPeriodStart = startOfDay(today);
-            currentPeriodEnd = endOfDay(today);
-          }
+          const effectiveFrom = dateRange?.from && isValid(dateRange.from) ? dateRange.from : today;
+          const effectiveTo = dateRange?.to && isValid(dateRange.to) ? dateRange.to : today;
 
-          const isWithinCurrentPeriod = (newIssueDate >= currentPeriodStart && newIssueDate <= currentPeriodEnd);
+          currentPeriodStart = startOfDay(effectiveFrom);
+          currentPeriodEnd = endOfDay(effectiveTo);
+
+          const isWithinCurrentPeriod = (isValid(newIssueDate) && newIssueDate >= currentPeriodStart && newIssueDate <= currentPeriodEnd);
 
           if (isWithinCurrentPeriod) {
             setDailyIssuesCount((prev) => prev + 1);
@@ -130,7 +124,7 @@ const IssuesCard: React.FC<IssuesCardProps> = ({ dateRange }) => {
         <CardHeader className="pb-2">
           <CardTitle className="text-2xl font-bold text-foreground">Issues Reported</CardTitle>
           <p className="text-sm text-muted-foreground">
-            {dateRange?.from ? `For ${format(dateRange.from, "MMM dd")} - ${dateRange.to ? format(dateRange.to, "MMM dd") : format(new Date(), "MMM dd")}` : "Today's operational issues"}
+            {dateRange?.from && isValid(dateRange.from) ? `For ${format(dateRange.from, "MMM dd")} - ${dateRange.to && isValid(dateRange.to) ? format(dateRange.to, "MMM dd") : format(new Date(), "MMM dd")}` : "Today's operational issues"}
           </p>
         </CardHeader>
         <CardContent className="flex-grow flex flex-col items-center justify-center relative p-4 pt-0">

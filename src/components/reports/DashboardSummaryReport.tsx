@@ -6,7 +6,7 @@ import { DateRange } from "react-day-picker";
 import { useInventory } from "@/context/InventoryContext";
 import { useOrders } from "@/context/OrdersContext";
 import { useOnboarding } from "@/context/OnboardingContext";
-import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { Loader2, Package, Receipt, AlertTriangle, DollarSign, FileText } from "lucide-react"; // Added FileText
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -31,20 +31,20 @@ const DashboardSummaryReport: React.FC<DashboardSummaryReportProps> = ({
   const [currentReportData, setCurrentReportData] = useState<any>(null);
 
   const generateReport = useCallback(() => {
+    const today = new Date();
+    const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : null;
+    const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (filterFrom ? endOfDay(filterFrom) : null);
+
     const filteredInventory = inventoryItems.filter(item => {
-      if (!dateRange?.from) return true;
+      if (!filterFrom || !filterTo) return true; // No date filter applied
       const itemDate = new Date(item.lastUpdated);
-      const from = startOfDay(dateRange.from);
-      const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(new Date());
-      return isWithinInterval(itemDate, { start: from, end: to });
+      return isValid(itemDate) && isWithinInterval(itemDate, { start: filterFrom, end: filterTo });
     });
 
     const filteredOrders = orders.filter(order => {
-      if (!dateRange?.from) return true;
+      if (!filterFrom || !filterTo) return true; // No date filter applied
       const orderDate = new Date(order.date);
-      const from = startOfDay(dateRange.from);
-      const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(new Date());
-      return isWithinInterval(orderDate, { start: from, end: to });
+      return isValid(orderDate) && isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
     });
 
     const totalStockValue = filteredInventory.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
@@ -74,6 +74,7 @@ const DashboardSummaryReport: React.FC<DashboardSummaryReportProps> = ({
       outOfStockItems,
       recentSalesOrders,
       recentPurchaseOrders,
+      dateRange,
     };
 
     setCurrentReportData(reportProps);

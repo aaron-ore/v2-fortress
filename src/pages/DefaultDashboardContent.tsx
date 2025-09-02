@@ -5,6 +5,7 @@ import AddInventoryDialog from "@/components/AddInventoryDialog";
 import ScanItemDialog from "@/components/ScanItemDialog";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { DateRange } from "react-day-picker";
+import { isValid } from "date-fns"; // Import isValid
 
 // Import new dashboard components
 import WalletCard from "@/components/dashboard/WalletCard";
@@ -47,7 +48,7 @@ const DefaultDashboardContent: React.FC = () => {
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <div className="flex items-center gap-4">
           <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
-          {dateRange?.from && (
+          {dateRange?.from && isValid(dateRange.from) && ( // Only show clear button if a valid 'from' date exists
             <Button variant="outline" onClick={handleClearDateFilter}>
               Clear Filter
             </Button>

@@ -20,8 +20,12 @@ const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> 
     const dataPoints = [];
     const today = new Date();
 
-    let startDate = dateRange?.from ? startOfDay(dateRange.from) : subDays(today, 6);
-    let endDate = dateRange?.to ? endOfDay(dateRange.to) : endOfDay(today);
+    // Ensure dateRange.from and dateRange.to are valid Date objects or fall back to defaults
+    const effectiveFrom = dateRange?.from && isValid(dateRange.from) ? dateRange.from : subDays(today, 6);
+    const effectiveTo = dateRange?.to && isValid(dateRange.to) ? dateRange.to : today;
+
+    let startDate = startOfDay(effectiveFrom);
+    let endDate = endOfDay(effectiveTo);
 
     if (startDate.getTime() > endDate.getTime()) {
       [startDate, endDate] = [endDate, startDate];

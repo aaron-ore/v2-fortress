@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DateRange } from "react-day-picker";
 import { useOrders, OrderItem } from "@/context/OrdersContext";
 import { useOnboarding } from "@/context/OnboardingContext";
-import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { Loader2, Users, DollarSign, Receipt, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -36,13 +36,15 @@ const SalesByCustomerReport: React.FC<SalesByCustomerReportProps> = ({
   const [currentReportData, setCurrentReportData] = useState<any>(null);
 
   const generateReport = useCallback(() => {
+    const today = new Date();
+    const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : null;
+    const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (filterFrom ? endOfDay(filterFrom) : null);
+
     const filteredOrders = orders.filter(order => {
       if (order.type !== "Sales") return false;
-      if (!dateRange?.from) return true;
+      if (!filterFrom || !filterTo) return true;
       const orderDate = new Date(order.date);
-      const from = startOfDay(dateRange.from);
-      const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(new Date());
-      return isWithinInterval(orderDate, { start: from, end: to });
+      return isValid(orderDate) && isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
     });
 
     const customerSalesMap: { [key: string]: { totalSales: number; totalItems: number; lastOrderDate: Date } } = {};

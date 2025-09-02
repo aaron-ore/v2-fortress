@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DateRange } from "react-day-picker";
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
 import { useOnboarding } from "@/context/OnboardingContext";
-import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { Loader2, AlertTriangle, Package, MapPin, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,12 +33,14 @@ const LowStockReport: React.FC<LowStockReportProps> = ({
   const [currentReportData, setCurrentReportData] = useState<any>(null);
 
   const generateReport = useCallback(() => {
+    const today = new Date();
+    const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : null;
+    const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (filterFrom ? endOfDay(filterFrom) : null);
+
     const filteredItems = inventoryItems.filter(item => {
-      if (!dateRange?.from) return true;
+      if (!filterFrom || !filterTo) return true;
       const itemDate = new Date(item.lastUpdated);
-      const from = startOfDay(dateRange.from);
-      const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(new Date());
-      return isWithinInterval(itemDate, { start: from, end: to });
+      return isValid(itemDate) && isWithinInterval(itemDate, { start: filterFrom, end: filterTo });
     });
 
     let itemsToDisplay: InventoryItem[] = [];

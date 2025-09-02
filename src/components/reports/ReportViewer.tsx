@@ -11,6 +11,7 @@ import { useOnboarding } from "@/context/OnboardingContext";
 import { showError, showSuccess } from "@/utils/toast";
 import { supabase } from "@/lib/supabaseClient";
 import { useProfile } from "@/context/ProfileContext";
+import { isValid } from "date-fns"; // Import isValid
 
 // Import all report components (will be created in subsequent steps)
 import InventoryValuationReport from "./InventoryValuationReport";
@@ -203,7 +204,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-4">
           <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
-          {dateRange?.from && (
+          {dateRange?.from && isValid(dateRange.from) && ( // Only show clear button if a valid 'from' date exists
             <Button variant="outline" onClick={() => setDateRange(undefined)}>
               Clear Date Filter
             </Button>

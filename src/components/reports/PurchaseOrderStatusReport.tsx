@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DateRange } from "react-day-picker";
 import { useOrders, OrderItem } from "@/context/OrdersContext";
 import { useOnboarding } from "@/context/OnboardingContext";
-import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { Loader2, FileText, Truck, DollarSign } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -32,14 +32,16 @@ const PurchaseOrderStatusReport: React.FC<PurchaseOrderStatusReportProps> = ({
   const [currentReportData, setCurrentReportData] = useState<any>(null);
 
   const generateReport = useCallback(() => {
+    const today = new Date();
+    const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : null;
+    const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (filterFrom ? endOfDay(filterFrom) : null);
+
     const filteredOrders = orders.filter(order => {
       if (order.type !== "Purchase") return false;
       if (statusFilter !== "all" && order.status.toLowerCase() !== statusFilter.toLowerCase()) return false;
-      if (!dateRange?.from) return true;
+      if (!filterFrom || !filterTo) return true;
       const orderDate = new Date(order.date);
-      const from = startOfDay(dateRange.from);
-      const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(new Date());
-      return isWithinInterval(orderDate, { start: from, end: to });
+      return isValid(orderDate) && isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
     });
 
     const reportProps = {
@@ -147,8 +149,8 @@ const PurchaseOrderStatusReport: React.FC<PurchaseOrderStatusReportProps> = ({
                   {ordersToDisplay.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">{order.id}</TableCell>
-                      <TableCell>{order.customerSupplier}</TableCell>
                       <TableCell>{format(new Date(order.date), "MMM dd, yyyy")}</TableCell>
+                      <TableCell>{order.customerSupplier}</TableCell>
                       <TableCell>{format(new Date(order.dueDate), "MMM dd, yyyy")}</TableCell>
                       <TableCell>{order.status}</TableCell>
                       <TableCell className="text-right">${order.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>

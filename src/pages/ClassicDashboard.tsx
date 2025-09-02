@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PlusCircle, Package, AlertCircle, TrendingUp, Scan, Receipt, MapPin, DollarSign, Boxes } from "lucide-react";
 import { useInventory } from "@/context/InventoryContext";
 import { useOrders } from "@/context/OrdersContext";
-import { format, isValid } from "date-fns";
+import { format, isValid, startOfDay, endOfDay } from "date-fns";
 import AddInventoryDialog from "@/components/AddInventoryDialog";
 import ScanItemDialog from "@/components/ScanItemDialog";
 import {
@@ -31,17 +31,15 @@ const ClassicDashboard: React.FC = () => {
 
   // Helper function to check if a date falls within the selected range
   const isDateInRange = (dateString: string) => {
-    if (!dateRange?.from) return true; // No filter applied
+    if (!dateRange?.from || !isValid(dateRange.from)) return true; // No valid 'from' date, so no filter applied
+
     const itemDate = new Date(dateString);
-    itemDate.setHours(0, 0, 0, 0); // Normalize to start of day
+    if (!isValid(itemDate)) return false; // If itemDate is invalid, it can't be in range
 
-    const from = dateRange.from;
-    from.setHours(0, 0, 0, 0);
+    const filterFrom = startOfDay(dateRange.from);
+    const filterTo = dateRange.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
 
-    const to = dateRange.to || dateRange.from; // If only 'from' is selected, 'to' is 'from'
-    to.setHours(23, 59, 59, 999); // Normalize to end of day
-
-    return itemDate >= from && itemDate <= to;
+    return itemDate >= filterFrom && itemDate <= filterTo;
   };
 
   // Key Metrics
@@ -65,9 +63,14 @@ const ClassicDashboard: React.FC = () => {
   const recentOrders = useMemo(() => {
     return orders
       .filter(order => order.status !== "Archived" && isDateInRange(order.date))
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        if (!isValid(dateA) || !isValid(dateB)) return 0;
+        return dateB.getTime() - dateA.getTime();
+      })
       .slice(0, 5);
-  }, [orders, dateRange]);
+  }, [orders, dateRange, isDateInRange]);
 
   const handleCreatePO = () => navigate("/create-po");
   const handleCreateInvoice = () => navigate("/create-invoice");
@@ -82,7 +85,7 @@ const ClassicDashboard: React.FC = () => {
         <h1 className="text-3xl font-bold">Classic Dashboard</h1>
         <div className="flex items-center gap-4">
           <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
-          {dateRange?.from && (
+          {dateRange?.from && isValid(dateRange.from) && ( // Only show clear button if a valid 'from' date exists
             <Button variant="outline" onClick={handleClearDateFilter}>
               Clear Filter
             </Button>

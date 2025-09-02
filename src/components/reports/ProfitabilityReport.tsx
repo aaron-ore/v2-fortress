@@ -6,7 +6,7 @@ import { DateRange } from "react-day-picker";
 import { useOrders } from "@/context/OrdersContext";
 import { useInventory } from "@/context/InventoryContext";
 import { useOnboarding } from "@/context/OnboardingContext";
-import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { Loader2, DollarSign, BarChart } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -37,13 +37,15 @@ const ProfitabilityReport: React.FC<ProfitabilityReportProps> = ({
   const [currentReportData, setCurrentReportData] = useState<any>(null);
 
   const generateReport = useCallback(() => {
+    const today = new Date();
+    const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : null;
+    const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (filterFrom ? endOfDay(filterFrom) : null);
+
     const filteredOrders = orders.filter(order => {
       if (order.type !== "Sales") return false;
-      if (!dateRange?.from) return true;
+      if (!filterFrom || !filterTo) return true;
       const orderDate = new Date(order.date);
-      const from = startOfDay(dateRange.from);
-      const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(new Date());
-      return isWithinInterval(orderDate, { start: from, end: to });
+      return isValid(orderDate) && isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
     });
 
     let totalSalesRevenue = 0;
