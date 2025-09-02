@@ -12,7 +12,7 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import CreatePurchaseOrder from "./pages/CreatePurchaseOrder";
 import EditInventoryItem from "./pages/EditInventoryItem";
-import EditPurchaseOrder from "./pages/EditPurchaseOrder";
+import EditPurchaseOrder from "./pages/Edit/EditPurchaseOrder";
 import Auth from "./pages/Auth";
 import MyProfile from "./pages/MyProfile";
 import AccountSettings from "./pages/AccountSettings";
@@ -126,6 +126,9 @@ const AppContent = () => {
   const { isLoadingProfile, fetchProfile } = useProfile(); // Get fetchProfile from context
   const { isPrinting, printContentData, resetPrintState } = usePrint();
 
+  // Ref to track if QuickBooks callback has been processed in this render cycle
+  const qbCallbackProcessedRef = useRef(false);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -151,26 +154,33 @@ const AppContent = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Handle QuickBooks OAuth callback messages
+  // Handle QuickBooks OAuth callback messages and navigation
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const quickbooksSuccess = params.get('quickbooks_success');
     const quickbooksError = params.get('quickbooks_error');
     const realmIdPresent = params.get('realmId_present');
 
-    if (quickbooksSuccess) {
-      showSuccess("QuickBooks connected successfully!");
-      if (realmIdPresent === 'false') {
-        showError("QuickBooks company (realmId) was not received. Please ensure you select a company during the QuickBooks authorization flow.");
+    // Only process if there are QuickBooks params and it hasn't been processed yet
+    if ((quickbooksSuccess || quickbooksError) && !qbCallbackProcessedRef.current) {
+      if (quickbooksSuccess) {
+        showSuccess("QuickBooks connected successfully!");
+        if (realmIdPresent === 'false') {
+          showError("QuickBooks company (realmId) was not received. Please ensure you select a company during the QuickBooks authorization flow.");
+        }
+        // Explicitly refresh the session and then the profile
+        supabase.auth.refreshSession().then(() => {
+          fetchProfile(); // Fetch the profile to get the updated QuickBooks tokens
+        });
+      } else if (quickbooksError) {
+        showError(`QuickBooks connection failed: ${quickbooksError}`);
       }
-      // Explicitly refresh the session and then the profile
-      supabase.auth.refreshSession().then(() => {
-        fetchProfile(); // Fetch the profile to get the updated QuickBooks tokens
-      });
-      // REMOVED: navigate(location.pathname, { replace: true }); // This line caused the conflict
-    } else if (quickbooksError) {
-      showError(`QuickBooks connection failed: ${quickbooksError}`);
-      // REMOVED: navigate(location.pathname, { replace: true }); // This line caused the conflict
+
+      // Mark as processed to prevent re-triggering on subsequent renders
+      qbCallbackProcessedRef.current = true;
+
+      // Navigate away from the callback URL to /settings
+      navigate('/settings', { replace: true });
     }
   }, [location.search, navigate, fetchProfile]);
 
@@ -193,8 +203,7 @@ const AppContent = () => {
     <Routes>
       <Route path="/auth" element={<Auth />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      {/* Add a route for the QuickBooks OAuth callback to prevent 404 */}
-      <Route path="/quickbooks-oauth-callback" element={<QuickBooksOAuthCallbackHandler />} />
+      {/* The /quickbooks-oauth-callback route is now handled directly by AppContent's useEffect */}
       {!session && <Route path="*" element={<Auth />} />}
     </Routes>
   );
@@ -258,24 +267,6 @@ const AppContent = () => {
         </PrintWrapper>
       )}
     </>
-  );
-};
-
-// Component to handle QuickBooks OAuth callback redirect
-const QuickBooksOAuthCallbackHandler: React.FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    // The Edge Function now redirects to the frontend base URL with query params.
-    // This component's job is to simply navigate to the /settings page.
-    navigate('/settings', { replace: true });
-  }, [navigate]); // No need to depend on location.search here, as the Edge Function already handled it.
-  
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
-      Processing QuickBooks connection...
-    </div>
   );
 };
 
