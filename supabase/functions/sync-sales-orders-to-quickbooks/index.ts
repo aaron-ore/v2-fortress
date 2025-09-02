@@ -24,6 +24,7 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
      console.log('Edge Function received Authorization header:', authHeader);
     const { data: { user } } = await supabaseAdmin.auth.getUser(authHeader);
+    console.log('Edge Function user from auth.getUser:', user);
 
     if (!user) {
       return new Response(JSON.stringify({ error: 'Unauthorized: User not authenticated.' }), {
