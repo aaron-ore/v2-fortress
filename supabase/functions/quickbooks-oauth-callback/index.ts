@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     const state = url.searchParams.get('state');
     const error = url.searchParams.get('error');
     const errorDescription = url.searchParams.get('error_description');
-    const realmIdFromUrl = url.searchParams.get('realmId'); // RE-ADDED: Extract realmId from URL parameters
+    // REMOVED: const realmIdFromUrl = url.searchParams.get('realmId'); // No longer getting from URL
 
     // Log all search parameters for debugging
     console.log('QuickBooks OAuth Callback: All URL search parameters:', JSON.stringify(Object.fromEntries(url.searchParams.entries()), null, 2));
@@ -90,10 +90,7 @@ Deno.serve(async (req) => {
     const accessToken = tokens.access_token;
     const refreshToken = tokens.refresh_token;
 
-    // NEW LOG: Realm ID from URL parameters
-    console.log('QuickBooks OAuth Callback: Received Realm ID (from URL parameters):', realmIdFromUrl || 'null (missing from URL)');
-
-    // NEW: Extract realmId from id_token as a fallback
+    // NEW: Extract realmId from id_token
     let realmIdFromIdToken: string | null = null;
     if (tokens.id_token) {
       try {
@@ -107,10 +104,10 @@ Deno.serve(async (req) => {
         console.error('Error decoding id_token or extracting realmId:', e);
       }
     }
-    console.log('QuickBooks OAuth Callback: Extracted Realm ID from id_token (fallback):', realmIdFromIdToken || 'null (missing from id_token)');
+    console.log('QuickBooks OAuth Callback: Extracted Realm ID from id_token:', realmIdFromIdToken || 'null (missing from id_token)');
 
-    // Prioritize realmId from URL, then fallback to id_token
-    const finalRealmId = realmIdFromUrl || realmIdFromIdToken;
+    // Now, we exclusively use realmIdFromIdToken as it was present in your logs
+    const finalRealmId = realmIdFromIdToken;
     console.log('QuickBooks OAuth Callback: Final Realm ID to be stored:', finalRealmId || 'null');
 
 
