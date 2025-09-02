@@ -149,7 +149,7 @@ const Settings: React.FC = () => {
     companyCurrency !== (companyProfile?.currency || "USD");
 
   const isQuickBooksConnected = profile?.quickbooksAccessToken && profile?.quickbooksRefreshToken && profile?.quickbooksRealmId;
-  const isQuickBooksPartiallyConnected = profile?.quickbooksAccessToken && profile?.quickbooksRefreshToken && !profile?.quickbooksRealmId;
+  // REMOVED: const isQuickBooksPartiallyConnected = profile?.quickbooksAccessToken && profile?.quickbooksRefreshToken && !profile?.quickbooksRealmId;
 
 
   return (
@@ -252,12 +252,7 @@ const Settings: React.FC = () => {
                   Please log in to connect to QuickBooks.
                 </p>
               )}
-              {isQuickBooksPartiallyConnected && ( // NEW: Display specific warning for partial connection
-                <p className="text-sm text-yellow-500 flex items-center gap-1 mt-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  QuickBooks tokens received, but company (realmId) not saved. Please ensure you select a company during the QuickBooks authorization flow. If the issue persists, verify your `redirect_uri` in the Intuit Developer portal.
-                </p>
-              )}
+              {/* REMOVED: isQuickBooksPartiallyConnected warning */}
               <p className="text-xs text-muted-foreground mt-2">
                 <AlertTriangle className="inline h-3 w-3 mr-1" />
                 **Important:** Ensure the following `redirect_uri` is registered in your Intuit Developer application settings:
