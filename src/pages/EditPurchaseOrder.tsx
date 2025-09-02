@@ -241,7 +241,7 @@ const EditPurchaseOrder: React.FC = () => {
                     disabled
                   />
                   {poQrCodeSvg && (
-                    <div dangerouslySetInnerHTML={{ __html: poQrCodeSvg }} className="w-20 h-20 object-contain" />
+                    <div dangerouslySetInnerHTML={{ __html: poQrCodeSvg }} className="w-20 h-20 object-contain flex-shrink-0" />
                   )}
                 </div>
               </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -158,6 +158,7 @@ const CreateInvoice: React.FC = () => {
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<POItem[]>([]);
   const [invoiceQrCodeSvg, setInvoiceQrCodeSvg] = useState<string | null>(null);
+  const [calculatedTotalAmount, setCalculatedTotalAmount] = useState(0); // NEW state for real-time total
 
   const taxRate = 0.05;
 
@@ -186,6 +187,12 @@ const CreateInvoice: React.FC = () => {
       setCustomerContact("");
     }
   }, [selectedCustomerId, customers]);
+
+  // Effect to calculate total amount in real-time
+  useEffect(() => {
+    const subtotal = items.reduce((sum, item) => sum + (isNaN(item.quantity) ? 0 : item.quantity) * (isNaN(item.unitPrice) ? 0 : item.unitPrice), 0);
+    setCalculatedTotalAmount(subtotal * (1 + taxRate));
+  }, [items, taxRate]);
 
   // Generate QR code for Invoice number (only if invoiceNumber is set, i.e., after order creation)
   React.useEffect(() => {
@@ -233,11 +240,6 @@ const CreateInvoice: React.FC = () => {
     setCustomerContact(formatted);
   };
 
-  const calculateTotalAmount = () => {
-    const subtotal = items.reduce((sum, item) => sum + (isNaN(item.quantity) ? 0 : item.quantity) * (isNaN(item.unitPrice) ? 0 : item.unitPrice), 0);
-    return subtotal * (1 + taxRate);
-  };
-
   const handleAddSelectedInventoryItems = (selectedInventoryItems: InventoryItem[]) => {
     const newInvoiceItems: POItem[] = selectedInventoryItems.map((invItem) => ({
       id: items.length > 0 ? Math.max(...items.map(i => i.id)) + 1 + Math.random() : 1 + Math.random(),
@@ -264,7 +266,7 @@ const CreateInvoice: React.FC = () => {
       customerSupplier: customerName,
       date: invoiceDate,
       status: "New Order" as "New Order",
-      totalAmount: calculateTotalAmount(),
+      totalAmount: calculatedTotalAmount, // Use the real-time calculated amount
       dueDate: dueDate,
       itemCount: items.length,
       notes: notes,
@@ -355,6 +357,9 @@ const CreateInvoice: React.FC = () => {
                     placeholder="Will be generated on creation"
                     disabled
                   />
+                  {invoiceQrCodeSvg && (
+                    <div dangerouslySetInnerHTML={{ __html: invoiceQrCodeSvg }} className="w-20 h-20 object-contain flex-shrink-0" />
+                  )}
                 </div>
               </div>
               <div className="space-y-2">
@@ -489,16 +494,16 @@ const CreateInvoice: React.FC = () => {
                 </div>
               </DndContext>
               <div className="flex justify-end items-center mt-4 text-lg font-bold">
-                Total Amount: ${calculateTotalAmount().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                Total Amount: ${calculatedTotalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border rounded-lg shadow-sm p-6"> {/* Removed relative from here */}
+          <Card className="bg-card border-border rounded-lg shadow-sm p-6">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl font-semibold">Notes</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col relative min-h-[120px]"> {/* Added flex-col and relative to CardContent */}
+            <CardContent className="flex flex-col relative min-h-[120px]">
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -506,11 +511,6 @@ const CreateInvoice: React.FC = () => {
                 rows={4}
                 className="flex-grow"
               />
-              {invoiceQrCodeSvg && (
-                <div className="absolute bottom-4 right-4 w-20 h-20 object-contain">
-                  <div dangerouslySetInnerHTML={{ __html: invoiceQrCodeSvg }} />
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
