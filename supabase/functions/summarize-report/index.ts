@@ -12,34 +12,14 @@ Deno.serve(async (req) => {
   }
 
   let textToSummarize;
-  let requestBody = '';
 
   try {
     console.log('Edge Function: Incoming request method:', req.method);
     console.log('Edge Function: Content-Type header:', req.headers.get('Content-Type'));
     console.log('Edge Function: Content-Length header:', req.headers.get('Content-Length'));
 
-    // Check if the request has a body and it's readable
-    if (req.body) {
-      requestBody = await req.text(); // Read raw body once
-      console.log('Edge Function: Raw request body (before JSON.parse):', requestBody);
-    } else {
-      console.log('Edge Function: Request body is null or not readable.');
-      return new Response(JSON.stringify({ error: 'Request body is empty or unreadable.' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      });
-    }
-
-    if (!requestBody.trim()) {
-      console.error('Edge Function: requestBody is empty after reading. This means the client sent an empty body or it was stripped.');
-      return new Response(JSON.stringify({ error: 'Received empty request body. Please ensure content is sent.' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      });
-    }
-
-    const jsonBody = JSON.parse(requestBody);
+    // Use req.json() directly for more robust JSON parsing
+    const jsonBody = await req.json();
     textToSummarize = jsonBody.textToSummarize;
 
     console.log('Edge Function: Parsed textToSummarize:', textToSummarize);
@@ -130,8 +110,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Edge Function error during request parsing or processing:', error);
-    console.error('Problematic request body:', requestBody);
-    return new Response(JSON.stringify({ error: `Failed to parse request body: ${error.message}. Raw body: ${requestBody}` }), {
+    return new Response(JSON.stringify({ error: `Failed to process request: ${error.message}` }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
     });
