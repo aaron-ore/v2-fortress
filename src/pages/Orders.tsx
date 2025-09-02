@@ -31,7 +31,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-import { useForm } from "react-hook-form";
+import { useForm } from "@hookform/react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useOrders, OrderItem, POItem } from "@/context/OrdersContext";
@@ -58,6 +58,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabaseClient"; // Import supabase
+import { isValid } from "date-fns"; // Import isValid from date-fns
 
 const formSchema = z.object({
   type: z.enum(["Sales", "Purchase"]),
@@ -538,14 +539,21 @@ const Orders: React.FC = () => {
     );
 
     if (dateRange?.from) {
-      const fromDate = new Date(dateRange.from);
-      fromDate.setHours(0, 0, 0, 0);
-      const toDate = dateRange.to ? new Date(dateRange.to) : fromDate;
-      toDate.setHours(23, 59, 59, 999);
+      // dateRange.from is guaranteed to be a valid Date object if dateRange.from exists
+      // dateRange.to can be undefined if only one day is selected.
+      
+      // Create new Date objects to avoid modifying the original dateRange objects
+      // and ensure they are valid before setting hours.
+      const filterFrom = new Date(dateRange.from);
+      const filterTo = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from); // Ensure filterTo is also a valid Date
+
+      filterFrom.setHours(0, 0, 0, 0);
+      filterTo.setHours(23, 59, 59, 999);
 
       return searchFiltered.filter(order => {
         const orderDate = new Date(order.date);
-        return orderDate >= fromDate && orderDate <= toDate;
+        // Ensure orderDate is valid before comparison
+        return isValid(orderDate) && orderDate >= filterFrom && orderDate <= filterTo;
       });
     }
 
