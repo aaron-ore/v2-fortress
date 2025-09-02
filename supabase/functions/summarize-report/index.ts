@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     // Check if the request has a body and it's readable
     if (req.body) {
       requestBody = await req.text(); // Read raw body once
-      console.log('Edge Function: Raw request body:', requestBody);
+      console.log('Edge Function: Raw request body (before JSON.parse):', requestBody);
     } else {
       console.log('Edge Function: Request body is null or not readable.');
       return new Response(JSON.stringify({ error: 'Request body is empty or unreadable.' }), {

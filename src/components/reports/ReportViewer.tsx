@@ -137,9 +137,9 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
       }
 
       const response = await supabase.functions.invoke('summarize-report', {
-        // REMOVED: JSON.stringify and Content-Type header
         body: { textToSummarize }, // Pass as plain object
         headers: {
+          'Content-Type': 'application/json', // Explicitly set Content-Type
           'Authorization': `Bearer ${session.access_token}`,
         },
       });
