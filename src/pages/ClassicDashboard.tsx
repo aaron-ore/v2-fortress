@@ -31,10 +31,10 @@ const ClassicDashboard: React.FC = () => {
 
   // Helper function to check if a date falls within the selected range
   const isDateInRange = (dateString: string) => {
-    if (!dateRange?.from || !isValid(dateRange.from)) return true; // No valid 'from' date, so no filter applied
-
     const itemDate = new Date(dateString);
     if (!isValid(itemDate)) return false; // If itemDate is invalid, it can't be in range
+
+    if (!dateRange?.from || !isValid(dateRange.from)) return true; // No valid 'from' date, so no filter applied
 
     const filterFrom = startOfDay(dateRange.from);
     const filterTo = dateRange.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : endOfDay(dateRange.from);

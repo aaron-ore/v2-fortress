@@ -16,13 +16,14 @@ const PendingInvoicesCard: React.FC = () => {
         order.status !== "Shipped" &&
         order.status !== "Archived" &&
         order.status !== "Packed" &&
-        isValid(new Date(order.dueDate)) &&
+        isValid(new Date(order.dueDate)) && // Ensure dueDate is valid
         isPast(new Date(order.dueDate)) &&
         new Date(order.dueDate) < thirtyDaysAgo // More than 30 days late
       )
       .sort((a, b) => {
         const dateA = new Date(a.dueDate);
         const dateB = new Date(b.dueDate);
+        // Ensure dates are valid before comparison
         if (!isValid(dateA) || !isValid(dateB)) return 0;
         return dateA.getTime() - dateB.getTime(); // Sort by earliest due date first
       })

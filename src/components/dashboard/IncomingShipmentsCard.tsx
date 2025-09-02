@@ -13,6 +13,7 @@ const IncomingShipmentsCard: React.FC = () => {
       .sort((a, b) => {
         const dateA = new Date(a.dueDate);
         const dateB = new Date(b.dueDate);
+        // Ensure dates are valid before comparison
         if (!isValid(dateA) || !isValid(dateB)) return 0;
         return dateA.getTime() - dateB.getTime();
       })

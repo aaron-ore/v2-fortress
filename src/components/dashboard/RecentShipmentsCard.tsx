@@ -14,6 +14,7 @@ const RecentShipmentsCard: React.FC = () => {
       .sort((a, b) => {
         const dateA = new Date(a.date);
         const dateB = new Date(b.date);
+        // Ensure dates are valid before comparison
         if (!isValid(dateA) || !isValid(dateB)) return 0;
         return dateB.getTime() - dateA.getTime(); // Sort by most recent first
       })

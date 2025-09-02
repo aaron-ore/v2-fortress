@@ -42,11 +42,11 @@ const OrderListTable: React.FC<OrderListTableProps> = ({ filteredOrders, onOrder
               <TableBody>
                 {filteredOrders.map((order) => {
                   const today = new Date();
-                  const dueDate = new Date(order.dueDate);
-                  const isDueDateValid = isValid(dueDate); // Check if date is valid
+                  const dueDateObj = new Date(order.dueDate); // Create Date object
+                  const isDueDateValid = isValid(dueDateObj); // Check validity
 
-                  const isOverdue = isDueDateValid && dueDate < today && order.status !== "Shipped" && order.status !== "Packed";
-                  const isDueSoon = isDueDateValid && dueDate > today && dueDate <= new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000) && order.status !== "Shipped" && order.status !== "Packed";
+                  const isOverdue = isDueDateValid && dueDateObj < today && order.status !== "Shipped" && order.status !== "Packed";
+                  const isDueSoon = isDueDateValid && dueDateObj > today && dueDateObj <= new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000) && order.status !== "Shipped" && order.status !== "Packed";
 
                   const dueDateClass = cn(
                     "font-medium",
@@ -86,7 +86,7 @@ const OrderListTable: React.FC<OrderListTableProps> = ({ filteredOrders, onOrder
                       </TableCell>
                       <TableCell className="truncate max-w-[200px]">{order.customerSupplier}</TableCell>
                       <TableCell>{format(new Date(order.date), "MMM dd, yyyy")}</TableCell>
-                      <TableCell className={dueDateClass}>{isDueDateValid ? format(dueDate, "MMM dd, yyyy") : "N/A"}</TableCell>
+                      <TableCell className={dueDateClass}>{isDueDateValid ? format(dueDateObj, "MMM dd, yyyy") : "N/A"}</TableCell>
                       <TableCell>
                         <Badge variant={statusVariant}>
                           {order.status}
