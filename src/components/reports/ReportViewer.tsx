@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +14,7 @@ import { useProfile } from "@/context/ProfileContext";
 
 // Import all report components (will be created in subsequent steps)
 import InventoryValuationReport from "./InventoryValuationReport";
-import LowStockReport from "./LowStockReport";
+import LowStockReport from "./Components/reports/LowStockReport";
 import InventoryMovementReport from "./InventoryMovementReport";
 import SalesByCustomerReport from "./SalesByCustomerReport";
 import SalesByProductReport from "./SalesByProductReport";
@@ -135,9 +137,9 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
       }
 
       const response = await supabase.functions.invoke('summarize-report', {
-        body: JSON.stringify({ textToSummarize }),
+        // REMOVED: JSON.stringify and Content-Type header
+        body: { textToSummarize }, // Pass as plain object
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
       });
