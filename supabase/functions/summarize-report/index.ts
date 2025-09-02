@@ -16,19 +16,9 @@ Deno.serve(async (req) => {
   try {
     console.log('Edge Function: Incoming request method:', req.method);
     console.log('Edge Function: Content-Type header:', req.headers.get('Content-Type'));
-    console.log('Edge Function: Content-Length header:', req.headers.get('Content-Length'));
 
-    // Log all headers for debugging
-    console.log('Edge Function: All incoming headers:');
-    for (const [key, value] of req.headers.entries()) {
-      console.log(`  ${key}: ${value}`);
-    }
-
-    // Attempt to parse the JSON directly from the request body
-    console.log('Edge Function: Attempting to parse JSON from request body using req.json()...');
-    const jsonBody = await req.json(); // Use req.json() directly
+    const jsonBody = await req.json();
     textToSummarize = jsonBody.textToSummarize;
-    console.log('Edge Function: Successfully parsed JSON from body.');
     console.log('Edge Function: Extracted textToSummarize (first 100 chars):', textToSummarize ? textToSummarize.substring(0, 100) + '...' : 'null');
     console.log('Edge Function: Length of textToSummarize:', textToSummarize ? textToSummarize.length : 0);
 
@@ -40,16 +30,41 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create a Supabase client with the service_role key to access secrets
+    // Create a Supabase client with the service_role key to access secrets and perform admin actions
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get the authenticated user's session (optional, for logging/RLS if needed)
+    // Get the Authorization header from the incoming request
     const authHeader = req.headers.get('Authorization');
-    console.log('Edge Function: Authorization header for user auth:', authHeader);
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(authHeader);
+    console.log('Edge Function: Authorization header received:', authHeader);
+
+    if (!authHeader) {
+      console.error('Edge Function: Authorization header missing. Returning 401.');
+      return new Response(JSON.stringify({ error: 'Unauthorized: Authorization header missing.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      });
+    }
+
+    // Create a new Supabase client using the ANON_KEY and the user's JWT
+    // This client will correctly validate the user's session and respect RLS
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: {
+            Authorization: authHeader,
+          },
+        },
+      }
+    );
+
+    // Get the authenticated user from the token using the new client
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    console.log('Edge Function: User from supabase.auth.getUser():', user);
 
     if (userError) {
       console.error('Edge Function: Error getting user from token:', userError);
@@ -67,7 +82,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch the Gemini API key from Supabase Secrets
+    // Fetch the Gemini API key from Supabase Secrets (using supabaseAdmin as it's an environment variable)
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     if (!geminiApiKey) {
       console.error('Edge Function: Gemini API key not configured. Please ensure GEMINI_API_KEY is set in Supabase Secrets.');
