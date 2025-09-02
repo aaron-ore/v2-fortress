@@ -17,13 +17,14 @@ export interface UserProfile {
   createdAt: string;
   quickbooksAccessToken?: string; // NEW: Add QuickBooks Access Token
   quickbooksRefreshToken?: string; // NEW: Add QuickBooks Refresh Token
+  quickbooksRealmId?: string; // NEW: Add QuickBooks Realm ID
 }
 
 interface ProfileContextType {
   profile: UserProfile | null;
   allProfiles: UserProfile[];
   isLoadingProfile: boolean;
-  updateProfile: (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "quickbooksAccessToken" | "quickbooksRefreshToken">>) => Promise<void>;
+  updateProfile: (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "quickbooksAccessToken" | "quickbooksRefreshToken" | "quickbooksRealmId">>) => Promise<void>;
   updateUserRole: (userId: string, newRole: string, organizationId: string | null) => Promise<void>;
   fetchProfile: () => Promise<void>;
   fetchAllProfiles: () => Promise<void>;
@@ -56,7 +57,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code), quickbooks_access_token, quickbooks_refresh_token") // NEW: Select unique_code from organizations and QuickBooks tokens
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code), quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id") // UPDATED: Select quickbooks_realm_id
       .eq("id", session.user.id)
       .single();
 
@@ -93,6 +94,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         createdAt: userProfileData.created_at,
         quickbooksAccessToken: userProfileData.quickbooks_access_token || undefined, // NEW
         quickbooksRefreshToken: userProfileData.quickbooks_refresh_token || undefined, // NEW
+        quickbooksRealmId: userProfileData.quickbooks_realm_id || undefined, // NEW: Map quickbooks_realm_id
       });
     }
     setIsLoadingProfile(false);
@@ -110,7 +112,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, quickbooks_access_token, quickbooks_refresh_token") // NEW: Select QuickBooks tokens
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id") // UPDATED: Select quickbooks_realm_id
       .eq("organization_id", profile.organizationId);
 
     if (error) {
@@ -130,6 +132,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         createdAt: p.created_at,
         quickbooksAccessToken: p.quickbooks_access_token || undefined, // NEW
         quickbooksRefreshToken: p.quickbooks_refresh_token || undefined, // NEW
+        quickbooksRealmId: p.quickbooks_realm_id || undefined, // NEW: Map quickbooks_realm_id
       }));
       setAllProfiles(fetchedProfiles); // Set fetched data, could be empty
     }
@@ -164,7 +167,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   }, [profile?.role, profile?.organizationId, fetchAllProfiles]);
 
-  const updateProfile = async (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "quickbooksAccessToken" | "quickbooksRefreshToken">>) => {
+  const updateProfile = async (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "quickbooksAccessToken" | "quickbooksRefreshToken" | "quickbooksRealmId">>) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       showError("You must be logged in to update your profile.");
@@ -203,6 +206,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         createdAt: data.created_at,
         quickbooksAccessToken: data.quickbooks_access_token || undefined, // NEW
         quickbooksRefreshToken: data.quickbooks_refresh_token || undefined, // NEW
+        quickbooksRealmId: data.quickbooks_realm_id || undefined, // NEW: Map quickbooks_realm_id
       });
       // REMOVED: addActivity("Profile Updated", `Updated own profile details.`, { oldProfile: oldProfile, newProfile: data });
       showSuccess("Profile updated successfully!");
@@ -255,6 +259,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
             organizationCode: profile?.organizationCode, // Keep existing organizationCode
             quickbooksAccessToken: updatedProfileData.quickbooks_access_token || undefined, // NEW
             quickbooksRefreshToken: updatedProfileData.quickbooks_refresh_token || undefined, // NEW
+            quickbooksRealmId: updatedProfileData.quickbooks_realm_id || undefined, // NEW: Map quickbooks_realm_id
           } : p
         )
       );

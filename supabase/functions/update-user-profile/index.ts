@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
         organization_id: organizationId, // Ensure organizationId is set/updated
       })
       .eq('id', targetUserId)
-      .select()
+      .select('id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id') // UPDATED: Select quickbooks_realm_id
       .single();
 
     if (updateError) {
