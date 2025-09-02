@@ -156,23 +156,23 @@ const AppContent = () => {
     const params = new URLSearchParams(location.search);
     const quickbooksSuccess = params.get('quickbooks_success');
     const quickbooksError = params.get('quickbooks_error');
-    const realmIdPresent = params.get('realmId_present'); // NEW: Check if realmId was present
+    const realmIdPresent = params.get('realmId_present');
 
     if (quickbooksSuccess) {
       showSuccess("QuickBooks connected successfully!");
-      if (realmIdPresent === 'false') { // NEW: Specific warning if realmId was missing
+      if (realmIdPresent === 'false') {
         showError("QuickBooks company (realmId) was not received. Please ensure you select a company during the QuickBooks authorization flow.");
       }
       // Explicitly refresh the session and then the profile
       supabase.auth.refreshSession().then(() => {
         fetchProfile(); // Fetch the profile to get the updated QuickBooks tokens
       });
-      navigate(location.pathname, { replace: true }); // Clear query params
+      // REMOVED: navigate(location.pathname, { replace: true }); // This line caused the conflict
     } else if (quickbooksError) {
       showError(`QuickBooks connection failed: ${quickbooksError}`);
-      navigate(location.pathname, { replace: true }); // Clear query params
+      // REMOVED: navigate(location.pathname, { replace: true }); // This line caused the conflict
     }
-  }, [location.search, navigate, fetchProfile]); // Added fetchProfile to dependencies
+  }, [location.search, navigate, fetchProfile]);
 
 
   if (loadingAuth || isLoadingProfile) {
@@ -267,14 +267,10 @@ const QuickBooksOAuthCallbackHandler: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const redirectTo = params.get('redirect_to'); // NEW: Get the original redirect_to URL
-
-    // After processing, redirect to the original frontend URL's settings page
-    // or a default if redirect_to is not available.
-    const targetPath = redirectTo ? `${redirectTo}/settings` : '/settings';
-    navigate(targetPath, { replace: true });
-  }, [navigate, location.search]);
+    // The Edge Function now redirects to the frontend base URL with query params.
+    // This component's job is to simply navigate to the /settings page.
+    navigate('/settings', { replace: true });
+  }, [navigate]); // No need to depend on location.search here, as the Edge Function already handled it.
   
   return (
     <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
