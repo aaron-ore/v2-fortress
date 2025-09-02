@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   }
 
   let textToSummarize;
-  let rawRequestBody = '';
+  let jsonBody;
 
   try {
     console.log('Edge Function: Incoming request method:', req.method);
@@ -25,25 +25,36 @@ Deno.serve(async (req) => {
       console.log(`  ${key}: ${value}`);
     }
 
-    // Attempt to read the raw request body as text first
+    console.log('Edge Function: Attempting to parse request body as JSON...');
     try {
-      rawRequestBody = await req.text();
-      console.log('Edge Function: Raw request body (as text):', `"${rawRequestBody}"`, 'length:', rawRequestBody.length);
-    } catch (readError) {
-      console.error('Edge Function: Error reading raw request body as text:', readError);
-      rawRequestBody = 'Error reading body';
-    }
-
-    // Now attempt to parse the JSON body
-    let jsonBody;
-    try {
-      jsonBody = JSON.parse(rawRequestBody); // Parse the already read text
+      jsonBody = await req.json(); // Directly attempt to parse as JSON
+      console.log('Edge Function: Successfully parsed JSON body.');
       textToSummarize = jsonBody.textToSummarize;
-      console.log('Edge Function: Parsed textToSummarize (first 100 chars):', textToSummarize ? textToSummarize.substring(0, 100) + '...' : 'null');
+      console.log('Edge Function: Extracted textToSummarize (first 100 chars):', textToSummarize ? textToSummarize.substring(0, 100) + '...' : 'null');
       console.log('Edge Function: Length of textToSummarize:', textToSummarize ? textToSummarize.length : 0);
     } catch (parseError) {
-      console.error('Edge Function: Error parsing JSON from raw body:', parseError);
-      return new Response(JSON.stringify({ error: `Failed to parse JSON request body. Raw body: "${rawRequestBody}". Error: ${parseError.message}` }), {
+      console.error('Edge Function: Error parsing JSON from request body:', parseError);
+      // If parsing fails, try to read as text for more context
+      let rawBodyFallback = 'Could not read body as text.';
+      try {
+        const reader = req.body?.getReader();
+        if (reader) {
+          const chunks = [];
+          let result;
+          do {
+            result = await reader.read();
+            if (result.value) {
+              chunks.push(result.value);
+            }
+          } while (!result.done);
+          const decoder = new TextDecoder();
+          rawBodyFallback = chunks.map(chunk => decoder.decode(chunk, { stream: true })).join('');
+          rawBodyFallback += decoder.decode(new Uint8Array()); // Final decode
+        }
+      } catch (readFallbackError) {
+        console.error('Edge Function: Error during raw body fallback read:', readFallbackError);
+      }
+      return new Response(JSON.stringify({ error: `Failed to parse JSON request body. Raw body (fallback): "${rawBodyFallback}". Error: ${parseError.message}` }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       });
