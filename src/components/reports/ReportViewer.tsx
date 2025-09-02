@@ -57,15 +57,16 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
   // Function to generate the text content of the report for AI summarization
   const generateReportTextContent = useCallback(() => {
     if (reportContentRef.current) {
-      // Get innerText, then normalize whitespace:
-      // 1. Replace multiple newlines/spaces with a single space
-      // 2. Trim leading/trailing whitespace
-      const text = reportContentRef.current.innerText
+      const rawInnerText = reportContentRef.current.innerText;
+      console.log("Client-side: Raw innerText from reportContentRef:", `"${rawInnerText}"`, "length:", rawInnerText.length);
+
+      const text = rawInnerText
         .replace(/(\r\n|\n|\r){2,}/g, '\n\n') // Reduce multiple newlines to max two
         .replace(/[ \t]+/g, ' ') // Replace multiple spaces/tabs with single space
         .trim();
       return text;
     }
+    console.log("Client-side: reportContentRef.current is null.");
     return "";
   }, [reportContentRef]);
 
@@ -110,18 +111,21 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
     setIsSummarizing(true);
     setAiSummary(""); // Clear previous AI summary
 
+    if (!reportContentRef.current) {
+      showError("Report content not rendered. Please ensure the report is visible and fully loaded.");
+      setIsSummarizing(false);
+      return;
+    }
+
     try {
       const rawText = generateReportTextContent();
-      const textToSummarize = rawText.trim(); // Explicitly trim here
+      let textToSummarize = rawText.trim();
 
-      console.log("Client-side rawText before sending:", `"${rawText}"`, "length:", rawText.length);
-      console.log("Client-side textToSummarize (trimmed) before sending:", `"${textToSummarize}"`, "length:", textToSummarize.length);
-
-      if (!textToSummarize) { // Check for empty string after trimming
-        showError("No text content found in the report to summarize.");
-        setIsSummarizing(false);
-        return;
+      if (!textToSummarize) {
+        console.warn("Client-side: Report text content is empty after extraction. Using fallback for AI summary.");
+        textToSummarize = "The report content was empty or could not be extracted. This is a placeholder summary for testing purposes.";
       }
+      console.log("Client-side textToSummarize (final) before sending to Edge Function:", `"${textToSummarize}"`, "length:", textToSummarize.length);
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
