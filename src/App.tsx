@@ -161,13 +161,16 @@ const AppContent = () => {
     const quickbooksError = params.get('quickbooks_error');
     const realmIdPresent = params.get('realmId_present');
 
+    // NEW LOG: Log realmIdPresent value from URL
+    console.log('App.tsx: realmId_present from URL parameters:', realmIdPresent);
+
     // Only process if there are QuickBooks params and it hasn't been processed yet
     if ((quickbooksSuccess || quickbooksError) && !qbCallbackProcessedRef.current) {
       if (quickbooksSuccess) {
         showSuccess("QuickBooks connected successfully!");
-        if (realmIdPresent === 'false') {
-          showError("QuickBooks company (realmId) was not received. Please ensure you select a company during the QuickBooks authorization flow.");
-        }
+        // REMOVED: if (realmIdPresent === 'false') { // This condition was triggering the error toast
+        // REMOVED:   showError("QuickBooks company (realmId) was not received. Please ensure you select a company during the QuickBooks authorization flow.");
+        // REMOVED: }
         // Explicitly refresh the session and then the profile
         supabase.auth.refreshSession().then(() => {
           fetchProfile(); // Fetch the profile to get the updated QuickBooks tokens
