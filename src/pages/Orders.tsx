@@ -617,6 +617,24 @@ const Orders: React.FC = () => {
               Clear Filter
             </Button>
           )}
+          {/* Moved Order Actions Dropdown here */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Order Actions <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setIsOrderReceiveShipmentDialogOpen(true)}>
+                <PackagePlus className="h-4 w-4 mr-2" /> Receive Shipment
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsOrderFulfillmentDialogOpen(true)}>
+                <PackageCheck className="h-4 w-4 mr-2" /> Fulfill Order
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -636,23 +654,6 @@ const Orders: React.FC = () => {
           </Button>
         )}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              Order Actions <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setIsOrderReceiveShipmentDialogOpen(true)}>
-              <PackagePlus className="h-4 w-4 mr-2" /> Receive Shipment
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setIsOrderFulfillmentDialogOpen(true)}>
-              <PackageCheck className="h-4 w-4 mr-2" /> Fulfill Order
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
         <Dialog open={isAddOrderDialogOpen} onOpenChange={setIsAddOrderDialogOpen}>
           <DialogTrigger asChild>
             <Button>
