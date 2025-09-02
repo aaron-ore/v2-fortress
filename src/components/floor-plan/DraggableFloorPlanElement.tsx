@@ -5,7 +5,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { FloorPlanElement } from "@/context/FloorPlanContext";
-import { Box, LayoutGrid, Table, Desk } from "lucide-react";
+import { Box, LayoutGrid, Table, Monitor } from "lucide-react"; // Changed Desk to Monitor
 
 interface DraggableFloorPlanElementProps {
   element: FloorPlanElement;
@@ -17,7 +17,7 @@ const iconMap = {
   shelf: Box,
   aisle: LayoutGrid,
   bin: Table,
-  desk: Desk,
+  desk: Monitor, // Changed Desk to Monitor
   custom: Box, // Default icon for custom
 };
 

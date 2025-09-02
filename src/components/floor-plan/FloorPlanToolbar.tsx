@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useDraggable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
-import { Box, LayoutGrid, Table, Desk, PlusCircle } from "lucide-react";
+import { Box, LayoutGrid, Table, Monitor, PlusCircle } from "lucide-react"; // Changed Desk to Monitor
 import { FloorPlanElement } from "@/context/FloorPlanContext";
 
 interface FloorPlanToolbarProps {
@@ -60,7 +60,7 @@ const FloorPlanToolbar: React.FC<FloorPlanToolbarProps> = ({ onAddCustomElement 
         <DraggableShape id="shelf" type="shelf" label="Shelf" icon={Box} color="#2196F3" />
         <DraggableShape id="aisle" type="aisle" label="Aisle" icon={LayoutGrid} color="#4CAF50" />
         <DraggableShape id="bin" type="bin" label="Bin" icon={Table} color="#FF9800" />
-        <DraggableShape id="desk" type="desk" label="Desk" icon={Desk} color="#9C27B0" />
+        <DraggableShape id="desk" type="desk" label="Desk" icon={Monitor} color="#9C27B0" /> {/* Changed Desk to Monitor */}
         
         <Button onClick={onAddCustomElement} className="col-span-2 flex items-center justify-center gap-2">
           <PlusCircle className="h-4 w-4" /> Add Custom Shape
