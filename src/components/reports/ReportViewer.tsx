@@ -57,8 +57,14 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
   // Function to generate the text content of the report for AI summarization
   const generateReportTextContent = useCallback(() => {
     if (reportContentRef.current) {
-      // Extract text from the rendered report component
-      return reportContentRef.current.innerText;
+      // Get innerText, then normalize whitespace:
+      // 1. Replace multiple newlines/spaces with a single space
+      // 2. Trim leading/trailing whitespace
+      const text = reportContentRef.current.innerText
+        .replace(/(\r\n|\n|\r){2,}/g, '\n\n') // Reduce multiple newlines to max two
+        .replace(/[ \t]+/g, ' ') // Replace multiple spaces/tabs with single space
+        .trim();
+      return text;
     }
     return "";
   }, [reportContentRef]);
@@ -98,22 +104,28 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
   const handleSummarizeReport = async () => {
     if (!reportData) {
       showError("No report data to summarize. Please generate the report first.");
+      setIsSummarizing(false);
       return;
     }
     setIsSummarizing(true);
-    setAiSummary(""); // Clear previous summary
+    setAiSummary(""); // Clear previous AI summary
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        showError("You must be logged in to use the AI Summary tool.");
+      const rawText = generateReportTextContent();
+      const textToSummarize = rawText.trim(); // Explicitly trim here
+
+      console.log("Client-side rawText before sending:", `"${rawText}"`, "length:", rawText.length);
+      console.log("Client-side textToSummarize (trimmed) before sending:", `"${textToSummarize}"`, "length:", textToSummarize.length);
+
+      if (!textToSummarize) { // Check for empty string after trimming
+        showError("No text content found in the report to summarize.");
         setIsSummarizing(false);
         return;
       }
 
-      const textToSummarize = generateReportTextContent();
-      if (!textToSummarize.trim()) {
-        showError("No text content found in the report to summarize.");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        showError("You must be logged in to use the AI Summary tool.");
         setIsSummarizing(false);
         return;
       }
@@ -137,7 +149,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
         showError("Failed to get a summary from the AI. Please try again.");
       }
     } catch (error: any) {
-      console.error("Error calling Edge Function:", error);
+      console.error("Error generating summary:", error); // Changed log message
       showError(`Error generating summary: ${error.message}`);
     } finally {
       setIsSummarizing(false);

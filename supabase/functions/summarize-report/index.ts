@@ -11,10 +11,18 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  let textToSummarize;
   try {
-    const { textToSummarize } = await req.json();
+    const requestBody = await req.text(); // Read raw body first
+    console.log('Edge Function: Raw request body:', requestBody);
+
+    const jsonBody = JSON.parse(requestBody);
+    textToSummarize = jsonBody.textToSummarize;
+
+    console.log('Edge Function: Parsed textToSummarize:', textToSummarize);
 
     if (!textToSummarize) {
+      console.error('Edge Function: textToSummarize is empty or null after parsing.');
       return new Response(JSON.stringify({ error: 'No text provided for summarization.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
@@ -29,9 +37,19 @@ Deno.serve(async (req) => {
 
     // Get the authenticated user's session (optional, for logging/RLS if needed)
     const authHeader = req.headers.get('Authorization');
-    const { data: { user } } = await supabaseAdmin.auth.getUser(authHeader);
+    console.log('Edge Function: Authorization header:', authHeader); // Log auth header
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(authHeader);
+
+    if (userError) {
+      console.error('Edge Function: Error getting user from token:', userError);
+      return new Response(JSON.stringify({ error: `Unauthorized: ${userError.message}` }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      });
+    }
 
     if (!user) {
+      console.error('Edge Function: User not authenticated from token. Returning 401.');
       return new Response(JSON.stringify({ error: 'Unauthorized: User not authenticated.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 401,
@@ -41,6 +59,7 @@ Deno.serve(async (req) => {
     // Fetch the Gemini API key from Supabase Secrets
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     if (!geminiApiKey) {
+      console.error('Edge Function: Gemini API key not configured.'); // Log missing key
       return new Response(JSON.stringify({ error: 'Gemini API key not configured.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
@@ -87,7 +106,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Edge Function error:', error);
+    console.error('Edge Function error during request parsing or processing:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
