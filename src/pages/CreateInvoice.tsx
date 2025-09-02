@@ -309,6 +309,7 @@ const CreateInvoice: React.FC = () => {
       notes,
       taxRate,
       companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
+      invoiceQrCodeSvg: invoiceQrCodeSvg, // Pass QR code SVG to PDF
     };
 
     initiatePrint({ type: "invoice", props: pdfProps });
@@ -349,18 +350,13 @@ const CreateInvoice: React.FC = () => {
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="invoiceNumber">Invoice Number</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="invoiceNumber"
-                    value={invoiceNumber}
-                    onChange={(e) => setInvoiceNumber(e.target.value)}
-                    placeholder="Will be generated on creation"
-                    disabled
-                  />
-                  {invoiceQrCodeSvg && (
-                    <div dangerouslySetInnerHTML={{ __html: invoiceQrCodeSvg }} className="w-20 h-20 object-contain flex-shrink-0" />
-                  )}
-                </div>
+                <Input
+                  id="invoiceNumber"
+                  value={invoiceNumber}
+                  onChange={(e) => setInvoiceNumber(e.target.value)}
+                  placeholder="Will be generated on creation"
+                  disabled
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="customerNameSelect">Customer Name</Label>
@@ -445,6 +441,20 @@ const CreateInvoice: React.FC = () => {
                   onChange={(e) => setDueDate(e.target.value)}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="totalAmount">Total Amount</Label>
+                <Input
+                  id="totalAmount"
+                  type="text" // Changed to text to display formatted currency
+                  value={`$${calculatedTotalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  disabled
+                />
+              </div>
+              {invoiceQrCodeSvg && (
+                <div className="flex items-center justify-center">
+                  <div dangerouslySetInnerHTML={{ __html: invoiceQrCodeSvg }} className="w-20 h-20 object-contain flex-shrink-0" />
+                </div>
+              )}
             </CardContent>
           </Card>
 

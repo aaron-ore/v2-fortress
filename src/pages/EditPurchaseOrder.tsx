@@ -192,6 +192,7 @@ const EditPurchaseOrder: React.FC = () => {
       notes,
       taxRate,
       companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
+      poQrCodeSvg: poQrCodeSvg, // Pass QR code SVG to PDF
     };
 
     initiatePrint({ type: "purchase-order", props: pdfProps });
@@ -233,17 +234,12 @@ const EditPurchaseOrder: React.FC = () => {
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="poNumber">Order ID</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="poNumber"
-                    value={poNumber}
-                    onChange={(e) => setPoNumber(e.target.value)}
-                    disabled
-                  />
-                  {poQrCodeSvg && (
-                    <div dangerouslySetInnerHTML={{ __html: poQrCodeSvg }} className="w-20 h-20 object-contain flex-shrink-0" />
-                  )}
-                </div>
+                <Input
+                  id="poNumber"
+                  value={poNumber}
+                  onChange={(e) => setPoNumber(e.target.value)}
+                  disabled
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="supplier">Customer/Supplier</Label>
@@ -324,11 +320,16 @@ const EditPurchaseOrder: React.FC = () => {
                 <Label htmlFor="totalAmount">Total Amount</Label>
                 <Input
                   id="totalAmount"
-                  type="number"
-                  value={calculateTotalAmount().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  type="text" // Changed to text to display formatted currency
+                  value={`$${calculateTotalAmount().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                   disabled
                 />
               </div>
+              {poQrCodeSvg && (
+                <div className="flex items-center justify-center">
+                  <div dangerouslySetInnerHTML={{ __html: poQrCodeSvg }} className="w-20 h-20 object-contain flex-shrink-0" />
+                </div>
+              )}
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="notes">Notes</Label>
                 <Textarea

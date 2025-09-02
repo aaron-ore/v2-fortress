@@ -292,6 +292,7 @@ const CreatePurchaseOrder: React.FC = () => {
       notes,
       taxRate,
       companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
+      poQrCodeSvg: poQrCodeSvg, // Pass QR code SVG to PDF
     };
 
     initiatePrint({ type: "purchase-order", props: pdfProps });
@@ -332,18 +333,13 @@ const CreatePurchaseOrder: React.FC = () => {
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="poNumber">PO Number</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="poNumber"
-                    value={poNumber}
-                    onChange={(e) => setPoNumber(e.target.value)}
-                    placeholder="Will be generated on creation"
-                    disabled
-                  />
-                  {poQrCodeSvg && (
-                    <div dangerouslySetInnerHTML={{ __html: poQrCodeSvg }} className="w-20 h-20 object-contain flex-shrink-0" />
-                  )}
-                </div>
+                <Input
+                  id="poNumber"
+                  value={poNumber}
+                  onChange={(e) => setPoNumber(e.target.value)}
+                  placeholder="Will be generated on creation"
+                  disabled
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="supplierName">Supplier Name</Label>
@@ -412,6 +408,20 @@ const CreatePurchaseOrder: React.FC = () => {
                   onChange={(e) => setDueDate(e.target.value)}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="totalAmount">Total Amount</Label>
+                <Input
+                  id="totalAmount"
+                  type="text" // Changed to text to display formatted currency
+                  value={`$${calculatedTotalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  disabled
+                />
+              </div>
+              {poQrCodeSvg && (
+                <div className="flex items-center justify-center">
+                  <div dangerouslySetInnerHTML={{ __html: poQrCodeSvg }} className="w-20 h-20 object-contain flex-shrink-0" />
+                </div>
+              )}
             </CardContent>
           </Card>
 

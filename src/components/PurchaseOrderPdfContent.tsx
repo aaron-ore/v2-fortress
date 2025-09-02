@@ -23,6 +23,7 @@ interface PurchaseOrderPdfContentProps {
   notes: string;
   taxRate: number; // New: Tax Rate (e.g., 0.05 for 5%)
   companyLogoUrl?: string;
+  poQrCodeSvg?: string; // NEW: Add QR code SVG prop
 }
 
 const PurchaseOrderPdfContent: React.FC<PurchaseOrderPdfContentProps> = ({
@@ -41,6 +42,7 @@ const PurchaseOrderPdfContent: React.FC<PurchaseOrderPdfContentProps> = ({
   notes,
   taxRate,
   companyLogoUrl,
+  poQrCodeSvg, // NEW: Destructure QR code SVG
 }) => {
   const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
   const taxAmount = subtotal * taxRate;
@@ -63,6 +65,11 @@ const PurchaseOrderPdfContent: React.FC<PurchaseOrderPdfContentProps> = ({
         <div className="text-right">
           <p className="text-sm font-semibold">DATE: {poDate}</p>
           <p className="text-sm font-semibold">PO: {poNumber}</p>
+          {poQrCodeSvg && ( // NEW: Display QR code here
+            <div className="mt-2 flex justify-end">
+              <div dangerouslySetInnerHTML={{ __html: poQrCodeSvg }} className="w-[20mm] h-[20mm] object-contain" />
+            </div>
+          )}
         </div>
       </div>
 

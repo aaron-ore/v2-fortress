@@ -23,6 +23,7 @@ interface InvoicePdfContentProps {
   notes: string;
   taxRate: number; // e.g., 0.05 for 5%
   companyLogoUrl?: string;
+  invoiceQrCodeSvg?: string; // NEW: Add QR code SVG prop
 }
 
 const InvoicePdfContent: React.FC<InvoicePdfContentProps> = ({
@@ -41,6 +42,7 @@ const InvoicePdfContent: React.FC<InvoicePdfContentProps> = ({
   notes,
   taxRate,
   companyLogoUrl,
+  invoiceQrCodeSvg, // NEW: Destructure QR code SVG
 }) => {
   const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
   const taxAmount = subtotal * taxRate;
@@ -63,6 +65,11 @@ const InvoicePdfContent: React.FC<InvoicePdfContentProps> = ({
         <div className="text-right">
           <p className="text-sm font-semibold">DATE: {invoiceDate}</p>
           <p className="text-sm font-semibold">INVOICE #: {invoiceNumber}</p>
+          {invoiceQrCodeSvg && ( // NEW: Display QR code here
+            <div className="mt-2 flex justify-end">
+              <div dangerouslySetInnerHTML={{ __html: invoiceQrCodeSvg }} className="w-[20mm] h-[20mm] object-contain" />
+            </div>
+          )}
         </div>
       </div>
 
