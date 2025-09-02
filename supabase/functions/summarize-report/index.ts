@@ -11,6 +11,7 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  let textToSummarize;
   let rawRequestBody = '';
 
   try {
@@ -30,20 +31,111 @@ Deno.serve(async (req) => {
     console.log('Edge Function: Successfully read raw request body. Length:', rawRequestBody.length);
     console.log('Edge Function: Raw request body content (first 500 chars):', `"${rawRequestBody.substring(0, 500)}..."`);
 
-    // For debugging, return the raw body directly
-    return new Response(JSON.stringify({
-      message: 'Raw body received for debugging.',
-      rawBody: rawRequestBody,
-      rawBodyLength: rawRequestBody.length,
-      contentType: req.headers.get('Content-Type'),
-      contentLength: req.headers.get('Content-Length'),
-    }), {
+    // Now attempt to parse the JSON from the raw text
+    let jsonBody;
+    try {
+      jsonBody = JSON.parse(rawRequestBody);
+      textToSummarize = jsonBody.textToSummarize;
+      console.log('Edge Function: Successfully parsed JSON from raw body.');
+      console.log('Edge Function: Extracted textToSummarize (first 100 chars):', textToSummarize ? textToSummarize.substring(0, 100) + '...' : 'null');
+      console.log('Edge Function: Length of textToSummarize:', textToSummarize ? textToSummarize.length : 0);
+    } catch (parseError) {
+      console.error('Edge Function: Error parsing JSON from raw body:', parseError);
+      return new Response(JSON.stringify({ error: `Failed to parse JSON from raw body. Raw body: "${rawRequestBody}". Error: ${parseError.message}` }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      });
+    }
+
+    if (!textToSummarize) {
+      console.error('Edge Function: textToSummarize is empty or null after parsing.');
+      return new Response(JSON.stringify({ error: 'No text provided for summarization.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      });
+    }
+
+    // Create a Supabase client with the service_role key to access secrets
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Get the authenticated user's session (optional, for logging/RLS if needed)
+    const authHeader = req.headers.get('Authorization');
+    console.log('Edge Function: Authorization header for user auth:', authHeader);
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(authHeader);
+
+    if (userError) {
+      console.error('Edge Function: Error getting user from token:', userError);
+      return new Response(JSON.stringify({ error: `Unauthorized: ${userError.message}` }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      });
+    }
+
+    if (!user) {
+      console.error('Edge Function: User not authenticated from token. Returning 401.');
+      return new Response(JSON.stringify({ error: 'Unauthorized: User not authenticated.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      });
+    }
+
+    // Fetch the Gemini API key from Supabase Secrets
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    if (!geminiApiKey) {
+      console.error('Edge Function: Gemini API key not configured. Please ensure GEMINI_API_KEY is set in Supabase Secrets.');
+      return new Response(JSON.stringify({ error: 'Gemini API key not configured.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
+    console.log('Edge Function: Gemini API key is configured.');
+
+    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${geminiApiKey}`;
+    console.log('Edge Function: Gemini API URL:', GEMINI_API_URL);
+
+    const prompt = `Summarize the following text concisely and accurately. Focus on the key information and main points. The summary should be suitable for a business report or quick overview:\n\n${textToSummarize}`;
+
+    const geminiResponse = await fetch(GEMINI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{ text: prompt }],
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topP: 0.95,
+          topK: 64,
+          maxOutputTokens: 500,
+        },
+      }),
+    });
+
+    if (!geminiResponse.ok) {
+      const errorData = await geminiResponse.json();
+      console.error('Edge Function: Gemini API call failed. Status:', geminiResponse.status, 'Status Text:', geminiResponse.statusText);
+      console.error('Edge Function: Gemini API error response:', JSON.stringify(errorData, null, 2));
+      return new Response(JSON.stringify({ error: `Gemini API error: ${errorData.error?.message || 'Unknown error'}` }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: geminiResponse.status,
+      });
+    }
+
+    const geminiData = await geminiResponse.json();
+    const summary = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 'No summary generated.';
+
+    return new Response(JSON.stringify({ summary }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
 
   } catch (error) {
-    console.error('Edge Function error during request processing:', error);
+    console.error('Edge Function error during request parsing or processing:', error);
     return new Response(JSON.stringify({ error: `Failed to process request: ${error.message}` }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
