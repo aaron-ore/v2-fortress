@@ -19,6 +19,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSidebar } from "@/context/SidebarContext"; // NEW: Import useSidebar
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // NEW: Import Tooltip components
 
 interface SidebarProps {
   // isCollapsed: boolean; // REMOVED: No longer passed as prop
@@ -98,18 +99,26 @@ const Sidebar: React.FC<SidebarProps> = () => { // REMOVED: Props from function 
         // Special handling for "Warehouse Operations" dropdown when collapsed
         if (item.isParent && item.children && isCollapsed) {
           return (
-            <Button
-              key={item.title}
-              variant="ghost"
-              className={cn(
-                baseButtonClass,
-                currentIsActive ? activeLinkClass : inactiveLinkClass,
-                "justify-center px-0 rounded-md" // Ensure rounded-md for collapsed parent
-              )}
-              onClick={() => handleNavigation(item.href)} // Navigate to parent link when collapsed
-            >
-              <item.icon className="h-5 w-5" />
-            </Button>
+            <TooltipProvider key={item.title}> {/* NEW: TooltipProvider for collapsed items */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      baseButtonClass,
+                      currentIsActive ? activeLinkClass : inactiveLinkClass,
+                      "justify-center px-0 rounded-md" // Ensure rounded-md for collapsed parent
+                    )}
+                    onClick={() => handleNavigation(item.href)} // Navigate to parent link when collapsed
+                  >
+                    <item.icon className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="ml-2"> {/* NEW: TooltipContent */}
+                  {item.title}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           );
         }
 
@@ -138,30 +147,40 @@ const Sidebar: React.FC<SidebarProps> = () => { // REMOVED: Props from function 
         }
 
         return (
-          <Button
-            key={item.title}
-            variant="ghost"
-            className={cn(
-              baseButtonClass,
-              currentIsActive ? activeLinkClass : inactiveLinkClass,
-              isCollapsed && "justify-center px-0 rounded-md" // Ensure rounded-md for collapsed items
-            )}
-            onClick={() => {
-              if (item.action) {
-                item.action();
-              } else {
-                handleNavigation(item.href);
-              }
-            }}
-          >
-            <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
-            {!isCollapsed && <span className="truncate">{item.title}</span>}
-            {item.title === "Notifications" && unreadCount > 0 && !isCollapsed && (
-              <span className="ml-auto px-2 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full">
-                {unreadCount}
-              </span>
-            )}
-          </Button>
+          <TooltipProvider key={item.title}> {/* NEW: TooltipProvider for collapsed items */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    baseButtonClass,
+                    currentIsActive ? activeLinkClass : inactiveLinkClass,
+                    isCollapsed && "justify-center px-0 rounded-md" // Ensure rounded-md for collapsed items
+                  )}
+                  onClick={() => {
+                    if (item.action) {
+                      item.action();
+                    } else {
+                      handleNavigation(item.href);
+                    }
+                  }}
+                >
+                  <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+                  {!isCollapsed && <span className="truncate">{item.title}</span>}
+                  {item.title === "Notifications" && unreadCount > 0 && !isCollapsed && (
+                    <span className="ml-auto px-2 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              {isCollapsed && ( // NEW: TooltipContent for collapsed items
+                <TooltipContent side="right" className="ml-2">
+                  {item.title}
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         );
       })}
     </div>
@@ -191,14 +210,23 @@ const Sidebar: React.FC<SidebarProps> = () => { // REMOVED: Props from function 
 
       {/* Notch Expand Button - visible only when collapsed */}
       {isCollapsed && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggleCollapse}
-          className="absolute top-4 -right-5 h-10 w-10 rounded-full bg-sidebar-toggle-background text-sidebar-foreground hover:bg-sidebar-toggle-background/80 shadow-md border border-sidebar-border"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </Button>
+        <TooltipProvider> {/* NEW: TooltipProvider for the toggle button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onToggleCollapse}
+                className="absolute top-4 -right-5 h-10 w-10 rounded-full bg-sidebar-toggle-background text-sidebar-foreground hover:bg-sidebar-toggle-background/80 shadow-md border border-sidebar-border"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="ml-2">
+              Expand Sidebar
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
 
       {/* User Profile Section */}
@@ -213,6 +241,23 @@ const Sidebar: React.FC<SidebarProps> = () => { // REMOVED: Props from function 
             <p className="text-xs text-muted-foreground truncate">{profile.role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
           </div>
         </div>
+      )}
+      {isCollapsed && profile && ( // NEW: Collapsed user profile tooltip
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center justify-center p-3 border-b border-sidebar-border flex-shrink-0">
+                <Avatar className="h-9 w-9">
+                  <AvatarImage src={profile.avatarUrl} alt={profile.fullName} />
+                  <AvatarFallback>{profile.fullName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                </Avatar>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="ml-2">
+              {profile.fullName} ({profile.role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())})
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
 
       {/* Navigation Links */}
@@ -234,14 +279,25 @@ const Sidebar: React.FC<SidebarProps> = () => { // REMOVED: Props from function 
 
       {/* Logout Button */}
       <div className="mt-auto p-3 border-t border-sidebar-border flex-shrink-0">
-        <Button
-          variant="ghost"
-          className={cn(baseButtonClass, "text-destructive focus:bg-destructive/10 rounded-md", isCollapsed && "justify-center px-0")} // Added rounded-md
-          onClick={handleLogout}
-        >
-          <LogOut className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
-          {!isCollapsed && "Logout"}
-        </Button>
+        <TooltipProvider> {/* NEW: TooltipProvider for logout button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                className={cn(baseButtonClass, "text-destructive focus:bg-destructive/10 rounded-md", isCollapsed && "justify-center px-0")} // Added rounded-md
+                onClick={handleLogout}
+              >
+                <LogOut className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+                {!isCollapsed && "Logout"}
+              </Button>
+            </TooltipTrigger>
+            {isCollapsed && ( // NEW: TooltipContent for logout button
+              <TooltipContent side="right" className="ml-2">
+                Logout
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   );
