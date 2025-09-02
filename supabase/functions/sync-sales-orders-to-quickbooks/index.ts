@@ -16,15 +16,59 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Create a Supabase client with the service_role key for admin operations
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
     const authHeader = req.headers.get('Authorization');
-    console.log('Edge Function received Authorization header:', authHeader); // ADDED THIS LINE
-    const { data: { user } } = await supabaseAdmin.auth.getUser(authHeader);
-    console.log('Edge Function user from auth.getUser:', user); // ADDED THIS LINE
+    console.log('Edge Function received Authorization header:', authHeader);
+
+    if (!authHeader) {
+      console.error('Edge Function: Authorization header missing. Returning 401.');
+      return new Response(JSON.stringify({ error: 'Unauthorized: Authorization header missing.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      });
+    }
+
+    // Extract the JWT from the Authorization header
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      console.error('Edge Function: JWT token missing from Authorization header. Returning 401.');
+      return new Response(JSON.stringify({ error: 'Unauthorized: JWT token missing.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      });
+    }
+
+    // Create a Supabase client for the *user's session* using their access token
+    // This client will respect RLS policies if used for database queries,
+    // but more importantly, its auth.getUser() should correctly validate the user's token.
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '', // Use anon key for user-level client
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`, // Pass the user's token directly
+          },
+        },
+      }
+    );
+
+    // Get the authenticated user from the user's session client
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    console.log('Edge Function user from auth.getUser:', user);
+
+    if (userError) {
+      console.error('Edge Function: Error getting user from token:', userError);
+      return new Response(JSON.stringify({ error: `Unauthorized: ${userError.message}` }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      });
+    }
 
     if (!user) {
       console.error('Edge Function: User not authenticated from token. Returning 401.');
@@ -34,7 +78,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch user's profile to get QuickBooks tokens and realmId
+    // Fetch user's profile to get QuickBooks tokens and realmId using supabaseAdmin (bypasses RLS)
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id')
