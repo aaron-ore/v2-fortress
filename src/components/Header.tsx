@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { userAndSettingsNavItems, supportAndResourcesNavItems, NavItem } from "@/lib/navigation";
 import { Input } from "@/components/ui/input";
+import { useOnboarding } from "@/context/OnboardingContext"; // NEW: Import useOnboarding
 
 interface HeaderProps {
   setIsNotificationSheetOpen: (isOpen: boolean) => void;
@@ -34,6 +35,7 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
+  const { companyProfile } = useOnboarding(); // NEW: Get companyProfile
   const isMobile = useIsMobile();
 
   const handleLogout = async () => {
@@ -128,18 +130,18 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
   return (
     <header className="bg-card rounded-lg shadow-sm p-4 flex items-center justify-between h-[80px] flex-shrink-0"> {/* Increased height, added padding, rounded corners, shadow */}
       <div className="flex items-center space-x-4 flex-grow">
-        <div className="relative flex-grow max-w-md"> {/* Search bar */}
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            placeholder="Search (Ctrl+K)"
-            className="pl-10 pr-4 py-2 rounded-full bg-input border-border focus:ring-2 focus:ring-primary focus:border-transparent"
-            onClick={() => setIsGlobalSearchDialogOpen(true)}
-          />
-        </div>
+        {/* Company Name where search bar used to be */}
+        <h2 className="text-2xl font-bold text-foreground truncate max-w-xs">
+          {companyProfile?.name || "Fortress"}
+        </h2>
       </div>
 
       <div className="flex items-center space-x-4">
         <CurrentDateTime /> {/* Date/Time on desktop header */}
+        {/* Search icon moved next to time */}
+        <Button variant="ghost" size="icon" onClick={() => setIsGlobalSearchDialogOpen(true)}>
+          <Search className="h-5 w-5 text-muted-foreground" />
+        </Button>
         <Button variant="ghost" size="icon" onClick={() => setIsFeedbackDialogOpen(true)}> {/* NEW: Make Flag button open FeedbackDialog */}
           <Flag className="h-5 w-5 text-muted-foreground" />
         </Button>

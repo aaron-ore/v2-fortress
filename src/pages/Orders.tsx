@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { PlusCircle, Search, Edit, Archive, Eye, PackageCheck, PackagePlus, ChevronDown } from "lucide-react";
+import { PlusCircle, Search, Edit, Archive, Eye, PackageCheck, PackagePlus, ChevronDown, RefreshCw, Loader2, Plug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -57,6 +57,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/lib/supabaseClient"; // Import supabase
 
 const formSchema = z.object({
   type: z.enum(["Sales", "Purchase"]),
@@ -499,7 +500,7 @@ export const createOrderColumns = (updateOrder: (order: OrderItem) => void, arch
 
 const Orders: React.FC = () => {
   const { orders, fetchOrders, updateOrder, archiveOrder } = useOrders();
-  const { profile } = useProfile();
+  const { profile, fetchProfile } = useProfile(); // NEW: Get fetchProfile
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOrderDialogOpen, setIsAddOrderDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
@@ -507,6 +508,7 @@ const Orders: React.FC = () => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [isOrderFulfillmentDialogOpen, setIsOrderFulfillmentDialogOpen] = useState(false);
   const [isOrderReceiveShipmentDialogOpen, setIsOrderReceiveShipmentDialogOpen] = useState(false);
+  const [isSyncingQuickBooks, setIsSyncingQuickBooks] = useState(false); // NEW: State for QuickBooks sync loading
 
   useEffect(() => {
     fetchOrders();
@@ -552,6 +554,51 @@ const Orders: React.FC = () => {
 
   const columns = useMemo(() => createOrderColumns(updateOrder, archiveOrder), [updateOrder, archiveOrder]);
 
+  // NEW: Handle Sync to QuickBooks
+  const handleSyncSalesOrders = async () => {
+    if (!profile?.quickbooksAccessToken || !profile?.quickbooksRealmId) {
+      showError("QuickBooks is not fully connected. Please ensure your QuickBooks company is selected in Settings.");
+      return;
+    }
+    setIsSyncingQuickBooks(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        showError("You must be logged in to sync with QuickBooks.");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('sync-sales-orders-to-quickbooks', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      showSuccess(data.message || "Sales orders synced successfully!");
+      console.log("QuickBooks Sync Results:", data.results);
+      await fetchOrders(); // Refresh orders to show updated sync status
+      await fetchProfile(); // Refresh profile to ensure latest QuickBooks tokens/status
+    } catch (error: any) {
+      console.error("Error syncing sales orders to QuickBooks:", error);
+      showError(`Failed to sync sales orders: ${error.message}`);
+    } finally {
+      setIsSyncingQuickBooks(false);
+    }
+  };
+
+  const isQuickBooksConnected = profile?.quickbooksAccessToken && profile?.quickbooksRealmId;
+  const isAdmin = profile?.role === 'admin';
+
   return (
     <div className="flex flex-col space-y-6 p-6">
       <h1 className="text-3xl font-bold">Order Management</h1>
@@ -574,6 +621,21 @@ const Orders: React.FC = () => {
       </div>
 
       <div className="flex flex-wrap items-center justify-end gap-2">
+        {/* NEW: Sync to QuickBooks Button */}
+        {isAdmin && isQuickBooksConnected && (
+          <Button onClick={handleSyncSalesOrders} disabled={isSyncingQuickBooks}>
+            {isSyncingQuickBooks ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Syncing...
+              </>
+            ) : (
+              <>
+                <Plug className="h-4 w-4 mr-2" /> Sync to QuickBooks
+              </>
+            )}
+          </Button>
+        )}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
