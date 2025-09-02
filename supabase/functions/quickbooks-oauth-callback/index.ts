@@ -21,15 +21,19 @@ Deno.serve(async (req) => {
     const error = url.searchParams.get('error');
     const errorDescription = url.searchParams.get('error_description');
 
+    // Define the client application's base URL for redirection
+    // This should be the URL where your frontend app is hosted, e.g., on Vercel
+    const CLIENT_APP_BASE_URL = 'https://dyad-generated-app.vercel.app'; // Hardcode for robustness
+
     if (error) {
       console.error('QuickBooks OAuth Error:', error, errorDescription);
-      // Redirect back to settings page with an error message
-      return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent(errorDescription || error)}`, 302);
+      // Redirect back to the client-side callback handler with an error message
+      return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent(errorDescription || error)}`, 302);
     }
 
     if (!code || !state) {
       console.error('Missing code or state in QuickBooks OAuth callback.');
-      return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent('Missing authorization code or state.')}`, 302);
+      return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent('Missing authorization code or state.')}`, 302);
     }
 
     const QUICKBOOKS_CLIENT_ID = Deno.env.get('QUICKBOOKS_CLIENT_ID');
@@ -39,15 +43,15 @@ Deno.serve(async (req) => {
 
     if (!QUICKBOOKS_CLIENT_ID) {
       console.error('Missing QUICKBOOKS_CLIENT_ID environment variable.');
-      return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent('QuickBooks Client ID is missing in Supabase secrets.')}`, 302);
+      return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent('QuickBooks Client ID is missing in Supabase secrets.')}`, 302);
     }
     if (!QUICKBOOKS_CLIENT_SECRET) {
       console.error('Missing QUICKBOOKS_CLIENT_SECRET environment variable.');
-      return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent('QuickBooks Client Secret is missing in Supabase secrets.')}`, 302);
+      return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent('QuickBooks Client Secret is missing in Supabase secrets.')}`, 302);
     }
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       console.error('Missing Supabase environment variables.');
-      return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent('Server configuration error: Supabase URL or Service Role Key missing.')}`, 302);
+      return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent('Server configuration error: Supabase URL or Service Role Key missing.')}`, 302);
     }
 
     // Construct the redirectUri explicitly using the full function path
@@ -72,7 +76,7 @@ Deno.serve(async (req) => {
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.json();
       console.error('Error exchanging QuickBooks code for tokens:', errorData);
-      return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent(errorData.error_description || 'Failed to get QuickBooks tokens.')}`, 302);
+      return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent(errorData.error_description || 'Failed to get QuickBooks tokens.')}`, 302);
     }
 
     const tokens = await tokenResponse.json();
@@ -104,12 +108,11 @@ Deno.serve(async (req) => {
     if (updateError) {
       console.error('Error updating user profile with QuickBooks tokens:', updateError);
       console.error('Full updateError object:', JSON.stringify(updateError, null, 2)); // NEW LOG
-      return Response.redirect(`${url.origin}/settings?quickbooks_error=${encodeURIComponent('Failed to save QuickBooks tokens.')}`, 302);
+      return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent('Failed to save QuickBooks tokens.')}`, 302);
     }
 
     console.log('QuickBooks tokens and Realm ID successfully stored for user:', userId);
-    return Response.redirect(`https://${url.host}/settings?quickbooks_success=true`, 302);
-
+    return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_success=true`, 302); // Redirect back to client app's handler
   } catch (error) {
     console.error('QuickBooks OAuth callback Edge Function error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
