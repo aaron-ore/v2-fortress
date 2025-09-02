@@ -56,10 +56,7 @@ const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
     id: 'floor-plan-canvas',
   });
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor)
-  );
+  // REMOVED: sensors and handleDragEnd as DndContext is now in parent
 
   // Load initial floor plan or reset
   useEffect(() => {
@@ -93,55 +90,6 @@ const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
       setFloorPlanName("New Floor Plan");
     }
   }, [currentFloorPlan, setElements]); // Added setElements to dependencies
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over, delta } = event;
-
-    if (!over || over.id !== 'floor-plan-canvas') {
-      // If dropped outside canvas, or not on a droppable area, do nothing
-      return;
-    }
-
-    if (active.data.current?.type === 'newElement') {
-      // Calculate position relative to the droppable canvas
-      const canvasRect = over.rect.current;
-      const newElementX = (active.rect.current.translated?.left || 0) - (canvasRect.left || 0);
-      const newElementY = (active.rect.current.translated?.top || 0) - (canvasRect.top || 0);
-
-      const elementType = active.data.current.elementType as FloorPlanElement['type'];
-      const label = active.data.current.label as string;
-      const color = active.data.current.color as string;
-
-      const newElement: FloorPlanElement = {
-        id: nanoid(),
-        type: elementType,
-        name: label,
-        x: newElementX,
-        y: newElementY,
-        width: 100,
-        height: 100,
-        color: color,
-      };
-      setElements((prev) => [...prev, newElement]); // Use prop setter
-      onElementSelect(newElement); // Select the newly added element
-    } else if (active.data.current?.type === 'existingElement') {
-      // Move existing element
-      setElements((prev) => // Use prop setter
-        prev.map((el) =>
-          el.id === active.id
-            ? { ...el, x: el.x + delta.x, y: el.y + delta.y }
-            : el
-        )
-      );
-      // Update selected element's position if it was the one moved
-      if (selectedElement?.id === active.id) {
-        // This should ideally call onUpdateElement from parent, but for now, direct update is fine
-        // as selectedElement is just a reference to an element in the `elements` array.
-        // The `elements` array itself is updated via setElements.
-        onElementSelect({ ...selectedElement, x: selectedElement.x + delta.x, y: selectedElement.y + delta.y });
-      }
-    }
-  };
 
   const handleSaveFloorPlan = async () => {
     setIsSaving(true);
@@ -218,56 +166,56 @@ const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
   // These are now handled directly by FloorPlanPage and passed to ElementPropertiesPanel
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd} onDragStart={() => {}} collisionDetection={closestCorners}>
-      <div className="flex flex-col h-full">
-        <Card className="mb-4 bg-card border-border shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl font-semibold flex items-center gap-2">
-              <LayoutGrid className="h-6 w-6 text-primary" /> Floor Plan:
-              <Input
-                value={floorPlanName}
-                onChange={(e) => setFloorPlanName(e.target.value)}
-                onBlur={handleSaveFloorPlan}
-                className="ml-2 text-xl font-semibold border-none focus-visible:ring-0 focus-visible:ring-offset-0"
-              />
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap items-center gap-3">
-            <Button onClick={handleNewFloorPlan} variant="outline" size="sm">
-              <PlusCircle className="h-4 w-4 mr-2" /> New Plan
+    <div className="flex flex-col h-full">
+      <Card className="mb-4 bg-card border-border shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xl font-semibold flex items-center gap-2">
+            <LayoutGrid className="h-6 w-6 text-primary" /> Floor Plan:
+            <Input
+              value={floorPlanName}
+              onChange={(e) => setFloorPlanName(e.target.value)}
+              onBlur={handleSaveFloorPlan}
+              className="ml-2 text-xl font-semibold border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+            />
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center gap-3">
+          <Button onClick={handleNewFloorPlan} variant="outline" size="sm">
+            <PlusCircle className="h-4 w-4 mr-2" /> New Plan
+          </Button>
+          <Select value={currentFloorPlan?.id || ""} onValueChange={handleLoadFloorPlan} disabled={isLoadingFloorPlans || floorPlans.length === 0}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Load Existing Plan" />
+            </SelectTrigger>
+            <SelectContent>
+              {isLoadingFloorPlans ? (
+                <SelectItem value="loading" disabled>Loading...</SelectItem>
+              ) : floorPlans.length === 0 ? (
+                <SelectItem value="no-plans" disabled>No saved plans</SelectItem>
+              ) : (
+                floorPlans.map(plan => (
+                  <SelectItem key={plan.id} value={plan.id}>{plan.name}</SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+          <Button onClick={handleSaveFloorPlan} disabled={isSaving || !currentFloorPlan} size="sm">
+            {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+            Save Plan
+          </Button>
+          {currentFloorPlan && (
+            <Button variant="destructive" onClick={() => handleDeleteFloorPlanClick(currentFloorPlan)} size="sm">
+              <Trash2 className="h-4 w-4 mr-2" /> Delete Plan
             </Button>
-            <Select value={currentFloorPlan?.id || ""} onValueChange={handleLoadFloorPlan} disabled={isLoadingFloorPlans || floorPlans.length === 0}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Load Existing Plan" />
-              </SelectTrigger>
-              <SelectContent>
-                {isLoadingFloorPlans ? (
-                  <SelectItem value="loading" disabled>Loading...</SelectItem>
-                ) : floorPlans.length === 0 ? (
-                  <SelectItem value="no-plans" disabled>No saved plans</SelectItem>
-                ) : (
-                  floorPlans.map(plan => (
-                    <SelectItem key={plan.id} value={plan.id}>{plan.name}</SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-            <Button onClick={handleSaveFloorPlan} disabled={isSaving || !currentFloorPlan} size="sm">
-              {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-              Save Plan
-            </Button>
-            {currentFloorPlan && (
-              <Button variant="destructive" onClick={() => handleDeleteFloorPlanClick(currentFloorPlan)} size="sm">
-                <Trash2 className="h-4 w-4 mr-2" /> Delete Plan
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+          )}
+        </CardContent>
+      </Card>
 
+      {/* The actual canvas area, now square and responsive */}
+      <div className="flex-grow flex items-center justify-center"> {/* Wrapper to center the square canvas */}
         <div
           ref={setDroppableNodeRef}
-          className="relative flex-grow border-2 border-dashed border-muted-foreground/50 rounded-lg bg-muted/10 overflow-hidden"
-          // Removed fixed width and height styles
+          className="relative w-full aspect-square border-2 border-dashed border-muted-foreground/50 rounded-lg bg-muted/10 overflow-hidden"
         >
           {elements.map((element) => (
             <DraggableFloorPlanElement
@@ -321,7 +269,7 @@ const FloorPlanEditor: React.FC<FloorPlanEditorProps> = ({
           cancelText="Cancel"
         />
       )}
-    </DndContext>
+    </div>
   );
 };
 
