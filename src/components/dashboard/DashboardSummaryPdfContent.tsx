@@ -1,7 +1,7 @@
 import React from "react";
 import { InventoryItem } from "@/context/InventoryContext";
 import { OrderItem } from "@/context/OrdersContext";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns"; // Import isValid
 
 interface DashboardSummaryPdfContentProps {
   companyName: string;
@@ -30,6 +30,9 @@ const DashboardSummaryPdfContent: React.FC<DashboardSummaryPdfContentProps> = ({
   recentPurchaseOrders,
   reportDate,
 }) => {
+  // dateRange is not directly used here, but if it were, it would need isValid checks.
+  // For now, assuming reportDate is the primary date for this PDF.
+
   return (
     <div className="bg-white text-gray-900 font-sans text-sm p-[20mm]">
       {/* Header */}

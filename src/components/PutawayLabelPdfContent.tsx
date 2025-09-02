@@ -1,5 +1,5 @@
 import React from "react";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns"; // Import isValid
 
 interface PutawayLabelPdfContentProps {
   itemName: string;
@@ -24,6 +24,8 @@ const PutawayLabelPdfContent: React.FC<PutawayLabelPdfContentProps> = ({
   qrCodeSvg,
   printDate,
 }) => {
+  const expirationDateObj = expirationDate ? new Date(expirationDate) : null;
+
   return (
     <div className="bg-white text-gray-900 font-sans text-xs p-2 w-[50mm] h-[50mm] border border-black flex flex-col overflow-hidden">
       {/* QR Code at the top */}
@@ -47,9 +49,9 @@ const PutawayLabelPdfContent: React.FC<PutawayLabelPdfContentProps> = ({
             <span className="font-bold">Lot:</span> {lotNumber}
           </div>
         )}
-        {expirationDate && (
+        {expirationDateObj && isValid(expirationDateObj) && (
           <div>
-            <span className="font-bold">Exp:</span> {expirationDate}
+            <span className="font-bold">Exp:</span> {format(expirationDateObj, "MM/yy")}
           </div>
         )}
         {serialNumber && ( // Placeholder for serial number

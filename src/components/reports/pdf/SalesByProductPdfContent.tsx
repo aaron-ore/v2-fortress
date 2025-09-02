@@ -1,5 +1,5 @@
 import React from "react";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns"; // Import isValid
 
 interface ProductSalesData {
   productName: string;
@@ -28,8 +28,8 @@ const SalesByProductPdfContent: React.FC<SalesByProductPdfContentProps> = ({
   productSales,
   dateRange,
 }) => {
-  const formattedDateRange = dateRange?.from
-    ? `${format(dateRange.from, "MMM dd, yyyy")} - ${dateRange.to ? format(dateRange.to, "MMM dd, yyyy") : format(new Date(), "MMM dd, yyyy")}`
+  const formattedDateRange = dateRange?.from && isValid(dateRange.from)
+    ? `${format(dateRange.from, "MMM dd, yyyy")} - ${dateRange.to && isValid(dateRange.to) ? format(dateRange.to, "MMM dd, yyyy") : format(new Date(), "MMM dd, yyyy")}`
     : "All Time";
 
   const totalOverallRevenue = productSales.reduce((sum, data) => sum + data.totalRevenue, 0);

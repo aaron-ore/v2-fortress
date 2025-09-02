@@ -1,5 +1,5 @@
 import React from "react";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns"; // Import isValid
 
 interface ProfitabilityMetricsData {
   name: string;
@@ -30,8 +30,8 @@ const ProfitabilityPdfContent: React.FC<ProfitabilityPdfContentProps> = ({
   totalCostOfGoodsSold,
   dateRange,
 }) => {
-  const formattedDateRange = dateRange?.from
-    ? `${format(dateRange.from, "MMM dd, yyyy")} - ${dateRange.to ? format(dateRange.to, "MMM dd, yyyy") : format(new Date(), "MMM dd, yyyy")}`
+  const formattedDateRange = dateRange?.from && isValid(dateRange.from)
+    ? `${format(dateRange.from, "MMM dd, yyyy")} - ${dateRange.to && isValid(dateRange.to) ? format(dateRange.to, "MMM dd, yyyy") : format(new Date(), "MMM dd, yyyy")}`
     : "All Time";
 
   const grossProfit = totalSalesRevenue - totalCostOfGoodsSold;

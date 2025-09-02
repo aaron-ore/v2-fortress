@@ -1,5 +1,5 @@
 import React from "react";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns"; // Import isValid
 
 interface PickListItem {
   itemName: string;
@@ -31,6 +31,8 @@ const PickingWavePdfContent: React.FC<PickingWavePdfContentProps> = ({
   pickListItems,
   pickerName,
 }) => {
+  const pickDateObj = new Date(pickDate);
+
   return (
     <div className="bg-white text-gray-900 font-sans text-sm p-[20mm]">
       {/* Header */}
@@ -47,7 +49,7 @@ const PickingWavePdfContent: React.FC<PickingWavePdfContentProps> = ({
           <p className="text-lg font-semibold text-gray-700">Wave ID: {waveId}</p>
         </div>
         <div className="text-right">
-          <p className="text-sm font-semibold">PICK DATE: {pickDate}</p>
+          <p className="text-sm font-semibold">PICK DATE: {isValid(pickDateObj) ? format(pickDateObj, "MMM dd, yyyy") : "N/A"}</p>
           {pickerName && <p className="text-sm font-semibold">PICKER: {pickerName}</p>}
         </div>
       </div>
