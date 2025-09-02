@@ -461,16 +461,17 @@ const CreatePurchaseOrder: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border rounded-lg shadow-sm p-6 relative"> {/* Added relative for QR positioning */}
+          <Card className="bg-card border-border rounded-lg shadow-sm p-6"> {/* Removed relative from here */}
             <CardHeader className="pb-4">
               <CardTitle className="text-xl font-semibold">Notes</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col relative min-h-[120px]"> {/* Added flex-col and relative to CardContent */}
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Add any additional notes or instructions here..."
                 rows={4}
+                className="flex-grow"
               />
               {poQrCodeSvg && (
                 <div className="absolute bottom-4 right-4 w-20 h-20 object-contain">

@@ -129,7 +129,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
       .update({
         type: updatedOrder.type,
         customer_supplier: updatedOrder.customerSupplier,
-        created_at: updatedOrder.date,
+        // REMOVED: created_at: updatedOrder.date, // This field should not be manually updated
         status: updatedOrder.status,
         total_amount: updatedOrder.totalAmount,
         due_date: updatedOrder.dueDate,
