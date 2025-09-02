@@ -22,9 +22,9 @@ Deno.serve(async (req) => {
     );
 
     const authHeader = req.headers.get('Authorization');
-     console.log('Edge Function received Authorization header:', authHeader);
+    console.log('Edge Function received Authorization header:', authHeader); // ADDED THIS LINE
     const { data: { user } } = await supabaseAdmin.auth.getUser(authHeader);
-    console.log('Edge Function user from auth.getUser:', user);
+    console.log('Edge Function user from auth.getUser:', user); // ADDED THIS LINE
 
     if (!user) {
       console.error('Edge Function: User not authenticated from token. Returning 401.');
