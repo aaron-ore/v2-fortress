@@ -28,7 +28,8 @@ import {
   ChevronRight,
   Menu,
   UserRound,
-  Plug, // NEW: Import Plug icon for Integrations
+  Plug,
+  Layout, // NEW: Import Layout icon for Floor Plan
 } from "lucide-react";
 import React from "react";
 
@@ -49,7 +50,8 @@ export const mainNavItems: NavItem[] = [
   { title: "Customers", href: "/customers", icon: UserRound },
   { title: "Vendors", href: "/vendors", icon: Truck },
   { title: "Locations", href: "/locations", icon: MapPin },
-  { title: "Integrations", href: "/integrations", icon: Plug }, // NEW: Add Integrations NavItem
+  { title: "Floor Plan", href: "/floor-plan", icon: Layout }, // NEW: Add Floor Plan NavItem
+  { title: "Integrations", href: "/integrations", icon: Plug },
   { title: "Reports", href: "/reports", icon: BarChart },
   {
     title: "Warehouse Operations",

@@ -29,6 +29,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Locations from "./pages/Locations";
 import Customers from "./pages/Customers";
 import Integrations from "./pages/Integrations"; // NEW: Import Integrations page
+import FloorPlanPage from "./pages/FloorPlanPage"; // NEW: Import FloorPlanPage
 import { ThemeProvider } from "./components/ThemeProvider";
 import { InventoryProvider } from "./context/InventoryContext";
 import { OrdersProvider } from "./context/OrdersContext";
@@ -40,6 +41,7 @@ import { CustomerProvider } from "./context/CustomerContext";
 import { ProfileProvider, useProfile } from "./context/ProfileContext";
 import { StockMovementProvider } from "./context/StockMovementContext";
 import { ReplenishmentProvider } from "./context/ReplenishmentContext";
+import { FloorPlanProvider } from "./context/FloorPlanContext"; // NEW: Import FloorPlanProvider
 import OnboardingWizard from "./components/onboarding/OnboardingWizard";
 import { supabase } from "./lib/supabaseClient";
 import React, { useState, useEffect, useRef } from "react";
@@ -81,33 +83,36 @@ const AuthenticatedApp = () => {
                 <StockMovementProvider>
                   <ReplenishmentProvider>
                     <InventoryProvider>
-                      <Routes>
-                        <Route path="/" element={<Layout />}>
-                          <Route index element={<Dashboard />} />
-                          <Route path="inventory" element={<Inventory />} />
-                          <Route path="inventory/:id" element={<EditInventoryItem />} />
-                          <Route path="orders" element={<Orders />} />
-                          <Route path="orders/:id" element={<EditPurchaseOrder />} />
-                          <Route path="reports" element={<Reports />} />
-                          <Route path="settings" element={<Settings />} />
-                          <Route path="create-po" element={<CreatePurchaseOrder />} />
-                          <Route path="create-invoice" element={<CreateInvoice />} />
-                          <Route path="profile" element={<MyProfile />} />
-                          <Route path="account-settings" element={<AccountSettings />} />
-                          <Route path="notifications-page" element={<NotificationsPage />} />
-                          <Route path="billing" element={<BillingSubscriptions />} />
-                          <Route path="help" element={<HelpCenter />} />
-                          <Route path="whats-new" element={<WhatsNew />} />
-                          <Route path="vendors" element={<Vendors />} />
-                          <Route path="customers" element={<Customers />} />
-                          <Route path="users" element={<Users />} />
-                          <Route path="setup-instructions" element={<SetupInstructions />} />
-                          <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
-                          <Route path="locations" element={<Locations />} />
-                          <Route path="integrations" element={<Integrations />} /> {/* NEW: Add Integrations route */}
-                          <Route path="*" element={<NotFound />} />
-                        </Route>
-                      </Routes>
+                      <FloorPlanProvider> {/* NEW: Wrap with FloorPlanProvider */}
+                        <Routes>
+                          <Route path="/" element={<Layout />}>
+                            <Route index element={<Dashboard />} />
+                            <Route path="inventory" element={<Inventory />} />
+                            <Route path="inventory/:id" element={<EditInventoryItem />} />
+                            <Route path="orders" element={<Orders />} />
+                            <Route path="orders/:id" element={<EditPurchaseOrder />} />
+                            <Route path="reports" element={<Reports />} />
+                            <Route path="settings" element={<Settings />} />
+                            <Route path="create-po" element={<CreatePurchaseOrder />} />
+                            <Route path="create-invoice" element={<CreateInvoice />} />
+                            <Route path="profile" element={<MyProfile />} />
+                            <Route path="account-settings" element={<AccountSettings />} />
+                            <Route path="notifications-page" element={<NotificationsPage />} />
+                            <Route path="billing" element={<BillingSubscriptions />} />
+                            <Route path="help" element={<HelpCenter />} />
+                            <Route path="whats-new" element={<WhatsNew />} />
+                            <Route path="vendors" element={<Vendors />} />
+                            <Route path="customers" element={<Customers />} />
+                            <Route path="users" element={<Users />} />
+                            <Route path="setup-instructions" element={<SetupInstructions />} />
+                            <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
+                            <Route path="locations" element={<Locations />} />
+                            <Route path="floor-plan" element={<FloorPlanPage />} /> {/* NEW: Add FloorPlanPage route */}
+                            <Route path="integrations" element={<Integrations />} />
+                            <Route path="*" element={<NotFound />} />
+                          </Route>
+                        </Routes>
+                      </FloorPlanProvider>
                     </InventoryProvider>
                   </ReplenishmentProvider>
                 </StockMovementProvider>
