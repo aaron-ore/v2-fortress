@@ -38,7 +38,7 @@ import { VendorProvider } from "./context/VendorContext";
 import { CustomerProvider } from "./context/CustomerContext";
 import { ProfileProvider, useProfile } from "./context/ProfileContext";
 import { StockMovementProvider } from "./context/StockMovementContext";
-import { ReplenishmentProvider } from "./context/ReplenishmentContext";
+import { ReplenishmentProvider } "./context/ReplenishmentContext";
 import OnboardingWizard from "./components/onboarding/OnboardingWizard";
 import { supabase } from "./lib/supabaseClient";
 import React, { useState, useEffect, useRef } from "react";
@@ -159,10 +159,9 @@ const AppContent = () => {
     const params = new URLSearchParams(location.search);
     const quickbooksSuccess = params.get('quickbooks_success');
     const quickbooksError = params.get('quickbooks_error');
-    const realmIdPresent = params.get('realmId_present');
+    // REMOVED: const realmIdPresent = params.get('realmId_present'); // No longer needed
 
-    // NEW LOG: Log realmIdPresent value from URL
-    console.log('App.tsx: realmId_present from URL parameters:', realmIdPresent);
+    // REMOVED: console.log('App.tsx: realmId_present from URL parameters:', realmIdPresent); // No longer needed
 
     // Only process if there are QuickBooks params and it hasn't been processed yet
     if ((quickbooksSuccess || quickbooksError) && !qbCallbackProcessedRef.current) {
