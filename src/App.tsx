@@ -28,6 +28,7 @@ import WarehouseOperationsPage from "./pages/WarehouseOperationsPage";
 import ResetPassword from "./pages/ResetPassword";
 import Locations from "./pages/Locations";
 import Customers from "./pages/Customers";
+import Integrations from "./pages/Integrations"; // NEW: Import Integrations page
 import { ThemeProvider } from "./components/ThemeProvider";
 import { InventoryProvider } from "./context/InventoryContext";
 import { OrdersProvider } from "./context/OrdersContext";
@@ -103,6 +104,7 @@ const AuthenticatedApp = () => {
                           <Route path="setup-instructions" element={<SetupInstructions />} />
                           <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
                           <Route path="locations" element={<Locations />} />
+                          <Route path="integrations" element={<Integrations />} /> {/* NEW: Add Integrations route */}
                           <Route path="*" element={<NotFound />} />
                         </Route>
                       </Routes>
@@ -180,7 +182,7 @@ const AppContent = () => {
       qbCallbackProcessedRef.current = true;
 
       // Navigate away from the callback URL to /settings
-      navigate('/settings', { replace: true });
+      navigate('/integrations', { replace: true }); // NEW: Redirect to Integrations page
     }
   }, [location.search, navigate, fetchProfile]);
 

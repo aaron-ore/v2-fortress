@@ -27,7 +27,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
-  UserRound, // NEW: Import UserRound icon for Customers
+  UserRound,
+  Plug, // NEW: Import Plug icon for Integrations
 } from "lucide-react";
 import React from "react";
 
@@ -45,9 +46,10 @@ export const mainNavItems: NavItem[] = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },
   { title: "Inventory", href: "/inventory", icon: Package },
   { title: "Orders", href: "/orders", icon: Receipt },
-  { title: "Customers", href: "/customers", icon: UserRound }, // NEW: Add Customers NavItem
+  { title: "Customers", href: "/customers", icon: UserRound },
   { title: "Vendors", href: "/vendors", icon: Truck },
-  { title: "Locations", href: "/locations", icon: MapPin }, // NEW: Add Locations NavItem
+  { title: "Locations", href: "/locations", icon: MapPin },
+  { title: "Integrations", href: "/integrations", icon: Plug }, // NEW: Add Integrations NavItem
   { title: "Reports", href: "/reports", icon: BarChart },
   {
     title: "Warehouse Operations",
@@ -67,7 +69,6 @@ export const mainNavItems: NavItem[] = [
       { title: "Stock Transfer", href: "/warehouse-operations#stock-transfer", icon: Scan },
       { title: "Cycle Count", href: "/warehouse-operations#cycle-count", icon: CheckCircle },
       { title: "Issue Report", href: "/warehouse-operations#issue-report", icon: AlertTriangle },
-      // REMOVED: { title: "Location Management", href: "/location-management", icon: MapPin },
     ],
   },
 ];
