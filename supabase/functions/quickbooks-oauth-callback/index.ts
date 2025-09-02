@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
 
     console.log('QuickBooks OAuth Callback: Received Access Token (first 10 chars):', accessToken ? accessToken.substring(0, 10) : 'N/A');
     console.log('QuickBooks OAuth Callback: Received Refresh Token (first 10 chars):', refreshToken ? refreshToken.substring(0, 10) : 'N/A');
-    console.log('QuickBooks OAuth Callback: Received Realm ID (from URL):', realmIdFromUrl || 'null (missing from URL)');
+    console.log('QuickBooks OAuth Callback: Received Realm ID (from URL):', realmIdFromUrl || 'null (missing from URL)'); // NEW LOG HERE
 
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
