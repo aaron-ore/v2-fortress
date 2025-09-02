@@ -29,7 +29,7 @@ import {
   Menu,
   UserRound,
   Plug,
-  Layout, // NEW: Import Layout icon for Floor Plan
+  // Layout, // REMOVED: Import Layout icon for Floor Plan
 } from "lucide-react";
 import React from "react";
 
@@ -50,7 +50,7 @@ export const mainNavItems: NavItem[] = [
   { title: "Customers", href: "/customers", icon: UserRound },
   { title: "Vendors", href: "/vendors", icon: Truck },
   { title: "Locations", href: "/locations", icon: MapPin },
-  { title: "Floor Plan", href: "/floor-plan", icon: Layout }, // NEW: Add Floor Plan NavItem
+  // { title: "Floor Plan", href: "/floor-plan", icon: Layout }, // REMOVED: Add Floor Plan NavItem
   { title: "Integrations", href: "/integrations", icon: Plug },
   { title: "Reports", href: "/reports", icon: BarChart },
   {

@@ -29,7 +29,6 @@ import ResetPassword from "./pages/ResetPassword";
 import Locations from "./pages/Locations";
 import Customers from "./pages/Customers";
 import Integrations from "./pages/Integrations"; // NEW: Import Integrations page
-import FloorPlanPage from "./pages/FloorPlanPage"; // NEW: Import FloorPlanPage
 import { ThemeProvider } from "./components/ThemeProvider";
 import { InventoryProvider } from "./context/InventoryContext";
 import { OrdersProvider } from "./context/OrdersContext";
@@ -41,7 +40,6 @@ import { CustomerProvider } from "./context/CustomerContext";
 import { ProfileProvider, useProfile } from "./context/ProfileContext";
 import { StockMovementProvider } from "./context/StockMovementContext";
 import { ReplenishmentProvider } from "./context/ReplenishmentContext";
-import { FloorPlanProvider } from "./context/FloorPlanContext"; // NEW: Import FloorPlanProvider
 import OnboardingWizard from "./components/onboarding/OnboardingWizard";
 import { supabase } from "./lib/supabaseClient";
 import React, { useState, useEffect, useRef } from "react";
@@ -83,7 +81,7 @@ const AuthenticatedApp = () => {
                 <StockMovementProvider>
                   <ReplenishmentProvider>
                     <InventoryProvider>
-                      <FloorPlanProvider> {/* NEW: Wrap with FloorPlanProvider */}
+                      {/* FloorPlanProvider removed */}
                         <Routes>
                           <Route path="/" element={<Layout />}>
                             <Route index element={<Dashboard />} />
@@ -107,12 +105,11 @@ const AuthenticatedApp = () => {
                             <Route path="setup-instructions" element={<SetupInstructions />} />
                             <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
                             <Route path="locations" element={<Locations />} />
-                            <Route path="floor-plan" element={<FloorPlanPage />} /> {/* NEW: Add FloorPlanPage route */}
+                            {/* FloorPlanPage route removed */}
                             <Route path="integrations" element={<Integrations />} />
                             <Route path="*" element={<NotFound />} />
                           </Route>
                         </Routes>
-                      </FloorPlanProvider>
                     </InventoryProvider>
                   </ReplenishmentProvider>
                 </StockMovementProvider>
