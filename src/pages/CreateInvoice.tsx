@@ -95,7 +95,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
       <TableCell className="text-right w-[100px]">
         <Input
           type="number"
-          value={item.quantity === 0 ? "" : item.quantity}
+          value={item.quantity === 0 ? "" : String(item.quantity)} // Explicitly cast to string
           onChange={(e) =>
             handleItemChange(
               item.id,
@@ -110,7 +110,7 @@ const SortableItemRow: React.FC<SortableItemRowProps> = ({ item, handleItemChang
       <TableCell className="text-right w-[120px]">
         <Input
           type="number"
-          value={item.unitPrice === 0 ? "" : item.unitPrice}
+          value={item.unitPrice === 0 ? "" : String(item.unitPrice)} // Explicitly cast to string
           onChange={(e) =>
             handleItemChange(
               item.id,
@@ -441,20 +441,17 @@ const CreateInvoice: React.FC = () => {
                   onChange={(e) => setDueDate(e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="totalAmount">Total Amount</Label>
-                <Input
-                  id="totalAmount"
-                  type="text" // Changed to text to display formatted currency
-                  value={`$${calculatedTotalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                  disabled
-                />
-              </div>
-              {invoiceQrCodeSvg && (
-                <div className="flex items-center justify-center">
-                  <div dangerouslySetInnerHTML={{ __html: invoiceQrCodeSvg }} className="w-20 h-20 object-contain flex-shrink-0" />
+              <div className="space-y-2 flex items-center justify-between">
+                <Label htmlFor="totalAmount" className="text-lg font-bold">Total Amount:</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold">
+                    ${calculatedTotalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                  {invoiceQrCodeSvg && (
+                    <div dangerouslySetInnerHTML={{ __html: invoiceQrCodeSvg }} className="w-16 h-16 object-contain flex-shrink-0" />
+                  )}
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
 
