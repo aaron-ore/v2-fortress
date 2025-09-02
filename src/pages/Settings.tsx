@@ -58,21 +58,22 @@ const Settings: React.FC = () => {
     }
 
     const clientId = import.meta.env.VITE_QUICKBOOKS_CLIENT_ID;
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    // const supabaseUrl = import.meta.env.VITE_SUPABASE_URL; // REMOVED: No longer needed for explicit URL
 
     if (!clientId) {
       showError("QuickBooks Client ID is not configured. Please add VITE_QUICKBOOKS_CLIENT_ID to your .env file.");
       return;
     }
-    if (!supabaseUrl) {
-      showError("Supabase URL is not configured. Please add VITE_SUPABASE_URL to your .env file.");
-      return;
-    }
+    // if (!supabaseUrl) { // REMOVED: No longer needed for explicit URL
+    //   showError("Supabase URL is not configured. Please add VITE_SUPABASE_URL to your .env file.");
+    //   return;
+    // }
 
     // Construct the OAuth 2.0 authorization URL
     // The redirect URI MUST match the one registered in your QuickBooks Developer Portal
     // and the one used in the Edge Function.
-    const redirectUri = `${supabaseUrl}/functions/v1/quickbooks-oauth-callback`;
+    // Using explicit Supabase project ID and function name for redirect URI
+    const redirectUri = `https://nojumocxivfjsbqnnkqe.supabase.co/functions/v1/quickbooks-oauth-callback`;
     
     const scope = "com.intuit.quickbooks.accounting openid profile email address phone"; // Required scopes
     const responseType = "code";
