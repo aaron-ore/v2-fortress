@@ -156,9 +156,13 @@ const AppContent = () => {
     const params = new URLSearchParams(location.search);
     const quickbooksSuccess = params.get('quickbooks_success');
     const quickbooksError = params.get('quickbooks_error');
+    const realmIdPresent = params.get('realmId_present'); // NEW: Check if realmId was present
 
     if (quickbooksSuccess) {
       showSuccess("QuickBooks connected successfully!");
+      if (realmIdPresent === 'false') { // NEW: Specific warning if realmId was missing
+        showError("QuickBooks company (realmId) was not received. Please ensure you select a company during the QuickBooks authorization flow.");
+      }
       // Explicitly refresh the session and then the profile
       supabase.auth.refreshSession().then(() => {
         fetchProfile(); // Fetch the profile to get the updated QuickBooks tokens
@@ -260,11 +264,18 @@ const AppContent = () => {
 // Component to handle QuickBooks OAuth callback redirect
 const QuickBooksOAuthCallbackHandler: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
   useEffect(() => {
-    // The Edge Function has already processed the tokens and redirected with success/error params.
-    // We just need to redirect to the settings page.
-    navigate('/settings', { replace: true });
-  }, [navigate]);
+    const params = new URLSearchParams(location.search);
+    const redirectTo = params.get('redirect_to'); // NEW: Get the original redirect_to URL
+
+    // After processing, redirect to the original frontend URL's settings page
+    // or a default if redirect_to is not available.
+    const targetPath = redirectTo ? `${redirectTo}/settings` : '/settings';
+    navigate(targetPath, { replace: true });
+  }, [navigate, location.search]);
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
       Processing QuickBooks connection...

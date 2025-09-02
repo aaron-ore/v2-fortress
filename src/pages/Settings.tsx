@@ -69,8 +69,9 @@ const Settings: React.FC = () => {
     const scope = "com.intuit.quickbooks.accounting openid profile email address phone";
     const responseType = "code";
     const state = profile.id;
+    const redirectToFrontend = window.location.origin; // Capture current frontend origin
 
-    const authUrl = `https://appcenter.intuit.com/app/connect/oauth2?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=${responseType}&state=${state}`;
+    const authUrl = `https://appcenter.intuit.com/app/connect/oauth2?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=${responseType}&state=${state}&redirect_to=${encodeURIComponent(redirectToFrontend)}`; // Pass redirect_to
     
     window.location.href = authUrl;
   };

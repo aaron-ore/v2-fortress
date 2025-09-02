@@ -18,21 +18,24 @@ Deno.serve(async (req) => {
     const state = url.searchParams.get('state');
     const error = url.searchParams.get('error');
     const errorDescription = url.searchParams.get('error_description');
-    const realmIdFromUrl = url.searchParams.get('realmId'); // Extract realmId from URL params
+    const realmIdFromUrl = url.searchParams.get('realmId');
+    const redirectToFrontend = url.searchParams.get('redirect_to'); // NEW: Extract redirect_to
 
     // Log all search parameters for debugging
     console.log('QuickBooks OAuth Callback: All URL search parameters:', JSON.stringify(Object.fromEntries(url.searchParams.entries()), null, 2));
 
-    const CLIENT_APP_BASE_URL = 'https://dyad-generated-app.vercel.app';
+    // Define a fallback client app base URL if redirectToFrontend is not provided
+    const FALLBACK_CLIENT_APP_BASE_URL = 'https://dyad-generated-app.vercel.app';
+    const finalRedirectBase = redirectToFrontend || FALLBACK_CLIENT_APP_BASE_URL;
 
     if (error) {
       console.error('QuickBooks OAuth Error:', error, errorDescription);
-      return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent(errorDescription || error)}`, 302);
+      return Response.redirect(`${finalRedirectBase}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent(errorDescription || error)}`, 302);
     }
 
     if (!code || !state) {
       console.error('Missing code or state in QuickBooks OAuth callback.');
-      return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent('Missing authorization code or state.')}`, 302);
+      return Response.redirect(`${finalRedirectBase}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent('Missing authorization code or state.')}`, 302);
     }
 
     if (!realmIdFromUrl) {
@@ -48,7 +51,7 @@ Deno.serve(async (req) => {
 
     if (!QUICKBOOKS_CLIENT_ID || !QUICKBOOKS_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       console.error('Missing Supabase or QuickBooks environment variables.');
-      return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent('Server configuration error: Missing environment variables.')}`, 302);
+      return Response.redirect(`${finalRedirectBase}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent('Server configuration error: Missing environment variables.')}`, 302);
     }
 
     const redirectUri = `https://nojumocxivfjsbqnnkqe.supabase.co/functions/v1/quickbooks-oauth-callback`;
@@ -71,7 +74,7 @@ Deno.serve(async (req) => {
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.json();
       console.error('Error exchanging QuickBooks code for tokens:', errorData);
-      return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent(errorData.error_description || 'Failed to get QuickBooks tokens.')}`, 302);
+      return Response.redirect(`${finalRedirectBase}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent(errorData.error_description || 'Failed to get QuickBooks tokens.')}`, 302);
     }
 
     const tokens = await tokenResponse.json();
@@ -92,18 +95,18 @@ Deno.serve(async (req) => {
       .update({
         quickbooks_access_token: accessToken,
         quickbooks_refresh_token: refreshToken,
-        quickbooks_realm_id: realmIdFromUrl, // Store the realmId (will be null if not in URL)
+        quickbooks_realm_id: realmIdFromUrl,
       })
       .eq('id', userId);
 
     if (updateError) {
       console.error('Error updating user profile with QuickBooks tokens:', updateError);
-      return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent('Failed to save QuickBooks tokens.')}`, 302);
+      return Response.redirect(`${finalRedirectBase}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent('Failed to save QuickBooks tokens.')}`, 302);
     }
 
     console.log('QuickBooks tokens and Realm ID successfully stored for user:', userId);
     // Redirect back to client app's handler, including realmId status
-    return Response.redirect(`${CLIENT_APP_BASE_URL}/quickbooks-oauth-callback?quickbooks_success=true&realmId_present=${!!realmIdFromUrl}`, 302);
+    return Response.redirect(`${finalRedirectBase}/quickbooks-oauth-callback?quickbooks_success=true&realmId_present=${!!realmIdFromUrl}`, 302);
   } catch (error) {
     console.error('QuickBooks OAuth callback Edge Function error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
