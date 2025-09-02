@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     const state = url.searchParams.get('state');
     const error = url.searchParams.get('error');
     const errorDescription = url.searchParams.get('error_description');
-    const realmIdFromUrl = url.searchParams.get('realmId');
+    // REMOVED: const realmIdFromUrl = url.searchParams.get('realmId'); // No longer getting from URL
 
     // Log all search parameters for debugging
     console.log('QuickBooks OAuth Callback: All URL search parameters:', JSON.stringify(Object.fromEntries(url.searchParams.entries()), null, 2));
@@ -49,10 +49,6 @@ Deno.serve(async (req) => {
     if (!code || !userId) { // Use decoded userId
       console.error('Missing authorization code or userId in QuickBooks OAuth callback.');
       return Response.redirect(`${finalRedirectBase}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent('Missing authorization code or user ID.')}`, 302);
-    }
-
-    if (!realmIdFromUrl) {
-      console.warn('QuickBooks OAuth Callback: realmId is missing from the URL parameters. This usually indicates an incorrect redirect_uri configuration in Intuit Developer settings.');
     }
 
     const QUICKBOOKS_CLIENT_ID = Deno.env.get('QUICKBOOKS_CLIENT_ID');
@@ -94,9 +90,21 @@ Deno.serve(async (req) => {
     const accessToken = tokens.access_token;
     const refreshToken = tokens.refresh_token;
 
-    console.log('QuickBooks OAuth Callback: Received Access Token (first 10 chars):', accessToken ? accessToken.substring(0, 10) : 'N/A');
-    console.log('QuickBooks OAuth Callback: Received Refresh Token (first 10 chars):', refreshToken ? refreshToken.substring(0, 10) : 'N/A');
-    console.log('QuickBooks OAuth Callback: Received Realm ID (from URL):', realmIdFromUrl || 'null (missing from URL)'); // NEW LOG HERE
+    // NEW: Extract realmId from id_token
+    let realmIdFromIdToken: string | null = null;
+    if (tokens.id_token) {
+      try {
+        const idTokenParts = tokens.id_token.split('.');
+        if (idTokenParts.length === 3) {
+          const idTokenPayloadBase64 = idTokenParts[1];
+          const idTokenPayload = JSON.parse(atob(idTokenPayloadBase64));
+          realmIdFromIdToken = idTokenPayload.realmId || null;
+        }
+      } catch (e) {
+        console.error('Error decoding id_token or extracting realmId:', e);
+      }
+    }
+    console.log('QuickBooks OAuth Callback: Extracted Realm ID from id_token:', realmIdFromIdToken || 'null (missing from id_token)');
 
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -105,7 +113,7 @@ Deno.serve(async (req) => {
       .update({
         quickbooks_access_token: accessToken,
         quickbooks_refresh_token: refreshToken,
-        quickbooks_realm_id: realmIdFromUrl,
+        quickbooks_realm_id: realmIdFromIdToken, // Use realmId extracted from id_token
       })
       .eq('id', userId); // Use decoded userId
 
@@ -116,7 +124,7 @@ Deno.serve(async (req) => {
 
     console.log('QuickBooks tokens and Realm ID successfully stored for user:', userId);
     // Redirect back to client app's handler, including realmId status
-    return Response.redirect(`${finalRedirectBase}/quickbooks-oauth-callback?quickbooks_success=true&realmId_present=${!!realmIdFromUrl}`, 302);
+    return Response.redirect(`${finalRedirectBase}/quickbooks-oauth-callback?quickbooks_success=true&realmId_present=${!!realmIdFromIdToken}`, 302);
   } catch (error) {
     console.error('QuickBooks OAuth callback Edge Function error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
