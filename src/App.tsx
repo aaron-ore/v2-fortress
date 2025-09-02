@@ -38,7 +38,7 @@ import { VendorProvider } from "./context/VendorContext";
 import { CustomerProvider } from "./context/CustomerContext";
 import { ProfileProvider, useProfile } from "./context/ProfileContext";
 import { StockMovementProvider } from "./context/StockMovementContext";
-import { ReplenishmentProvider } "./context/ReplenishmentContext";
+import { ReplenishmentProvider } from "./context/ReplenishmentContext";
 import OnboardingWizard from "./components/onboarding/OnboardingWizard";
 import { supabase } from "./lib/supabaseClient";
 import React, { useState, useEffect, useRef } from "react";
@@ -159,17 +159,15 @@ const AppContent = () => {
     const params = new URLSearchParams(location.search);
     const quickbooksSuccess = params.get('quickbooks_success');
     const quickbooksError = params.get('quickbooks_error');
-    // REMOVED: const realmIdPresent = params.get('realmId_present'); // No longer needed
+    const realmIdPresent = params.get('realmId_present');
 
-    // REMOVED: console.log('App.tsx: realmId_present from URL parameters:', realmIdPresent); // No longer needed
+    // NEW LOG: Log realmIdPresent value from URL
+    console.log('App.tsx: realmId_present from URL parameters:', realmIdPresent);
 
     // Only process if there are QuickBooks params and it hasn't been processed yet
     if ((quickbooksSuccess || quickbooksError) && !qbCallbackProcessedRef.current) {
       if (quickbooksSuccess) {
         showSuccess("QuickBooks connected successfully!");
-        // REMOVED: if (realmIdPresent === 'false') { // This condition was triggering the error toast
-        // REMOVED:   showError("QuickBooks company (realmId) was not received. Please ensure you select a company during the QuickBooks authorization flow.");
-        // REMOVED: }
         // Explicitly refresh the session and then the profile
         supabase.auth.refreshSession().then(() => {
           fetchProfile(); // Fetch the profile to get the updated QuickBooks tokens
