@@ -6,17 +6,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// QuickBooks API endpoints
-const QUICKBOOKS_OAUTH_URL = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
-const QUICKBOOKS_API_BASE_URL = 'https://quickbooks.intuit.com/v3/company';
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // Create a Supabase client with the service_role key for admin operations
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -33,7 +28,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Extract the JWT from the Authorization header
     const token = authHeader.split(' ')[1];
     if (!token) {
       console.error('Edge Function: JWT token missing from Authorization header. Returning 401.');
@@ -43,22 +37,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create a Supabase client for the *user's session* using their access token
-    // This client will respect RLS policies if used for database queries,
-    // but more importantly, its auth.getUser() should correctly validate the user's token.
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '', // Use anon key for user-level client
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
           headers: {
-            Authorization: `Bearer ${token}`, // Pass the user's token directly
+            Authorization: `Bearer ${token}`,
           },
         },
       }
     );
 
-    // Get the authenticated user from the user's session client
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     console.log('Edge Function user from auth.getUser:', user);
 
@@ -78,18 +68,21 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch user's profile to get QuickBooks tokens and realmId using supabaseAdmin (bypasses RLS)
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id')
       .eq('id', user.id)
       .single();
 
-    console.log('Edge Function: Fetched profile for user:', user.id, 'Profile data:', profile); // NEW LOG
+    console.log('Edge Function: Fetched profile for user:', user.id, 'Profile data:', profile);
 
     if (profileError || !profile?.quickbooks_access_token || !profile?.quickbooks_refresh_token || !profile?.quickbooks_realm_id) {
       console.error('QuickBooks credentials missing for user:', user.id, profileError);
-      return new Response(JSON.stringify({ error: 'QuickBooks integration not set up for this user.' }), {
+      // NEW: More specific error message if realmId is missing
+      const errorMessage = !profile?.quickbooks_realm_id 
+        ? 'QuickBooks company (realmId) is missing. Please re-connect QuickBooks and ensure you select a company during authorization.'
+        : 'QuickBooks integration not fully set up for this user (tokens or realmId missing).';
+      return new Response(JSON.stringify({ error: errorMessage }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       });
@@ -109,10 +102,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Function to refresh QuickBooks access token
     const refreshQuickBooksToken = async () => {
       console.log('Refreshing QuickBooks token...');
-      const refreshResponse = await fetch(QUICKBOOKS_OAUTH_URL, {
+      const refreshResponse = await fetch('https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -133,9 +125,8 @@ Deno.serve(async (req) => {
 
       const newTokens = await refreshResponse.json();
       accessToken = newTokens.access_token;
-      refreshToken = newTokens.refresh_token; // Refresh token might also be updated
+      refreshToken = newTokens.refresh_token;
 
-      // Update user's profile with new tokens
       const { error: updateTokenError } = await supabaseAdmin
         .from('profiles')
         .update({
@@ -151,13 +142,12 @@ Deno.serve(async (req) => {
       console.log('QuickBooks token refreshed and saved.');
     };
 
-    // Fetch sales orders that are 'Shipped' and not yet synced to QuickBooks
     const { data: ordersToSync, error: ordersError } = await supabaseAdmin
       .from('orders')
       .select('*')
       .eq('type', 'Sales')
       .eq('status', 'Shipped')
-      .is('quickbooks_synced', false); // Assuming this column exists after migration
+      .is('quickbooks_synced', false);
 
     if (ordersError) {
       console.error('Error fetching orders to sync:', ordersError);
@@ -178,21 +168,14 @@ Deno.serve(async (req) => {
 
     for (const order of ordersToSync) {
       try {
-        // Construct QuickBooks Sales Receipt object
         const salesReceipt = {
           CustomerRef: {
-            // In a real app, you'd map customerSupplier to a QuickBooks Customer ID
-            // For now, we'll just use the name, QuickBooks might create a new customer or match by name.
-            // A more robust solution would involve syncing customers first and storing QuickBooks Customer IDs.
-            // Or, if customerSupplier is an ID, you'd look up the QuickBooks ID.
             name: order.customer_supplier,
           },
           Line: order.items.map((item: any) => ({
             DetailType: 'SalesItemLineDetail',
             SalesItemLineDetail: {
               ItemRef: {
-                // Similar to CustomerRef, map inventoryItemId to QuickBooks Item ID
-                // For now, use item name. QuickBooks might create a new item or match by name.
                 name: item.itemName,
               },
               UnitPrice: item.unitPrice,
@@ -203,7 +186,6 @@ Deno.serve(async (req) => {
           TxnDate: order.date,
           PrivateNote: `Fortress Order ID: ${order.id}. Notes: ${order.notes || ''}`,
           TotalAmt: order.total_amount,
-          // Add other fields as needed, e.g., BillEmail, ShipAddr, etc.
         };
 
         let qbResponse;
@@ -218,13 +200,9 @@ Deno.serve(async (req) => {
             body: JSON.stringify(salesReceipt),
           });
         } catch (fetchError) {
-          // Catch network errors or other fetch-related issues
-          console.error('Network error during QuickBooks API call:', fetchError);
-          // Attempt token refresh and retry if it's an auth error
           if (fetchError instanceof Response && fetchError.status === 401) {
             console.log('QuickBooks API call failed with 401, attempting token refresh...');
-            await refreshQuickBooksToken(); // This updates accessToken
-            // Retry the QuickBooks API call with the new token
+            await refreshQuickBooksToken();
             qbResponse = await fetch(`${QUICKBOOKS_API_BASE_URL}/${realmId}/salesreceipt?minorversion=69`, {
               method: 'POST',
               headers: {
@@ -235,7 +213,7 @@ Deno.serve(async (req) => {
               body: JSON.stringify(salesReceipt),
             });
           } else {
-            throw fetchError; // Re-throw if not a 401 or other network issue
+            throw fetchError;
           }
         }
 
@@ -248,7 +226,6 @@ Deno.serve(async (req) => {
         const qbData = await qbResponse.json();
         const quickbooksId = qbData.SalesReceipt.Id;
 
-        // Update order in Supabase
         const { error: updateOrderError } = await supabaseAdmin
           .from('orders')
           .update({

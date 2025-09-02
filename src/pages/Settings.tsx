@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useTheme } from "next-themes"; // Corrected import for useTheme
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -12,8 +12,8 @@ import { useProfile } from "@/context/ProfileContext";
 import { showError, showSuccess } from "@/utils/toast";
 import { Loader2 } from "lucide-react";
 import { useOnboarding } from "@/context/OnboardingContext";
-import { Link } from "react-router-dom"; // Import Link for navigation
-import { FileText, Plug, CheckCircle, RefreshCw } from "lucide-react"; // NEW: Import RefreshCw icon
+import { Link } from "react-router-dom";
+import { FileText, Plug, CheckCircle, RefreshCw, AlertTriangle } from "lucide-react"; // NEW: Import AlertTriangle
 import { supabase } from "@/lib/supabaseClient";
 
 const Settings: React.FC = () => {
@@ -25,7 +25,7 @@ const Settings: React.FC = () => {
   const [companyAddress, setCompanyAddress] = useState(companyProfile?.address || "");
   const [companyCurrency, setCompanyCurrency] = useState(companyProfile?.currency || "USD");
   const [isSavingCompanyProfile, setIsSavingCompanyProfile] = useState(false);
-  const [isSyncingQuickBooks, setIsSyncingQuickBooks] = useState(false); // NEW: State for QuickBooks sync loading
+  const [isSyncingQuickBooks, setIsSyncingQuickBooks] = useState(false);
 
   useEffect(() => {
     if (companyProfile) {
@@ -58,26 +58,17 @@ const Settings: React.FC = () => {
     }
 
     const clientId = import.meta.env.VITE_QUICKBOOKS_CLIENT_ID;
-    // const supabaseUrl = import.meta.env.VITE_SUPABASE_URL; // REMOVED: No longer needed for explicit URL
 
     if (!clientId) {
       showError("QuickBooks Client ID is not configured. Please add VITE_QUICKBOOKS_CLIENT_ID to your .env file.");
       return;
     }
-    // if (!supabaseUrl) { // REMOVED: No longer needed for explicit URL
-    //   showError("Supabase URL is not configured. Please add VITE_SUPABASE_URL to your .env file.");
-    //   return;
-    // }
 
-    // Construct the OAuth 2.0 authorization URL
-    // The redirect URI MUST match the one registered in your QuickBooks Developer Portal
-    // and the one used in the Edge Function.
-    // Using explicit Supabase project ID and function name for redirect URI
     const redirectUri = `https://nojumocxivfjsbqnnkqe.supabase.co/functions/v1/quickbooks-oauth-callback`;
     
-    const scope = "com.intuit.quickbooks.accounting openid profile email address phone"; // Required scopes
+    const scope = "com.intuit.quickbooks.accounting openid profile email address phone";
     const responseType = "code";
-    const state = profile.id; // Use profile.id as state to identify the user
+    const state = profile.id;
 
     const authUrl = `https://appcenter.intuit.com/app/connect/oauth2?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=${responseType}&state=${state}`;
     
@@ -93,12 +84,12 @@ const Settings: React.FC = () => {
     try {
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ quickbooks_access_token: null, quickbooks_refresh_token: null })
+        .update({ quickbooks_access_token: null, quickbooks_refresh_token: null, quickbooks_realm_id: null }) // NEW: Also clear realm_id
         .eq('id', profile.id);
       
       if (updateError) throw updateError;
 
-      await fetchProfile(); // Refresh profile context
+      await fetchProfile();
       showSuccess("Disconnected from QuickBooks.");
     } catch (error: any) {
       console.error("Error disconnecting QuickBooks:", error);
@@ -106,17 +97,14 @@ const Settings: React.FC = () => {
     }
   };
 
-  // NEW: Function to trigger sales order sync
   const handleSyncSalesOrders = async () => {
-    if (!profile?.quickbooksAccessToken) {
-      showError("QuickBooks is not connected. Please connect your account first.");
+    if (!profile?.quickbooksAccessToken || !profile?.quickbooksRealmId) { // NEW: Check for realmId
+      showError("QuickBooks is not fully connected. Please ensure your QuickBooks company is selected and try connecting again.");
       return;
     }
     setIsSyncingQuickBooks(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-       console.log("Client-side session before sync:", session);
-      console.log("Client-side access token before sync:", session?.access_token);
       
       if (!session) {
         showError("You must be logged in to sync with QuickBooks.");
@@ -140,7 +128,7 @@ const Settings: React.FC = () => {
 
       showSuccess(data.message || "Sales orders synced successfully!");
       console.log("QuickBooks Sync Results:", data.results);
-      await fetchProfile(); // Refresh profile to ensure quickbooks_synced status is updated
+      await fetchProfile();
     } catch (error: any) {
       console.error("Error syncing sales orders to QuickBooks:", error);
       showError(`Failed to sync sales orders: ${error.message}`);
@@ -153,6 +141,10 @@ const Settings: React.FC = () => {
     companyName !== (companyProfile?.name || "") ||
     companyAddress !== (companyProfile?.address || "") ||
     companyCurrency !== (companyProfile?.currency || "USD");
+
+  const isQuickBooksConnected = profile?.quickbooksAccessToken && profile?.quickbooksRefreshToken && profile?.quickbooksRealmId;
+  const isQuickBooksPartiallyConnected = profile?.quickbooksAccessToken && profile?.quickbooksRefreshToken && !profile?.quickbooksRealmId;
+
 
   return (
     <div className="flex flex-col space-y-6 p-6">
@@ -184,7 +176,6 @@ const Settings: React.FC = () => {
                   <SelectItem value="EUR">EUR (€)</SelectItem>
                   <SelectItem value="GBP">GBP (£)</SelectItem>
                   <SelectItem value="JPY">JPY (¥)</SelectItem>
-                  {/* Add more currencies as needed */}
                 </SelectContent>
               </Select>
             </div>
@@ -219,7 +210,7 @@ const Settings: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {profile?.quickbooksAccessToken ? (
+          {isQuickBooksConnected ? (
             <div className="flex flex-col gap-2">
               <p className="text-green-500 font-semibold">
                 <CheckCircle className="inline h-4 w-4 mr-2" /> Connected to QuickBooks!
@@ -227,7 +218,7 @@ const Settings: React.FC = () => {
               <p className="text-sm text-muted-foreground">
                 Your Fortress account is linked. You can now synchronize data.
               </p>
-              <Button onClick={handleSyncSalesOrders} disabled={isSyncingQuickBooks}> {/* NEW: Sync button */}
+              <Button onClick={handleSyncSalesOrders} disabled={isSyncingQuickBooks}>
                 {isSyncingQuickBooks ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Syncing...
@@ -255,6 +246,19 @@ const Settings: React.FC = () => {
                   Please log in to connect to QuickBooks.
                 </p>
               )}
+              {isQuickBooksPartiallyConnected && ( // NEW: Display specific warning for partial connection
+                <p className="text-sm text-yellow-500 flex items-center gap-1 mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  QuickBooks tokens received, but company (realmId) not saved. Please ensure you select a company during the QuickBooks authorization flow. If the issue persists, verify your `redirect_uri` in the Intuit Developer portal.
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground mt-2">
+                <AlertTriangle className="inline h-3 w-3 mr-1" />
+                **Important:** Ensure the following `redirect_uri` is registered in your Intuit Developer application settings:
+                <code className="block bg-muted/20 p-1 rounded-sm mt-1 text-xs font-mono break-all">
+                  https://nojumocxivfjsbqnnkqe.supabase.co/functions/v1/quickbooks-oauth-callback
+                </code>
+              </p>
             </div>
           )}
         </CardContent>
