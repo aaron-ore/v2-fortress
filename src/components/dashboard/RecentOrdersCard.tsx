@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Receipt } from "lucide-react";
 import { useOrders } from "@/context/OrdersContext";
-import { formatDistanceToNowStrict, isValid } from "date-fns"; // Import isValid
+import { formatDistanceToNowStrict, isValid } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area"; // Import ScrollArea
 
 const RecentOrdersCard: React.FC = () => {
   const { orders } = useOrders();
@@ -46,38 +47,42 @@ const RecentOrdersCard: React.FC = () => {
           </TabsList>
           <TabsContent value="sales" className="mt-4">
             {recentSalesOrders.length > 0 ? (
-              <ul className="text-sm space-y-2">
-                {recentSalesOrders.map((order) => {
-                  const orderDate = new Date(order.date);
-                  return (
-                    <li key={order.id} className="flex justify-between items-center">
-                      <span>{order.id} - {order.customerSupplier}</span>
-                      <span className="text-muted-foreground text-xs">
-                        {isValid(orderDate) ? formatDistanceToNowStrict(orderDate, { addSuffix: true }) : "N/A"}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
+              <ScrollArea className="h-[120px] rounded-md border p-2"> {/* Added ScrollArea */}
+                <ul className="text-sm space-y-2">
+                  {recentSalesOrders.map((order) => {
+                    const orderDate = new Date(order.date);
+                    return (
+                      <li key={order.id} className="flex justify-between items-center">
+                        <span>{order.id} - {order.customerSupplier}</span>
+                        <span className="text-muted-foreground text-xs">
+                          {isValid(orderDate) ? formatDistanceToNowStrict(orderDate, { addSuffix: true }) : "N/A"}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </ScrollArea>
             ) : (
               <p className="text-center text-muted-foreground text-sm py-4">No recent sales orders.</p>
             )}
           </TabsContent>
           <TabsContent value="purchases" className="mt-4">
             {recentPurchaseOrders.length > 0 ? (
-              <ul className="text-sm space-y-2">
-                {recentPurchaseOrders.map((order) => {
-                  const orderDate = new Date(order.date);
-                  return (
-                    <li key={order.id} className="flex justify-between items-center">
-                      <span>{order.id} - {order.customerSupplier}</span>
-                      <span className="text-muted-foreground text-xs">
-                        {isValid(orderDate) ? formatDistanceToNowStrict(orderDate, { addSuffix: true }) : "N/A"}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
+              <ScrollArea className="h-[120px] rounded-md border p-2"> {/* Added ScrollArea */}
+                <ul className="text-sm space-y-2">
+                  {recentPurchaseOrders.map((order) => {
+                    const orderDate = new Date(order.date);
+                    return (
+                      <li key={order.id} className="flex justify-between items-center">
+                        <span>{order.id} - {order.customerSupplier}</span>
+                        <span className="text-muted-foreground text-xs">
+                          {isValid(orderDate) ? formatDistanceToNowStrict(orderDate, { addSuffix: true }) : "N/A"}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </ScrollArea>
             ) : (
               <p className="text-center text-muted-foreground text-sm py-4">No recent purchase orders.</p>
             )}
