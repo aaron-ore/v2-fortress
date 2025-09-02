@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
   }
 
   let textToSummarize;
-  let rawRequestBody = '';
 
   try {
     console.log('Edge Function: Incoming request method:', req.method);
@@ -25,27 +24,13 @@ Deno.serve(async (req) => {
       console.log(`  ${key}: ${value}`);
     }
 
-    // Attempt to read the raw request body as text
-    console.log('Edge Function: Attempting to read raw request body as text...');
-    rawRequestBody = await req.text();
-    console.log('Edge Function: Successfully read raw request body. Length:', rawRequestBody.length);
-    console.log('Edge Function: Raw request body content (first 500 chars):', `"${rawRequestBody.substring(0, 500)}..."`);
-
-    // Now attempt to parse the JSON from the raw text
-    let jsonBody;
-    try {
-      jsonBody = JSON.parse(rawRequestBody);
-      textToSummarize = jsonBody.textToSummarize;
-      console.log('Edge Function: Successfully parsed JSON from raw body.');
-      console.log('Edge Function: Extracted textToSummarize (first 100 chars):', textToSummarize ? textToSummarize.substring(0, 100) + '...' : 'null');
-      console.log('Edge Function: Length of textToSummarize:', textToSummarize ? textToSummarize.length : 0);
-    } catch (parseError) {
-      console.error('Edge Function: Error parsing JSON from raw body:', parseError);
-      return new Response(JSON.stringify({ error: `Failed to parse JSON from raw body. Raw body: "${rawRequestBody}". Error: ${parseError.message}` }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      });
-    }
+    // Attempt to parse the JSON directly from the request body
+    console.log('Edge Function: Attempting to parse JSON from request body using req.json()...');
+    const jsonBody = await req.json(); // Use req.json() directly
+    textToSummarize = jsonBody.textToSummarize;
+    console.log('Edge Function: Successfully parsed JSON from body.');
+    console.log('Edge Function: Extracted textToSummarize (first 100 chars):', textToSummarize ? textToSummarize.substring(0, 100) + '...' : 'null');
+    console.log('Edge Function: Length of textToSummarize:', textToSummarize ? textToSummarize.length : 0);
 
     if (!textToSummarize) {
       console.error('Edge Function: textToSummarize is empty or null after parsing.');
@@ -135,7 +120,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Edge Function error during request parsing or processing:', error);
+    console.error('Edge Function error during request processing:', error);
     return new Response(JSON.stringify({ error: `Failed to process request: ${error.message}` }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
