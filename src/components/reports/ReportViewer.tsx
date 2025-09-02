@@ -61,7 +61,6 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
     if (reportContentRef.current) {
       const rawInnerText = reportContentRef.current.innerText;
       console.log("Client-side: Raw innerText from reportContentRef:", `"${rawInnerText}"`, "length:", rawInnerText.length);
-      console.log("Client-side: OuterHTML from reportContentRef:", reportContentRef.current.outerHTML);
 
       const text = rawInnerText
         .replace(/(\r\n|\n|\r){2,}/g, '\n\n') // Reduce multiple newlines to max two
@@ -130,7 +129,9 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
         setIsSummarizing(false);
         return;
       }
-      console.log("Client-side textToSummarize (final) before sending to Edge Function:", `"${textToSummarize}"`, "length:", textToSummarize.length);
+      // NEW: Log the textToSummarize right before sending
+      console.log("Client-side: Final textToSummarize before sending to Edge Function:", `"${textToSummarize.substring(0, 500)}..."`, "length:", textToSummarize.length);
+
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
