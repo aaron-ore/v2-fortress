@@ -61,6 +61,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
     if (reportContentRef.current) {
       const rawInnerText = reportContentRef.current.innerText;
       console.log("Client-side: Raw innerText from reportContentRef:", `"${rawInnerText}"`, "length:", rawInnerText.length);
+      console.log("Client-side: OuterHTML from reportContentRef:", reportContentRef.current.outerHTML);
 
       const text = rawInnerText
         .replace(/(\r\n|\n|\r){2,}/g, '\n\n') // Reduce multiple newlines to max two
@@ -124,8 +125,10 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
       let textToSummarize = rawText.trim();
 
       if (!textToSummarize) {
-        console.warn("Client-side: Report text content is empty after extraction. Using fallback for AI summary.");
-        textToSummarize = "The report content was empty or could not be extracted. This is a placeholder summary for testing purposes.";
+        console.warn("Client-side: Report text content is empty after extraction. Cannot send for AI summary.");
+        showError("No report content found to summarize. Please ensure the report is fully loaded and visible.");
+        setIsSummarizing(false);
+        return;
       }
       console.log("Client-side textToSummarize (final) before sending to Edge Function:", `"${textToSummarize}"`, "length:", textToSummarize.length);
 
