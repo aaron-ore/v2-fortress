@@ -18,11 +18,11 @@ Deno.serve(async (req) => {
     console.log('Edge Function: Content-Type header:', req.headers.get('Content-Type'));
     console.log('Edge Function: Content-Length header:', req.headers.get('Content-Length'));
 
-    // Use req.json() directly for more robust JSON parsing
     const jsonBody = await req.json();
     textToSummarize = jsonBody.textToSummarize;
 
-    console.log('Edge Function: Parsed textToSummarize:', textToSummarize);
+    console.log('Edge Function: Parsed textToSummarize (first 100 chars):', textToSummarize ? textToSummarize.substring(0, 100) + '...' : 'null');
+    console.log('Edge Function: Length of textToSummarize:', textToSummarize ? textToSummarize.length : 0);
 
     if (!textToSummarize) {
       console.error('Edge Function: textToSummarize is empty or null after parsing.');
@@ -62,14 +62,16 @@ Deno.serve(async (req) => {
     // Fetch the Gemini API key from Supabase Secrets
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     if (!geminiApiKey) {
-      console.error('Edge Function: Gemini API key not configured.');
+      console.error('Edge Function: Gemini API key not configured. Please ensure GEMINI_API_KEY is set in Supabase Secrets.');
       return new Response(JSON.stringify({ error: 'Gemini API key not configured.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       });
     }
+    console.log('Edge Function: Gemini API key is configured.');
 
     const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${geminiApiKey}`;
+    console.log('Edge Function: Gemini API URL:', GEMINI_API_URL);
 
     const prompt = `Summarize the following text concisely and accurately. Focus on the key information and main points. The summary should be suitable for a business report or quick overview:\n\n${textToSummarize}`;
 
@@ -93,7 +95,8 @@ Deno.serve(async (req) => {
 
     if (!geminiResponse.ok) {
       const errorData = await geminiResponse.json();
-      console.error('Gemini API error:', errorData);
+      console.error('Edge Function: Gemini API call failed. Status:', geminiResponse.status, 'Status Text:', geminiResponse.statusText);
+      console.error('Edge Function: Gemini API error response:', JSON.stringify(errorData, null, 2));
       return new Response(JSON.stringify({ error: `Gemini API error: ${errorData.error?.message || 'Unknown error'}` }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: geminiResponse.status,
