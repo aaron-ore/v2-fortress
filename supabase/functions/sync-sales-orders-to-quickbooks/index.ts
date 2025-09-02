@@ -200,6 +200,56 @@ Deno.serve(async (req) => {
       return createResult.Customer.Id;
     };
 
+    // NEW: Function to get a suitable Income Account ID
+    const getQuickBooksIncomeAccountId = async () => {
+      // Try to find a 'Sales' or 'Services' income account
+      const querySalesAccountUrl = `${QUICKBOOKS_API_BASE_URL}/${realmId}/query?query=${encodeURIComponent(`SELECT * FROM Account WHERE AccountType = 'Income' AND Name = 'Sales'`)}&minorversion=69`;
+      const queryServicesAccountUrl = `${QUICKBOOKS_API_BASE_URL}/${realmId}/query?query=${encodeURIComponent(`SELECT * FROM Account WHERE AccountType = 'Income' AND Name = 'Services'`)}&minorversion=69`;
+
+      let salesAccountResult = await makeQuickBooksApiCall(querySalesAccountUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      if (salesAccountResult.QueryResponse.Account && salesAccountResult.QueryResponse.Account.length > 0) {
+        console.log(`Found existing QuickBooks Income Account 'Sales' (ID: ${salesAccountResult.QueryResponse.Account[0].Id})`);
+        return salesAccountResult.QueryResponse.Account[0].Id;
+      }
+
+      let servicesAccountResult = await makeQuickBooksApiCall(queryServicesAccountUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      if (servicesAccountResult.QueryResponse.Account && servicesAccountResult.QueryResponse.Account.length > 0) {
+        console.log(`Found existing QuickBooks Income Account 'Services' (ID: ${servicesAccountResult.QueryResponse.Account[0].Id})`);
+        return servicesAccountResult.QueryResponse.Account[0].Id;
+      }
+
+      // If no specific 'Sales' or 'Services' account found, try to find any Income account
+      const queryAnyIncomeAccountUrl = `${QUICKBOOKS_API_BASE_URL}/${realmId}/query?query=${encodeURIComponent(`SELECT * FROM Account WHERE AccountType = 'Income' MAXRESULTS 1`)}&minorversion=69`;
+      let anyIncomeAccountResult = await makeQuickBooksApiCall(queryAnyIncomeAccountUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      if (anyIncomeAccountResult.QueryResponse.Account && anyIncomeAccountResult.QueryResponse.Account.length > 0) {
+        console.log(`Found generic QuickBooks Income Account '${anyIncomeAccountResult.QueryResponse.Account[0].Name}' (ID: ${anyIncomeAccountResult.QueryResponse.Account[0].Id})`);
+        return anyIncomeAccountResult.QueryResponse.Account[0].Id;
+      }
+
+      throw new Error("No suitable Income Account found in QuickBooks. Please ensure you have an 'Income' type account (e.g., 'Sales' or 'Services') configured in your QuickBooks company.");
+    };
+
     const getOrCreateQuickBooksItem = async (itemName: string, unitPrice: number) => {
       // Search for item
       const queryUrl = `${QUICKBOOKS_API_BASE_URL}/${realmId}/query?query=${encodeURIComponent(`SELECT * FROM Item WHERE Name = '${itemName}'`)}&minorversion=69`;
@@ -216,20 +266,18 @@ Deno.serve(async (req) => {
         return searchResult.QueryResponse.Item[0].Id;
       }
 
-      // Create new service item if not found
+      // If not found, create new service item
       console.log(`QuickBooks item ${itemName} not found, creating new service item...`);
+
+      const incomeAccountId = await getQuickBooksIncomeAccountId(); // Get the account ID
+
       const newItemPayload = {
         Name: itemName,
-        Type: 'Service', // For simplicity, create as a Service item
+        Type: 'Service',
         Active: true,
         UnitPrice: unitPrice,
         IncomeAccountRef: {
-          // This needs to be a valid QuickBooks Income Account ID.
-          // For a demo, we can try to find a default 'Sales' or 'Services' account,
-          // or use a hardcoded ID if one is known to exist in the sandbox.
-          // A more robust solution would query available accounts.
-          // For now, let's use a placeholder name and hope QuickBooks can resolve it.
-          name: 'Sales', // Common default income account name
+          value: incomeAccountId, // Use the fetched ID
         },
       };
       const createUrl = `${QUICKBOOKS_API_BASE_URL}/${realmId}/item?minorversion=69`;
