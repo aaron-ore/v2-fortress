@@ -19,29 +19,40 @@ Deno.serve(async (req) => {
     const error = url.searchParams.get('error');
     const errorDescription = url.searchParams.get('error_description');
     const realmIdFromUrl = url.searchParams.get('realmId');
-    const redirectToFrontend = url.searchParams.get('redirect_to'); // NEW: Extract redirect_to
 
     // Log all search parameters for debugging
     console.log('QuickBooks OAuth Callback: All URL search parameters:', JSON.stringify(Object.fromEntries(url.searchParams.entries()), null, 2));
 
-    // Define a fallback client app base URL if redirectToFrontend is not provided
+    // NEW: Decode the state parameter to get userId and redirectToFrontend
+    let userId: string | null = null;
+    let redirectToFrontend: string | null = null;
     const FALLBACK_CLIENT_APP_BASE_URL = 'https://dyad-generated-app.vercel.app';
+
+    if (state) {
+      try {
+        const decodedState = JSON.parse(atob(state)); // Base64 decode and parse JSON
+        userId = decodedState.userId;
+        redirectToFrontend = decodedState.redirectToFrontend;
+        console.log('QuickBooks OAuth Callback: Decoded state - userId:', userId, 'redirectToFrontend:', redirectToFrontend);
+      } catch (e) {
+        console.error('Error decoding state parameter:', e);
+      }
+    }
     const finalRedirectBase = redirectToFrontend || FALLBACK_CLIENT_APP_BASE_URL;
+
 
     if (error) {
       console.error('QuickBooks OAuth Error:', error, errorDescription);
       return Response.redirect(`${finalRedirectBase}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent(errorDescription || error)}`, 302);
     }
 
-    if (!code || !state) {
-      console.error('Missing code or state in QuickBooks OAuth callback.');
-      return Response.redirect(`${finalRedirectBase}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent('Missing authorization code or state.')}`, 302);
+    if (!code || !userId) { // Use decoded userId
+      console.error('Missing authorization code or userId in QuickBooks OAuth callback.');
+      return Response.redirect(`${finalRedirectBase}/quickbooks-oauth-callback?quickbooks_error=${encodeURIComponent('Missing authorization code or user ID.')}`, 302);
     }
 
     if (!realmIdFromUrl) {
       console.warn('QuickBooks OAuth Callback: realmId is missing from the URL parameters. This usually indicates an incorrect redirect_uri configuration in Intuit Developer settings.');
-      // We will still proceed to exchange tokens, but realmId will be null.
-      // The frontend will then display a specific error.
     }
 
     const QUICKBOOKS_CLIENT_ID = Deno.env.get('QUICKBOOKS_CLIENT_ID');
@@ -82,7 +93,6 @@ Deno.serve(async (req) => {
 
     const accessToken = tokens.access_token;
     const refreshToken = tokens.refresh_token;
-    const userId = state;
 
     console.log('QuickBooks OAuth Callback: Received Access Token (first 10 chars):', accessToken ? accessToken.substring(0, 10) : 'N/A');
     console.log('QuickBooks OAuth Callback: Received Refresh Token (first 10 chars):', refreshToken ? refreshToken.substring(0, 10) : 'N/A');
@@ -97,7 +107,7 @@ Deno.serve(async (req) => {
         quickbooks_refresh_token: refreshToken,
         quickbooks_realm_id: realmIdFromUrl,
       })
-      .eq('id', userId);
+      .eq('id', userId); // Use decoded userId
 
     if (updateError) {
       console.error('Error updating user profile with QuickBooks tokens:', updateError);
