@@ -12,7 +12,7 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import CreatePurchaseOrder from "./pages/CreatePurchaseOrder";
 import EditInventoryItem from "./pages/EditInventoryItem";
-import EditPurchaseOrder from "./pages/Edit/EditPurchaseOrder";
+import EditPurchaseOrder from "./pages/EditPurchaseOrder"; // Corrected import path
 import Auth from "./pages/Auth";
 import MyProfile from "./pages/MyProfile";
 import AccountSettings from "./pages/AccountSettings";
