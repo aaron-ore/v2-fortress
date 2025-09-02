@@ -12,11 +12,13 @@ Deno.serve(async (req) => {
   }
 
   let textToSummarize;
+  let requestBody = ''; // Initialize requestBody to an empty string
+
   try {
-    const requestBody = await req.text(); // Read raw body first
+    requestBody = await req.text(); // Read raw body once
     console.log('Edge Function: Raw request body:', requestBody);
 
-    const jsonBody = JSON.parse(requestBody);
+    const jsonBody = JSON.parse(requestBody); // Parse the raw text
     textToSummarize = jsonBody.textToSummarize;
 
     console.log('Edge Function: Parsed textToSummarize:', textToSummarize);
@@ -107,7 +109,8 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Edge Function error during request parsing or processing:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('Problematic request body:', requestBody); // Log the problematic body
+    return new Response(JSON.stringify({ error: `Failed to parse request body: ${error.message}. Raw body: ${requestBody}` }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
     });
