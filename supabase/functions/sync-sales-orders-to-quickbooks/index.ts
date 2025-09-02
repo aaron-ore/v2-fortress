@@ -27,6 +27,7 @@ Deno.serve(async (req) => {
     console.log('Edge Function user from auth.getUser:', user);
 
     if (!user) {
+      console.error('Edge Function: User not authenticated from token. Returning 401.');
       return new Response(JSON.stringify({ error: 'Unauthorized: User not authenticated.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 401,
