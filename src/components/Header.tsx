@@ -39,19 +39,19 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
   const isMobile = useIsMobile();
 
   const handleLogout = async () => {
-    const { data: { session } = { session: null } } = await supabase.auth.getSession();
-    if (!session) {
-      showSuccess("You are already logged out.");
-      navigate("/auth");
-      return;
-    }
-
     const { error } = await supabase.auth.signOut();
     if (error) {
-      showError("Failed to log out: " + error.message);
+      // If the error is specifically "Auth session missing", it means they are effectively logged out.
+      // Treat it as a success for the user experience.
+      if (error.message.includes("Auth session missing")) {
+        showSuccess("Logged out successfully!");
+      } else {
+        showError("Failed to log out: " + error.message);
+      }
     } else {
       showSuccess("Logged out successfully!");
     }
+    // Navigation to /auth is handled by App.tsx's onAuthStateChange listener
   };
 
   const renderDropdownItems = (items: NavItem[]) => (

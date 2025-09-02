@@ -27,21 +27,20 @@ const MobileDrawerContent: React.FC<MobileDrawerContentProps> = ({ onLinkClick }
   const { profile } = useProfile();
 
   const handleLogout = async () => {
-    const { data: { session } = { session: null } } = await supabase.auth.getSession();
-    if (!session) {
-      showSuccess("You are already logged out.");
-      navigate("/auth");
-      onLinkClick();
-      return;
-    }
-
     const { error } = await supabase.auth.signOut();
     if (error) {
-      showError("Failed to log out: " + error.message);
+      // If the error is specifically "Auth session missing", it means they are effectively logged out.
+      // Treat it as a success for the user experience.
+      if (error.message.includes("Auth session missing")) {
+        showSuccess("Logged out successfully!");
+      } else {
+        showError("Failed to log out: " + error.message);
+      }
     } else {
       showSuccess("Logged out successfully!");
-      onLinkClick();
     }
+    // Call onLinkClick to close the drawer, but let App.tsx handle navigation.
+    onLinkClick();
   };
 
   const handleNavigation = (path: string) => {
