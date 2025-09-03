@@ -240,18 +240,17 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
     const newPoNumber = `PO${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`; // Simple mock PO number
     const totalAmount = poItems.reduce((sum, poItem) => sum + poItem.quantity * poItem.unitPrice, 0);
 
-    const newPurchaseOrder = { // Removed explicit type annotation
-      id: undefined, // Explicitly set to undefined to satisfy the optional 'id' in the parameter type
-      type: "Purchase",
+    const newPurchaseOrder = {
+      type: "Purchase" as "Purchase",
       customerSupplier: vendor.name,
       date: new Date().toISOString().split("T")[0],
-      status: "New Order",
+      status: "New Order" as "New Order",
       totalAmount: totalAmount,
       dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       itemCount: poItems.length,
       notes: `Manually triggered reorder for ${currentItem.name}.`,
-      orderType: "Wholesale",
-      shippingMethod: "Standard",
+      orderType: "Wholesale" as "Wholesale",
+      shippingMethod: "Standard" as "Standard",
       items: poItems,
       terms: "Net 30",
     };
