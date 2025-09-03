@@ -1,6 +1,7 @@
 "use client";
 
-import React, {
+import React,
+{
   createContext,
   useState,
   useContext,
@@ -18,6 +19,7 @@ import { useVendors } from "./VendorContext";
 import { processAutoReorder } from "@/utils/autoReorderLogic";
 import { useNotifications } from "./NotificationContext";
 // REMOVED: import { useActivityLogs } from "./ActivityLogContext";
+import { isValid } from "date-fns"; // Import isValid for date validation
 
 export interface InventoryItem {
   id: string;
@@ -84,10 +86,10 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
     const retailPrice = parseFloat(item.retail_price || '0');
     const autoReorderQuantity = parseInt(item.auto_reorder_quantity || '0');
 
-    // Ensure last_updated is valid or provide a fallback
-    const lastUpdated = item.last_updated && !isNaN(new Date(item.last_updated).getTime())
+    // Ensure last_updated is always a valid ISO string
+    const validatedLastUpdated = (item.last_updated && isValid(new Date(item.last_updated)))
       ? item.last_updated
-      : new Date().toISOString().split('T')[0]; // Fallback to today's date
+      : new Date().toISOString(); // Fallback to current valid ISO string
 
     return {
       id: item.id,
@@ -107,7 +109,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
       location: item.location,
       pickingBinLocation: item.picking_bin_location || item.location, // Default to main location if not set
       status: item.status,
-      lastUpdated: lastUpdated, // Use validated date
+      lastUpdated: validatedLastUpdated, // Use validated date string
       imageUrl: item.image_url || undefined,
       vendorId: item.vendor_id || undefined,
       barcodeUrl: item.barcode_url || undefined,
@@ -160,7 +162,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
     const totalQuantity = item.pickingBinQuantity + item.overstockQuantity;
     const status = totalQuantity > item.reorderLevel ? "In Stock" : (totalQuantity > 0 ? "Low Stock" : "Out of Stock");
-    const lastUpdated = new Date().toISOString().split('T')[0];
+    const lastUpdated = new Date().toISOString(); // Use full ISO string
 
     const { data, error } = await supabase
       .from("inventory_items")
@@ -219,7 +221,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
     const totalQuantity = updatedItem.pickingBinQuantity + updatedItem.overstockQuantity;
     const newStatus = totalQuantity > updatedItem.reorderLevel ? "In Stock" : (totalQuantity > 0 ? "Low Stock" : "Out of Stock");
-    const lastUpdated = new Date().toISOString().split('T')[0];
+    const lastUpdated = new Date().toISOString(); // Use full ISO string
 
     const { data, error } = await supabase
       .from("inventory_items")

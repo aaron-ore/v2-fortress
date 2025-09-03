@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
 // REMOVED: import { mockReplenishmentTasks } from "@/utils/mockData"; // Import mock data
+import { isValid } from "date-fns"; // Import isValid for date validation
 
 export interface ReplenishmentTask {
   id: string;
@@ -34,13 +35,13 @@ export const ReplenishmentProvider: React.FC<{ children: ReactNode }> = ({ child
   const mapSupabaseTaskToReplenishmentTask = (task: any): ReplenishmentTask => {
     const quantity = parseInt(task.quantity || '0');
 
-    // Ensure createdAt is valid or provide a fallback
-    const createdAt = task.created_at && !isNaN(new Date(task.created_at).getTime())
+    // Ensure createdAt is always a valid ISO string
+    const validatedCreatedAt = (task.created_at && isValid(new Date(task.created_at)))
       ? task.created_at
-      : new Date().toISOString(); // Fallback to current timestamp
+      : new Date().toISOString(); // Fallback to current valid ISO string
 
-    // Ensure completedAt is valid or provide a fallback, or keep undefined if not present
-    const completedAt = task.completed_at && !isNaN(new Date(task.completed_at).getTime())
+    // Ensure completedAt is valid or keep undefined if not present
+    const validatedCompletedAt = (task.completed_at && isValid(new Date(task.completed_at)))
       ? task.completed_at
       : undefined;
 
@@ -53,8 +54,8 @@ export const ReplenishmentProvider: React.FC<{ children: ReactNode }> = ({ child
       quantity: isNaN(quantity) ? 0 : quantity,
       status: task.status,
       assignedTo: task.assigned_to || undefined,
-      createdAt: createdAt, // Use validated date
-      completedAt: completedAt, // Use validated date or undefined
+      createdAt: validatedCreatedAt, // Use validated date string
+      completedAt: validatedCompletedAt, // Use validated date string or undefined
       organizationId: task.organization_id,
     };
   };

@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { showError } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
 // REMOVED: import { useActivityLogs } from "./ActivityLogContext";
+import { isValid } from "date-fns"; // Import isValid for date validation
 
 export interface StockMovement {
   id: string;
@@ -35,10 +36,10 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
     const oldQuantity = parseInt(movement.old_quantity || '0');
     const newQuantity = parseInt(movement.new_quantity || '0');
 
-    // Ensure timestamp is valid or provide a fallback
-    const timestamp = movement.timestamp && !isNaN(new Date(movement.timestamp).getTime())
+    // Ensure timestamp is always a valid ISO string
+    const validatedTimestamp = (movement.timestamp && isValid(new Date(movement.timestamp)))
       ? movement.timestamp
-      : new Date().toISOString(); // Fallback to current timestamp
+      : new Date().toISOString(); // Fallback to current valid ISO string
 
     return {
       id: movement.id,
@@ -49,7 +50,7 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
       oldQuantity: isNaN(oldQuantity) ? 0 : oldQuantity,
       newQuantity: isNaN(newQuantity) ? 0 : newQuantity,
       reason: movement.reason,
-      timestamp: timestamp, // Use validated timestamp
+      timestamp: validatedTimestamp, // Use validated date string
       organizationId: movement.organization_id,
     };
   };

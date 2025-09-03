@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
 import { generateSequentialNumber } from "@/utils/numberGenerator"; // Import generateSequentialNumber
+import { isValid } from "date-fns"; // Import isValid for date validation
 
 export interface POItem {
   id: number;
@@ -61,22 +62,23 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
       inventoryItemId: item.inventoryItemId,
     }));
 
-    const createdAtDate = order.created_at && !isNaN(new Date(order.created_at).getTime())
+    // Ensure created_at and due_date are always valid ISO strings
+    const validatedCreatedAt = (order.created_at && isValid(new Date(order.created_at)))
       ? order.created_at
-      : new Date().toISOString().split('T')[0];
+      : new Date().toISOString(); // Fallback to current valid ISO string
     
-    const dueDate = order.due_date && !isNaN(new Date(order.due_date).getTime())
+    const validatedDueDate = (order.due_date && isValid(new Date(order.due_date)))
       ? order.due_date
-      : new Date().toISOString().split('T')[0];
+      : new Date().toISOString(); // Fallback to current valid ISO string
 
     return {
       id: order.id,
       type: order.type,
       customerSupplier: order.customer_supplier,
-      date: createdAtDate,
+      date: validatedCreatedAt, // Use validated date string
       status: order.status,
       totalAmount: isNaN(totalAmount) ? 0 : totalAmount,
-      dueDate: dueDate,
+      dueDate: validatedDueDate, // Use validated date string
       itemCount: isNaN(itemCount) ? 0 : itemCount,
       notes: order.notes || "",
       orderType: order.order_type,

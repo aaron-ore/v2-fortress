@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 // REMOVED: import { mockUserProfile, mockAllProfiles } from "@/utils/mockData";
 // REMOVED: import { useActivityLogs } from "./ActivityLogContext";
+import { isValid } from "date-fns"; // Import isValid for date validation
 
 export interface UserProfile {
   id: string;
@@ -39,6 +40,29 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
   const errorToastId = useRef<string | number | null>(null);
   // REMOVED: const { addActivity } = useActivityLogs();
 
+  const mapSupabaseProfileToUserProfile = (p: any, sessionEmail?: string): UserProfile => {
+    // Ensure created_at is always a valid ISO string
+    const validatedCreatedAt = (p.created_at && isValid(new Date(p.created_at)))
+      ? p.created_at
+      : new Date().toISOString(); // Fallback to current valid ISO string
+
+    return {
+      id: p.id,
+      fullName: p.full_name,
+      email: p.email || sessionEmail || "",
+      phone: p.phone || undefined,
+      address: p.address || undefined,
+      avatarUrl: p.avatar_url || undefined,
+      role: p.role,
+      organizationId: p.organization_id,
+      organizationCode: p.organizations?.unique_code || undefined,
+      createdAt: validatedCreatedAt, // Use validated date string
+      quickbooksAccessToken: p.quickbooks_access_token || undefined,
+      quickbooksRefreshToken: p.quickbooks_refresh_token || undefined,
+      quickbooksRealmId: p.quickbooks_realm_id || undefined,
+    };
+  };
+
   const fetchProfile = useCallback(async () => {
     setIsLoadingProfile(true);
     const { data: { session } } = await supabase.auth.getSession();
@@ -46,9 +70,6 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (!session) {
       setProfile(null);
       setIsLoadingProfile(false);
-      // REMOVED: Always load mock user profile if no session found for testing purposes
-      // console.warn("Loading mock user profile as no session found.");
-      // setProfile(mockUserProfile);
       return;
     }
 
@@ -57,7 +78,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code), quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id") // UPDATED: Select quickbooks_realm_id
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code), quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id")
       .eq("id", session.user.id)
       .single();
 
@@ -72,69 +93,31 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
 
     if (profileFetchError) {
-      // REMOVED: if (errorToastId.current === null) {
-      // REMOVED:   errorToastId.current = showError("Failed to load user profile. Please try again.");
-      // REMOVED:   setTimeout(() => { errorToastId.current = null; }, 3000);
-      // REMOVED: }
       setProfile(null);
-      // REMOVED: Always load mock user profile due to Supabase error for testing purposes
-      // console.warn("Loading mock user profile due to Supabase error.");
-      // setProfile(mockUserProfile);
     } else if (userProfileData) {
-      setProfile({
-        id: userProfileData.id,
-        fullName: userProfileData.full_name,
-        email: userProfileData.email || session.user.email || "",
-        phone: userProfileData.phone || undefined,
-        address: userProfileData.address || undefined,
-        avatarUrl: userProfileData.avatar_url || undefined,
-        role: userProfileData.role,
-        organizationId: userProfileData.organization_id,
-        organizationCode: userProfileData.organizations?.unique_code || undefined, // NEW: Set organizationCode
-        createdAt: userProfileData.created_at,
-        quickbooksAccessToken: userProfileData.quickbooks_access_token || undefined, // NEW
-        quickbooksRefreshToken: userProfileData.quickbooks_refresh_token || undefined, // NEW
-        quickbooksRealmId: userProfileData.quickbooks_realm_id || undefined, // NEW: Map quickbooks_realm_id
-      });
+      setProfile(mapSupabaseProfileToUserProfile(userProfileData, session.user.email));
     }
     setIsLoadingProfile(false);
   }, []);
 
   const fetchAllProfiles = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session || profile?.role !== 'admin' || !profile?.organizationId) { // Use optional chaining for profile
+    if (!session || profile?.role !== 'admin' || !profile?.organizationId) {
       setAllProfiles([]);
-      // REMOVED: Always load mock all profiles if current user is not admin or has no organization for testing purposes
-      // console.warn("Loading mock all profiles as current user is not admin or has no organization.");
-      // setAllProfiles(mockAllProfiles);
       return;
     }
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id") // UPDATED: Select quickbooks_realm_id
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id")
       .eq("organization_id", profile.organizationId);
 
     if (error) {
       console.error("Error fetching all profiles:", error);
-      // REMOVED: showError("Failed to load all user profiles."); // Removed this toast
-      setAllProfiles([]); // Return empty array on error
+      setAllProfiles([]);
     } else if (data) {
-      const fetchedProfiles: UserProfile[] = data.map((p: any) => ({
-        id: p.id,
-        fullName: p.full_name,
-        email: p.email || "Email N/A",
-        phone: p.phone || undefined,
-        address: p.address || undefined,
-        avatarUrl: p.avatar_url || undefined,
-        role: p.role,
-        organizationId: p.organization_id,
-        createdAt: p.created_at,
-        quickbooksAccessToken: p.quickbooks_access_token || undefined, // NEW
-        quickbooksRefreshToken: p.quickbooks_refresh_token || undefined, // NEW
-        quickbooksRealmId: p.quickbooks_realm_id || undefined, // NEW: Map quickbooks_realm_id
-      }));
-      setAllProfiles(fetchedProfiles); // Set fetched data, could be empty
+      const fetchedProfiles: UserProfile[] = data.map((p: any) => mapSupabaseProfileToUserProfile(p));
+      setAllProfiles(fetchedProfiles);
     }
   }, [profile?.role, profile?.organizationId]);
 
@@ -147,10 +130,6 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         setProfile(null);
         setAllProfiles([]);
         setIsLoadingProfile(false);
-        // REMOVED: Always load mock user profile and all profiles if no session found for testing purposes
-        // console.warn("Loading mock user profile and all profiles as no session found.");
-        // setProfile(mockUserProfile);
-        // setAllProfiles(mockAllProfiles);
       }
     });
     return () => subscription.unsubscribe();
@@ -161,9 +140,6 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       fetchAllProfiles();
     } else {
       setAllProfiles([]);
-      // REMOVED: Always load mock all profiles if current user is not admin or has no organization for testing purposes
-      // console.warn("Loading mock all profiles as current user is not admin or has no organization.");
-      // setAllProfiles(mockAllProfiles);
     }
   }, [profile?.role, profile?.organizationId, fetchAllProfiles]);
 
@@ -173,8 +149,6 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       showError("You must be logged in to update your profile.");
       return;
     }
-
-    // REMOVED: const oldProfile = profile;
 
     const { data, error } = await supabase
       .from("profiles")
@@ -190,38 +164,19 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     if (error) {
       console.error("Error updating profile:", error);
-      // REMOVED: addActivity("Profile Update Failed", `Failed to update own profile.`, { error: error.message, userId: session.user.id });
       showError(`Failed to update profile: ${error.message}`);
     } else if (data) {
-      setProfile({
-        id: data.id,
-        fullName: data.full_name,
-        email: data.email || session.user.email || "",
-        phone: data.phone || undefined,
-        address: data.address || undefined,
-        avatarUrl: data.avatar_url || undefined,
-        role: data.role,
-        organizationId: data.organization_id,
-        organizationCode: profile?.organizationCode, // Keep existing organizationCode
-        createdAt: data.created_at,
-        quickbooksAccessToken: data.quickbooks_access_token || undefined, // NEW
-        quickbooksRefreshToken: data.quickbooks_refresh_token || undefined, // NEW
-        quickbooksRealmId: data.quickbooks_realm_id || undefined, // NEW: Map quickbooks_realm_id
-      });
-      // REMOVED: addActivity("Profile Updated", `Updated own profile details.`, { oldProfile: oldProfile, newProfile: data });
+      setProfile(mapSupabaseProfileToUserProfile(data, session.user.email));
       showSuccess("Profile updated successfully!");
     }
   };
 
   const updateUserRole = async (userId: string, newRole: string, organizationId: string | null) => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session || profile?.role !== 'admin' || !profile?.organizationId) { // Use optional chaining for profile
+    if (!session || profile?.role !== 'admin' || !profile?.organizationId) {
       showError("You do not have permission to update user roles.");
       return;
     }
-
-    // REMOVED: const targetUser = allProfiles.find(p => p.id === userId);
-    // REMOVED: const oldRole = targetUser?.role;
 
     try {
       const { data, error } = await supabase.functions.invoke('update-user-profile', {
@@ -248,29 +203,17 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       setAllProfiles((prevProfiles) =>
         prevProfiles.map((p) =>
           p.id === updatedProfileData.id ? {
-            ...p,
-            role: updatedProfileData.role,
-            organizationId: updatedProfileData.organization_id,
-            fullName: updatedProfileData.full_name,
-            phone: updatedProfileData.phone,
-            address: updatedProfileData.address,
-            avatarUrl: updatedProfileData.avatar_url,
-            email: updatedProfileData.email,
+            ...mapSupabaseProfileToUserProfile(updatedProfileData),
             organizationCode: profile?.organizationCode, // Keep existing organizationCode
-            quickbooksAccessToken: updatedProfileData.quickbooks_access_token || undefined, // NEW
-            quickbooksRefreshToken: updatedProfileData.quickbooks_refresh_token || undefined, // NEW
-            quickbooksRealmId: updatedProfileData.quickbooks_realm_id || undefined, // NEW: Map quickbooks_realm_id
           } : p
         )
       );
-      // REMOVED: addActivity("User Role Updated", `Updated role for user ${targetUser?.fullName || userId} from "${oldRole}" to "${newRole}".`, { targetUserId: userId, oldRole, newRole });
       showSuccess(`Role for ${updatedProfileData.full_name || updatedProfileData.id} updated to ${newRole}!`);
       if (session.user.id === updatedProfileData.id) {
         fetchProfile();
       }
     } catch (error: any) {
       console.error("Error calling Edge Function to update user role:", error);
-      // REMOVED: addActivity("User Role Update Failed", `Failed to update role for user ${targetUser?.fullName || userId} to "${newRole}".`, { error: error.message, targetUserId: userId, newRole });
       showError(`Failed to update role for user ${userId}: ${error.message}`);
     }
   };
