@@ -19,7 +19,7 @@ import { PlusCircle, Trash2, Printer, PackageOpen, QrCode } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import InvoicePdfContent from "@/components/InvoicePdfContent";
 import { useOnboarding } from "@/context/OnboardingContext";
-import { useOrders, POItem, OrderItem } from "@/context/OrdersContext"; // NEW: Import OrderItem
+import { useOrders, POItem, OrderItem } from "@/context/OrdersContext";
 import { generateSequentialNumber } from "@/utils/numberGenerator";
 import { formatPhoneNumber } from "@/utils/formatters";
 import InventorySelectionDialog from "@/components/InventorySelectionDialog";
