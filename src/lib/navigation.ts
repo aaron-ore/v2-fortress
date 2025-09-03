@@ -41,6 +41,7 @@ export interface NavItem {
   children?: NavItem[];
   adminOnly?: boolean;
   mobileOnly?: boolean;
+  action?: () => void; // NEW: Add optional action property
 }
 
 export const mainNavItems: NavItem[] = [

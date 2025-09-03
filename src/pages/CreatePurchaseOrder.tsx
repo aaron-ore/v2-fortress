@@ -240,8 +240,7 @@ const CreatePurchaseOrder: React.FC = () => {
       return;
     }
 
-    const newPurchaseOrder = {
-      // id: poNumber, // Let context generate ID
+    const newPurchaseOrder: Omit<OrderItem, "id" | "organizationId"> = { // Explicitly type as Omit<OrderItem, "id" | "organizationId">
       type: "Purchase" as "Purchase",
       customerSupplier: supplierName,
       date: poDate,

@@ -7,7 +7,7 @@ import { useOrders } from "@/context/OrdersContext";
 import { useInventory } from "@/context/InventoryContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
-import { Loader2, DollarSign, BarChart } from "lucide-react";
+import { Loader2, DollarSign, BarChart, FileText } from "lucide-react"; // NEW: Import FileText
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ProfitabilityMetricsData {

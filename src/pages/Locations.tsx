@@ -10,7 +10,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { usePrint, PrintContentData } from "@/context/PrintContext";
 import LocationLabelGenerator from "@/components/LocationLabelGenerator"; // Import the new component
-import { parseLocationString } from "@/utils/locationParser"; // NEW: Import parseLocationString
+import { parseLocationString, LocationParts } from "@/utils/locationParser"; // NEW: Import parseLocationString and LocationParts
 
 const Locations: React.FC = () => {
   const { locations, addLocation, removeLocation } = useOnboarding();
@@ -78,11 +78,11 @@ const Locations: React.FC = () => {
     showSuccess(`Generated and sent ${labelsToPrint.length} location labels to printer!`);
   };
 
-  const initialLabelProps = useMemo(() => {
+  const initialLabelProps: Partial<LocationParts> = useMemo(() => { // Explicitly type as Partial<LocationParts>
     if (selectedLocationForLabel) {
       return parseLocationString(selectedLocationForLabel);
     }
-    return {};
+    return { area: "A", row: "01", bay: "01", level: "1", pos: "A" }; // Default values if no location is selected
   }, [selectedLocationForLabel]);
 
   return (

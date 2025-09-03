@@ -17,7 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { showSuccess, showError } from "@/utils/toast";
-import { useInventory } from "@/context/InventoryContext";
+import { useInventory, InventoryItem } from "@/context/InventoryContext"; // Corrected import
 import { useStockMovement } from "@/context/StockMovementContext";
 import { useOrders, OrderItem, POItem } from "@/context/OrdersContext";
 import { useVendors } from "@/context/VendorContext";

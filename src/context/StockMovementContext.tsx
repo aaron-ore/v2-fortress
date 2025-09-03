@@ -16,11 +16,12 @@ export interface StockMovement {
   reason: string;
   timestamp: string;
   organizationId: string | null;
+  userId: string; // NEW: Add userId to StockMovement interface
 }
 
 interface StockMovementContextType {
   stockMovements: StockMovement[];
-  addStockMovement: (movement: Omit<StockMovement, "id" | "timestamp" | "organizationId">) => Promise<void>;
+  addStockMovement: (movement: Omit<StockMovement, "id" | "timestamp" | "organizationId" | "userId">) => Promise<void>;
   fetchStockMovements: (itemId?: string) => Promise<void>;
 }
 
@@ -52,6 +53,7 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
       reason: movement.reason,
       timestamp: validatedTimestamp, // Use validated date string
       organizationId: movement.organization_id,
+      userId: movement.user_id, // Map user_id
     };
   };
 
@@ -90,7 +92,7 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
     }
   }, [fetchStockMovements, isLoadingProfile]);
 
-  const addStockMovement = async (movement: Omit<StockMovement, "id" | "timestamp" | "organizationId">) => {
+  const addStockMovement = async (movement: Omit<StockMovement, "id" | "timestamp" | "organizationId" | "userId">) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session || !profile?.organizationId) {
       showError("You must be logged in and have an organization ID to log stock movements.");
