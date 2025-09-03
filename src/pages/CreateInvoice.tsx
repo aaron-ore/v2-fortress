@@ -19,7 +19,7 @@ import { PlusCircle, Trash2, Printer, PackageOpen, QrCode } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import InvoicePdfContent from "@/components/InvoicePdfContent";
 import { useOnboarding } from "@/context/OnboardingContext";
-import { useOrders, POItem } from "@/context/OrdersContext";
+import { useOrders, POItem, OrderItem } from "@/context/OrdersContext"; // NEW: Import OrderItem
 import { generateSequentialNumber } from "@/utils/numberGenerator";
 import { formatPhoneNumber } from "@/utils/formatters";
 import InventorySelectionDialog from "@/components/InventorySelectionDialog";
@@ -261,7 +261,7 @@ const CreateInvoice: React.FC = () => {
       return;
     }
 
-    const newSalesOrder: Omit<OrderItem, "id" | "organizationId"> = { // Explicitly type as Omit<OrderItem, "id" | "organizationId">
+    const newSalesOrder: Omit<OrderItem, "organizationId"> = { // Explicitly type as Omit<OrderItem, "organizationId">
       type: "Sales" as "Sales",
       customerSupplier: customerName,
       date: invoiceDate,

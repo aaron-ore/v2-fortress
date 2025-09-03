@@ -23,7 +23,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlusCircle, Trash2, Archive, Printer, PackageOpen, QrCode } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
-import { useOrders, POItem } from "@/context/OrdersContext";
+import { useOrders, POItem, OrderItem } from "@/context/OrdersContext"; // NEW: Import OrderItem
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PurchaseOrderPdfContent from "@/components/PurchaseOrderPdfContent";
 import { useOnboarding } from "@/context/OnboardingContext";
@@ -240,7 +240,7 @@ const CreatePurchaseOrder: React.FC = () => {
       return;
     }
 
-    const newPurchaseOrder: Omit<OrderItem, "id" | "organizationId"> = { // Explicitly type as Omit<OrderItem, "id" | "organizationId">
+    const newPurchaseOrder: Omit<OrderItem, "organizationId"> = { // Explicitly type as Omit<OrderItem, "organizationId">
       type: "Purchase" as "Purchase",
       customerSupplier: supplierName,
       date: poDate,
