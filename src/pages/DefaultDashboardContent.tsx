@@ -33,16 +33,25 @@ const DefaultDashboardContent: React.FC = () => {
   const [isScanItemDialogOpen, setIsScanItemDialogOpen] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
-  // Normalize dateRange to always have both 'from' and 'to' as valid Dates if not undefined
+  // Normalize dateRange to ensure 'from' and 'to' are always valid Date objects if the range is active
   const normalizedDateRange = useMemo(() => {
-    if (!dateRange?.from || !isValid(dateRange.from)) {
+    if (!dateRange) {
       return undefined;
     }
-    // If 'from' is valid but 'to' is missing or invalid, set 'to' to be the same as 'from'
-    if (!dateRange.to || !isValid(dateRange.to)) {
-      return { from: dateRange.from, to: dateRange.from };
+
+    const from = dateRange.from;
+    const to = dateRange.to;
+
+    const validFrom = from && isValid(from) ? from : undefined;
+    const validTo = to && isValid(to) ? to : undefined;
+
+    if (validFrom && validTo) {
+      return { from: validFrom, to: validTo };
     }
-    return dateRange;
+    if (validFrom) { // If only 'from' is valid, set 'to' to be the same
+      return { from: validFrom, to: validFrom };
+    }
+    return undefined; // If neither is valid, return undefined
   }, [dateRange]);
 
   const handleScanItem = () => {
@@ -59,7 +68,7 @@ const DefaultDashboardContent: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <div className="flex items-center gap-4">
-          <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
+          <DateRangePicker dateRange={normalizedDateRange} onDateRangeChange={setDateRange} />
           {dateRange?.from && isValid(dateRange.from) && ( // Only show clear button if a valid 'from' date exists
             <Button variant="outline" onClick={handleClearDateFilter}>
               Clear Filter
