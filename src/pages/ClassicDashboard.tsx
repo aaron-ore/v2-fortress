@@ -29,15 +29,27 @@ const ClassicDashboard: React.FC = () => {
   const [isScanItemDialogOpen, setIsScanItemDialogOpen] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
+  // Normalize dateRange to always have both 'from' and 'to' as valid Dates if not undefined
+  const normalizedDateRange = useMemo(() => {
+    if (!dateRange?.from || !isValid(dateRange.from)) {
+      return undefined;
+    }
+    // If 'from' is valid but 'to' is missing or invalid, set 'to' to be the same as 'from'
+    if (!dateRange.to || !isValid(dateRange.to)) {
+      return { from: dateRange.from, to: dateRange.from };
+    }
+    return dateRange;
+  }, [dateRange]);
+
   // Helper function to check if a date falls within the selected range
   const isDateInRange = (dateString: string) => {
     const itemDate = new Date(dateString);
     if (!isValid(itemDate)) return false; // If itemDate is invalid, it can't be in range
 
-    if (!dateRange?.from || !isValid(dateRange.from)) return true; // No valid 'from' date, so no filter applied
+    if (!normalizedDateRange?.from || !isValid(normalizedDateRange.from)) return true; // No valid 'from' date, so no filter applied
 
-    const filterFrom = startOfDay(dateRange.from);
-    const filterTo = dateRange.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+    const filterFrom = startOfDay(normalizedDateRange.from);
+    const filterTo = normalizedDateRange.to && isValid(normalizedDateRange.to) ? endOfDay(normalizedDateRange.to) : endOfDay(normalizedDateRange.from);
 
     return itemDate >= filterFrom && itemDate <= filterTo;
   };
@@ -70,7 +82,7 @@ const ClassicDashboard: React.FC = () => {
         return dateB.getTime() - dateA.getTime();
       })
       .slice(0, 5);
-  }, [orders, dateRange, isDateInRange]);
+  }, [orders, normalizedDateRange, isDateInRange]); // Use normalizedDateRange here
 
   const handleCreatePO = () => navigate("/create-po");
   const handleCreateInvoice = () => navigate("/create-invoice");

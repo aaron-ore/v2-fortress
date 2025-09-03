@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import AddInventoryDialog from "@/components/AddInventoryDialog";
 import ScanItemDialog from "@/components/ScanItemDialog";
 import { DateRangePicker } from "@/components/DateRangePicker";
@@ -33,6 +33,18 @@ const DefaultDashboardContent: React.FC = () => {
   const [isScanItemDialogOpen, setIsScanItemDialogOpen] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
+  // Normalize dateRange to always have both 'from' and 'to' as valid Dates if not undefined
+  const normalizedDateRange = useMemo(() => {
+    if (!dateRange?.from || !isValid(dateRange.from)) {
+      return undefined;
+    }
+    // If 'from' is valid but 'to' is missing or invalid, set 'to' to be the same as 'from'
+    if (!dateRange.to || !isValid(dateRange.to)) {
+      return { from: dateRange.from, to: dateRange.from };
+    }
+    return dateRange;
+  }, [dateRange]);
+
   const handleScanItem = () => {
     setIsScanItemDialogOpen(true);
   };
@@ -62,10 +74,10 @@ const DefaultDashboardContent: React.FC = () => {
           <OrderFulfillmentRateCard />
         </div>
         <div className="col-span-full md:col-span-1">
-          <Last3MonthSalesCard dateRange={dateRange} />
+          <Last3MonthSalesCard dateRange={normalizedDateRange} />
         </div>
         <div className="col-span-full md:col-span-1">
-          <IssuesCard dateRange={dateRange} />
+          <IssuesCard dateRange={normalizedDateRange} />
         </div>
         <div className="col-span-full md:col-span-1 flex flex-col gap-4">
           <WalletCard />
@@ -76,10 +88,10 @@ const DefaultDashboardContent: React.FC = () => {
 
         {/* Row 2: 1 wide card + 2 regular cards */}
         <div className="col-span-full md:col-span-2 lg:col-span-2 xl:col-span-2">
-          <LiveInformationAreaChartCard dateRange={dateRange} />
+          <LiveInformationAreaChartCard dateRange={normalizedDateRange} />
         </div>
         <div className="col-span-full md:col-span-1">
-          <StockDiscrepancyCard dateRange={dateRange} />
+          <StockDiscrepancyCard dateRange={normalizedDateRange} />
         </div>
         <div className="col-span-full md:col-span-1">
           <LocationStockHealthCard />
@@ -87,7 +99,7 @@ const DefaultDashboardContent: React.FC = () => {
 
         {/* Row 3: 1 very wide card + 1 regular card */}
         <div className="col-span-full md:col-span-2 lg:col-span-3 xl:col-span-3">
-          <MonthlyOverviewChartCard dateRange={dateRange} />
+          <MonthlyOverviewChartCard dateRange={normalizedDateRange} />
         </div>
         <div className="col-span-full md:col-span-1">
           <TopSellingProductsCard /> {/* Replaced ProfitabilityMetricsCard */}
