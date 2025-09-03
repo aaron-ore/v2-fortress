@@ -261,7 +261,7 @@ const CreateInvoice: React.FC = () => {
       return;
     }
 
-    const newSalesOrder: Omit<OrderItem, "organizationId"> = { // Explicitly type as Omit<OrderItem, "organizationId">
+    const newSalesOrder: Omit<OrderItem, "organizationId"> & { id?: string } = { // Explicitly type as Omit<OrderItem, "organizationId"> & { id?: string }
       type: "Sales" as "Sales",
       customerSupplier: customerName,
       date: invoiceDate,
