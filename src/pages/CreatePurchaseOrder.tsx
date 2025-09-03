@@ -241,6 +241,7 @@ const CreatePurchaseOrder: React.FC = () => {
     }
 
     const newPurchaseOrder = { // Removed explicit type annotation
+      id: undefined, // Explicitly set to undefined to satisfy the optional 'id' in the parameter type
       type: "Purchase" as "Purchase",
       customerSupplier: supplierName,
       date: poDate,

@@ -262,6 +262,7 @@ const CreateInvoice: React.FC = () => {
     }
 
     const newSalesOrder = { // Removed explicit type annotation
+      id: undefined, // Explicitly set to undefined to satisfy the optional 'id' in the parameter type
       type: "Sales" as "Sales",
       customerSupplier: customerName,
       date: invoiceDate,

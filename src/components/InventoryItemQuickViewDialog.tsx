@@ -241,6 +241,7 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
     const totalAmount = poItems.reduce((sum, poItem) => sum + poItem.quantity * poItem.unitPrice, 0);
 
     const newPurchaseOrder = { // Removed explicit type annotation
+      id: undefined, // Explicitly set to undefined to satisfy the optional 'id' in the parameter type
       type: "Purchase",
       customerSupplier: vendor.name,
       date: new Date().toISOString().split("T")[0],
