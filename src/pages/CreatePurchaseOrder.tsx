@@ -240,7 +240,7 @@ const CreatePurchaseOrder: React.FC = () => {
       return;
     }
 
-    const newPurchaseOrder: Omit<OrderItem, "organizationId"> & { id?: string } = { // Explicitly type as Omit<OrderItem, "organizationId"> & { id?: string }
+    const newPurchaseOrder = { // Removed explicit type annotation
       type: "Purchase" as "Purchase",
       customerSupplier: supplierName,
       date: poDate,

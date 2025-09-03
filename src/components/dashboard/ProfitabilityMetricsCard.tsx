@@ -92,7 +92,7 @@ const ProfitabilityMetricsCard: React.FC = () => {
                   labelStyle={{ color: "hsl(var(--muted-foreground))", fontSize: "0.75rem" }}
                   formatter={(value: number) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 />
-                <Bar dataKey="value" fill={(entry: ProfitabilityMetric) => entry.color} radius={[4, 4, 0, 0]} label={{ position: 'insideRight', formatter: (value: number) => `${value}%`, fill: 'white', fontSize: 10 }} />
+                <Bar dataKey="value" fill={(entry: ProfitabilityMetric) => entry.color as any} radius={[4, 4, 0, 0]} label={{ position: 'insideRight', formatter: (value: number) => `${value}%`, fill: 'white', fontSize: 10 }} />
               </BarChart>
             </ResponsiveContainer>
           </div>

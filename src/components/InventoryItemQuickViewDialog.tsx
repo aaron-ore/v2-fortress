@@ -240,7 +240,7 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
     const newPoNumber = `PO${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`; // Simple mock PO number
     const totalAmount = poItems.reduce((sum, poItem) => sum + poItem.quantity * poItem.unitPrice, 0);
 
-    const newPurchaseOrder: Omit<OrderItem, "organizationId"> & { id?: string } = {
+    const newPurchaseOrder = { // Removed explicit type annotation
       type: "Purchase",
       customerSupplier: vendor.name,
       date: new Date().toISOString().split("T")[0],
