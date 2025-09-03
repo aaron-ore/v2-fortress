@@ -83,7 +83,8 @@ const StockDiscrepancyCard: React.FC<StockDiscrepancyCardProps> = ({ dateRange }
           filter: `organization_id=eq.${profile?.organizationId}&status=eq.pending`,
         },
         (payload) => {
-          const newDiscrepancyDate = new Date(payload.new.timestamp);
+          // Ensure timestamp is valid before creating a Date object
+          const newDiscrepancyDate = new Date(payload.new.timestamp && isValid(new Date(payload.new.timestamp)) ? payload.new.timestamp : new Date().toISOString());
           const today = new Date();
           let currentPeriodStart: Date;
           let currentPeriodEnd: Date;

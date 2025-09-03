@@ -83,7 +83,8 @@ const IssuesCard: React.FC<IssuesCardProps> = ({ dateRange }) => {
           filter: `organization_id=eq.${profile?.organizationId}&activity_type=eq.Issue Reported`,
         },
         (payload) => {
-          const newIssueDate = new Date(payload.new.timestamp);
+          // Ensure timestamp is valid before creating a Date object
+          const newIssueDate = new Date(payload.new.timestamp && isValid(new Date(payload.new.timestamp)) ? payload.new.timestamp : new Date().toISOString());
           const today = new Date();
           let currentPeriodStart: Date;
           let currentPeriodEnd: Date;

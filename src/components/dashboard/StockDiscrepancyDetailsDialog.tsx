@@ -77,7 +77,8 @@ const StockDiscrepancyDetailsDialog: React.FC<StockDiscrepancyDetailsDialogProps
     } else {
       const fetchedDiscrepancies: DiscrepancyLog[] = data.map((log: any) => ({
         id: log.id,
-        timestamp: log.timestamp,
+        // Ensure timestamp is valid before storing
+        timestamp: (log.timestamp && isValid(new Date(log.timestamp))) ? log.timestamp : new Date().toISOString(),
         userId: log.user_id,
         organizationId: log.organization_id,
         itemId: log.item_id,
