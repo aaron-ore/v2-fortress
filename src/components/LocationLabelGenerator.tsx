@@ -28,6 +28,7 @@ interface LocationLabelGeneratorProps {
   initialLevel?: string;
   initialPos?: string;
   initialColor?: string;
+  initialLocationString?: string; // NEW: Add initialLocationString prop
   onGenerateAndPrint?: (data: PrintContentData[]) => void; // Optional callback for external print
 }
 
@@ -38,10 +39,11 @@ const LocationLabelGenerator: React.FC<LocationLabelGeneratorProps> = ({
   initialLevel = "1",
   initialPos = "A",
   initialColor = labelColors[0].hex,
+  initialLocationString, // NEW: Destructure initialLocationString
   onGenerateAndPrint,
 }) => {
   const { initiatePrint } = usePrint();
-  const { companyProfile } = useOnboarding();
+  const { companyProfile, locations } = useOnboarding(); // Get all existing locations
 
   const [area, setArea] = useState(initialArea);
   const [row, setRow] = useState(initialRow);
@@ -98,6 +100,16 @@ const LocationLabelGenerator: React.FC<LocationLabelGeneratorProps> = ({
 
     if (!companyProfile) {
       showError("Company profile not set up. Please complete onboarding or set company details in settings.");
+      return;
+    }
+
+    // NEW: Duplication check
+    const existingLocation = locations.find(loc => loc.toLowerCase() === locationString.toLowerCase());
+    if (existingLocation && (
+        !initialLocationString || // Case 1: Creating a new label, but the generated string already exists
+        (initialLocationString && existingLocation.toLowerCase() !== initialLocationString.toLowerCase()) // Case 2: Editing an existing label, but the new generated string duplicates another existing one
+    )) {
+      showError(`A location with the identifier "${locationString}" already exists. Please choose a unique identifier.`);
       return;
     }
 

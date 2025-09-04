@@ -164,6 +164,7 @@ const Locations: React.FC = () => {
               initialBay={initialLabelProps.bay}
               initialLevel={initialLabelProps.level}
               initialPos={initialLabelProps.pos}
+              initialLocationString={selectedLocationForLabel || undefined} // NEW: Pass selectedLocationForLabel
               onGenerateAndPrint={handleGenerateAndPrintFromGenerator}
             />
           </CardContent>
