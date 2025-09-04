@@ -36,8 +36,8 @@ const StockDiscrepancyCard: React.FC<StockDiscrepancyCardProps> = ({ dateRange }
     let previousPeriodEnd: Date;
 
     // Use the dateRange directly, as it's now guaranteed to be sanitized by DateRangePicker
-    const effectiveFrom = dateRange?.from || today;
-    const effectiveTo = dateRange?.to || today;
+    const effectiveFrom = dateRange?.from && isValid(dateRange.from) ? dateRange.from : today;
+    const effectiveTo = dateRange?.to && isValid(dateRange.to) ? dateRange.to : today;
 
     currentPeriodStart = startOfDay(effectiveFrom);
     currentPeriodEnd = endOfDay(effectiveTo);
@@ -90,8 +90,8 @@ const StockDiscrepancyCard: React.FC<StockDiscrepancyCardProps> = ({ dateRange }
           let currentPeriodStart: Date;
           let currentPeriodEnd: Date;
 
-          const effectiveFrom = dateRange?.from || today;
-          const effectiveTo = dateRange?.to || today;
+          const effectiveFrom = dateRange?.from && isValid(dateRange.from) ? dateRange.from : today;
+          const effectiveTo = dateRange?.to && isValid(dateRange.to) ? dateRange.to : today;
 
           currentPeriodStart = startOfDay(effectiveFrom);
           currentPeriodEnd = endOfDay(effectiveTo);

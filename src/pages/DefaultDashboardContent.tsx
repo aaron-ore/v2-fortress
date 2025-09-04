@@ -5,7 +5,7 @@ import AddInventoryDialog from "@/components/AddInventoryDialog";
 import ScanItemDialog from "@/components/ScanItemDialog";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { DateRange } from "react-day-picker";
-import { isValid } from "date-fns"; // Import isValid
+import { isValid, startOfDay, endOfDay } from "date-fns"; // Import startOfDay, endOfDay
 
 // Import new dashboard components
 import WalletCard from "@/components/dashboard/WalletCard";
@@ -44,6 +44,9 @@ const DefaultDashboardContent: React.FC = () => {
     setDateRange(undefined);
   };
 
+  // Helper to check if dateRange.from is valid before using isValid
+  const isDateRangeFromValid = dateRange?.from && isValid(dateRange.from);
+
   return (
     <div className="space-y-6">
       {/* Header and Date Filter in the same row */}
@@ -51,7 +54,7 @@ const DefaultDashboardContent: React.FC = () => {
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <div className="flex items-center gap-4">
           <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
-          {dateRange?.from && isValid(dateRange.from) && ( // Only show clear button if a valid 'from' date exists
+          {isDateRangeFromValid && ( // Only show clear button if a valid 'from' date exists
             <Button variant="outline" onClick={handleClearDateFilter}>
               Clear Filter
             </Button>

@@ -40,7 +40,9 @@ const InventoryMovementReport: React.FC<InventoryMovementReportProps> = ({
     await fetchAllProfiles(); // Ensure user profiles are loaded for names
 
     const today = new Date();
+    // Ensure dateRange.from is a valid Date before using it in startOfDay
     const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : null;
+    // Ensure dateRange.to is a valid Date, or default to endOfDay(filterFrom) if filterFrom is valid
     const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (filterFrom ? endOfDay(filterFrom) : null);
 
     const filteredMovements = stockMovements.filter(movement => {

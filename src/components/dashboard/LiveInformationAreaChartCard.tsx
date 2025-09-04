@@ -22,8 +22,8 @@ const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> 
     const today = new Date();
 
     // Use the dateRange directly, as it's now guaranteed to be sanitized by DateRangePicker
-    const effectiveFrom = dateRange?.from || subDays(today, 6);
-    const effectiveTo = dateRange?.to || today;
+    const effectiveFrom = dateRange?.from && isValid(dateRange.from) ? dateRange.from : subDays(today, 6);
+    const effectiveTo = dateRange?.to && isValid(dateRange.to) ? dateRange.to : today;
 
     let startDate = startOfDay(effectiveFrom);
     let endDate = endOfDay(effectiveTo);

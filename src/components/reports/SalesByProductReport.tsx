@@ -43,7 +43,9 @@ const SalesByProductReport: React.FC<SalesByProductReportProps> = ({
 
   const generateReport = useCallback(() => {
     const today = new Date();
+    // Ensure dateRange.from is a valid Date before using it in startOfDay
     const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : null;
+    // Ensure dateRange.to is a valid Date, or default to endOfDay(filterFrom) if filterFrom is valid
     const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (filterFrom ? endOfDay(filterFrom) : null);
 
     const filteredOrders = orders.filter(order => {
