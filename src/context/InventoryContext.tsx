@@ -18,6 +18,7 @@ import { useVendors } from "./VendorContext";
 import { processAutoReorder } from "@/utils/autoReorderLogic";
 import { useNotifications } from "./NotificationContext";
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
+import { mockInventoryItems } from "@/utils/mockData"; // Import mock data
 
 export interface InventoryItem {
   id: string;
@@ -60,12 +61,24 @@ const InventoryContext = createContext<InventoryContextType | undefined>(
   undefined,
 );
 
-const initialInventoryItems: InventoryItem[] = [];
-
+// Changed initialInventoryItems to use mock data
 export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(initialInventoryItems);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(() => {
+    // Attempt to load from local storage first, then fallback to mock data
+    if (typeof window !== 'undefined') {
+      const storedItems = localStorage.getItem("inventoryItems");
+      if (storedItems) {
+        return JSON.parse(storedItems).map((item: any) => ({
+          ...item,
+          // Ensure dates are parsed correctly if stored as strings
+          lastUpdated: parseAndValidateDate(item.lastUpdated)?.toISOString() || new Date().toISOString(),
+        }));
+      }
+    }
+    return mockInventoryItems;
+  });
   const { profile, isLoadingProfile } = useProfile();
   const { addOrder } = useOrders();
   const { vendors } = useVendors();
@@ -119,8 +132,8 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session || !profile?.organizationId) {
-      setInventoryItems([]);
-      return [];
+      setInventoryItems(mockInventoryItems); // Fallback to mock data if no session or orgId
+      return mockInventoryItems;
     }
 
     const { data, error } = await supabase
@@ -130,8 +143,8 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error fetching inventory items:", error);
-      setInventoryItems([]); // Return empty array on error
-      return [];
+      setInventoryItems(mockInventoryItems); // Fallback to mock data on error
+      return mockInventoryItems;
     } else {
       const fetchedItems: InventoryItem[] = data.map(mapSupabaseItemToInventoryItem);
       setInventoryItems(fetchedItems); // Set fetched data, could be empty

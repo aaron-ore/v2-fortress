@@ -10,22 +10,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProfile } from "@/context/ProfileContext";
 import { showError, showSuccess } from "@/utils/toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Palette } from "lucide-react"; // NEW: Import Palette icon
 import { useOnboarding } from "@/context/OnboardingContext";
 import { Link } from "react-router-dom";
 // REMOVED: import { FileText, Plug, CheckCircle, RefreshCw, AlertTriangle } from "lucide-react";
 // REMOVED: import { supabase } from "@/lib/supabaseClient";
 
 const Settings: React.FC = () => {
-  const { theme, setTheme } = useTheme();
-  const { profile, updateProfile, isLoadingProfile, fetchProfile } = useProfile();
+  const { theme, setTheme } = useTheme(); // Current active theme from next-themes
+  const { profile, updateProfile, isLoadingProfile, fetchProfile, updateOrganizationTheme } = useProfile(); // NEW: Get updateOrganizationTheme
   const { companyProfile, setCompanyProfile, locations, addLocation, removeLocation } = useOnboarding();
 
   const [companyName, setCompanyName] = useState(companyProfile?.name || "");
   const [companyAddress, setCompanyAddress] = useState(companyProfile?.address || "");
   const [companyCurrency, setCompanyCurrency] = useState(companyProfile?.currency || "USD");
   const [isSavingCompanyProfile, setIsSavingCompanyProfile] = useState(false);
-  // REMOVED: const [isSyncingQuickBooks, setIsSyncingQuickBooks] = useState(false);
+  const [selectedOrganizationTheme, setSelectedOrganizationTheme] = useState(profile?.organizationTheme || "dark"); // NEW: State for organization theme
 
   useEffect(() => {
     if (companyProfile) {
@@ -34,6 +34,13 @@ const Settings: React.FC = () => {
       setCompanyCurrency(companyProfile.currency);
     }
   }, [companyProfile]);
+
+  // NEW: Update selectedOrganizationTheme when profile.organizationTheme changes
+  useEffect(() => {
+    if (profile?.organizationTheme) {
+      setSelectedOrganizationTheme(profile.organizationTheme);
+    }
+  }, [profile?.organizationTheme]);
 
   const handleSaveCompanyProfile = async () => {
     setIsSavingCompanyProfile(true);
@@ -51,17 +58,28 @@ const Settings: React.FC = () => {
     }
   };
 
-  // REMOVED: handleConnectQuickBooks
-  // REMOVED: handleDisconnectQuickBooks
-  // REMOVED: handleSyncSalesOrders
+  // NEW: Handle saving organization theme
+  const handleSaveOrganizationTheme = async () => {
+    if (!profile || profile.role !== 'admin' || !profile.organizationId) {
+      showError("You do not have permission to update the organization's theme.");
+      return;
+    }
+    if (selectedOrganizationTheme === profile.organizationTheme) {
+      showSuccess("No changes to save for organization theme.");
+      return;
+    }
+    await updateOrganizationTheme(selectedOrganizationTheme);
+    // Also apply the theme locally immediately
+    setTheme(selectedOrganizationTheme);
+  };
 
   const hasCompanyProfileChanges =
     companyName !== (companyProfile?.name || "") ||
     companyAddress !== (companyProfile?.address || "") ||
     companyCurrency !== (companyProfile?.currency || "USD");
 
-  // REMOVED: isQuickBooksConnected
-  // REMOVED: isQuickBooksPartiallyConnected
+  // NEW: Check for organization theme changes
+  const hasOrganizationThemeChanges = selectedOrganizationTheme !== (profile?.organizationTheme || "dark");
 
   return (
     <div className="flex flex-col space-y-6 p-6">
@@ -117,7 +135,38 @@ const Settings: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* REMOVED: QuickBooks Integration Card */}
+      {/* NEW: Organization Theme Settings */}
+      {profile?.role === 'admin' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Palette className="h-6 w-6 text-primary" /> Organization Theme
+            </CardTitle>
+            <CardDescription>Set the default theme for all users in your organization.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="organizationTheme">Default Theme</Label>
+              <Select value={selectedOrganizationTheme} onValueChange={setSelectedOrganizationTheme}>
+                <SelectTrigger id="organizationTheme">
+                  <SelectValue placeholder="Select theme" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="dark">Dark (Default)</SelectItem>
+                  <SelectItem value="ocean-breeze">Ocean Breeze</SelectItem>
+                  <SelectItem value="sunset-glow">Sunset Glow</SelectItem>
+                  <SelectItem value="forest-whisper">Forest Whisper</SelectItem>
+                  <SelectItem value="emerald">Emerald</SelectItem>
+                  <SelectItem value="deep-forest">Deep Forest</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={handleSaveOrganizationTheme} disabled={!hasOrganizationThemeChanges}>
+              Save Organization Theme
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

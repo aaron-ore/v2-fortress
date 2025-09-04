@@ -14,6 +14,7 @@ export interface UserProfile {
   role: string;
   organizationId: string | null;
   organizationCode?: string; // NEW: Add organizationCode
+  organizationTheme?: string; // NEW: Add organizationTheme
   createdAt: string;
   quickbooksAccessToken?: string; // NEW: Add QuickBooks Access Token
   quickbooksRefreshToken?: string; // NEW: Add QuickBooks Refresh Token
@@ -24,8 +25,9 @@ interface ProfileContextType {
   profile: UserProfile | null;
   allProfiles: UserProfile[];
   isLoadingProfile: boolean;
-  updateProfile: (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "quickbooksAccessToken" | "quickbooksRefreshToken" | "quickbooksRealmId">>) => Promise<void>;
+  updateProfile: (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "organizationTheme" | "quickbooksAccessToken" | "quickbooksRefreshToken" | "quickbooksRealmId">>) => Promise<void>;
   updateUserRole: (userId: string, newRole: string, organizationId: string | null) => Promise<void>;
+  updateOrganizationTheme: (theme: string) => Promise<void>; // NEW: Add updateOrganizationTheme
   fetchProfile: () => Promise<void>;
   fetchAllProfiles: () => Promise<void>;
 }
@@ -53,6 +55,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       role: p.role || "viewer", // Default role
       organizationId: p.organization_id,
       organizationCode: p.organizations?.[0]?.unique_code || undefined, // Access as array if it's a join
+      organizationTheme: p.organizations?.[0]?.default_theme || 'dark', // NEW: Get default_theme from organizations
       createdAt: createdAtString,
       quickbooksAccessToken: p.quickbooks_access_token || undefined,
       quickbooksRefreshToken: p.quickbooks_refresh_token || undefined,
@@ -75,7 +78,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code), quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id")
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code, default_theme), quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id") // NEW: Select default_theme
       .eq("id", session.user.id)
       .single();
 
@@ -140,7 +143,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   }, [profile?.role, profile?.organizationId, fetchAllProfiles]);
 
-  const updateProfile = async (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "quickbooksAccessToken" | "quickbooksRefreshToken" | "quickbooksRealmId">>) => {
+  const updateProfile = async (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "organizationTheme" | "quickbooksAccessToken" | "quickbooksRefreshToken" | "quickbooksRealmId">>) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       showError("You must be logged in to update your profile.");
@@ -165,6 +168,27 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     } else if (data) {
       setProfile(mapSupabaseProfileToUserProfile(data, session.user.email));
       showSuccess("Profile updated successfully!");
+    }
+  };
+
+  const updateOrganizationTheme = async (theme: string) => {
+    if (!profile || profile.role !== 'admin' || !profile.organizationId) {
+      showError("You do not have permission to update the organization's theme.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from('organizations')
+      .update({ default_theme: theme })
+      .eq('id', profile.organizationId);
+
+    if (error) {
+      console.error("Error updating organization theme:", error);
+      showError(`Failed to update organization theme: ${error.message}`);
+    } else {
+      showSuccess("Organization theme updated successfully!");
+      // Refresh profile to get the new theme
+      fetchProfile();
     }
   };
 
@@ -216,7 +240,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   return (
-    <ProfileContext.Provider value={{ profile, allProfiles, isLoadingProfile, updateProfile, updateUserRole, fetchProfile, fetchAllProfiles }}>
+    <ProfileContext.Provider value={{ profile, allProfiles, isLoadingProfile, updateProfile, updateUserRole, updateOrganizationTheme, fetchProfile, fetchAllProfiles }}>
       {children}
     </ProfileContext.Provider>
   );

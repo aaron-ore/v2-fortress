@@ -71,6 +71,8 @@ import DiscrepancyPdfContent from "./components/reports/pdf/DiscrepancyPdfConten
 const queryClient = new QueryClient();
 
 const AuthenticatedApp = () => {
+  const { isOnboardingComplete } = useOnboarding();
+
   return (
     <SidebarProvider>
       <OrdersProvider>
@@ -110,6 +112,7 @@ const AuthenticatedApp = () => {
                             <Route path="*" element={<NotFound />} />
                           </Route>
                         </Routes>
+                      {isOnboardingComplete ? null : <OnboardingWizard />}
                     </InventoryProvider>
                   </ReplenishmentProvider>
                 </StockMovementProvider>
@@ -127,7 +130,7 @@ const AppContent = () => {
   const [loadingAuth, setLoadingAuth] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
-  const { isLoadingProfile, fetchProfile } = useProfile(); // Get fetchProfile from context
+  const { isLoadingProfile, fetchProfile, profile } = useProfile(); // Get fetchProfile and profile from context
   const { isPrinting, printContentData, resetPrintState } = usePrint();
 
   // Ref to track if QuickBooks callback has been processed in this render cycle
@@ -274,34 +277,46 @@ const AppContent = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="dark">
-      <SonnerToaster
-        richColors
-        position="top-right"
-        duration={3000}
-        closeButton
-        toastOptions={{
-          style: {
-            minWidth: '250px',
-            maxWidth: '350px',
-          },
-        }}
-      />
-      <BrowserRouter>
-        <ProfileProvider>
-            <OnboardingProvider>
-              <PrintProvider>
-                <TooltipProvider>
-                  <AppContent />
-                </TooltipProvider>
-              </PrintProvider>
-            </OnboardingProvider>
-        </ProfileProvider>
-      </BrowserRouter>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const { profile, isLoadingProfile } = useProfile(); // Access profile and isLoadingProfile
+
+  // Determine the default theme based on organization settings, fallback to 'dark'
+  const defaultTheme = useMemo(() => {
+    if (!isLoadingProfile && profile?.organizationTheme) {
+      return profile.organizationTheme;
+    }
+    return "dark";
+  }, [profile?.organizationTheme, isLoadingProfile]);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme={defaultTheme}> {/* Use dynamic defaultTheme */}
+        <SonnerToaster
+          richColors
+          position="top-right"
+          duration={3000}
+          closeButton
+          toastOptions={{
+            style: {
+              minWidth: '250px',
+              maxWidth: '350px',
+            },
+          }}
+        />
+        <BrowserRouter>
+          <ProfileProvider>
+              <OnboardingProvider>
+                <PrintProvider>
+                  <TooltipProvider>
+                    <AppContent />
+                  </TooltipProvider>
+                </PrintProvider>
+              </OnboardingProvider>
+          </ProfileProvider>
+        </BrowserRouter>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
