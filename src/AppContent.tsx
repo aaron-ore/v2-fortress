@@ -55,40 +55,69 @@ import { usePrint } from "./context/PrintContext";
 import { supabase } from "./lib/supabaseClient";
 import { showSuccess, showError } from "./utils/toast";
 
+// NEW: Import all providers needed for AuthenticatedApp
+import { SidebarProvider } from "./context/SidebarContext";
+import { OrdersProvider } from "./context/OrdersContext";
+import { VendorProvider } from "./context/VendorContext";
+import { CustomerProvider } from "./context/CustomerContext";
+import { CategoryProvider } from "./context/CategoryContext";
+import { NotificationProvider } from "./context/NotificationContext";
+import { StockMovementProvider } from "./context/StockMovementContext";
+import { ReplenishmentProvider } from "./context/ReplenishmentContext";
+import { InventoryProvider } from "./context/InventoryContext";
+
+
+// Moved AuthenticatedApp definition here
 const AuthenticatedApp = () => {
   const { isOnboardingComplete } = useOnboarding();
 
   return (
-    <>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="inventory/:id" element={<EditInventoryItem />} />
-          <Route path="orders" element={<Orders />} />
-          <Route path="orders/:id" element={<EditPurchaseOrder />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="create-po" element={<CreatePurchaseOrder />} />
-          <Route path="create-invoice" element={<CreateInvoice />} />
-          <Route path="profile" element={<MyProfile />} />
-          <Route path="account-settings" element={<AccountSettings />} />
-          <Route path="notifications-page" element={<NotificationsPage />} />
-          <Route path="billing" element={<BillingSubscriptions />} />
-          <Route path="help" element={<HelpCenter />} />
-          <Route path="whats-new" element={<WhatsNew />} />
-          <Route path="vendors" element={<Vendors />} />
-          <Route path="customers" element={<Customers />} />
-          <Route path="users" element={<Users />} />
-          <Route path="setup-instructions" element={<SetupInstructions />} />
-          <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
-          <Route path="locations" element={<Locations />} />
-          <Route path="integrations" element={<Integrations />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
-      {isOnboardingComplete ? null : <OnboardingWizard />}
-    </>
+    <SidebarProvider>
+      <OrdersProvider>
+        <VendorProvider>
+          <CustomerProvider>
+            <CategoryProvider>
+              <NotificationProvider>
+                <StockMovementProvider>
+                  <ReplenishmentProvider>
+                    <InventoryProvider>
+                        <Routes>
+                          <Route path="/" element={<Layout />}>
+                            <Route index element={<Dashboard />} />
+                            <Route path="inventory" element={<Inventory />} />
+                            <Route path="inventory/:id" element={<EditInventoryItem />} />
+                            <Route path="orders" element={<Orders />} />
+                            <Route path="orders/:id" element={<EditPurchaseOrder />} />
+                            <Route path="reports" element={<Reports />} />
+                            <Route path="settings" element={<Settings />} />
+                            <Route path="create-po" element={<CreatePurchaseOrder />} />
+                            <Route path="create-invoice" element={<CreateInvoice />} />
+                            <Route path="profile" element={<MyProfile />} />
+                            <Route path="account-settings" element={<AccountSettings />} />
+                            <Route path="notifications-page" element={<NotificationsPage />} />
+                            <Route path="billing" element={<BillingSubscriptions />} />
+                            <Route path="help" element={<HelpCenter />} />
+                            <Route path="whats-new" element={<WhatsNew />} />
+                            <Route path="vendors" element={<Vendors />} />
+                            <Route path="customers" element={<Customers />} />
+                            <Route path="users" element={<Users />} />
+                            <Route path="setup-instructions" element={<SetupInstructions />} />
+                            <Route path="warehouse-operations" element={<WarehouseOperationsPage />} />
+                            <Route path="locations" element={<Locations />} />
+                            <Route path="integrations" element={<Integrations />} />
+                            <Route path="*" element={<NotFound />} />
+                          </Route>
+                        </Routes>
+                      {isOnboardingComplete ? null : <OnboardingWizard />}
+                    </InventoryProvider>
+                  </ReplenishmentProvider>
+                </StockMovementProvider>
+              </NotificationProvider>
+            </CategoryProvider>
+          </CustomerProvider>
+        </VendorProvider>
+      </OrdersProvider>
+    </SidebarProvider>
   );
 };
 
@@ -97,7 +126,7 @@ const AppContent = () => {
   const [loadingAuth, setLoadingAuth] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
-  const { isLoadingProfile, fetchProfile, profile } = useProfile();
+  const { isLoadingProfile, fetchProfile } = useProfile(); // Removed 'profile' as it's not directly used here
   const { isPrinting, printContentData, resetPrintState } = usePrint();
 
   const qbCallbackProcessedRef = useRef(false);

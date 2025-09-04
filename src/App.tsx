@@ -8,7 +8,6 @@ import { ProfileProvider } from "./context/ProfileContext";
 import { PrintProvider } from "./context/PrintContext";
 import React from "react";
 import ThemedAppContent from "./components/ThemedAppContent"; // NEW: Import ThemedAppContent
-import { ThemeProvider } from "./components/ThemeProvider"; // Keep ThemeProvider import for direct use in App
 
 const queryClient = new QueryClient();
 
