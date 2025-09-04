@@ -70,8 +70,8 @@ const ClassicDashboard: React.FC = () => {
     return orders
       .filter(order => order.status !== "Archived" && isDateInRange(order.date))
       .sort((a, b) => {
-        const dateA = parseAndValidateDate(a.date); // NEW: Use parseAndValidateDate
-        const dateB = parseAndValidateDate(b.date); // NEW: Use parseAndValidateDate
+        const dateA = parseAndValidateDate(a.date);
+        const dateB = parseAndValidateDate(b.date);
         if (!dateA || !dateB) return 0; // Handle null dates
         return dateB.getTime() - dateA.getTime();
       })

@@ -26,7 +26,7 @@ interface DiscrepancyPdfContentProps {
   companyContact: string;
   companyLogoUrl?: string;
   reportDate: string;
-  discrepancies: DiscrepancyLog[];
+  discrepancies: DiscrecrepancyLog[];
   statusFilter: "all" | "pending" | "resolved";
   dateRange?: DateRange; // NEW: Add dateRange prop
   allProfiles: UserProfile[];

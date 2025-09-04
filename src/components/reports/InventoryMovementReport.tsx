@@ -157,7 +157,7 @@ const InventoryMovementReport: React.FC<InventoryMovementReportProps> = ({
                       <TableCell className="text-right">{movement.newQuantity}</TableCell>
                       <TableCell>{movement.reason}</TableCell>
                       <TableCell>{getUserName(movement.userId)}</TableCell>
-                      <TableCell>{format(parseAndValidateDate(movement.timestamp)!, "MMM dd, HH:mm")}</TableCell>
+                      <TableCell>{parseAndValidateDate(movement.timestamp) ? format(parseAndValidateDate(movement.timestamp)!, "MMM dd, HH:mm") : "N/A"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
