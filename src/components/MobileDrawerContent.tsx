@@ -44,8 +44,8 @@ const MobileDrawerContent: React.FC<MobileDrawerContentProps> = ({ onLinkClick }
   };
 
   const handleNavigation = (path: string) => {
+    onLinkClick(); // Close the sheet immediately
     navigate(path);
-    onLinkClick();
   };
 
   const baseButtonClass = "justify-start text-base font-medium transition-colors hover:text-primary w-full";
@@ -55,7 +55,10 @@ const MobileDrawerContent: React.FC<MobileDrawerContentProps> = ({ onLinkClick }
   const renderNavItems = (items: NavItem[], isSubItem = false) => (
     <div className={cn("space-y-1", isSubItem && "ml-4 border-l border-muted/30 pl-2")}>
       {items.map((item) => {
-        const currentIsActive = location.pathname.startsWith(item.href) || (item.href === "/" && location.pathname === "/");
+        // Refined logic for active link detection
+        const currentIsActive = item.href === "/"
+          ? location.pathname === "/"
+          : location.pathname.startsWith(item.href);
 
         if (item.adminOnly && profile?.role !== 'admin') {
           return null;

@@ -20,7 +20,7 @@ const MobileNav: React.FC = () => {
   return (
     <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon"> {/* No longer conditional, always present for mobile header */}
+        <Button variant="ghost" size="icon">
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
