@@ -27,6 +27,7 @@ import DashboardSummaryReport from "./DashboardSummaryReport"; // For the overvi
 
 interface ReportViewerProps {
   reportId: string;
+  dateRange: DateRange | undefined; // NEW: Accept dateRange prop
 }
 
 // Map report IDs to their respective components
@@ -42,12 +43,11 @@ const reportComponents: { [key: string]: React.ElementType } = {
   "stock-discrepancy": DiscrepancyReport,
 };
 
-const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
+const ReportViewer: React.FC<ReportViewerProps> = ({ reportId, dateRange }) => { // NEW: Destructure dateRange
   const { initiatePrint } = usePrint();
   const { companyProfile } = useOnboarding();
   const { profile } = useProfile();
 
-  // Removed dateRange state
   const [reportData, setReportData] = useState<any>(null);
   const [isLoadingReport, setIsLoadingReport] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
@@ -96,15 +96,16 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
     const pdfProps = {
       companyName: companyProfile.name,
       companyAddress: companyProfile.address,
-      companyContact: companyProfile.currency, // Using currency as a generic contact
+      companyContact: companyProfile.currency, // Using currency as a generic contact for company
       companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
       reportDate: new Date().toLocaleDateString(),
+      dateRange, // NEW: Pass dateRange to PDF props
       ...reportData.pdfProps, // Specific props from the generated report
     };
 
     initiatePrint({ type: reportData.printType, props: pdfProps });
     showSuccess("Report sent to printer!");
-  }, [reportData, companyProfile, initiatePrint]);
+  }, [reportData, companyProfile, initiatePrint, dateRange]); // NEW: Add dateRange to dependencies
 
   const handleSummarizeReport = async () => {
     if (!reportData) {
@@ -199,19 +200,11 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
 
   return (
     <div className="flex flex-col h-full">
-      <Card className="mb-4 bg-card border-border shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xl font-semibold">Report Configuration</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-4">
-          {/* Removed DateRangePicker and Clear Date Filter Button */}
-          {/* Other global filters can go here */}
-        </CardContent>
-      </Card>
+      {/* Removed Report Configuration Card as it's now in the parent Reports component */}
 
       <div className="flex-grow overflow-y-auto">
         <CurrentReportComponent
-          // Removed dateRange prop
+          dateRange={dateRange} // NEW: Pass dateRange prop to child component
           onGenerateReport={handleGenerateReport}
           isLoading={isLoadingReport}
           reportContentRef={reportContentRef} // Pass ref to child component

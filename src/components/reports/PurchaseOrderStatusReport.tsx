@@ -13,14 +13,14 @@ import { Label } from "@/components/ui/label"; // Added Label import
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface PurchaseOrderStatusReportProps {
-  // Removed dateRange prop
+  dateRange: DateRange | undefined; // NEW: dateRange prop
   onGenerateReport: (data: { pdfProps: any; printType: string }) => void;
   isLoading: boolean;
   reportContentRef: React.RefObject<HTMLDivElement>;
 }
 
 const PurchaseOrderStatusReport: React.FC<PurchaseOrderStatusReportProps> = ({
-  // Removed dateRange prop
+  dateRange, // NEW: Destructure dateRange prop
   onGenerateReport,
   isLoading,
   reportContentRef,
@@ -33,10 +33,17 @@ const PurchaseOrderStatusReport: React.FC<PurchaseOrderStatusReportProps> = ({
   const [currentReportData, setCurrentReportData] = useState<any>(null);
 
   const generateReport = useCallback(() => {
-    // Removed date filtering logic, now always "all time"
+    const filterFrom = dateRange?.from ? startOfDay(dateRange.from) : null;
+    const filterTo = dateRange?.to ? endOfDay(dateRange.to) : (dateRange?.from ? endOfDay(dateRange.from) : null);
+
     const filteredOrders = orders.filter(order => {
       if (order.type !== "Purchase") return false;
       if (statusFilter !== "all" && order.status.toLowerCase() !== statusFilter.toLowerCase()) return false;
+      const orderDate = parseAndValidateDate(order.date);
+      if (!orderDate) return false;
+      if (filterFrom && filterTo) {
+        return isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
+      }
       return true;
     });
 
@@ -48,13 +55,13 @@ const PurchaseOrderStatusReport: React.FC<PurchaseOrderStatusReportProps> = ({
       reportDate: format(new Date(), "MMM dd, yyyy HH:mm"),
       orders: filteredOrders,
       statusFilter,
-      // Removed dateRange from reportProps
+      dateRange, // NEW: Pass dateRange to reportProps
     };
 
     setCurrentReportData(reportProps);
     onGenerateReport({ pdfProps: reportProps, printType: "purchase-order-status-report" });
     setReportGenerated(true);
-  }, [orders, statusFilter, companyProfile, onGenerateReport]); // Removed dateRange from dependencies
+  }, [orders, statusFilter, companyProfile, onGenerateReport, dateRange]); // NEW: Added dateRange to dependencies
 
   useEffect(() => {
     generateReport();

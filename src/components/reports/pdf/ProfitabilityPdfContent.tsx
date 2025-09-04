@@ -1,6 +1,7 @@
 import React from "react";
 import { format, isValid } from "date-fns"; // Import isValid
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
+import { DateRange } from "react-day-picker"; // NEW: Import DateRange
 
 interface ProfitabilityMetricsData {
   name: string;
@@ -17,7 +18,7 @@ interface ProfitabilityPdfContentProps {
   metricsData: ProfitabilityMetricsData[];
   totalSalesRevenue: number;
   totalCostOfGoodsSold: number;
-  dateRange?: { from?: Date; to?: Date };
+  dateRange?: DateRange; // NEW: Add dateRange prop
 }
 
 const ProfitabilityPdfContent: React.FC<ProfitabilityPdfContentProps> = ({
@@ -29,7 +30,7 @@ const ProfitabilityPdfContent: React.FC<ProfitabilityPdfContentProps> = ({
   metricsData,
   totalSalesRevenue,
   totalCostOfGoodsSold,
-  dateRange,
+  dateRange, // NEW: Destructure dateRange
 }) => {
   const formattedDateRange = dateRange?.from && parseAndValidateDate(dateRange.from.toISOString())
     ? `${format(parseAndValidateDate(dateRange.from.toISOString())!, "MMM dd, yyyy")} - ${dateRange.to && parseAndValidateDate(dateRange.to.toISOString()) ? format(parseAndValidateDate(dateRange.to.toISOString())!, "MMM dd, yyyy") : format(new Date(), "MMM dd, yyyy")}`
@@ -53,7 +54,7 @@ const ProfitabilityPdfContent: React.FC<ProfitabilityPdfContentProps> = ({
         </div>
         <div className="text-right">
           <p className="text-sm font-semibold">REPORT DATE: {parseAndValidateDate(reportDate) ? format(parseAndValidateDate(reportDate)!, "MMM dd, yyyy HH:mm") : "N/A"}</p>
-          <p className="text-sm font-semibold">DATA PERIOD: {formattedDateRange}</p>
+          <p className="text-sm font-semibold">DATA PERIOD: {formattedDateRange}</p> {/* NEW: Display data period */}
         </div>
       </div>
 

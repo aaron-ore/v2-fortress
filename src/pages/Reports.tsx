@@ -8,7 +8,7 @@ import {
 import ReportSidebar from "@/components/reports/ReportSidebar";
 import ReportViewer from "@/components/reports/ReportViewer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, LayoutDashboard, Package, Receipt, Truck, Scale, FileText, DollarSign, Users, AlertTriangle, ChevronDown } from "lucide-react";
+import { BarChart, LayoutDashboard, Package, Receipt, Truck, Scale, FileText, DollarSign, Users, AlertTriangle, ChevronDown, FilterX } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { DateRangePicker } from "@/components/DateRangePicker"; // Import DateRangePicker
+import { DateRange } from "react-day-picker"; // Import DateRange
 
 interface ReportCategory {
   title: string;
@@ -81,6 +83,7 @@ const Reports: React.FC = () => {
   const navigate = useNavigate();
   const [activeReportId, setActiveReportId] = useState<string>("");
   const [reportViewMode, setReportViewMode] = useState<"simple" | "detailed">("simple"); // 'simple' for sidebar, 'detailed' for dropdown
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined); // NEW: dateRange state
 
   // Flatten all reports for the dropdown menu
   const allReports = useMemo(() => {
@@ -102,6 +105,10 @@ const Reports: React.FC = () => {
   const handleReportSelect = (reportId: string) => {
     setActiveReportId(reportId);
     navigate(`/reports#${reportId}`); // Update URL hash
+  };
+
+  const handleClearDateFilter = () => {
+    setDateRange(undefined);
   };
 
   const currentReportTitle = useMemo(() => {
@@ -134,6 +141,20 @@ const Reports: React.FC = () => {
         Generate detailed reports to gain actionable insights into your inventory, sales, and operations.
       </p>
 
+      <Card className="mb-4 bg-card border-border shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xl font-semibold">Report Configuration</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center gap-4">
+          <DateRangePicker dateRange={dateRange} onSelect={setDateRange} />
+          {dateRange?.from && (
+            <Button variant="outline" onClick={handleClearDateFilter} size="icon">
+              <FilterX className="h-4 w-4" />
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
       {reportViewMode === "simple" ? (
         <ResizablePanelGroup
           direction="horizontal"
@@ -148,7 +169,7 @@ const Reports: React.FC = () => {
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={80}>
             <div className="flex h-full flex-col p-4">
-              <ReportViewer reportId={activeReportId} />
+              <ReportViewer reportId={activeReportId} dateRange={dateRange} /> {/* Pass dateRange */}
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
@@ -187,7 +208,7 @@ const Reports: React.FC = () => {
             </DropdownMenu>
           </CardHeader>
           <CardContent className="flex-grow p-4 pt-0">
-            <ReportViewer reportId={activeReportId} />
+            <ReportViewer reportId={activeReportId} dateRange={dateRange} /> {/* Pass dateRange */}
           </CardContent>
         </Card>
       )}

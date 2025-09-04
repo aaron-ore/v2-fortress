@@ -3,6 +3,7 @@ import { InventoryItem } from "@/context/InventoryContext";
 import { OrderItem } from "@/context/OrdersContext";
 import { format, isValid } from "date-fns"; // Import isValid
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
+import { DateRange } from "react-day-picker"; // NEW: Import DateRange
 
 interface DashboardSummaryPdfContentProps {
   companyName: string;
@@ -16,6 +17,7 @@ interface DashboardSummaryPdfContentProps {
   recentSalesOrders: OrderItem[];
   recentPurchaseOrders: OrderItem[];
   reportDate: string;
+  dateRange?: DateRange; // NEW: Add dateRange prop
 }
 
 const DashboardSummaryPdfContent: React.FC<DashboardSummaryPdfContentProps> = ({
@@ -30,9 +32,11 @@ const DashboardSummaryPdfContent: React.FC<DashboardSummaryPdfContentProps> = ({
   recentSalesOrders,
   recentPurchaseOrders,
   reportDate,
+  dateRange, // NEW: Destructure dateRange
 }) => {
-  // dateRange is not directly used here, but if it were, it would need isValid checks.
-  // For now, assuming reportDate is the primary date for this PDF.
+  const formattedDateRange = dateRange?.from && parseAndValidateDate(dateRange.from.toISOString())
+    ? `${format(parseAndValidateDate(dateRange.from.toISOString())!, "MMM dd, yyyy")} - ${dateRange.to && parseAndValidateDate(dateRange.to.toISOString()) ? format(parseAndValidateDate(dateRange.to.toISOString())!, "MMM dd, yyyy") : format(new Date(), "MMM dd, yyyy")}`
+    : "All Time";
 
   return (
     <div className="bg-white text-gray-900 font-sans text-sm p-[20mm]">
@@ -50,6 +54,7 @@ const DashboardSummaryPdfContent: React.FC<DashboardSummaryPdfContentProps> = ({
         </div>
         <div className="text-right">
           <p className="text-sm font-semibold">REPORT DATE: {parseAndValidateDate(reportDate) ? format(parseAndValidateDate(reportDate)!, "MMM dd, yyyy HH:mm") : "N/A"}</p>
+          <p className="text-sm font-semibold">DATA PERIOD: {formattedDateRange}</p> {/* NEW: Display data period */}
         </div>
       </div>
 
@@ -78,11 +83,11 @@ const DashboardSummaryPdfContent: React.FC<DashboardSummaryPdfContentProps> = ({
               <span>{totalUnitsOnHand.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-semibold">Low Stock Items:</span>
+              <span className={lowStockItems.length > 0 ? "font-semibold text-red-600" : "font-semibold"}>Low Stock Items:</span>
               <span className={lowStockItems.length > 0 ? "text-red-600" : ""}>{lowStockItems.length}</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-semibold">Out-of-Stock Items:</span>
+              <span className={outOfStockItems.length > 0 ? "font-semibold text-red-600" : "font-semibold"}>Out-of-Stock Items:</span>
               <span className={outOfStockItems.length > 0 ? "text-red-600" : ""}>{outOfStockItems.length}</span>
             </div>
           </div>
@@ -135,11 +140,15 @@ const DashboardSummaryPdfContent: React.FC<DashboardSummaryPdfContentProps> = ({
                   <td className="py-2 px-4 text-right border-r border-gray-200">{item.quantity}</td>
                   <td className="py-2 px-4 text-right">{item.reorderLevel}</td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              ))
+            ) : (
+              <tr className="border-b border-gray-200">
+                <td colSpan={4} className="py-2 px-4 text-center text-gray-600">No low stock items.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* Detailed Out-of-Stock Items */}
       {outOfStockItems.length > 0 && (
@@ -158,11 +167,15 @@ const DashboardSummaryPdfContent: React.FC<DashboardSummaryPdfContentProps> = ({
                   <td className="py-2 px-4 border-r border-gray-200">{item.name}</td>
                   <td className="py-2 px-4">{item.sku}</td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              ))
+            ) : (
+              <tr className="border-b border-gray-200">
+                <td colSpan={2} className="py-2 px-4 text-center text-gray-600">No out of stock items.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* Footer */}
       <div className="text-xs text-gray-500 mt-12 text-right">

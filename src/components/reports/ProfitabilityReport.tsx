@@ -18,14 +18,14 @@ interface ProfitabilityMetricsData {
 }
 
 interface ProfitabilityReportProps {
-  // Removed dateRange prop
+  dateRange: DateRange | undefined; // NEW: dateRange prop
   onGenerateReport: (data: { pdfProps: any; printType: string }) => void;
   isLoading: boolean;
   reportContentRef: React.RefObject<HTMLDivElement>;
 }
 
 const ProfitabilityReport: React.FC<ProfitabilityReportProps> = ({
-  // Removed dateRange prop
+  dateRange, // NEW: Destructure dateRange prop
   onGenerateReport,
   isLoading,
   reportContentRef,
@@ -38,9 +38,16 @@ const ProfitabilityReport: React.FC<ProfitabilityReportProps> = ({
   const [currentReportData, setCurrentReportData] = useState<any>(null);
 
   const generateReport = useCallback(() => {
-    // Removed date filtering logic, now always "all time"
+    const filterFrom = dateRange?.from ? startOfDay(dateRange.from) : null;
+    const filterTo = dateRange?.to ? endOfDay(dateRange.to) : (dateRange?.from ? endOfDay(dateRange.from) : null);
+
     const filteredOrders = orders.filter(order => {
       if (order.type !== "Sales") return false;
+      const orderDate = parseAndValidateDate(order.date);
+      if (!orderDate) return false;
+      if (filterFrom && filterTo) {
+        return isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
+      }
       return true;
     });
 
@@ -83,13 +90,13 @@ const ProfitabilityReport: React.FC<ProfitabilityReportProps> = ({
       metricsData,
       totalSalesRevenue,
       totalCostOfGoodsSold,
-      // Removed dateRange from reportProps
+      dateRange, // NEW: Pass dateRange to reportProps
     };
 
     setCurrentReportData(reportProps);
     onGenerateReport({ pdfProps: reportProps, printType: "profitability-report" });
     setReportGenerated(true);
-  }, [orders, inventoryItems, companyProfile, onGenerateReport]); // Removed dateRange from dependencies
+  }, [orders, inventoryItems, companyProfile, onGenerateReport, dateRange]); // NEW: Added dateRange to dependencies
 
   useEffect(() => {
     generateReport();

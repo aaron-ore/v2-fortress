@@ -13,14 +13,14 @@ import { Label } from "@/components/ui/label"; // Added Label import
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface LowStockReportProps {
-  // Removed dateRange prop
+  dateRange: DateRange | undefined; // NEW: dateRange prop
   onGenerateReport: (data: { pdfProps: any; printType: string }) => void;
   isLoading: boolean;
   reportContentRef: React.RefObject<HTMLDivElement>;
 }
 
 const LowStockReport: React.FC<LowStockReportProps> = ({
-  // Removed dateRange prop
+  dateRange, // NEW: Destructure dateRange prop
   onGenerateReport,
   isLoading,
   reportContentRef,
@@ -34,8 +34,17 @@ const LowStockReport: React.FC<LowStockReportProps> = ({
   const [currentReportData, setCurrentReportData] = useState<any>(null);
 
   const generateReport = useCallback(() => {
-    // Removed date filtering logic, now always "all time"
-    const filteredItems = inventoryItems;
+    const filterFrom = dateRange?.from ? startOfDay(dateRange.from) : null;
+    const filterTo = dateRange?.to ? endOfDay(dateRange.to) : (dateRange?.from ? endOfDay(dateRange.from) : null);
+
+    const filteredItems = inventoryItems.filter(item => {
+      const itemLastUpdated = parseAndValidateDate(item.lastUpdated);
+      if (!itemLastUpdated) return false;
+      if (filterFrom && filterTo) {
+        return isWithinInterval(itemLastUpdated, { start: filterFrom, end: filterTo });
+      }
+      return true;
+    });
 
     let itemsToDisplay: InventoryItem[] = [];
 
@@ -48,20 +57,20 @@ const LowStockReport: React.FC<LowStockReportProps> = ({
     }
 
     const reportProps = {
-      companyName: companyProfile?.name || "Fortress Inventory",
+      companyName: companyProfile?.name || "Fort Fortress Inventory",
       companyAddress: companyProfile?.address || "N/A",
       companyContact: companyProfile?.currency || "N/A",
       companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
       reportDate: format(new Date(), "MMM dd, yyyy HH:mm"),
       items: itemsToDisplay,
       statusFilter,
-      // Removed dateRange from reportProps
+      dateRange, // NEW: Pass dateRange to reportProps
     };
 
     setCurrentReportData(reportProps);
     onGenerateReport({ pdfProps: reportProps, printType: "low-stock-report" });
     setReportGenerated(true);
-  }, [inventoryItems, locations, statusFilter, companyProfile, onGenerateReport]); // Removed dateRange from dependencies
+  }, [inventoryItems, locations, statusFilter, companyProfile, onGenerateReport, dateRange]); // NEW: Added dateRange to dependencies
 
   useEffect(() => {
     generateReport();

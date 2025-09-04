@@ -2,6 +2,7 @@ import React from "react";
 import { format, isValid } from "date-fns"; // Import isValid
 import { UserProfile } from "@/context/ProfileContext";
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
+import { DateRange } from "react-day-picker"; // NEW: Import DateRange
 
 interface DiscrepancyLog {
   id: string;
@@ -27,7 +28,7 @@ interface DiscrepancyPdfContentProps {
   reportDate: string;
   discrepancies: DiscrepancyLog[];
   statusFilter: "all" | "pending" | "resolved";
-  dateRange?: { from?: Date; to?: Date };
+  dateRange?: DateRange; // NEW: Add dateRange prop
   allProfiles: UserProfile[];
 }
 
@@ -39,7 +40,7 @@ const DiscrepancyPdfContent: React.FC<DiscrepancyPdfContentProps> = ({
   reportDate,
   discrepancies,
   statusFilter,
-  dateRange,
+  dateRange, // NEW: Destructure dateRange
   allProfiles,
 }) => {
   const formattedDateRange = dateRange?.from && parseAndValidateDate(dateRange.from.toISOString())
@@ -73,7 +74,7 @@ const DiscrepancyPdfContent: React.FC<DiscrepancyPdfContentProps> = ({
         </div>
         <div className="text-right">
           <p className="text-sm font-semibold">REPORT DATE: {parseAndValidateDate(reportDate) ? format(parseAndValidateDate(reportDate)!, "MMM dd, yyyy HH:mm") : "N/A"}</p>
-          <p className="text-sm font-semibold">DATA PERIOD: {formattedDateRange}</p>
+          <p className="text-sm font-semibold">DATA PERIOD: {formattedDateRange}</p> {/* NEW: Display data period */}
         </div>
       </div>
 

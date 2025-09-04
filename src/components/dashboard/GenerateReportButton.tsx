@@ -6,33 +6,63 @@ import { useOnboarding } from "@/context/OnboardingContext";
 import { useInventory } from "@/context/InventoryContext";
 import { useOrders } from "@/context/OrdersContext";
 import { showError } from "@/utils/toast";
-import { format } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { DateRange } from "react-day-picker";
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
-const GenerateReportButton: React.FC = () => {
+interface GenerateReportButtonProps {
+  dateRange: DateRange | undefined; // NEW: dateRange prop
+}
+
+const GenerateReportButton: React.FC<GenerateReportButtonProps> = ({ dateRange }) => { // NEW: Destructure dateRange
   const { initiatePrint } = usePrint();
   const { companyProfile } = useOnboarding();
   const { inventoryItems } = useInventory();
   const { orders } = useOrders();
 
+  const filterFrom = dateRange?.from ? startOfDay(dateRange.from) : null;
+  const filterTo = dateRange?.to ? endOfDay(dateRange.to) : (dateRange?.from ? endOfDay(dateRange.from) : null);
+
+  const filteredInventory = useMemo(() => {
+    return inventoryItems.filter(item => {
+      const itemLastUpdated = parseAndValidateDate(item.lastUpdated);
+      if (!itemLastUpdated) return false;
+      if (filterFrom && filterTo) {
+        return isWithinInterval(itemLastUpdated, { start: filterFrom, end: filterTo });
+      }
+      return true;
+    });
+  }, [inventoryItems, filterFrom, filterTo]);
+
+  const filteredOrders = useMemo(() => {
+    return orders.filter(order => {
+      const orderDate = parseAndValidateDate(order.date);
+      if (!orderDate) return false;
+      if (filterFrom && filterTo) {
+        return isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
+      }
+      return true;
+    });
+  }, [orders, filterFrom, filterTo]);
+
   const totalStockValue = useMemo(() => {
-    return inventoryItems.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
-  }, [inventoryItems]);
+    return filteredInventory.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
+  }, [filteredInventory]);
 
   const totalUnitsOnHand = useMemo(() => {
-    return inventoryItems.reduce((sum, item) => sum + item.quantity, 0);
-  }, [inventoryItems]);
+    return filteredInventory.reduce((sum, item) => sum + item.quantity, 0);
+  }, [filteredInventory]);
 
   const lowStockItems = useMemo(() => {
-    return inventoryItems.filter(item => item.quantity <= item.reorderLevel);
-  }, [inventoryItems]);
+    return filteredInventory.filter(item => item.quantity <= item.reorderLevel);
+  }, [filteredInventory]);
 
   const outOfStockItems = useMemo(() => {
-    return inventoryItems.filter(item => item.quantity === 0);
-  }, [inventoryItems]);
+    return filteredInventory.filter(item => item.quantity === 0);
+  }, [filteredInventory]);
 
   const recentSalesOrders = useMemo(() => {
-    return orders
+    return filteredOrders
       .filter(order => order.type === "Sales")
       .sort((a, b) => {
         const dateA = parseAndValidateDate(a.date);
@@ -41,10 +71,10 @@ const GenerateReportButton: React.FC = () => {
         return dateB.getTime() - dateA.getTime();
       })
       .slice(0, 5); // Get top 5 recent sales orders
-  }, [orders]);
+  }, [filteredOrders]);
 
   const recentPurchaseOrders = useMemo(() => {
-    return orders
+    return filteredOrders
       .filter(order => order.type === "Purchase")
       .sort((a, b) => {
         const dateA = parseAndValidateDate(a.date);
@@ -53,7 +83,7 @@ const GenerateReportButton: React.FC = () => {
         return dateB.getTime() - dateB.getTime();
       })
       .slice(0, 5); // Get top 5 recent purchase orders
-  }, [orders]);
+  }, [filteredOrders]);
 
   const handleGenerateReport = () => {
     if (!companyProfile) {
@@ -73,6 +103,7 @@ const GenerateReportButton: React.FC = () => {
       outOfStockItems,
       recentSalesOrders,
       recentPurchaseOrders,
+      dateRange, // NEW: Pass dateRange to reportProps
     };
 
     initiatePrint({ type: "dashboard-summary", props: reportProps });

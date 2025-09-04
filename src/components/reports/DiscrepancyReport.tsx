@@ -31,14 +31,14 @@ interface DiscrepancyLog {
 }
 
 interface DiscrepancyReportProps {
-  // Removed dateRange prop
+  dateRange: DateRange | undefined; // NEW: dateRange prop
   onGenerateReport: (data: { pdfProps: any; printType: string }) => void;
   isLoading: boolean;
   reportContentRef: React.RefObject<HTMLDivElement>;
 }
 
 const DiscrepancyReport: React.FC<DiscrepancyReportProps> = ({
-  // Removed dateRange prop
+  dateRange, // NEW: Destructure dateRange prop
   onGenerateReport,
   isLoading,
   reportContentRef,
@@ -65,7 +65,12 @@ const DiscrepancyReport: React.FC<DiscrepancyReportProps> = ({
       query = query.eq('status', statusFilter);
     }
 
-    // Removed date filtering logic, now always "all time"
+    const filterFrom = dateRange?.from ? startOfDay(dateRange.from) : null;
+    const filterTo = dateRange?.to ? endOfDay(dateRange.to) : (dateRange?.from ? endOfDay(dateRange.from) : null);
+
+    if (filterFrom && filterTo) {
+      query = query.gte('timestamp', filterFrom.toISOString()).lte('timestamp', filterTo.toISOString());
+    }
 
     const { data, error } = await query;
 
@@ -91,7 +96,7 @@ const DiscrepancyReport: React.FC<DiscrepancyReportProps> = ({
       }));
       return fetchedDiscrepancies;
     }
-  }, [profile?.organizationId, statusFilter]); // Removed dateRange from dependencies
+  }, [profile?.organizationId, statusFilter, dateRange]); // NEW: Added dateRange to dependencies
 
   const generateReport = useCallback(async () => {
     const itemsToDisplay = await fetchDiscrepancies();
@@ -105,14 +110,14 @@ const DiscrepancyReport: React.FC<DiscrepancyReportProps> = ({
       reportDate: format(new Date(), "MMM dd, yyyy HH:mm"),
       discrepancies: itemsToDisplay,
       statusFilter,
-      // Removed dateRange from reportProps
+      dateRange, // NEW: Pass dateRange to reportProps
       allProfiles, // Pass all profiles to resolve user names in PDF
     };
 
     setCurrentReportData(reportProps);
     onGenerateReport({ pdfProps: reportProps, printType: "discrepancy-report" });
     setReportGenerated(true);
-  }, [fetchDiscrepancies, companyProfile, statusFilter, onGenerateReport, allProfiles, fetchAllProfiles]); // Removed dateRange from dependencies
+  }, [fetchDiscrepancies, companyProfile, statusFilter, onGenerateReport, allProfiles, fetchAllProfiles, dateRange]); // NEW: Added dateRange to dependencies
 
   useEffect(() => {
     generateReport();

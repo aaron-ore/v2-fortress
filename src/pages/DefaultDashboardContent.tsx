@@ -21,6 +21,8 @@ import MonthlyOverviewChartCard from "@/components/dashboard/MonthlyOverviewChar
 import TopSellingProductsCard from "@/components/dashboard/TopSellingProductsCard"; // Replaced ProfitabilityMetricsCard
 import GenerateReportButton from "@/components/dashboard/GenerateReportButton";
 import { Button } from "@/components/ui/button";
+import { FilterX } from "lucide-react"; // Import FilterX icon
+import { parseAndValidateDate } from "@/utils/dateUtils"; // Import parseAndValidateDate
 
 // NEW: Import the new cards for the 4th row
 import OpenPurchaseOrdersCard from "@/components/dashboard/OpenPurchaseOrdersCard";
@@ -31,20 +33,47 @@ import RecentShipmentsCard from "@/components/dashboard/RecentShipmentsCard";
 const DefaultDashboardContent: React.FC = () => {
   const [isAddInventoryDialogOpen, setIsAddInventoryDialogOpen] = useState(false);
   const [isScanItemDialogOpen, setIsScanItemDialogOpen] = useState(false);
-  // Removed dateRange state
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined); // Re-added dateRange state
 
   const handleScanItem = () => {
     setIsScanItemDialogOpen(true);
   };
 
-  // Removed handleClearDateFilter
+  const handleClearDateFilter = () => {
+    setDateRange(undefined);
+  };
+
+  // Helper function to check if a date falls within the selected range
+  const isDateInRange = (dateString: string) => {
+    if (!dateRange?.from) return true; // No filter applied
+
+    const date = parseAndValidateDate(dateString);
+    if (!date) return false; // Invalid date string
+
+    const from = dateRange.from ? startOfDay(dateRange.from) : null;
+    const to = dateRange.to ? endOfDay(dateRange.to) : (dateRange.from ? endOfDay(dateRange.from) : null);
+
+    if (from && to) {
+      return date >= from && date <= to;
+    } else if (from) {
+      return date >= from && date <= endOfDay(from);
+    }
+    return true;
+  };
 
   return (
     <div className="space-y-6">
       {/* Header and Date Filter in the same row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        {/* Removed DateRangePicker and Clear Filter Button */}
+        <div className="flex items-center gap-2">
+          <DateRangePicker dateRange={dateRange} onSelect={setDateRange} />
+          {dateRange?.from && (
+            <Button variant="outline" onClick={handleClearDateFilter} size="icon">
+              <FilterX className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -56,21 +85,21 @@ const DefaultDashboardContent: React.FC = () => {
           <Last3MonthSalesCard />
         </div>
         <div className="col-span-full md:col-span-1">
-          <IssuesCard />
+          <IssuesCard dateRange={dateRange} /> {/* Pass dateRange */}
         </div>
         <div className="col-span-full md:col-span-1 flex flex-col gap-4">
           <WalletCard />
           <LossesCard />
           <IncomeCard />
-          <GenerateReportButton />
+          <GenerateReportButton dateRange={dateRange} /> {/* Pass dateRange */}
         </div>
 
         {/* Row 2: 1 wide card + 2 regular cards */}
         <div className="col-span-full md:col-span-2 lg:col-span-2 xl:col-span-2">
-          <LiveInformationAreaChartCard />
+          <LiveInformationAreaChartCard dateRange={dateRange} /> {/* Pass dateRange */}
         </div>
         <div className="col-span-full md:col-span-1">
-          <StockDiscrepancyCard />
+          <StockDiscrepancyCard dateRange={dateRange} /> {/* Pass dateRange */}
         </div>
         <div className="col-span-full md:col-span-1">
           <LocationStockHealthCard />

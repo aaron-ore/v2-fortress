@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PlusCircle, Package, AlertCircle, TrendingUp, Scan, Receipt, MapPin, DollarSign, Boxes } from "lucide-react";
+import { PlusCircle, Package, AlertCircle, TrendingUp, Scan, Receipt, MapPin, DollarSign, Boxes, FilterX } from "lucide-react";
 import { useInventory } from "@/context/InventoryContext";
 import { useOrders } from "@/context/OrdersContext";
 import { format, isValid, startOfDay, endOfDay } from "date-fns";
@@ -28,11 +28,23 @@ const ClassicDashboard: React.FC = () => {
 
   const [isAddInventoryDialogOpen, setIsAddInventoryDialogOpen] = useState(false);
   const [isScanItemDialogOpen, setIsScanItemDialogOpen] = useState(false);
-  // Removed dateRange state
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined); // Re-added dateRange state
 
   // Helper function to check if a date falls within the selected range
-  // Now always returns true as date filtering is removed
   const isDateInRange = (dateString: string) => {
+    if (!dateRange?.from) return true; // No filter applied
+
+    const date = parseAndValidateDate(dateString);
+    if (!date) return false; // Invalid date string
+
+    const from = dateRange.from ? startOfDay(dateRange.from) : null;
+    const to = dateRange.to ? endOfDay(dateRange.to) : (dateRange.from ? endOfDay(dateRange.from) : null);
+
+    if (from && to) {
+      return date >= from && date <= to;
+    } else if (from) {
+      return date >= from && date <= endOfDay(from);
+    }
     return true;
   };
 
@@ -64,18 +76,25 @@ const ClassicDashboard: React.FC = () => {
         return dateB.getTime() - dateA.getTime();
       })
       .slice(0, 5);
-  }, [orders, isDateInRange]); // Removed dateRange from dependencies
+  }, [orders, isDateInRange, dateRange]); // Added dateRange to dependencies
 
   const handleCreatePO = () => navigate("/create-po");
   const handleCreateInvoice = () => navigate("/create-invoice");
-  // Removed handleClearDateFilter
+  const handleClearDateFilter = () => { setDateRange(undefined); }; // Re-added handler
 
   return (
     <div className="space-y-6">
       {/* Header and Date Filter in the same row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h1 className="text-3xl font-bold">Classic Dashboard</h1>
-        {/* Removed DateRangePicker and Clear Filter Button */}
+        <div className="flex items-center gap-2">
+          <DateRangePicker dateRange={dateRange} onSelect={setDateRange} />
+          {dateRange?.from && (
+            <Button variant="outline" onClick={handleClearDateFilter} size="icon">
+              <FilterX className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       <p className="text-muted-foreground">A streamlined overview of your inventory and orders.</p>

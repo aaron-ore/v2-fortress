@@ -22,7 +22,7 @@ import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAn
 interface DailyIssuesDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  dateRange: DateRange | undefined;
+  dateRange: DateRange | undefined; // NEW: dateRange prop
 }
 
 interface IssueLog {
@@ -42,7 +42,7 @@ interface IssueLog {
   };
 }
 
-const DailyIssuesDialog: React.FC<DailyIssuesDialogProps> = ({ isOpen, onClose, dateRange }) => {
+const DailyIssuesDialog: React.FC<DailyIssuesDialogProps> = ({ isOpen, onClose, dateRange }) => { // NEW: Destructure dateRange
   const { profile, allProfiles, fetchAllProfiles } = useProfile();
   const [issues, setIssues] = useState<IssueLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,7 +60,7 @@ const DailyIssuesDialog: React.FC<DailyIssuesDialogProps> = ({ isOpen, onClose, 
 
         const today = new Date();
         const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : startOfDay(today);
-        const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : endOfDay(today);
+        const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (dateRange?.from && isValid(dateRange.from) ? endOfDay(dateRange.from) : endOfDay(today));
 
         query = query.gte('timestamp', filterFrom.toISOString()).lte('timestamp', filterTo.toISOString());
 
@@ -89,7 +89,7 @@ const DailyIssuesDialog: React.FC<DailyIssuesDialogProps> = ({ isOpen, onClose, 
       fetchIssues();
       fetchAllProfiles(); // Ensure all profiles are fetched to map user IDs to names
     }
-  }, [isOpen, profile?.organizationId, fetchAllProfiles, dateRange]);
+  }, [isOpen, profile?.organizationId, fetchAllProfiles, dateRange]); // NEW: Added dateRange to dependencies
 
   const getUserName = (userId: string) => {
     const user = allProfiles.find(p => p.id === userId);

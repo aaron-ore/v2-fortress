@@ -12,14 +12,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface DashboardSummaryReportProps {
-  // Removed dateRange prop
+  dateRange: DateRange | undefined; // NEW: dateRange prop
   onGenerateReport: (data: { pdfProps: any; printType: string }) => void;
   isLoading: boolean;
   reportContentRef: React.RefObject<HTMLDivElement>;
 }
 
 const DashboardSummaryReport: React.FC<DashboardSummaryReportProps> = ({
-  // Removed dateRange prop
+  dateRange, // NEW: Destructure dateRange prop
   onGenerateReport,
   isLoading,
   reportContentRef,
@@ -32,9 +32,26 @@ const DashboardSummaryReport: React.FC<DashboardSummaryReportProps> = ({
   const [currentReportData, setCurrentReportData] = useState<any>(null);
 
   const generateReport = useCallback(() => {
-    // Removed date filtering logic, now always "all time"
-    const filteredInventory = inventoryItems;
-    const filteredOrders = orders;
+    const filterFrom = dateRange?.from ? startOfDay(dateRange.from) : null;
+    const filterTo = dateRange?.to ? endOfDay(dateRange.to) : (dateRange?.from ? endOfDay(dateRange.from) : null);
+
+    const filteredInventory = inventoryItems.filter(item => {
+      const itemLastUpdated = parseAndValidateDate(item.lastUpdated);
+      if (!itemLastUpdated) return false;
+      if (filterFrom && filterTo) {
+        return isWithinInterval(itemLastUpdated, { start: filterFrom, end: filterTo });
+      }
+      return true;
+    });
+
+    const filteredOrders = orders.filter(order => {
+      const orderDate = parseAndValidateDate(order.date);
+      if (!orderDate) return false;
+      if (filterFrom && filterTo) {
+        return isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
+      }
+      return true;
+    });
 
     const totalStockValue = filteredInventory.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
     const totalUnitsOnHand = filteredInventory.reduce((sum, item) => sum + item.quantity, 0);
@@ -73,13 +90,13 @@ const DashboardSummaryReport: React.FC<DashboardSummaryReportProps> = ({
       outOfStockItems,
       recentSalesOrders,
       recentPurchaseOrders,
-      // Removed dateRange from reportProps
+      dateRange, // NEW: Pass dateRange to reportProps
     };
 
     setCurrentReportData(reportProps);
     onGenerateReport({ pdfProps: reportProps, printType: "dashboard-summary" });
     setReportGenerated(true);
-  }, [inventoryItems, orders, companyProfile, onGenerateReport]); // Removed dateRange from dependencies
+  }, [inventoryItems, orders, companyProfile, onGenerateReport, dateRange]); // NEW: Add dateRange to dependencies
 
   useEffect(() => {
     // Regenerate report if dependencies change
@@ -99,7 +116,7 @@ const DashboardSummaryReport: React.FC<DashboardSummaryReportProps> = ({
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
         <FileText className="h-16 w-16 mb-4" />
-        <p className="text-lg">Click "Generate Report" to view the summary.</p>
+        <p className="text-lg">Configure filters and click "Generate Report".</p>
         <Button onClick={generateReport} className="mt-4">Generate Report</Button>
       </div>
     );
