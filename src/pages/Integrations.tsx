@@ -346,7 +346,7 @@ const Integrations: React.FC = () => {
               </Button>
               <Button variant="destructive" onClick={handleDisconnectShopify}>
                 Disconnect Shopify
-              </m>
+              </Button>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
