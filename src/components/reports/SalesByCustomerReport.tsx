@@ -18,14 +18,14 @@ interface CustomerSalesData {
 }
 
 interface SalesByCustomerReportProps {
-  dateRange: DateRange | undefined;
+  // Removed dateRange prop
   onGenerateReport: (data: { pdfProps: any; printType: string }) => void;
   isLoading: boolean;
   reportContentRef: React.RefObject<HTMLDivElement>;
 }
 
 const SalesByCustomerReport: React.FC<SalesByCustomerReportProps> = ({
-  dateRange,
+  // Removed dateRange prop
   onGenerateReport,
   isLoading,
   reportContentRef,
@@ -37,17 +37,10 @@ const SalesByCustomerReport: React.FC<SalesByCustomerReportProps> = ({
   const [currentReportData, setCurrentReportData] = useState<any>(null);
 
   const generateReport = useCallback(() => {
-    const today = new Date();
-    // Ensure dateRange.from is a valid Date before using it in startOfDay
-    const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : null;
-    // Ensure dateRange.to is a valid Date, or default to endOfDay(filterFrom) if filterFrom is valid
-    const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (filterFrom ? endOfDay(filterFrom) : null);
-
+    // Removed date filtering logic, now always "all time"
     const filteredOrders = orders.filter(order => {
       if (order.type !== "Sales") return false;
-      if (!filterFrom || !filterTo) return true;
-      const orderDate = parseAndValidateDate(order.date); // NEW: Use parseAndValidateDate
-      return orderDate && isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
+      return true;
     });
 
     const customerSalesMap: { [key: string]: { totalSales: number; totalItems: number; lastOrderDate: Date } } = {};
@@ -78,13 +71,13 @@ const SalesByCustomerReport: React.FC<SalesByCustomerReportProps> = ({
       companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
       reportDate: format(new Date(), "MMM dd, yyyy HH:mm"),
       customerSales,
-      dateRange,
+      // Removed dateRange from reportProps
     };
 
     setCurrentReportData(reportProps);
     onGenerateReport({ pdfProps: reportProps, printType: "sales-by-customer-report" });
     setReportGenerated(true);
-  }, [orders, dateRange, companyProfile, onGenerateReport]);
+  }, [orders, companyProfile, onGenerateReport]); // Removed dateRange from dependencies
 
   useEffect(() => {
     generateReport();

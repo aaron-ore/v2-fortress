@@ -18,14 +18,14 @@ interface ProfitabilityMetricsData {
 }
 
 interface ProfitabilityReportProps {
-  dateRange: DateRange | undefined;
+  // Removed dateRange prop
   onGenerateReport: (data: { pdfProps: any; printType: string }) => void;
   isLoading: boolean;
   reportContentRef: React.RefObject<HTMLDivElement>;
 }
 
 const ProfitabilityReport: React.FC<ProfitabilityReportProps> = ({
-  dateRange,
+  // Removed dateRange prop
   onGenerateReport,
   isLoading,
   reportContentRef,
@@ -38,17 +38,10 @@ const ProfitabilityReport: React.FC<ProfitabilityReportProps> = ({
   const [currentReportData, setCurrentReportData] = useState<any>(null);
 
   const generateReport = useCallback(() => {
-    const today = new Date();
-    // Ensure dateRange.from is a valid Date before using it in startOfDay
-    const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : null;
-    // Ensure dateRange.to is a valid Date, or default to endOfDay(filterFrom) if filterFrom is valid
-    const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (filterFrom ? endOfDay(filterFrom) : null);
-
+    // Removed date filtering logic, now always "all time"
     const filteredOrders = orders.filter(order => {
       if (order.type !== "Sales") return false;
-      if (!filterFrom || !filterTo) return true;
-      const orderDate = parseAndValidateDate(order.date); // NEW: Use parseAndValidateDate
-      return orderDate && isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
+      return true;
     });
 
     let totalSalesRevenue = 0;
@@ -90,13 +83,13 @@ const ProfitabilityReport: React.FC<ProfitabilityReportProps> = ({
       metricsData,
       totalSalesRevenue,
       totalCostOfGoodsSold,
-      dateRange,
+      // Removed dateRange from reportProps
     };
 
     setCurrentReportData(reportProps);
     onGenerateReport({ pdfProps: reportProps, printType: "profitability-report" });
     setReportGenerated(true);
-  }, [orders, inventoryItems, dateRange, companyProfile, onGenerateReport]);
+  }, [orders, inventoryItems, companyProfile, onGenerateReport]); // Removed dateRange from dependencies
 
   useEffect(() => {
     generateReport();

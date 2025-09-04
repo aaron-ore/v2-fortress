@@ -28,21 +28,12 @@ const ClassicDashboard: React.FC = () => {
 
   const [isAddInventoryDialogOpen, setIsAddInventoryDialogOpen] = useState(false);
   const [isScanItemDialogOpen, setIsScanItemDialogOpen] = useState(false);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  // Removed dateRange state
 
   // Helper function to check if a date falls within the selected range
+  // Now always returns true as date filtering is removed
   const isDateInRange = (dateString: string) => {
-    const itemDate = parseAndValidateDate(dateString); // Returns Date | null
-    if (!itemDate) return false;
-
-    // Ensure dateRange.from is a valid Date before using it in startOfDay
-    const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : null;
-    if (!filterFrom) return true; // No valid 'from' date, so no date filter applied
-
-    // Ensure dateRange.to is a valid Date, or default to endOfDay(filterFrom)
-    const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : endOfDay(filterFrom);
-
-    return itemDate >= filterFrom && itemDate <= filterTo;
+    return true;
   };
 
   // Key Metrics
@@ -73,27 +64,18 @@ const ClassicDashboard: React.FC = () => {
         return dateB.getTime() - dateA.getTime();
       })
       .slice(0, 5);
-  }, [orders, dateRange, isDateInRange]);
+  }, [orders, isDateInRange]); // Removed dateRange from dependencies
 
   const handleCreatePO = () => navigate("/create-po");
   const handleCreateInvoice = () => navigate("/create-invoice");
-  const handleClearDateFilter = () => {
-    setDateRange(undefined);
-  };
+  // Removed handleClearDateFilter
 
   return (
     <div className="space-y-6">
       {/* Header and Date Filter in the same row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h1 className="text-3xl font-bold">Classic Dashboard</h1>
-        <div className="flex items-center gap-4">
-          <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
-          {dateRange?.from && isValid(dateRange.from) && ( // Only show clear button if a valid 'from' date exists
-            <Button variant="outline" onClick={handleClearDateFilter}>
-              Clear Filter
-            </Button>
-          )}
-        </div>
+        {/* Removed DateRangePicker and Clear Filter Button */}
       </div>
 
       <p className="text-muted-foreground">A streamlined overview of your inventory and orders.</p>

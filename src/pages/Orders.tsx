@@ -428,10 +428,29 @@ export const createOrderColumns = (updateOrder: (order: OrderItem) => void, arch
   {
     accessorKey: "date",
     header: "Date",
+    cell: ({ row }) => {
+      const date = parseAndValidateDate(row.original.date);
+      return date ? format(date, "MMM dd, yyyy") : "N/A";
+    }
   },
   {
     accessorKey: "dueDate",
     header: "Due Date",
+    cell: ({ row }) => {
+      const dueDateObj = parseAndValidateDate(row.original.dueDate);
+      const today = new Date();
+      const isDueDateValid = dueDateObj && isValid(dueDateObj);
+
+      const isOverdue = isDueDateValid && dueDateObj < today && row.original.status !== "Shipped" && row.original.status !== "Packed";
+      const isDueSoon = isDueDateValid && dueDateObj > today && dueDateObj <= new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000) && row.original.status !== "Shipped" && row.original.status !== "Packed";
+
+      const dueDateClass = cn(
+        "font-medium",
+        isOverdue && "text-destructive",
+        isDueSoon && "text-yellow-500",
+      );
+      return <span className={dueDateClass}>{isDueDateValid ? format(dueDateObj, "MMM dd, yyyy") : "N/A"}</span>;
+    }
   },
   {
     accessorKey: "status",
@@ -506,7 +525,10 @@ const Orders: React.FC = () => {
   const [isAddOrderDialogOpen, setIsAddOrderDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
 
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  // Removed dateRange state and related handlers
+  // const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  // const handleClearDateFilter = () => { setDateRange(undefined); };
+
   const [isOrderFulfillmentDialogOpen, setIsOrderFulfillmentDialogOpen] = useState(false);
   const [isOrderReceiveShipmentDialogOpen, setIsOrderReceiveShipmentDialogOpen] = useState(false);
   const [isSyncingQuickBooks, setIsSyncingQuickBooks] = useState(false); // NEW: State for QuickBooks sync loading
@@ -514,10 +536,6 @@ const Orders: React.FC = () => {
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
-
-  const handleClearDateFilter = () => {
-    setDateRange(undefined);
-  };
 
   const filteredOrders = useMemo(() => {
     let currentOrders = orders;
@@ -538,27 +556,20 @@ const Orders: React.FC = () => {
       order.status.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    if (dateRange?.from) {
-      // dateRange.from is guaranteed to be a valid Date object if dateRange.from exists
-      // dateRange.to can be undefined if only one day is selected.
-      
-      // Create new Date objects to avoid modifying the original dateRange objects
-      // and ensure they are valid before setting hours.
-      const filterFrom = new Date(dateRange.from);
-      const filterTo = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from); // Ensure filterTo is also a valid Date
-
-      filterFrom.setHours(0, 0, 0, 0);
-      filterTo.setHours(23, 59, 59, 999);
-
-      return searchFiltered.filter(order => {
-        const orderDate = new Date(order.date);
-        // Ensure orderDate is valid before comparison
-        return isValid(orderDate) && orderDate >= filterFrom && orderDate <= filterTo;
-      });
-    }
+    // Removed dateRange filtering logic
+    // if (dateRange?.from) {
+    //   const filterFrom = new Date(dateRange.from);
+    //   const filterTo = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
+    //   filterFrom.setHours(0, 0, 0, 0);
+    //   filterTo.setHours(23, 59, 59, 999);
+    //   return searchFiltered.filter(order => {
+    //     const orderDate = new Date(order.date);
+    //     return isValid(orderDate) && orderDate >= filterFrom && orderDate <= filterTo;
+    //   });
+    // }
 
     return searchFiltered;
-  }, [orders, searchTerm, activeTab, dateRange]);
+  }, [orders, searchTerm, activeTab]); // Removed dateRange from dependencies
 
   const columns = useMemo(() => createOrderColumns(updateOrder, archiveOrder), [updateOrder, archiveOrder]);
 
@@ -619,13 +630,7 @@ const Orders: React.FC = () => {
           className="max-w-xs flex-grow"
         />
         <div className="flex items-center gap-2">
-          <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
-          {dateRange?.from && (
-            <Button variant="outline" onClick={handleClearDateFilter}>
-              Clear Filter
-            </Button>
-          )}
-          {/* Moved Order Actions Dropdown here */}
+          {/* Removed DateRangePicker and Clear Filter Button */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">

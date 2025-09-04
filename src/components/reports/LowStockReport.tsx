@@ -13,14 +13,14 @@ import { Label } from "@/components/ui/label"; // Added Label import
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface LowStockReportProps {
-  dateRange: DateRange | undefined;
+  // Removed dateRange prop
   onGenerateReport: (data: { pdfProps: any; printType: string }) => void;
   isLoading: boolean;
   reportContentRef: React.RefObject<HTMLDivElement>;
 }
 
 const LowStockReport: React.FC<LowStockReportProps> = ({
-  dateRange,
+  // Removed dateRange prop
   onGenerateReport,
   isLoading,
   reportContentRef,
@@ -34,17 +34,8 @@ const LowStockReport: React.FC<LowStockReportProps> = ({
   const [currentReportData, setCurrentReportData] = useState<any>(null);
 
   const generateReport = useCallback(() => {
-    const today = new Date();
-    // Ensure dateRange.from is a valid Date before using it in startOfDay
-    const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : null;
-    // Ensure dateRange.to is a valid Date, or default to endOfDay(filterFrom) if filterFrom is valid
-    const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (filterFrom ? endOfDay(filterFrom) : null);
-
-    const filteredItems = inventoryItems.filter(item => {
-      if (!filterFrom || !filterTo) return true;
-      const itemDate = parseAndValidateDate(item.lastUpdated); // NEW: Use parseAndValidateDate
-      return itemDate && isWithinInterval(itemDate, { start: filterFrom, end: filterTo });
-    });
+    // Removed date filtering logic, now always "all time"
+    const filteredItems = inventoryItems;
 
     let itemsToDisplay: InventoryItem[] = [];
 
@@ -64,13 +55,13 @@ const LowStockReport: React.FC<LowStockReportProps> = ({
       reportDate: format(new Date(), "MMM dd, yyyy HH:mm"),
       items: itemsToDisplay,
       statusFilter,
-      dateRange,
+      // Removed dateRange from reportProps
     };
 
     setCurrentReportData(reportProps);
     onGenerateReport({ pdfProps: reportProps, printType: "low-stock-report" });
     setReportGenerated(true);
-  }, [inventoryItems, locations, statusFilter, dateRange, companyProfile, onGenerateReport]);
+  }, [inventoryItems, locations, statusFilter, companyProfile, onGenerateReport]); // Removed dateRange from dependencies
 
   useEffect(() => {
     generateReport();

@@ -47,7 +47,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
   const { companyProfile } = useOnboarding();
   const { profile } = useProfile();
 
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  // Removed dateRange state
   const [reportData, setReportData] = useState<any>(null);
   const [isLoadingReport, setIsLoadingReport] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
@@ -74,7 +74,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
     return "";
   }, [reportContentRef]);
 
-  const handleGenerateReport = useCallback(async (data: any) => {
+  const handleGenerateReport = useCallback(async (data: { pdfProps: any; printType: string }) => {
     setIsLoadingReport(true);
     setReportData(data); // The child component will pass its processed data here
     setIsLoadingReport(false);
@@ -204,19 +204,14 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
           <CardTitle className="text-xl font-semibold">Report Configuration</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-4">
-          <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
-          {dateRange?.from && isValid(dateRange.from) && ( // Only show clear button if a valid 'from' date exists
-            <Button variant="outline" onClick={() => setDateRange(undefined)}>
-              Clear Date Filter
-            </Button>
-          )}
+          {/* Removed DateRangePicker and Clear Date Filter Button */}
           {/* Other global filters can go here */}
         </CardContent>
       </Card>
 
       <div className="flex-grow overflow-y-auto">
         <CurrentReportComponent
-          dateRange={dateRange}
+          // Removed dateRange prop
           onGenerateReport={handleGenerateReport}
           isLoading={isLoadingReport}
           reportContentRef={reportContentRef} // Pass ref to child component

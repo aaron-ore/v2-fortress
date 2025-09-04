@@ -31,35 +31,20 @@ import RecentShipmentsCard from "@/components/dashboard/RecentShipmentsCard";
 const DefaultDashboardContent: React.FC = () => {
   const [isAddInventoryDialogOpen, setIsAddInventoryDialogOpen] = useState(false);
   const [isScanItemDialogOpen, setIsScanItemDialogOpen] = useState(false);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-
-  // The DateRangePicker now handles its own internal normalization,
-  // so we can pass the raw dateRange state directly.
+  // Removed dateRange state
 
   const handleScanItem = () => {
     setIsScanItemDialogOpen(true);
   };
 
-  const handleClearDateFilter = () => {
-    setDateRange(undefined);
-  };
-
-  // Helper to check if dateRange.from is valid before using isValid
-  const isDateRangeFromValid = dateRange?.from && isValid(dateRange.from);
+  // Removed handleClearDateFilter
 
   return (
     <div className="space-y-6">
       {/* Header and Date Filter in the same row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <div className="flex items-center gap-4">
-          <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
-          {isDateRangeFromValid && ( // Only show clear button if a valid 'from' date exists
-            <Button variant="outline" onClick={handleClearDateFilter}>
-              Clear Filter
-            </Button>
-          )}
-        </div>
+        {/* Removed DateRangePicker and Clear Filter Button */}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -68,10 +53,10 @@ const DefaultDashboardContent: React.FC = () => {
           <OrderFulfillmentRateCard />
         </div>
         <div className="col-span-full md:col-span-1">
-          <Last3MonthSalesCard dateRange={dateRange} />
+          <Last3MonthSalesCard />
         </div>
         <div className="col-span-full md:col-span-1">
-          <IssuesCard dateRange={dateRange} />
+          <IssuesCard />
         </div>
         <div className="col-span-full md:col-span-1 flex flex-col gap-4">
           <WalletCard />
@@ -82,10 +67,10 @@ const DefaultDashboardContent: React.FC = () => {
 
         {/* Row 2: 1 wide card + 2 regular cards */}
         <div className="col-span-full md:col-span-2 lg:col-span-2 xl:col-span-2">
-          <LiveInformationAreaChartCard dateRange={dateRange} />
+          <LiveInformationAreaChartCard />
         </div>
         <div className="col-span-full md:col-span-1">
-          <StockDiscrepancyCard dateRange={dateRange} />
+          <StockDiscrepancyCard />
         </div>
         <div className="col-span-full md:col-span-1">
           <LocationStockHealthCard />
@@ -93,7 +78,7 @@ const DefaultDashboardContent: React.FC = () => {
 
         {/* Row 3: 1 very wide card + 1 regular card */}
         <div className="col-span-full md:col-span-2 lg:col-span-3 xl:col-span-3">
-          <MonthlyOverviewChartCard dateRange={dateRange} />
+          <MonthlyOverviewChartCard />
         </div>
         <div className="col-span-full md:col-span-1">
           <TopSellingProductsCard /> {/* Replaced ProfitabilityMetricsCard */}

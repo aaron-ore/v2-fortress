@@ -10,10 +10,10 @@ import { DateRange } from "react-day-picker";
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface MonthlyOverviewChartCardProps {
-  dateRange: DateRange | undefined;
+  // Removed dateRange prop
 }
 
-const MonthlyOverviewChartCard: React.FC<MonthlyOverviewChartCardProps> = ({ dateRange }) => {
+const MonthlyOverviewChartCard: React.FC<MonthlyOverviewChartCardProps> = () => {
   const { orders } = useOrders();
   const { inventoryItems } = useInventory();
 
@@ -21,9 +21,9 @@ const MonthlyOverviewChartCard: React.FC<MonthlyOverviewChartCardProps> = ({ dat
     const today = new Date();
     const monthlyData: { [key: string]: { salesRevenue: number; inventoryValue: number; purchaseVolume: number } } = {};
 
-    // Use the dateRange directly, as it's now guaranteed to be sanitized by DateRangePicker
-    const effectiveFrom = dateRange?.from && isValid(dateRange.from) ? dateRange.from : subMonths(today, 11);
-    const effectiveTo = dateRange?.to && isValid(dateRange.to) ? dateRange.to : today;
+    // Default to last 12 months
+    const effectiveFrom = subMonths(today, 11);
+    const effectiveTo = today;
 
     let startDate = startOfMonth(effectiveFrom);
     let endDate = endOfMonth(effectiveTo);
@@ -81,7 +81,7 @@ const MonthlyOverviewChartCard: React.FC<MonthlyOverviewChartCardProps> = ({ dat
       "Inventory Value": parseFloat(monthlyData[monthKey].inventoryValue.toFixed(2)),
       "Purchase Volume": parseFloat(monthlyData[monthKey].purchaseVolume.toFixed(0)),
     }));
-  }, [orders, inventoryItems, dateRange]);
+  }, [orders, inventoryItems]); // Removed dateRange from dependencies
 
   return (
     <Card className="bg-card border-border rounded-lg shadow-sm p-4 col-span-full flex flex-col h-[310px]">

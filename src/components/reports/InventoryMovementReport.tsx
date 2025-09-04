@@ -15,14 +15,14 @@ import { showError } from "@/utils/toast";
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface InventoryMovementReportProps {
-  dateRange: DateRange | undefined;
+  // Removed dateRange prop
   onGenerateReport: (data: { pdfProps: any; printType: string }) => void;
   isLoading: boolean;
   reportContentRef: React.RefObject<HTMLDivElement>;
 }
 
 const InventoryMovementReport: React.FC<InventoryMovementReportProps> = ({
-  dateRange,
+  // Removed dateRange prop
   onGenerateReport,
   isLoading,
   reportContentRef,
@@ -39,19 +39,12 @@ const InventoryMovementReport: React.FC<InventoryMovementReportProps> = ({
     await fetchStockMovements(); // Ensure latest movements are fetched
     await fetchAllProfiles(); // Ensure user profiles are loaded for names
 
-    const today = new Date();
-    // Ensure dateRange.from is a valid Date before using it in startOfDay
-    const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : null;
-    // Ensure dateRange.to is a valid Date, or default to endOfDay(filterFrom) if filterFrom is valid
-    const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (filterFrom ? endOfDay(filterFrom) : null);
-
+    // Removed date filtering logic, now always "all time"
     const filteredMovements = stockMovements.filter(movement => {
       if (movementTypeFilter !== "all" && movement.type !== movementTypeFilter) {
         return false;
       }
-      if (!filterFrom || !filterTo) return true;
-      const movementDate = parseAndValidateDate(movement.timestamp); // NEW: Use parseAndValidateDate
-      return movementDate && isWithinInterval(movementDate, { start: filterFrom, end: filterTo });
+      return true;
     });
 
     const reportProps = {
@@ -61,14 +54,14 @@ const InventoryMovementReport: React.FC<InventoryMovementReportProps> = ({
       companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
       reportDate: format(new Date(), "MMM dd, yyyy HH:mm"),
       movements: filteredMovements,
-      dateRange,
+      // Removed dateRange from reportProps
       allProfiles,
     };
 
     setCurrentReportData(reportProps);
     onGenerateReport({ pdfProps: reportProps, printType: "inventory-movement-report" });
     setReportGenerated(true);
-  }, [stockMovements, dateRange, movementTypeFilter, companyProfile, onGenerateReport, allProfiles, fetchStockMovements, fetchAllProfiles]);
+  }, [stockMovements, movementTypeFilter, companyProfile, onGenerateReport, allProfiles, fetchStockMovements, fetchAllProfiles]); // Removed dateRange from dependencies
 
   useEffect(() => {
     generateReport();

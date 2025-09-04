@@ -23,7 +23,7 @@ import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAn
 interface StockDiscrepancyDetailsDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  dateRange: DateRange | undefined;
+  // Removed dateRange prop
 }
 
 interface DiscrepancyLog {
@@ -42,7 +42,7 @@ interface DiscrepancyLog {
   status: string;
 }
 
-const StockDiscrepancyDetailsDialog: React.FC<StockDiscrepancyDetailsDialogProps> = ({ isOpen, onClose, dateRange }) => {
+const StockDiscrepancyDetailsDialog: React.FC<StockDiscrepancyDetailsDialogProps> = ({ isOpen, onClose }) => {
   const { profile, allProfiles, fetchAllProfiles } = useProfile();
   const [discrepancies, setDiscrepancies] = useState<DiscrepancyLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,8 +64,8 @@ const StockDiscrepancyDetailsDialog: React.FC<StockDiscrepancyDetailsDialogProps
       .order('timestamp', { ascending: false });
 
     const today = new Date();
-    const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : startOfDay(today);
-    const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : endOfDay(today);
+    const filterFrom = startOfDay(today);
+    const filterTo = endOfDay(today);
 
     query = query.gte('timestamp', filterFrom.toISOString()).lte('timestamp', filterTo.toISOString());
 
@@ -102,7 +102,7 @@ const StockDiscrepancyDetailsDialog: React.FC<StockDiscrepancyDetailsDialogProps
       fetchDiscrepancies();
       fetchAllProfiles(); // Ensure all profiles are fetched to map user IDs to names
     }
-  }, [isOpen, profile?.organizationId, dateRange, fetchAllProfiles]);
+  }, [isOpen, profile?.organizationId, fetchAllProfiles]); // Removed dateRange from dependencies
 
   const getUserName = (userId: string) => {
     const user = allProfiles.find(p => p.id === userId);
@@ -111,12 +111,7 @@ const StockDiscrepancyDetailsDialog: React.FC<StockDiscrepancyDetailsDialogProps
 
   const getDisplayDateRange = () => {
     const today = new Date();
-    const effectiveFrom = dateRange?.from || today;
-    const effectiveTo = dateRange?.to || today;
-
-    const from = format(effectiveFrom, "MMM dd, yyyy");
-    const to = format(effectiveTo, "MMM dd, yyyy");
-    return from === to ? from : `${from} - ${to}`;
+    return format(today, "MMM dd, yyyy");
   };
 
   const handleResolveClick = (discrepancy: DiscrepancyLog) => {
@@ -155,7 +150,7 @@ const StockDiscrepancyDetailsDialog: React.FC<StockDiscrepancyDetailsDialogProps
               <AlertTriangle className="h-6 w-6 text-destructive" /> Stock Discrepancies ({getDisplayDateRange()})
             </DialogTitle>
             <DialogDescription>
-              List of pending stock discrepancies reported within the selected date range.
+              List of pending stock discrepancies reported today.
             </DialogDescription>
           </DialogHeader>
           <div className="flex-grow flex flex-col gap-4 py-4 overflow-hidden">

@@ -13,10 +13,10 @@ import DailyIssuesDialog from "./DailyIssuesDialog";
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface IssuesCardProps {
-  dateRange: DateRange | undefined;
+  // Removed dateRange prop
 }
 
-const IssuesCard: React.FC<IssuesCardProps> = ({ dateRange }) => {
+const IssuesCard: React.FC<IssuesCardProps> = () => {
   const { profile } = useProfile();
   const [dailyIssuesCount, setDailyIssuesCount] = useState(0);
   const [previousPeriodIssuesCount, setPreviousPeriodIssuesCount] = useState(0);
@@ -35,12 +35,9 @@ const IssuesCard: React.FC<IssuesCardProps> = ({ dateRange }) => {
     let previousPeriodStart: Date;
     let previousPeriodEnd: Date;
 
-    // Use the dateRange directly, as it's now guaranteed to be sanitized by DateRangePicker
-    const effectiveFrom = dateRange?.from && isValid(dateRange.from) ? dateRange.from : today;
-    const effectiveTo = dateRange?.to && isValid(dateRange.to) ? dateRange.to : today;
-
-    currentPeriodStart = startOfDay(effectiveFrom);
-    currentPeriodEnd = endOfDay(effectiveTo);
+    // Default to today's date range
+    currentPeriodStart = startOfDay(today);
+    currentPeriodEnd = endOfDay(today);
 
     const durationMs = currentPeriodEnd.getTime() - currentPeriodStart.getTime();
     previousPeriodEnd = subDays(currentPeriodStart, 1);
@@ -90,11 +87,8 @@ const IssuesCard: React.FC<IssuesCardProps> = ({ dateRange }) => {
           let currentPeriodStart: Date;
           let currentPeriodEnd: Date;
 
-          const effectiveFrom = dateRange?.from && isValid(dateRange.from) ? dateRange.from : today;
-          const effectiveTo = dateRange?.to && isValid(dateRange.to) ? dateRange.to : today;
-
-          currentPeriodStart = startOfDay(effectiveFrom);
-          currentPeriodEnd = endOfDay(effectiveTo);
+          currentPeriodStart = startOfDay(today);
+          currentPeriodEnd = endOfDay(today);
 
           const isWithinCurrentPeriod = (newIssueDate && newIssueDate >= currentPeriodStart && newIssueDate <= currentPeriodEnd); // Check for null newIssueDate
 
@@ -108,7 +102,7 @@ const IssuesCard: React.FC<IssuesCardProps> = ({ dateRange }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile?.organizationId, dateRange]);
+  }, [profile?.organizationId]); // Removed dateRange from dependencies
 
   const percentageChange = useMemo(() => {
     if (previousPeriodIssuesCount === 0) {
@@ -126,7 +120,7 @@ const IssuesCard: React.FC<IssuesCardProps> = ({ dateRange }) => {
         <CardHeader className="pb-2">
           <CardTitle className="text-2xl font-bold text-foreground">Issues Reported</CardTitle>
           <p className="text-sm text-muted-foreground">
-            {dateRange?.from && isValid(dateRange.from) ? `For ${format(dateRange.from, "MMM dd")} - ${dateRange.to && isValid(dateRange.to) ? format(dateRange.to, "MMM dd") : format(new Date(), "MMM dd")}` : "Today's operational issues"}
+            Today's operational issues
           </p>
         </CardHeader>
         <CardContent className="flex-grow flex flex-col items-center justify-center relative p-4 pt-0">
@@ -148,7 +142,7 @@ const IssuesCard: React.FC<IssuesCardProps> = ({ dateRange }) => {
       <DailyIssuesDialog
         isOpen={isDailyIssuesDialogOpen}
         onClose={() => setIsDailyIssuesDialogOpen(false)}
-        dateRange={dateRange}
+        dateRange={undefined} // Pass undefined as dateRange is no longer used for filtering
       />
     </>
   );

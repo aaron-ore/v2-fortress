@@ -10,10 +10,10 @@ import { DateRange } from "react-day-picker";
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface LiveInformationAreaChartCardProps {
-  dateRange: DateRange | undefined;
+  // Removed dateRange prop
 }
 
-const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> = ({ dateRange }) => {
+const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> = () => {
   const { orders } = useOrders();
   const { stockMovements } = useStockMovement();
 
@@ -21,9 +21,9 @@ const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> 
     const dataPoints = [];
     const today = new Date();
 
-    // Use the dateRange directly, as it's now guaranteed to be sanitized by DateRangePicker
-    const effectiveFrom = dateRange?.from && isValid(dateRange.from) ? dateRange.from : subDays(today, 6);
-    const effectiveTo = dateRange?.to && isValid(dateRange.to) ? dateRange.to : today;
+    // Default to last 7 days
+    const effectiveFrom = subDays(today, 6);
+    const effectiveTo = today;
 
     let startDate = startOfDay(effectiveFrom);
     let endDate = endOfDay(effectiveTo);
@@ -75,7 +75,7 @@ const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> 
         "Total Daily Activity": totalDailyActivity,
       };
     });
-  }, [orders, stockMovements, dateRange]);
+  }, [orders, stockMovements]); // Removed dateRange from dependencies
 
   return (
     <Card className="bg-card border-border rounded-lg shadow-sm p-4 flex flex-col h-[310px]">
