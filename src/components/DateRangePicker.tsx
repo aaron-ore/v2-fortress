@@ -13,6 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useIsMobile } from "@/hooks/use-mobile"; // Import useIsMobile
 
 interface DateRangePickerProps extends React.HTMLAttributes<HTMLDivElement> {
   dateRange: DateRange | undefined;
@@ -27,6 +28,7 @@ export function DateRangePicker({
   align = "start",
   className,
 }: DateRangePickerProps) {
+  const isMobile = useIsMobile(); // Use the hook
 
   // Internal handler to sanitize the range received from react-day-picker
   const handleInternalDateRangeChange = (newRange: DateRange | undefined) => {
@@ -103,7 +105,8 @@ export function DateRangePicker({
                 format(calendarSelected.from, "LLL dd, y")
               )
             ) : (
-              <span>Pick a date range</span>
+              // Conditionally render "Pick a date range" based on isMobile
+              !isMobile && <span>Pick a date range</span>
             )}
           </Button>
         </PopoverTrigger>
