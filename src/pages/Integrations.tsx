@@ -7,12 +7,54 @@ import { Plug, CheckCircle, RefreshCw, AlertTriangle, Loader2 } from "lucide-rea
 import { useProfile } from "@/context/ProfileContext";
 import { showError, showSuccess } from "@/utils/toast";
 import { supabase } from "@/lib/supabaseClient";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const Integrations: React.FC = () => {
   const { profile, isLoadingProfile, fetchProfile } = useProfile();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isSyncingQuickBooks, setIsSyncingQuickBooks] = useState(false);
+  const [isSyncingShopify, setIsSyncingShopify] = useState(false); // NEW: State for Shopify sync loading
+
+  // Ref to prevent re-processing URL parameters on re-renders
+  const qbCallbackProcessedRef = React.useRef(false);
+  const shopifyCallbackProcessedRef = React.useRef(false); // NEW: Ref for Shopify callback
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const quickbooksSuccess = params.get('quickbooks_success');
+    const quickbooksError = params.get('quickbooks_error');
+    const shopifySuccess = params.get('shopify_success'); // NEW: Get Shopify success param
+    const shopifyError = params.get('shopify_error');     // NEW: Get Shopify error param
+
+    // Handle QuickBooks callback
+    if ((quickbooksSuccess || quickbooksError) && !qbCallbackProcessedRef.current) {
+      if (quickbooksSuccess) {
+        showSuccess("QuickBooks connected successfully!");
+        supabase.auth.refreshSession().then(() => {
+          fetchProfile();
+        });
+      } else if (quickbooksError) {
+        showError(`QuickBooks connection failed: ${quickbooksError}`);
+      }
+      qbCallbackProcessedRef.current = true;
+      navigate(location.pathname, { replace: true }); // Clear URL params
+    }
+
+    // NEW: Handle Shopify callback
+    if ((shopifySuccess || shopifyError) && !shopifyCallbackProcessedRef.current) {
+      if (shopifySuccess) {
+        showSuccess("Shopify connected successfully!");
+        supabase.auth.refreshSession().then(() => {
+          fetchProfile();
+        });
+      } else if (shopifyError) {
+        showError(`Shopify connection failed: ${shopifyError}`);
+      }
+      shopifyCallbackProcessedRef.current = true;
+      navigate(location.pathname, { replace: true }); // Clear URL params
+    }
+  }, [location.search, location.pathname, navigate, fetchProfile]);
 
   const handleConnectQuickBooks = () => {
     if (!profile?.id) {
@@ -105,7 +147,107 @@ const Integrations: React.FC = () => {
     }
   };
 
+  // NEW: Shopify Integration Handlers
+  const handleConnectShopify = () => {
+    if (!profile?.id) {
+      showError("You must be logged in to connect to Shopify.");
+      return;
+    }
+
+    const clientId = import.meta.env.VITE_SHOPIFY_CLIENT_ID;
+    const shopifyStoreName = prompt("Please enter your Shopify store name (e.g., your-store.myshopify.com):");
+
+    if (!shopifyStoreName) {
+      showError("Shopify store name is required to connect.");
+      return;
+    }
+
+    if (!clientId) {
+      showError("Shopify Client ID is not configured. Please add VITE_SHOPIFY_CLIENT_ID to your .env file.");
+      return;
+    }
+
+    const redirectUri = `https://nojumocxivfjsbqnnkqe.supabase.co/functions/v1/shopify-oauth-callback`;
+    
+    // Define the required Shopify scopes
+    const scopes = [
+      "read_products",
+      "write_products",
+      "read_orders",
+      "write_orders",
+      "read_customers",
+      "write_customers",
+      "read_fulfillments",
+      "write_fulfillments",
+      "read_inventory",
+      "write_inventory",
+    ];
+    const scope = scopes.join(',');
+    
+    const statePayload = {
+      userId: profile.id,
+      redirectToFrontend: window.location.origin,
+    };
+    const encodedState = btoa(JSON.stringify(statePayload));
+
+    const authUrl = `https://${shopifyStoreName}/admin/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodedState}`;
+    
+    window.location.href = authUrl;
+  };
+
+  const handleDisconnectShopify = async () => {
+    if (!profile?.organizationId || !profile?.shopifyAccessToken) {
+      showError("Not connected to Shopify.");
+      return;
+    }
+
+    try {
+      const { error: updateError } = await supabase
+        .from('organizations')
+        .update({ shopify_access_token: null, shopify_refresh_token: null, shopify_store_name: null })
+        .eq('id', profile.organizationId);
+      
+      if (updateError) throw updateError;
+
+      await fetchProfile(); // Refresh profile to update Shopify connection status
+      showSuccess("Disconnected from Shopify.");
+    } catch (error: any) {
+      console.error("Error disconnecting Shopify:", error);
+      showError(`Failed to disconnect from Shopify: ${error.message}`);
+    }
+  };
+
+  const handleSyncShopifyProducts = async () => {
+    if (!profile?.shopifyAccessToken || !profile?.shopifyStoreName) {
+      showError("Shopify is not connected. Please connect your Shopify store first.");
+      return;
+    }
+    setIsSyncingShopify(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        showError("You must be logged in to sync with Shopify.");
+        return;
+      }
+
+      // Placeholder for actual Shopify sync logic (e.g., another Edge Function)
+      // For now, just simulate a sync
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      showSuccess("Shopify product sync initiated (placeholder).");
+      console.log("Simulating Shopify product sync for store:", profile.shopifyStoreName);
+
+    } catch (error: any) {
+      console.error("Error syncing Shopify products:", error);
+      showError(`Failed to sync Shopify products: ${error.message}`);
+    } finally {
+      setIsSyncingShopify(false);
+    }
+  };
+
   const isQuickBooksConnected = profile?.quickbooksAccessToken && profile?.quickbooksRefreshToken && profile?.quickbooksRealmId;
+  const isShopifyConnected = profile?.shopifyAccessToken && profile?.shopifyStoreName; // NEW: Check Shopify connection status
+  const isAdmin = profile?.role === 'admin';
 
   if (isLoadingProfile) {
     return (
@@ -176,6 +318,61 @@ const Integrations: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* NEW: Shopify Integration Card */}
+      <Card className="bg-card border-border rounded-lg shadow-sm p-6">
+        <CardHeader className="pb-4 flex flex-row items-center gap-4">
+          <img src="/Shopify_logo.png" alt="Shopify Logo" className="h-10 object-contain" />
+          <CardTitle className="text-xl font-semibold">Shopify</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {isShopifyConnected ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-green-500 font-semibold">
+                <CheckCircle className="inline h-4 w-4 mr-2" /> Connected to Shopify Store: {profile?.shopifyStoreName}!
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Your Fortress account is linked with Shopify. You can now synchronize product data.
+              </p>
+              <Button onClick={handleSyncShopifyProducts} disabled={isSyncingShopify}>
+                {isSyncingShopify ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Syncing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" /> Sync Products from Shopify
+                  </>
+                )}
+              </Button>
+              <Button variant="destructive" onClick={handleDisconnectShopify}>
+                Disconnect Shopify
+              </m>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <p className="text-muted-foreground">
+                Connect your Shopify store to import products and synchronize inventory levels.
+              </p>
+              <Button onClick={handleConnectShopify} disabled={!profile?.id}>
+                Connect to Shopify
+              </Button>
+              {!profile?.id && (
+                <p className="text-sm text-red-500">
+                  Please log in to connect to Shopify.
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground mt-2">
+                <AlertTriangle className="inline h-3 w-3 mr-1" />
+                **Important:** Ensure the following `redirect_uri` is registered in your Shopify Partner Dashboard application settings:
+                <code className="block bg-muted/20 p-1 rounded-sm mt-1 text-xs font-mono break-all">
+                  https://nojumocxivfjsbqnnkqe.supabase.co/functions/v1/shopify-oauth-callback
+                </code>
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Future Integrations Placeholder */}
       <Card className="bg-card border-border rounded-lg shadow-sm p-6">
         <CardHeader className="pb-4 flex flex-row items-center gap-4">
@@ -188,7 +385,6 @@ const Integrations: React.FC = () => {
             Stay tuned for updates!
           </p>
           <ul className="list-disc list-inside text-muted-foreground mt-4 space-y-1">
-            <li>Shopify</li>
             <li>Amazon Seller Central</li>
             <li>Stripe</li>
             <li>And more...</li>
