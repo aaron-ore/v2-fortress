@@ -1,5 +1,6 @@
 import React from "react";
 import { format, isValid } from "date-fns"; // Import isValid
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface PutawayLabelPdfContentProps {
   itemName: string;
@@ -24,7 +25,7 @@ const PutawayLabelPdfContent: React.FC<PutawayLabelPdfContentProps> = ({
   qrCodeSvg,
   printDate,
 }) => {
-  const expirationDateObj = expirationDate ? new Date(expirationDate) : null;
+  const expirationDateObj = expirationDate ? parseAndValidateDate(expirationDate) : null;
 
   return (
     <div className="bg-white text-gray-900 font-sans text-xs p-2 w-[50mm] h-[50mm] border border-black flex flex-col overflow-hidden">
@@ -49,7 +50,7 @@ const PutawayLabelPdfContent: React.FC<PutawayLabelPdfContentProps> = ({
             <span className="font-bold">Lot:</span> {lotNumber}
           </div>
         )}
-        {expirationDateObj && isValid(expirationDateObj) && (
+        {expirationDateObj && (
           <div>
             <span className="font-bold">Exp:</span> {format(expirationDateObj, "MM/yy")}
           </div>
@@ -66,7 +67,7 @@ const PutawayLabelPdfContent: React.FC<PutawayLabelPdfContentProps> = ({
 
       {/* Footer Date */}
       <div className="text-right text-[0.5rem] mt-1 flex-shrink-0">
-        Date: {printDate}
+        Date: {parseAndValidateDate(printDate) ? format(parseAndValidateDate(printDate)!, "MMM dd, yyyy HH:mm") : "N/A"}
       </div>
     </div>
   );

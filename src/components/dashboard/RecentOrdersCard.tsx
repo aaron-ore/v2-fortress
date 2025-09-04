@@ -2,9 +2,10 @@ import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Receipt } from "lucide-react";
-import { useOrders } from "@/context/OrdersContext";
 import { formatDistanceToNowStrict, isValid } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area"; // Import ScrollArea
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
+import { useOrders } from "@/context/OrdersContext"; // Ensure useOrders is imported
 
 const RecentOrdersCard: React.FC = () => {
   const { orders } = useOrders();
@@ -13,10 +14,10 @@ const RecentOrdersCard: React.FC = () => {
     return orders
       .filter(order => order.type === "Sales")
       .sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
+        const dateA = parseAndValidateDate(a.date);
+        const dateB = parseAndValidateDate(b.date);
         // Ensure dates are valid before comparison
-        if (!isValid(dateA) || !isValid(dateB)) return 0; 
+        if (!dateA || !dateB) return 0; 
         return dateB.getTime() - dateA.getTime();
       })
       .slice(0, 3);
@@ -26,10 +27,10 @@ const RecentOrdersCard: React.FC = () => {
     return orders
       .filter(order => order.type === "Purchase")
       .sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
+        const dateA = parseAndValidateDate(a.date);
+        const dateB = parseAndValidateDate(b.date);
         // Ensure dates are valid before comparison
-        if (!isValid(dateA) || !isValid(dateB)) return 0; 
+        if (!dateA || !dateB) return 0; 
         return dateB.getTime() - dateA.getTime();
       })
       .slice(0, 3);
@@ -52,12 +53,12 @@ const RecentOrdersCard: React.FC = () => {
               <ScrollArea className="h-[120px] rounded-md border p-2"> {/* Added ScrollArea */}
                 <ul className="text-sm space-y-2">
                   {recentSalesOrders.map((order) => {
-                    const orderDate = new Date(order.date);
+                    const orderDate = parseAndValidateDate(order.date);
                     return (
                       <li key={order.id} className="flex justify-between items-center">
                         <span>{order.id} - {order.customerSupplier}</span>
                         <span className="text-muted-foreground text-xs">
-                          {isValid(orderDate) ? formatDistanceToNowStrict(orderDate, { addSuffix: true }) : "N/A"}
+                          {orderDate ? formatDistanceToNowStrict(orderDate, { addSuffix: true }) : "N/A"}
                         </span>
                       </li>
                     );
@@ -73,12 +74,12 @@ const RecentOrdersCard: React.FC = () => {
               <ScrollArea className="h-[120px] rounded-md border p-2"> {/* Added ScrollArea */}
                 <ul className="text-sm space-y-2">
                   {recentPurchaseOrders.map((order) => {
-                    const orderDate = new Date(order.date);
+                    const orderDate = parseAndValidateDate(order.date);
                     return (
                       <li key={order.id} className="flex justify-between items-center">
                         <span>{order.id} - {order.customerSupplier}</span>
                         <span className="text-muted-foreground text-xs">
-                          {isValid(orderDate) ? formatDistanceToNowStrict(orderDate, { addSuffix: true }) : "N/A"}
+                          {orderDate ? formatDistanceToNowStrict(orderDate, { addSuffix: true }) : "N/A"}
                         </span>
                       </li>
                     );

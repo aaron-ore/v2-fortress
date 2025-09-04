@@ -7,6 +7,7 @@ import SupplierInfoDialog from "@/components/SupplierInfoDialog";
 import { useNotifications } from "@/context/NotificationContext";
 import { useInventory } from "@/context/InventoryContext";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 const LowStockAlertsCard: React.FC = () => {
   const { addNotification } = useNotifications();

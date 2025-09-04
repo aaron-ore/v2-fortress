@@ -23,7 +23,7 @@ import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAn
 interface StockDiscrepancyDetailsDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  // Removed dateRange prop
+  dateRange: DateRange | undefined;
 }
 
 interface DiscrepancyLog {
@@ -42,7 +42,7 @@ interface DiscrepancyLog {
   status: string;
 }
 
-const StockDiscrepancyDetailsDialog: React.FC<StockDiscrepancyDetailsDialogProps> = ({ isOpen, onClose }) => {
+const StockDiscrepancyDetailsDialog: React.FC<StockDiscrepancyDetailsDialogProps> = ({ isOpen, onClose, dateRange }) => {
   const { profile, allProfiles, fetchAllProfiles } = useProfile();
   const [discrepancies, setDiscrepancies] = useState<DiscrepancyLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,8 +64,8 @@ const StockDiscrepancyDetailsDialog: React.FC<StockDiscrepancyDetailsDialogProps
       .order('timestamp', { ascending: false });
 
     const today = new Date();
-    const filterFrom = startOfDay(today);
-    const filterTo = endOfDay(today);
+    const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : startOfDay(today);
+    const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : endOfDay(today);
 
     query = query.gte('timestamp', filterFrom.toISOString()).lte('timestamp', filterTo.toISOString());
 
@@ -102,7 +102,7 @@ const StockDiscrepancyDetailsDialog: React.FC<StockDiscrepancyDetailsDialogProps
       fetchDiscrepancies();
       fetchAllProfiles(); // Ensure all profiles are fetched to map user IDs to names
     }
-  }, [isOpen, profile?.organizationId, fetchAllProfiles]); // Removed dateRange from dependencies
+  }, [isOpen, profile?.organizationId, fetchAllProfiles, dateRange]);
 
   const getUserName = (userId: string) => {
     const user = allProfiles.find(p => p.id === userId);
@@ -111,7 +111,14 @@ const StockDiscrepancyDetailsDialog: React.FC<StockDiscrepancyDetailsDialogProps
 
   const getDisplayDateRange = () => {
     const today = new Date();
-    return format(today, "MMM dd, yyyy");
+    const filterFrom = dateRange?.from && isValid(dateRange.from) ? dateRange.from : today;
+    const filterTo = dateRange?.to && isValid(dateRange.to) ? dateRange.to : today;
+
+    if (format(filterFrom, "yyyy-MM-dd") === format(filterTo, "yyyy-MM-dd")) {
+      return format(filterFrom, "MMM dd, yyyy");
+    } else {
+      return `${format(filterFrom, "MMM dd, yyyy")} - ${format(filterTo, "MMM dd, yyyy")}`;
+    }
   };
 
   const handleResolveClick = (discrepancy: DiscrepancyLog) => {

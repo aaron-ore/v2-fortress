@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { useOrders } from "@/context/OrdersContext";
 import { format, subDays, isValid } from "date-fns"; // Import isValid
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 const WeeklyRevenueBarChart: React.FC = () => {
   const { orders } = useOrders();
@@ -25,8 +26,8 @@ const WeeklyRevenueBarChart: React.FC = () => {
 
     // Populate "This Week" revenue from actual sales orders
     orders.filter(order => order.type === "Sales").forEach(order => {
-      const orderDate = new Date(order.date);
-      if (!isValid(orderDate)) return; // Skip invalid dates
+      const orderDate = parseAndValidateDate(order.date);
+      if (!orderDate) return; // Skip invalid dates
 
       const diffDays = Math.floor((today.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
 

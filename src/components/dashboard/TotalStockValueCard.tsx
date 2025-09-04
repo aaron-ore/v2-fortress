@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, ArrowUp, ArrowDown } from "lucide-react";
 import MiniTrendChart from "@/components/dashboard/MiniTrendChart";
 import { useInventory } from "@/context/InventoryContext";
+import { format, subMonths, isValid } from "date-fns"; // NEW: Import format, subMonths, isValid
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 const TotalStockValueCard: React.FC = () => {
   const { inventoryItems } = useInventory();
@@ -32,8 +34,8 @@ const TotalStockValueCard: React.FC = () => {
     const currentMonthIndex = new Date().getMonth();
 
     for (let i = 0; i < 6; i++) {
-      const monthIndex = (currentMonthIndex - 5 + i + 12) % 12; // Get last 6 months
-      const monthName = months[monthIndex];
+      const month = subMonths(new Date(), 5 - i); // Get the actual month for the data point
+      const monthName = format(month, "MMM");
       
       // Simulate stock value for each month, with current month being actual totalStockValue
       let simulatedValue;

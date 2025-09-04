@@ -1,5 +1,6 @@
 import React from "react";
 import { format, isValid } from "date-fns"; // Import isValid
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface InvoiceItem {
   id: number;
@@ -49,8 +50,8 @@ const InvoicePdfContent: React.FC<InvoicePdfContentProps> = ({
   const taxAmount = subtotal * taxRate;
   const totalAmount = subtotal + taxAmount;
 
-  const invoiceDateObj = new Date(invoiceDate);
-  const dueDateObj = new Date(dueDate);
+  const invoiceDateObj = parseAndValidateDate(invoiceDate);
+  const dueDateObj = parseAndValidateDate(dueDate);
 
   return (
     <div className="bg-white text-gray-900 font-sans text-sm p-[20mm]"> {/* Changed padding to 20mm */}
@@ -67,7 +68,7 @@ const InvoicePdfContent: React.FC<InvoicePdfContentProps> = ({
           </h1>
         </div>
         <div className="text-right">
-          <p className="text-sm font-semibold">DATE: {isValid(invoiceDateObj) ? format(invoiceDateObj, "MMM dd, yyyy") : "N/A"}</p>
+          <p className="text-sm font-semibold">DATE: {invoiceDateObj ? format(invoiceDateObj, "MMM dd, yyyy") : "N/A"}</p>
           <p className="text-sm font-semibold">INVOICE #: {invoiceNumber}</p>
           {invoiceQrCodeSvg && ( // NEW: Display QR code here
             <div className="mt-2 flex justify-end">
@@ -110,7 +111,7 @@ const InvoicePdfContent: React.FC<InvoicePdfContentProps> = ({
         <div>
           <p className="font-bold mb-2">DUE:</p>
           <div className="bg-gray-50 p-3 border border-gray-200 rounded">
-            <p>{isValid(dueDateObj) ? format(dueDateObj, "MMM dd, yyyy") : "N/A"}</p>
+            <p>{dueDateObj ? format(dueDateObj, "MMM dd, yyyy") : "N/A"}</p>
           </div>
         </div>
       </div>

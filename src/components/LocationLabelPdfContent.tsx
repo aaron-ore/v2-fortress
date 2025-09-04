@@ -1,5 +1,6 @@
 import React from "react";
 import { format } from "date-fns";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface LocationLabelPdfContentProps {
   area: string;
@@ -58,7 +59,7 @@ const LocationLabelPdfContent: React.FC<LocationLabelPdfContentProps> = ({
 
       {/* Footer */}
       <div className="flex-shrink-0 text-right text-[0.5rem] text-gray-500 mt-1">
-        Printed: {printDate}
+        Printed: {parseAndValidateDate(printDate) ? format(parseAndValidateDate(printDate)!, "MMM dd, yyyy HH:mm") : "N/A"}
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import React from "react";
 import { format, isValid } from "date-fns"; // Import isValid
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface POItem {
   id: number;
@@ -49,8 +50,8 @@ const PurchaseOrderPdfContent: React.FC<PurchaseOrderPdfContentProps> = ({
   const taxAmount = subtotal * taxRate;
   const totalAmount = subtotal + taxAmount;
 
-  const poDateObj = new Date(poDate);
-  const dueDateObj = new Date(dueDate);
+  const poDateObj = parseAndValidateDate(poDate);
+  const dueDateObj = parseAndValidateDate(dueDate);
 
   return (
     <div className="bg-white text-gray-900 font-sans text-sm p-[20mm]"> {/* Changed padding to 20mm */}
@@ -67,7 +68,7 @@ const PurchaseOrderPdfContent: React.FC<PurchaseOrderPdfContentProps> = ({
           </h1>
         </div>
         <div className="text-right">
-          <p className="text-sm font-semibold">DATE: {isValid(poDateObj) ? format(poDateObj, "MMM dd, yyyy") : "N/A"}</p>
+          <p className="text-sm font-semibold">DATE: {poDateObj ? format(poDateObj, "MMM dd, yyyy") : "N/A"}</p>
           <p className="text-sm font-semibold">PO: {poNumber}</p>
           {poQrCodeSvg && ( // NEW: Display QR code here
             <div className="mt-2 flex justify-end">
@@ -110,7 +111,7 @@ const PurchaseOrderPdfContent: React.FC<PurchaseOrderPdfContentProps> = ({
         <div>
           <p className="font-bold mb-2">DUE:</p>
           <div className="bg-gray-50 p-3 border border-gray-200 rounded">
-            <p>{isValid(dueDateObj) ? format(dueDateObj, "MMM dd, yyyy") : "N/A"}</p>
+            <p>{dueDateObj ? format(dueDateObj, "MMM dd, yyyy") : "N/A"}</p>
           </div>
         </div>
       </div>

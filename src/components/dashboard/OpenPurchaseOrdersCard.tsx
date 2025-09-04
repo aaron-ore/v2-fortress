@@ -4,6 +4,7 @@ import { ShoppingBag } from "lucide-react";
 import { useOrders } from "@/context/OrdersContext";
 import { format, isValid } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 const OpenPurchaseOrdersCard: React.FC = () => {
   const { orders } = useOrders();
@@ -12,9 +13,9 @@ const OpenPurchaseOrdersCard: React.FC = () => {
     return orders
       .filter(order => order.type === "Purchase" && order.status !== "Shipped" && order.status !== "Archived")
       .sort((a, b) => {
-        const dateA = new Date(a.dueDate);
-        const dateB = new Date(b.dueDate);
-        if (!isValid(dateA) || !isValid(dateB)) return 0;
+        const dateA = parseAndValidateDate(a.dueDate);
+        const dateB = parseAndValidateDate(b.dueDate);
+        if (!dateA || !dateB) return 0;
         return dateA.getTime() - dateB.getTime(); // Sort by earliest due date first
       })
       .slice(0, 5); // Show top 5
@@ -31,12 +32,12 @@ const OpenPurchaseOrdersCard: React.FC = () => {
           <ScrollArea className="flex-grow max-h-[180px] pr-2">
             <ul className="text-sm space-y-2">
               {openPurchaseOrders.map((po) => {
-                const dueDate = new Date(po.dueDate);
+                const dueDate = parseAndValidateDate(po.dueDate);
                 return (
                   <li key={po.id} className="flex justify-between items-center">
                     <span>{po.id} - {po.customerSupplier}</span>
                     <span className="text-muted-foreground text-xs">
-                      Due: {isValid(dueDate) ? format(dueDate, "MMM dd") : "N/A"}
+                      Due: {dueDate ? format(dueDate, "MMM dd") : "N/A"}
                     </span>
                   </li>
                 );

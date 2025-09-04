@@ -4,6 +4,7 @@ import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
 import { useInventory } from "@/context/InventoryContext"; // Corrected import path
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 const TopSellingProductsCard: React.FC = () => {
   const { inventoryItems } = useInventory();

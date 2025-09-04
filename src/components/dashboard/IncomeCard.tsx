@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 import { ArrowUp } from "lucide-react";
 import { useOrders } from "@/context/OrdersContext";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 const IncomeCard: React.FC = () => {
   const { orders } = useOrders();

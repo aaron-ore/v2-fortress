@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { TrendingUp, Lightbulb } from "lucide-react";
 import { useOrders } from "@/context/OrdersContext";
 import { format, subMonths, isValid } from "date-fns";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 const DemandForecastCard: React.FC = () => {
   const { orders } = useOrders();
@@ -22,8 +23,8 @@ const DemandForecastCard: React.FC = () => {
     }
 
     orders.filter(order => order.type === "Sales").forEach(order => {
-      const orderDate = new Date(order.date);
-      if (!isValid(orderDate)) return;
+      const orderDate = parseAndValidateDate(order.date);
+      if (!orderDate) return;
       const monthKey = format(orderDate, "MMM yyyy");
       if (historicalSales.hasOwnProperty(monthKey)) {
         historicalSales[monthKey] += order.totalAmount;
@@ -32,11 +33,16 @@ const DemandForecastCard: React.FC = () => {
 
     // Prepare data for the chart: last 6 months historical + next 3 months forecast
     const chartData = [];
-    const historicalKeys = Object.keys(historicalSales).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+    const historicalKeys = Object.keys(historicalSales).sort((a, b) => {
+      const dateA = parseAndValidateDate(a);
+      const dateB = parseAndValidateDate(b);
+      if (!dateA || !dateB) return 0;
+      return dateA.getTime() - dateB.getTime();
+    });
 
     historicalKeys.forEach(monthKey => {
       chartData.push({
-        name: format(new Date(monthKey), "MMM"),
+        name: format(parseAndValidateDate(monthKey)!, "MMM"),
         "Actual Sales": parseFloat(historicalSales[monthKey].toFixed(2)),
         "Projected Demand": null, // No projection for historical data
       });

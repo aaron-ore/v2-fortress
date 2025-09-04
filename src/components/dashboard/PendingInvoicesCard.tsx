@@ -4,6 +4,7 @@ import { ReceiptText } from "lucide-react";
 import { useOrders } from "@/context/OrdersContext";
 import { format, isValid, isPast, subDays } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 const PendingInvoicesCard: React.FC = () => {
   const { orders } = useOrders();
@@ -11,20 +12,21 @@ const PendingInvoicesCard: React.FC = () => {
   const pendingInvoices = useMemo(() => {
     const thirtyDaysAgo = subDays(new Date(), 30);
     return orders
-      .filter(order =>
-        order.type === "Sales" &&
-        order.status !== "Shipped" &&
-        order.status !== "Archived" &&
-        order.status !== "Packed" &&
-        isValid(new Date(order.dueDate)) && // Ensure dueDate is valid
-        isPast(new Date(order.dueDate)) &&
-        new Date(order.dueDate) < thirtyDaysAgo // More than 30 days late
-      )
+      .filter(order => {
+        const orderDueDate = parseAndValidateDate(order.dueDate);
+        return (
+          order.type === "Sales" &&
+          order.status !== "Shipped" &&
+          order.status !== "Archived" &&
+          order.status !== "Packed" &&
+          orderDueDate && isPast(orderDueDate) &&
+          orderDueDate < thirtyDaysAgo // More than 30 days late
+        );
+      })
       .sort((a, b) => {
-        const dateA = new Date(a.dueDate);
-        const dateB = new Date(b.dueDate);
-        // Ensure dates are valid before comparison
-        if (!isValid(dateA) || !isValid(dateB)) return 0;
+        const dateA = parseAndValidateDate(a.dueDate);
+        const dateB = parseAndValidateDate(b.dueDate);
+        if (!dateA || !dateB) return 0;
         return dateA.getTime() - dateB.getTime(); // Sort by earliest due date first
       })
       .slice(0, 5); // Show top 5
@@ -41,12 +43,12 @@ const PendingInvoicesCard: React.FC = () => {
           <ScrollArea className="flex-grow max-h-[180px] pr-2">
             <ul className="text-sm space-y-2">
               {pendingInvoices.map((invoice) => {
-                const dueDate = new Date(invoice.dueDate);
+                const dueDate = parseAndValidateDate(invoice.dueDate);
                 return (
                   <li key={invoice.id} className="flex justify-between items-center text-destructive">
                     <span>{invoice.id} - {invoice.customerSupplier}</span>
                     <span className="text-xs">
-                      Due: {isValid(dueDate) ? format(dueDate, "MMM dd") : "N/A"}
+                      Due: {dueDate ? format(dueDate, "MMM dd") : "N/A"}
                     </span>
                   </li>
                 );

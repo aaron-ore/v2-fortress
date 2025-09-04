@@ -4,6 +4,7 @@ import { Truck } from "lucide-react";
 import { useOrders } from "@/context/OrdersContext";
 import { format, isValid } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 const RecentShipmentsCard: React.FC = () => {
   const { orders } = useOrders();
@@ -12,10 +13,9 @@ const RecentShipmentsCard: React.FC = () => {
     return orders
       .filter(order => order.type === "Sales" && order.status === "Shipped")
       .sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        // Ensure dates are valid before comparison
-        if (!isValid(dateA) || !isValid(dateB)) return 0;
+        const dateA = parseAndValidateDate(a.date);
+        const dateB = parseAndValidateDate(b.date);
+        if (!dateA || !dateB) return 0;
         return dateB.getTime() - dateA.getTime(); // Sort by most recent first
       })
       .slice(0, 5); // Show top 5
@@ -32,12 +32,12 @@ const RecentShipmentsCard: React.FC = () => {
           <ScrollArea className="flex-grow max-h-[180px] pr-2">
             <ul className="text-sm space-y-2">
               {recentShipments.map((shipment) => {
-                const shipDate = new Date(shipment.date);
+                const shipDate = parseAndValidateDate(shipment.date);
                 return (
                   <li key={shipment.id} className="flex justify-between items-center">
                     <span>{shipment.id} - {shipment.customerSupplier}</span>
                     <span className="text-muted-foreground text-xs">
-                      {isValid(shipDate) ? format(shipDate, "MMM dd") : "N/A"}
+                      {shipDate ? format(shipDate, "MMM dd") : "N/A"}
                     </span>
                   </li>
                 );

@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { useOrders } from "@/context/OrdersContext";
 import { format, subMonths, isValid } from "date-fns"; // Import isValid
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 const SalesOverviewChart: React.FC = () => {
   const { orders } = useOrders();
@@ -23,8 +24,8 @@ const SalesOverviewChart: React.FC = () => {
     const monthlySales: { [key: string]: { revenue: number; units: number } } = {};
 
     orders.filter(order => order.type === "Sales").forEach(order => {
-      const orderDate = new Date(order.date);
-      if (!isValid(orderDate)) return; // Skip invalid dates
+      const orderDate = parseAndValidateDate(order.date);
+      if (!orderDate) return; // Skip invalid dates
 
       const monthKey = format(orderDate, "MMM"); // e.g., "Jan"
 

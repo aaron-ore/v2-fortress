@@ -7,6 +7,7 @@ import { useInventory } from "@/context/InventoryContext";
 import { useOrders } from "@/context/OrdersContext";
 import { showError } from "@/utils/toast";
 import { format } from "date-fns";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 const GenerateReportButton: React.FC = () => {
   const { initiatePrint } = usePrint();
@@ -33,14 +34,24 @@ const GenerateReportButton: React.FC = () => {
   const recentSalesOrders = useMemo(() => {
     return orders
       .filter(order => order.type === "Sales")
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .sort((a, b) => {
+        const dateA = parseAndValidateDate(a.date);
+        const dateB = parseAndValidateDate(b.date);
+        if (!dateA || !dateB) return 0;
+        return dateB.getTime() - dateA.getTime();
+      })
       .slice(0, 5); // Get top 5 recent sales orders
   }, [orders]);
 
   const recentPurchaseOrders = useMemo(() => {
     return orders
       .filter(order => order.type === "Purchase")
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .sort((a, b) => {
+        const dateA = parseAndValidateDate(a.date);
+        const dateB = parseAndValidateDate(b.date);
+        if (!dateA || !dateB) return 0;
+        return dateB.getTime() - dateB.getTime();
+      })
       .slice(0, 5); // Get top 5 recent purchase orders
   }, [orders]);
 
@@ -55,13 +66,13 @@ const GenerateReportButton: React.FC = () => {
       companyAddress: companyProfile.address,
       companyContact: companyProfile.currency, // Using currency as a generic contact for company
       companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
+      reportDate: format(new Date(), "MMM dd, yyyy HH:mm"),
       totalStockValue,
       totalUnitsOnHand,
       lowStockItems,
       outOfStockItems,
       recentSalesOrders,
       recentPurchaseOrders,
-      reportDate: format(new Date(), "MMM dd, yyyy HH:mm"),
     };
 
     initiatePrint({ type: "dashboard-summary", props: reportProps });
