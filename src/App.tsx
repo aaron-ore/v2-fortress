@@ -29,7 +29,6 @@ import ResetPassword from "./pages/ResetPassword";
 import Locations from "./pages/Locations";
 import Customers from "./pages/Customers";
 import Integrations from "./pages/Integrations"; // NEW: Import Integrations page
-import { ThemeProvider } from "./components/ThemeProvider";
 import { InventoryProvider } from "./context/InventoryContext";
 import { OrdersProvider } from "./context/OrdersContext";
 import { OnboardingProvider, useOnboarding } from "./context/OnboardingContext";
@@ -56,6 +55,7 @@ import LocationLabelPdfContent from "./components/LocationLabelPdfContent";
 import PickingWavePdfContent from "./components/PickingWavePdfContent";
 import { SidebarProvider } from "./context/SidebarContext";
 import { showSuccess, showError } from "./utils/toast";
+import ThemedAppContent from "./components/ThemedAppContent"; // NEW: Import ThemedAppContent
 
 // NEW: Import all new PDF content components
 import InventoryValuationPdfContent from "./components/reports/pdf/InventoryValuationPdfContent";
@@ -125,7 +125,8 @@ const AuthenticatedApp = () => {
   );
 };
 
-const AppContent = () => {
+// Renamed AppContent to AppContentWrapper to avoid conflict with the new AppContent component
+const AppContentWrapper = () => {
   const [session, setSession] = useState<any>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const navigate = useNavigate();
@@ -278,43 +279,31 @@ const AppContent = () => {
 };
 
 const App = () => {
-  const { profile, isLoadingProfile } = useProfile(); // Access profile and isLoadingProfile
-
-  // Determine the default theme based on organization settings, fallback to 'dark'
-  const defaultTheme = useMemo(() => {
-    if (!isLoadingProfile && profile?.organizationTheme) {
-      return profile.organizationTheme;
-    }
-    return "dark";
-  }, [profile?.organizationTheme, isLoadingProfile]);
-
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme={defaultTheme}> {/* Use dynamic defaultTheme */}
-        <SonnerToaster
-          richColors
-          position="top-right"
-          duration={3000}
-          closeButton
-          toastOptions={{
-            style: {
-              minWidth: '250px',
-              maxWidth: '350px',
-            },
-          }}
-        />
-        <BrowserRouter>
-          <ProfileProvider>
-              <OnboardingProvider>
-                <PrintProvider>
-                  <TooltipProvider>
-                    <AppContent />
-                  </TooltipProvider>
-                </PrintProvider>
-              </OnboardingProvider>
-          </ProfileProvider>
-        </BrowserRouter>
-      </ThemeProvider>
+      <SonnerToaster
+        richColors
+        position="top-right"
+        duration={3000}
+        closeButton
+        toastOptions={{
+          style: {
+            minWidth: '250px',
+            maxWidth: '350px',
+          },
+        }}
+      />
+      <BrowserRouter>
+        <ProfileProvider>
+            <OnboardingProvider>
+              <PrintProvider>
+                <TooltipProvider>
+                  <ThemedAppContent /> {/* NEW: Render ThemedAppContent here */}
+                </TooltipProvider>
+              </PrintProvider>
+            </OnboardingProvider>
+        </ProfileProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };
