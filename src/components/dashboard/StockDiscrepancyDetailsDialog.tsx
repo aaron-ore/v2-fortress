@@ -15,7 +15,7 @@ import { AlertTriangle, User, Clock, MapPin, Package, CheckCircle } from "lucide
 import { supabase } from "@/lib/supabaseClient";
 import { useProfile, UserProfile } from "@/context/ProfileContext";
 import { showError, showSuccess } from "@/utils/toast";
-import { format, startOfDay, endOfDay, subDays, isValid } from "date-fns";
+import { format, startOfDay, endOfDay, isValid } from "date-fns";
 import { DateRange } from "react-day-picker";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate

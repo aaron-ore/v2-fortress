@@ -155,7 +155,7 @@ const LowStockReport: React.FC<LowStockReportProps> = ({
               </Table>
             </ScrollArea>
           ) : (
-            <p className="text-center text-muted-foreground py-8">No items found for the selected criteria.</p>
+            <p className="text-center text-muted-foreground py-8">No items found for the selected criteria. Great job!</p>
           )}
         </CardContent>
       </Card>
