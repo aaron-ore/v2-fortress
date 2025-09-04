@@ -12,7 +12,7 @@ interface LiveInformationAreaChartCardProps {
   dateRange: DateRange | undefined;
 }
 
-const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardCardProps> = ({ dateRange }) => {
+const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> = ({ dateRange }) => {
   const { orders } = useOrders();
   const { stockMovements } = useStockMovement();
 
@@ -20,9 +20,9 @@ const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardCardPro
     const dataPoints = [];
     const today = new Date();
 
-    // Use the dateRange directly, as it's now guaranteed to be sanitized by DateRangePicker
-    const effectiveFrom = dateRange?.from || subDays(today, 6);
-    const effectiveTo = dateRange?.to || today;
+    // Ensure dateRange.from and dateRange.to are valid Date objects or fall back to defaults
+    const effectiveFrom = dateRange?.from && isValid(dateRange.from) ? dateRange.from : subDays(today, 6);
+    const effectiveTo = dateRange?.to && isValid(dateRange.to) ? dateRange.to : today;
 
     let startDate = startOfDay(effectiveFrom);
     let endDate = endOfDay(effectiveTo);
