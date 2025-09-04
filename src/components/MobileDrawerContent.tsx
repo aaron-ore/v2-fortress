@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,7 @@ const MobileDrawerContent: React.FC<MobileDrawerContentProps> = ({ onLinkClick }
   const activeLinkClass = "text-primary bg-muted";
   const inactiveLinkClass = "text-muted-foreground";
 
-  const renderNavItems = (items: NavItem[], isSubItem = false) => (
+  const renderNavItems = useCallback((items: NavItem[], isSubItem = false) => (
     <div className={cn("space-y-1", isSubItem && "ml-4 border-l border-muted/30 pl-2")}>
       {items.map((item) => {
         // Refined logic for active link detection
@@ -114,7 +114,7 @@ const MobileDrawerContent: React.FC<MobileDrawerContentProps> = ({ onLinkClick }
         );
       })}
     </div>
-  );
+  ), [location.pathname, navigate, onLinkClick, unreadCount, profile]); // Dependencies for useCallback
 
   return (
     <ScrollArea className="flex-grow py-4">
