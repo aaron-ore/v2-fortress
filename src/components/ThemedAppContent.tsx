@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import { useProfile } from "@/context/ProfileContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import AppContent from "@/AppContent"; // Assuming AppContent is now a separate component
+import AppContent from "@/AppContent"; // Corrected import path
 
 const ThemedAppContent: React.FC = () => {
   const { profile, isLoadingProfile } = useProfile();
