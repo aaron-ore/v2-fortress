@@ -58,8 +58,9 @@ const DailyIssuesDialog: React.FC<DailyIssuesDialogProps> = ({ isOpen, onClose, 
           .order('timestamp', { ascending: false });
 
         const today = new Date();
-        const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : startOfDay(today);
-        const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : endOfDay(today);
+        // Use the dateRange directly, as it's now guaranteed to be sanitized by DateRangePicker
+        const filterFrom = dateRange?.from ? startOfDay(dateRange.from) : startOfDay(today);
+        const filterTo = dateRange?.to ? endOfDay(dateRange.to) : endOfDay(today);
 
         query = query.gte('timestamp', filterFrom.toISOString()).lte('timestamp', filterTo.toISOString());
 
@@ -97,8 +98,8 @@ const DailyIssuesDialog: React.FC<DailyIssuesDialogProps> = ({ isOpen, onClose, 
 
   const getDisplayDateRange = () => {
     const today = new Date();
-    const effectiveFrom = dateRange?.from && isValid(dateRange.from) ? dateRange.from : today;
-    const effectiveTo = dateRange?.to && isValid(dateRange.to) ? dateRange.to : today;
+    const effectiveFrom = dateRange?.from || today;
+    const effectiveTo = dateRange?.to || today;
 
     const from = format(effectiveFrom, "MMM dd, yyyy");
     const to = format(effectiveTo, "MMM dd, yyyy");

@@ -57,27 +57,6 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
 
   const CurrentReportComponent = reportComponents[reportId];
 
-  // Normalize dateRange to ensure 'from' and 'to' are always valid Date objects if the range is active
-  const normalizedDateRange = useMemo(() => {
-    if (!dateRange) {
-      return undefined;
-    }
-
-    const from = dateRange.from;
-    const to = dateRange.to;
-
-    const validFrom = from && isValid(from) ? from : undefined;
-    const validTo = to && isValid(to) ? to : undefined;
-
-    if (validFrom && validTo) {
-      return { from: validFrom, to: validTo };
-    }
-    if (validFrom) { // If only 'from' is valid, set 'to' to be the same
-      return { from: validFrom, to: validFrom };
-    }
-    return undefined; // If neither is valid, return undefined
-  }, [dateRange]);
-
   // Function to generate the text content of the report for AI summarization
   const generateReportTextContent = useCallback(() => {
     if (reportContentRef.current) {
@@ -224,7 +203,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
           <CardTitle className="text-xl font-semibold">Report Configuration</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-4">
-          <DateRangePicker dateRange={normalizedDateRange} onDateRangeChange={setDateRange} />
+          <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
           {dateRange?.from && isValid(dateRange.from) && ( // Only show clear button if a valid 'from' date exists
             <Button variant="outline" onClick={() => setDateRange(undefined)}>
               Clear Date Filter
@@ -236,7 +215,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId }) => {
 
       <div className="flex-grow overflow-y-auto">
         <CurrentReportComponent
-          dateRange={normalizedDateRange}
+          dateRange={dateRange}
           onGenerateReport={handleGenerateReport}
           isLoading={isLoadingReport}
           reportContentRef={reportContentRef} // Pass ref to child component

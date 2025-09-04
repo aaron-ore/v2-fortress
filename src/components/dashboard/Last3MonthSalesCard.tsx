@@ -20,9 +20,9 @@ const Last3MonthSalesCard: React.FC<Last3MonthSalesCardProps> = ({ dateRange }) 
     const today = new Date();
     const monthlyData: { [key: string]: { salesRevenue: number; newInventory: number; itemsShipped: number } } = {};
 
-    // Ensure dateRange.from and dateRange.to are valid Date objects or fall back to defaults
-    const effectiveFrom = dateRange?.from && isValid(dateRange.from) ? dateRange.from : subMonths(today, 2);
-    const effectiveTo = dateRange?.to && isValid(dateRange.to) ? dateRange.to : today;
+    // Use the dateRange directly, as it's now guaranteed to be sanitized by DateRangePicker
+    const effectiveFrom = dateRange?.from || subMonths(today, 2);
+    const effectiveTo = dateRange?.to || today;
 
     let startDate = startOfMonth(effectiveFrom);
     let endDate = endOfMonth(effectiveTo);

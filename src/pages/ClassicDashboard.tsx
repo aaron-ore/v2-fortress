@@ -29,36 +29,18 @@ const ClassicDashboard: React.FC = () => {
   const [isScanItemDialogOpen, setIsScanItemDialogOpen] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
-  // Normalize dateRange to ensure 'from' and 'to' are always valid Date objects if the range is active
-  const normalizedDateRange = useMemo(() => {
-    if (!dateRange) {
-      return undefined;
-    }
-
-    const from = dateRange.from;
-    const to = dateRange.to;
-
-    const validFrom = from && isValid(from) ? from : undefined;
-    const validTo = to && isValid(to) ? to : undefined;
-
-    if (validFrom && validTo) {
-      return { from: validFrom, to: validTo };
-    }
-    if (validFrom) { // If only 'from' is valid, set 'to' to be the same
-      return { from: validFrom, to: validFrom };
-    }
-    return undefined; // If neither is valid, return undefined
-  }, [dateRange]);
+  // The DateRangePicker now handles its own internal normalization,
+  // so we can pass the raw dateRange state directly.
 
   // Helper function to check if a date falls within the selected range
   const isDateInRange = (dateString: string) => {
     const itemDate = new Date(dateString);
     if (!isValid(itemDate)) return false; // If itemDate is invalid, it can't be in range
 
-    if (!normalizedDateRange?.from || !isValid(normalizedDateRange.from)) return true; // No valid 'from' date, so no filter applied
+    if (!dateRange?.from || !isValid(dateRange.from)) return true; // No valid 'from' date, so no filter applied
 
-    const filterFrom = startOfDay(normalizedDateRange.from);
-    const filterTo = normalizedDateRange.to && isValid(normalizedDateRange.to) ? endOfDay(normalizedDateRange.to) : endOfDay(normalizedDateRange.from);
+    const filterFrom = startOfDay(dateRange.from);
+    const filterTo = dateRange.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
 
     return itemDate >= filterFrom && itemDate <= filterTo;
   };
@@ -91,7 +73,7 @@ const ClassicDashboard: React.FC = () => {
         return dateB.getTime() - dateA.getTime();
       })
       .slice(0, 5);
-  }, [orders, normalizedDateRange, isDateInRange]); // Use normalizedDateRange here
+  }, [orders, dateRange, isDateInRange]); // Use raw dateRange here
 
   const handleCreatePO = () => navigate("/create-po");
   const handleCreateInvoice = () => navigate("/create-invoice");
@@ -105,7 +87,7 @@ const ClassicDashboard: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h1 className="text-3xl font-bold">Classic Dashboard</h1>
         <div className="flex items-center gap-4">
-          <DateRangePicker dateRange={normalizedDateRange} onDateRangeChange={setDateRange} />
+          <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
           {dateRange?.from && isValid(dateRange.from) && ( // Only show clear button if a valid 'from' date exists
             <Button variant="outline" onClick={handleClearDateFilter}>
               Clear Filter
