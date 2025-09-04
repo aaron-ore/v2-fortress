@@ -32,20 +32,15 @@ const ClassicDashboard: React.FC = () => {
 
   // Helper function to check if a date falls within the selected range
   const isDateInRange = (dateString: string) => {
-    if (!dateRange?.from) return true; // No filter applied
+    if (!dateRange?.from || !isValid(dateRange.from)) return true; // No valid 'from' date, so no filter applied
 
     const date = parseAndValidateDate(dateString);
-    if (!date) return false; // Invalid date string
+    if (!date) return false; // Invalid date string, cannot be in range
 
-    const from = dateRange.from ? startOfDay(dateRange.from) : null;
-    const to = dateRange.to ? endOfDay(dateRange.to) : (dateRange.from ? endOfDay(dateRange.from) : null);
+    const from = startOfDay(dateRange.from);
+    const to = dateRange.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : endOfDay(dateRange.from); // Ensure 'to' is valid or default to 'from'
 
-    if (from && to) {
-      return date >= from && date <= to;
-    } else if (from) {
-      return date >= from && date <= endOfDay(from);
-    }
-    return true;
+    return date >= from && date <= to;
   };
 
   // Key Metrics
@@ -89,7 +84,7 @@ const ClassicDashboard: React.FC = () => {
         <h1 className="text-3xl font-bold">Classic Dashboard</h1>
         <div className="flex items-center gap-2">
           <DateRangePicker dateRange={dateRange} onSelect={setDateRange} />
-          {dateRange?.from && (
+          {dateRange?.from && isValid(dateRange.from) && ( // Only show clear button if a valid 'from' date exists
             <Button variant="outline" onClick={handleClearDateFilter} size="icon">
               <FilterX className="h-4 w-4" />
             </Button>

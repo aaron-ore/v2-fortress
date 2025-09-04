@@ -30,8 +30,8 @@ const SalesByProductPdfContent: React.FC<SalesByProductPdfContentProps> = ({
   productSales,
   dateRange, // NEW: Destructure dateRange
 }) => {
-  const formattedDateRange = dateRange?.from && parseAndValidateDate(dateRange.from.toISOString())
-    ? `${format(parseAndValidateDate(dateRange.from.toISOString())!, "MMM dd, yyyy")} - ${dateRange.to && parseAndValidateDate(dateRange.to.toISOString()) ? format(parseAndValidateDate(dateRange.to.toISOString())!, "MMM dd, yyyy") : format(new Date(), "MMM dd, yyyy")}`
+  const formattedDateRange = (dateRange?.from && isValid(dateRange.from))
+    ? `${format(dateRange.from, "MMM dd, yyyy")} - ${dateRange.to && isValid(dateRange.to) ? format(dateRange.to, "MMM dd, yyyy") : format(dateRange.from, "MMM dd, yyyy")}`
     : "All Time";
 
   const totalOverallRevenue = productSales.reduce((sum, data) => sum + data.totalRevenue, 0);

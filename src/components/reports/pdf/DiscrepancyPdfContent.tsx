@@ -26,7 +26,7 @@ interface DiscrepancyPdfContentProps {
   companyContact: string;
   companyLogoUrl?: string;
   reportDate: string;
-  discrepancies: DiscrecrepancyLog[];
+  discrepancies: DiscrepancyLog[];
   statusFilter: "all" | "pending" | "resolved";
   dateRange?: DateRange; // NEW: Add dateRange prop
   allProfiles: UserProfile[];
@@ -43,8 +43,8 @@ const DiscrepancyPdfContent: React.FC<DiscrepancyPdfContentProps> = ({
   dateRange, // NEW: Destructure dateRange
   allProfiles,
 }) => {
-  const formattedDateRange = dateRange?.from && parseAndValidateDate(dateRange.from.toISOString())
-    ? `${format(parseAndValidateDate(dateRange.from.toISOString())!, "MMM dd, yyyy")} - ${dateRange.to && parseAndValidateDate(dateRange.to.toISOString()) ? format(parseAndValidateDate(dateRange.to.toISOString())!, "MMM dd, yyyy") : format(new Date(), "MMM dd, yyyy")}`
+  const formattedDateRange = (dateRange?.from && isValid(dateRange.from))
+    ? `${format(dateRange.from, "MMM dd, yyyy")} - ${dateRange.to && isValid(dateRange.to) ? format(dateRange.to, "MMM dd, yyyy") : format(dateRange.from, "MMM dd, yyyy")}`
     : "All Time";
 
   const reportTitle = statusFilter === "pending"
@@ -119,19 +119,22 @@ const DiscrepancyPdfContent: React.FC<DiscrepancyPdfContentProps> = ({
           </thead>
           <tbody>
             {discrepancies.length > 0 ? (
-              discrepancies.map((discrepancy) => (
-                <tr key={discrepancy.id} className="border-b border-gray-200">
-                  <td className="py-2 px-4 border-r border-gray-200">{discrepancy.itemName}</td>
-                  <td className="py-2 px-4 border-r border-gray-200">{discrepancy.locationString} ({discrepancy.locationType.replace('_', ' ')})</td>
-                  <td className="py-2 px-4 text-right border-r border-gray-200">{discrepancy.originalQuantity}</td>
-                  <td className="py-2 px-4 text-right border-r border-gray-200">{discrepancy.countedQuantity}</td>
-                  <td className="py-2 px-4 text-right border-r border-gray-200 text-red-600">{discrepancy.difference}</td>
-                  <td className="py-2 px-4 border-r border-gray-200">{discrepancy.reason}</td>
-                  <td className="py-2 px-4 border-r border-gray-200">{discrepancy.status}</td>
-                  <td className="py-2 px-4 border-r border-gray-200">{getUserName(discrepancy.userId)}</td>
-                  <td className="py-2 px-4">{parseAndValidateDate(discrepancy.timestamp) ? format(parseAndValidateDate(discrepancy.timestamp)!, "MMM dd, yyyy HH:mm") : "N/A"}</td>
-                </tr>
-              ))
+              discrepancies.map((discrepancy) => {
+                const discrepancyTimestamp = parseAndValidateDate(discrepancy.timestamp);
+                return (
+                  <tr key={discrepancy.id} className="border-b border-gray-200">
+                    <td className="py-2 px-4 border-r border-gray-200">{discrepancy.itemName}</td>
+                    <td className="py-2 px-4 border-r border-gray-200">{discrepancy.locationString} ({discrepancy.locationType.replace('_', ' ')})</td>
+                    <td className="py-2 px-4 text-right border-r border-gray-200">{discrepancy.originalQuantity}</td>
+                    <td className="py-2 px-4 text-right border-r border-gray-200">{discrepancy.countedQuantity}</td>
+                    <td className="py-2 px-4 text-right border-r border-gray-200 text-red-600">{discrepancy.difference}</td>
+                    <td className="py-2 px-4 border-r border-gray-200">{discrepancy.reason}</td>
+                    <td className="py-2 px-4 border-r border-gray-200">{discrepancy.status}</td>
+                    <td className="py-2 px-4 border-r border-gray-200">{getUserName(discrepancy.userId)}</td>
+                    <td className="py-2 px-4">{discrepancyTimestamp ? format(discrepancyTimestamp, "MMM dd, yyyy HH:mm") : "N/A"}</td>
+                  </tr>
+                );
+              })
             ) : (
               <tr className="border-b border-gray-200">
                 <td colSpan={9} className="py-2 px-4 text-center text-gray-600">No discrepancies found for this report.</td>

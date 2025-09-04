@@ -33,14 +33,14 @@ const PurchaseOrderStatusReport: React.FC<PurchaseOrderStatusReportProps> = ({
   const [currentReportData, setCurrentReportData] = useState<any>(null);
 
   const generateReport = useCallback(() => {
-    const filterFrom = dateRange?.from ? startOfDay(dateRange.from) : null;
-    const filterTo = dateRange?.to ? endOfDay(dateRange.to) : (dateRange?.from ? endOfDay(dateRange.from) : null);
+    const filterFrom = (dateRange?.from && isValid(dateRange.from)) ? startOfDay(dateRange.from) : null;
+    const filterTo = (dateRange?.to && isValid(dateRange.to)) ? endOfDay(dateRange.to) : ((dateRange?.from && isValid(dateRange.from)) ? endOfDay(dateRange.from) : null);
 
     const filteredOrders = orders.filter(order => {
       if (order.type !== "Purchase") return false;
       if (statusFilter !== "all" && order.status.toLowerCase() !== statusFilter.toLowerCase()) return false;
       const orderDate = parseAndValidateDate(order.date);
-      if (!orderDate) return false;
+      if (!orderDate || !isValid(orderDate)) return false; // Ensure valid date
       if (filterFrom && filterTo) {
         return isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
       }
@@ -149,16 +149,20 @@ const PurchaseOrderStatusReport: React.FC<PurchaseOrderStatusReportProps> = ({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {ordersToDisplay.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.id}</TableCell>
-                      <TableCell>{format(parseAndValidateDate(order.date)!, "MMM dd, yyyy")}</TableCell>
-                      <TableCell>{order.customerSupplier}</TableCell>
-                      <TableCell>{format(parseAndValidateDate(order.dueDate)!, "MMM dd, yyyy")}</TableCell>
-                      <TableCell>{order.status}</TableCell>
-                      <TableCell className="text-right">${order.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                    </TableRow>
-                  ))}
+                  {ordersToDisplay.map((order) => {
+                    const orderDate = parseAndValidateDate(order.date);
+                    const dueDate = parseAndValidateDate(order.dueDate);
+                    return (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-medium">{order.id}</TableCell>
+                        <TableCell>{order.customerSupplier}</TableCell>
+                        <TableCell>{orderDate ? format(orderDate, "MMM dd, yyyy") : "N/A"}</TableCell>
+                        <TableCell>{dueDate ? format(dueDate, "MMM dd, yyyy") : "N/A"}</TableCell>
+                        <TableCell>{order.status}</TableCell>
+                        <TableCell className="text-right">${order.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </ScrollArea>

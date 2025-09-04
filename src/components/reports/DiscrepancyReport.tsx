@@ -65,8 +65,8 @@ const DiscrepancyReport: React.FC<DiscrepancyReportProps> = ({
       query = query.eq('status', statusFilter);
     }
 
-    const filterFrom = dateRange?.from ? startOfDay(dateRange.from) : null;
-    const filterTo = dateRange?.to ? endOfDay(dateRange.to) : (dateRange?.from ? endOfDay(dateRange.from) : null);
+    const filterFrom = (dateRange?.from && isValid(dateRange.from)) ? startOfDay(dateRange.from) : null;
+    const filterTo = (dateRange?.to && isValid(dateRange.to)) ? endOfDay(dateRange.to) : ((dateRange?.from && isValid(dateRange.from)) ? endOfDay(dateRange.from) : null);
 
     if (filterFrom && filterTo) {
       query = query.gte('timestamp', filterFrom.toISOString()).lte('timestamp', filterTo.toISOString());
@@ -198,19 +198,22 @@ const DiscrepancyReport: React.FC<DiscrepancyReportProps> = ({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {itemsToDisplay.map((discrepancy) => (
-                    <TableRow key={discrepancy.id}>
-                      <TableCell className="font-medium">{discrepancy.itemName}</TableCell>
-                      <TableCell>{discrepancy.locationString} ({discrepancy.locationType.replace('_', ' ')})</TableCell>
-                      <TableCell className="text-right">{discrepancy.originalQuantity}</TableCell>
-                      <TableCell className="text-right">{discrepancy.countedQuantity}</TableCell>
-                      <TableCell className="text-right text-destructive">{discrepancy.difference}</TableCell>
-                      <TableCell>{discrepancy.reason}</TableCell>
-                      <TableCell>{discrepancy.status}</TableCell>
-                      <TableCell>{getUserName(discrepancy.userId)}</TableCell>
-                      <TableCell>{format(parseAndValidateDate(discrepancy.timestamp)!, "MMM dd, yyyy HH:mm")}</TableCell>
-                    </TableRow>
-                  ))}
+                  {itemsToDisplay.map((discrepancy) => {
+                    const discrepancyTimestamp = parseAndValidateDate(discrepancy.timestamp);
+                    return (
+                      <TableRow key={discrepancy.id}>
+                        <TableCell className="font-medium">{discrepancy.itemName}</TableCell>
+                        <TableCell>{discrepancy.locationString} ({discrepancy.locationType.replace('_', ' ')})</TableCell>
+                        <TableCell className="text-right">{discrepancy.originalQuantity}</TableCell>
+                        <TableCell className="text-right">{discrepancy.countedQuantity}</TableCell>
+                        <TableCell className="text-right text-destructive">{discrepancy.difference}</TableCell>
+                        <TableCell>{discrepancy.reason}</TableCell>
+                        <TableCell>{discrepancy.status}</TableCell>
+                        <TableCell>{getUserName(discrepancy.userId)}</TableCell>
+                        <TableCell>{discrepancyTimestamp ? format(discrepancyTimestamp, "MMM dd, yyyy HH:mm") : "N/A"}</TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </ScrollArea>

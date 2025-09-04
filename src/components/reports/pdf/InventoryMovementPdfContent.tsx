@@ -26,8 +26,8 @@ const InventoryMovementPdfContent: React.FC<InventoryMovementPdfContentProps> = 
   dateRange, // NEW: Destructure dateRange
   allProfiles,
 }) => {
-  const formattedDateRange = dateRange?.from && parseAndValidateDate(dateRange.from.toISOString())
-    ? `${format(parseAndValidateDate(dateRange.from.toISOString())!, "MMM dd, yyyy")} - ${dateRange.to && parseAndValidateDate(dateRange.to.toISOString()) ? format(parseAndValidateDate(dateRange.to.toISOString())!, "MMM dd, yyyy") : format(new Date(), "MMM dd, yyyy")}`
+  const formattedDateRange = (dateRange?.from && isValid(dateRange.from))
+    ? `${format(dateRange.from, "MMM dd, yyyy")} - ${dateRange.to && isValid(dateRange.to) ? format(dateRange.to, "MMM dd, yyyy") : format(dateRange.from, "MMM dd, yyyy")}`
     : "All Time";
 
   const getUserName = (userId: string) => {
@@ -95,18 +95,21 @@ const InventoryMovementPdfContent: React.FC<InventoryMovementPdfContentProps> = 
           </thead>
           <tbody>
             {movements.length > 0 ? (
-              movements.map((movement) => (
-                <tr key={movement.id} className="border-b border-gray-200">
-                  <td className="py-2 px-4 border-r border-gray-200">{movement.itemName}</td>
-                  <td className="py-2 px-4 border-r border-gray-200">{movement.type}</td>
-                  <td className="py-2 px-4 text-right border-r border-gray-200">{movement.amount}</td>
-                  <td className="py-2 px-4 text-right border-r border-gray-200">{movement.oldQuantity}</td>
-                  <td className="py-2 px-4 text-right border-r border-gray-200">{movement.newQuantity}</td>
-                  <td className="py-2 px-4 border-r border-gray-200">{movement.reason}</td>
-                  <td className="py-2 px-4 border-r border-gray-200">{getUserName(movement.userId)}</td>
-                  <td className="py-2 px-4">{parseAndValidateDate(movement.timestamp) ? format(parseAndValidateDate(movement.timestamp)!, "MMM dd, yyyy HH:mm") : "N/A"}</td>
-                </tr>
-              ))
+              movements.map((movement) => {
+                const movementTimestamp = parseAndValidateDate(movement.timestamp);
+                return (
+                  <tr key={movement.id} className="border-b border-gray-200">
+                    <td className="py-2 px-4 border-r border-gray-200">{movement.itemName}</td>
+                    <td className="py-2 px-4 border-r border-gray-200">{movement.type}</td>
+                    <td className="py-2 px-4 text-right border-r border-gray-200">{movement.amount}</td>
+                    <td className="py-2 px-4 text-right border-r border-gray-200">{movement.oldQuantity}</td>
+                    <td className="py-2 px-4 text-right border-r border-gray-200">{movement.newQuantity}</td>
+                    <td className="py-2 px-4 border-r border-gray-200">{movement.reason}</td>
+                    <td className="py-2 px-4 border-r border-gray-200">{getUserName(movement.userId)}</td>
+                    <td className="py-2 px-4">{movementTimestamp ? format(movementTimestamp, "MMM dd, yyyy HH:mm") : "N/A"}</td>
+                  </tr>
+                );
+              })
             ) : (
               <tr className="border-b border-gray-200">
                 <td colSpan={8} className="py-2 px-4 text-center text-gray-600">No inventory movements found for this report.</td>

@@ -39,15 +39,15 @@ const InventoryMovementReport: React.FC<InventoryMovementReportProps> = ({
     await fetchStockMovements(); // Ensure latest movements are fetched
     await fetchAllProfiles(); // Ensure user profiles are loaded for names
 
-    const filterFrom = dateRange?.from ? startOfDay(dateRange.from) : null;
-    const filterTo = dateRange?.to ? endOfDay(dateRange.to) : (dateRange?.from ? endOfDay(dateRange.from) : null);
+    const filterFrom = (dateRange?.from && isValid(dateRange.from)) ? startOfDay(dateRange.from) : null;
+    const filterTo = (dateRange?.to && isValid(dateRange.to)) ? endOfDay(dateRange.to) : ((dateRange?.from && isValid(dateRange.from)) ? endOfDay(dateRange.from) : null);
 
     const filteredMovements = stockMovements.filter(movement => {
       if (movementTypeFilter !== "all" && movement.type !== movementTypeFilter) {
         return false;
       }
       const movementTimestamp = parseAndValidateDate(movement.timestamp);
-      if (!movementTimestamp) return false;
+      if (!movementTimestamp || !isValid(movementTimestamp)) return false; // Ensure valid date
       if (filterFrom && filterTo) {
         return isWithinInterval(movementTimestamp, { start: filterFrom, end: filterTo });
       }
@@ -148,18 +148,21 @@ const InventoryMovementReport: React.FC<InventoryMovementReportProps> = ({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {movementsToDisplay.map((movement) => (
-                    <TableRow key={movement.id}>
-                      <TableCell className="font-medium">{movement.itemName}</TableCell>
-                      <TableCell>{movement.type}</TableCell>
-                      <TableCell className="text-right">{movement.amount}</TableCell>
-                      <TableCell className="text-right">{movement.oldQuantity}</TableCell>
-                      <TableCell className="text-right">{movement.newQuantity}</TableCell>
-                      <TableCell>{movement.reason}</TableCell>
-                      <TableCell>{getUserName(movement.userId)}</TableCell>
-                      <TableCell>{parseAndValidateDate(movement.timestamp) ? format(parseAndValidateDate(movement.timestamp)!, "MMM dd, HH:mm") : "N/A"}</TableCell>
-                    </TableRow>
-                  ))}
+                  {movementsToDisplay.map((movement) => {
+                    const movementTimestamp = parseAndValidateDate(movement.timestamp);
+                    return (
+                      <TableRow key={movement.id}>
+                        <TableCell className="font-medium">{movement.itemName}</TableCell>
+                        <TableCell>{movement.type}</TableCell>
+                        <TableCell className="text-right">{movement.amount}</TableCell>
+                        <TableCell className="text-right">{movement.oldQuantity}</TableCell>
+                        <TableCell className="text-right">{movement.newQuantity}</TableCell>
+                        <TableCell>{movement.reason}</TableCell>
+                        <TableCell>{getUserName(movement.userId)}</TableCell>
+                        <TableCell>{movementTimestamp ? format(movementTimestamp, "MMM dd, HH:mm") : "N/A"}</TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </ScrollArea>

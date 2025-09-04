@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { DateRangePicker } from "@/components/DateRangePicker"; // Import DateRangePicker
 import { DateRange } from "react-day-picker"; // Import DateRange
+import { isValid } from "date-fns"; // Import isValid
 
 interface ReportCategory {
   title: string;
@@ -147,7 +148,7 @@ const Reports: React.FC = () => {
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-4">
           <DateRangePicker dateRange={dateRange} onSelect={setDateRange} />
-          {dateRange?.from && (
+          {dateRange?.from && isValid(dateRange.from) && ( // Only show clear button if a valid 'from' date exists
             <Button variant="outline" onClick={handleClearDateFilter} size="icon">
               <FilterX className="h-4 w-4" />
             </Button>

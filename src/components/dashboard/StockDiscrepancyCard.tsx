@@ -36,8 +36,8 @@ const StockDiscrepancyCard: React.FC<StockDiscrepancyCardProps> = ({ dateRange }
     let previousPeriodEnd: Date;
 
     // Determine current period based on dateRange prop
-    currentPeriodStart = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : startOfDay(today);
-    currentPeriodEnd = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (dateRange?.from && isValid(dateRange.from) ? endOfDay(dateRange.from) : endOfDay(today));
+    currentPeriodStart = (dateRange?.from && isValid(dateRange.from)) ? startOfDay(dateRange.from) : startOfDay(today);
+    currentPeriodEnd = (dateRange?.to && isValid(dateRange.to)) ? endOfDay(dateRange.to) : ((dateRange?.from && isValid(dateRange.from)) ? endOfDay(dateRange.from) : endOfDay(today));
 
     const durationMs = currentPeriodEnd.getTime() - currentPeriodStart.getTime();
     previousPeriodEnd = subDays(currentPeriodStart, 1);
@@ -87,10 +87,10 @@ const StockDiscrepancyCard: React.FC<StockDiscrepancyCardProps> = ({ dateRange }
           let currentPeriodStart: Date;
           let currentPeriodEnd: Date;
 
-          currentPeriodStart = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : startOfDay(today);
-          currentPeriodEnd = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (dateRange?.from && isValid(dateRange.from) ? endOfDay(dateRange.from) : endOfDay(today));
+          currentPeriodStart = (dateRange?.from && isValid(dateRange.from)) ? startOfDay(dateRange.from) : startOfDay(today);
+          currentPeriodEnd = (dateRange?.to && isValid(dateRange.to)) ? endOfDay(dateRange.to) : ((dateRange?.from && isValid(dateRange.from)) ? endOfDay(dateRange.from) : endOfDay(today));
 
-          const isWithinCurrentPeriod = (newDiscrepancyDate && newDiscrepancyDate >= currentPeriodStart && newDiscrepancyDate <= currentPeriodEnd); // Check for null newDiscrepancyDate
+          const isWithinCurrentPeriod = (newDiscrepancyDate && isValid(newDiscrepancyDate) && newDiscrepancyDate >= currentPeriodStart && newDiscrepancyDate <= currentPeriodEnd); // Check for null newDiscrepancyDate and isValid
 
           if (isWithinCurrentPeriod) {
             setPendingDiscrepanciesCount((prev) => prev + 1);

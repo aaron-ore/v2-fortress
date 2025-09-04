@@ -25,8 +25,8 @@ const PurchaseOrderStatusPdfContent: React.FC<PurchaseOrderStatusPdfContentProps
   statusFilter,
   dateRange, // NEW: Destructure dateRange
 }) => {
-  const formattedDateRange = dateRange?.from && parseAndValidateDate(dateRange.from.toISOString())
-    ? `${format(parseAndValidateDate(dateRange.from.toISOString())!, "MMM dd, yyyy")} - ${dateRange.to && parseAndValidateDate(dateRange.to.toISOString()) ? format(parseAndValidateDate(dateRange.to.toISOString())!, "MMM dd, yyyy") : format(new Date(), "MMM dd, yyyy")}`
+  const formattedDateRange = (dateRange?.from && isValid(dateRange.from))
+    ? `${format(dateRange.from, "MMM dd, yyyy")} - ${dateRange.to && isValid(dateRange.to) ? format(dateRange.to, "MMM dd, yyyy") : format(dateRange.from, "MMM dd, yyyy")}`
     : "All Time";
 
   const reportTitle = statusFilter === "all"
@@ -100,16 +100,20 @@ const PurchaseOrderStatusPdfContent: React.FC<PurchaseOrderStatusPdfContentProps
           </thead>
           <tbody>
             {orders.length > 0 ? (
-              orders.map((order) => (
-                <tr key={order.id} className="border-b border-gray-200">
-                  <td className="py-2 px-4 border-r border-gray-200">{order.id}</td>
-                  <td className="py-2 px-4 border-r border-gray-200">{order.customerSupplier}</td>
-                  <td className="py-2 px-4 border-r border-gray-200">{parseAndValidateDate(order.date) ? format(parseAndValidateDate(order.date)!, "MMM dd, yyyy") : "N/A"}</td>
-                  <td className="py-2 px-4 border-r border-gray-200">{parseAndValidateDate(order.dueDate) ? format(parseAndValidateDate(order.dueDate)!, "MMM dd, yyyy") : "N/A"}</td>
-                  <td className="py-2 px-4 border-r border-gray-200">{order.status}</td>
-                  <td className="py-2 px-4 text-right">${order.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                </tr>
-              ))
+              orders.map((order) => {
+                const orderDate = parseAndValidateDate(order.date);
+                const dueDate = parseAndValidateDate(order.dueDate);
+                return (
+                  <tr key={order.id} className="border-b border-gray-200">
+                    <td className="py-2 px-4 border-r border-gray-200">{order.id}</td>
+                    <td className="py-2 px-4 border-r border-gray-200">{order.customerSupplier}</td>
+                    <td className="py-2 px-4 border-r border-gray-200">{orderDate ? format(orderDate, "MMM dd, yyyy") : "N/A"}</td>
+                    <td className="py-2 px-4 border-r border-gray-200">{dueDate ? format(dueDate, "MMM dd, yyyy") : "N/A"}</td>
+                    <td className="py-2 px-4 border-r border-gray-200">{order.status}</td>
+                    <td className="py-2 px-4 text-right">${order.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  </tr>
+                );
+              })
             ) : (
               <tr className="border-b border-gray-200">
                 <td colSpan={6} className="py-2 px-4 text-center text-gray-600">No purchase orders found for this report.</td>

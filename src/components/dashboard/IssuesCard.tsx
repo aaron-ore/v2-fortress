@@ -36,8 +36,8 @@ const IssuesCard: React.FC<IssuesCardProps> = ({ dateRange }) => { // NEW: Destr
     let previousPeriodEnd: Date;
 
     // Determine current period based on dateRange prop
-    currentPeriodStart = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : startOfDay(today);
-    currentPeriodEnd = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (dateRange?.from && isValid(dateRange.from) ? endOfDay(dateRange.from) : endOfDay(today));
+    currentPeriodStart = (dateRange?.from && isValid(dateRange.from)) ? startOfDay(dateRange.from) : startOfDay(today);
+    currentPeriodEnd = (dateRange?.to && isValid(dateRange.to)) ? endOfDay(dateRange.to) : ((dateRange?.from && isValid(dateRange.from)) ? endOfDay(dateRange.from) : endOfDay(today));
 
     const durationMs = currentPeriodEnd.getTime() - currentPeriodStart.getTime();
     previousPeriodEnd = subDays(currentPeriodStart, 1);
@@ -87,10 +87,10 @@ const IssuesCard: React.FC<IssuesCardProps> = ({ dateRange }) => { // NEW: Destr
           let currentPeriodStart: Date;
           let currentPeriodEnd: Date;
 
-          currentPeriodStart = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : startOfDay(today);
-          currentPeriodEnd = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (dateRange?.from && isValid(dateRange.from) ? endOfDay(dateRange.from) : endOfDay(today));
+          currentPeriodStart = (dateRange?.from && isValid(dateRange.from)) ? startOfDay(dateRange.from) : startOfDay(today);
+          currentPeriodEnd = (dateRange?.to && isValid(dateRange.to)) ? endOfDay(dateRange.to) : ((dateRange?.from && isValid(dateRange.from)) ? endOfDay(dateRange.from) : endOfDay(today));
 
-          const isWithinCurrentPeriod = (newIssueDate && newIssueDate >= currentPeriodStart && newIssueDate <= currentPeriodEnd); // Check for null newIssueDate
+          const isWithinCurrentPeriod = (newIssueDate && isValid(newIssueDate) && newIssueDate >= currentPeriodStart && newIssueDate <= currentPeriodEnd); // Check for null newIssueDate and isValid
 
           if (isWithinCurrentPeriod) {
             setDailyIssuesCount((prev) => prev + 1);

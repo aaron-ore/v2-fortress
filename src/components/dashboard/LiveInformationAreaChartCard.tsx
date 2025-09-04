@@ -22,8 +22,8 @@ const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> 
     const today = new Date();
 
     // Determine effective date range for filtering
-    const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : subDays(startOfDay(today), 6);
-    const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (dateRange?.from && isValid(dateRange.from) ? endOfDay(dateRange.from) : endOfDay(today));
+    const filterFrom = (dateRange?.from && isValid(dateRange.from)) ? startOfDay(dateRange.from) : subDays(startOfDay(today), 6);
+    const filterTo = (dateRange?.to && isValid(dateRange.to)) ? endOfDay(dateRange.to) : ((dateRange?.from && isValid(dateRange.from)) ? endOfDay(dateRange.from) : endOfDay(today));
 
     let startDate = filterFrom;
     let endDate = filterTo;
@@ -43,7 +43,7 @@ const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> 
 
     orders.forEach(order => {
       const orderDate = parseAndValidateDate(order.date); // NEW: Use parseAndValidateDate
-      if (!orderDate) return;
+      if (!orderDate || !isValid(orderDate)) return; // Ensure valid date
       const dateKey = format(orderDate, "MMM dd");
       if (dailyMetrics[dateKey] && isWithinInterval(orderDate, { start: startDate, end: endDate })) {
         if (order.type === "Sales") {
@@ -56,7 +56,7 @@ const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> 
 
     stockMovements.forEach(movement => {
       const moveDate = parseAndValidateDate(movement.timestamp); // NEW: Use parseAndValidateDate
-      if (!moveDate) return;
+      if (!moveDate || !isValid(moveDate)) return; // Ensure valid date
       const dateKey = format(moveDate, "MMM dd");
       if (dailyMetrics[dateKey] && isWithinInterval(moveDate, { start: startDate, end: endDate })) {
         dailyMetrics[dateKey].adjustments += movement.amount;
@@ -66,7 +66,7 @@ const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> 
     return Object.keys(dailyMetrics).sort((a, b) => {
       const dateA = parseAndValidateDate(a); // NEW: Use parseAndValidateDate
       const dateB = parseAndValidateDate(b); // NEW: Use parseAndValidateDate
-      if (!dateA || !dateB) return 0;
+      if (!dateA || !dateB || !isValid(dateA) || !isValid(dateB)) return 0; // Ensure valid dates
       return dateA.getTime() - dateB.getTime();
     }).map(dateKey => {
       const totalDailyActivity = dailyMetrics[dateKey].salesVolume + dailyMetrics[dateKey].purchaseVolume + dailyMetrics[dateKey].adjustments;

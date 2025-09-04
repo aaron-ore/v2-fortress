@@ -37,13 +37,13 @@ const SalesByCustomerReport: React.FC<SalesByCustomerReportProps> = ({
   const [currentReportData, setCurrentReportData] = useState<any>(null);
 
   const generateReport = useCallback(() => {
-    const filterFrom = dateRange?.from ? startOfDay(dateRange.from) : null;
-    const filterTo = dateRange?.to ? endOfDay(dateRange.to) : (dateRange?.from ? endOfDay(dateRange.from) : null);
+    const filterFrom = (dateRange?.from && isValid(dateRange.from)) ? startOfDay(dateRange.from) : null;
+    const filterTo = (dateRange?.to && isValid(dateRange.to)) ? endOfDay(dateRange.to) : ((dateRange?.from && isValid(dateRange.from)) ? endOfDay(dateRange.from) : null);
 
     const filteredOrders = orders.filter(order => {
       if (order.type !== "Sales") return false;
       const orderDate = parseAndValidateDate(order.date);
-      if (!orderDate) return false;
+      if (!orderDate || !isValid(orderDate)) return false; // Ensure valid date
       if (filterFrom && filterTo) {
         return isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
       }
@@ -59,7 +59,7 @@ const SalesByCustomerReport: React.FC<SalesByCustomerReportProps> = ({
       customerSalesMap[order.customerSupplier].totalSales += order.totalAmount;
       customerSalesMap[order.customerSupplier].totalItems += order.itemCount;
       const currentOrderDate = parseAndValidateDate(order.date); // NEW: Use parseAndValidateDate
-      if (currentOrderDate && currentOrderDate > customerSalesMap[order.customerSupplier].lastOrderDate) {
+      if (currentOrderDate && isValid(currentOrderDate) && currentOrderDate > customerSalesMap[order.customerSupplier].lastOrderDate) { // Ensure valid date
         customerSalesMap[order.customerSupplier].lastOrderDate = currentOrderDate;
       }
     });

@@ -6,7 +6,7 @@ import { useOnboarding } from "@/context/OnboardingContext";
 import { useInventory } from "@/context/InventoryContext";
 import { useOrders } from "@/context/OrdersContext";
 import { showError } from "@/utils/toast";
-import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
@@ -20,13 +20,13 @@ const GenerateReportButton: React.FC<GenerateReportButtonProps> = ({ dateRange }
   const { inventoryItems } = useInventory();
   const { orders } = useOrders();
 
-  const filterFrom = dateRange?.from ? startOfDay(dateRange.from) : null;
-  const filterTo = dateRange?.to ? endOfDay(dateRange.to) : (dateRange?.from ? endOfDay(dateRange.from) : null);
+  const filterFrom = (dateRange?.from && isValid(dateRange.from)) ? startOfDay(dateRange.from) : null;
+  const filterTo = (dateRange?.to && isValid(dateRange.to)) ? endOfDay(dateRange.to) : ((dateRange?.from && isValid(dateRange.from)) ? endOfDay(dateRange.from) : null);
 
   const filteredInventory = useMemo(() => {
     return inventoryItems.filter(item => {
       const itemLastUpdated = parseAndValidateDate(item.lastUpdated);
-      if (!itemLastUpdated) return false;
+      if (!itemLastUpdated || !isValid(itemLastUpdated)) return false;
       if (filterFrom && filterTo) {
         return isWithinInterval(itemLastUpdated, { start: filterFrom, end: filterTo });
       }
@@ -37,7 +37,7 @@ const GenerateReportButton: React.FC<GenerateReportButtonProps> = ({ dateRange }
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
       const orderDate = parseAndValidateDate(order.date);
-      if (!orderDate) return false;
+      if (!orderDate || !isValid(orderDate)) return false;
       if (filterFrom && filterTo) {
         return isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
       }
@@ -67,7 +67,7 @@ const GenerateReportButton: React.FC<GenerateReportButtonProps> = ({ dateRange }
       .sort((a, b) => {
         const dateA = parseAndValidateDate(a.date);
         const dateB = parseAndValidateDate(b.date);
-        if (!dateA || !dateB) return 0;
+        if (!dateA || !dateB || !isValid(dateA) || !isValid(dateB)) return 0;
         return dateB.getTime() - dateA.getTime();
       })
       .slice(0, 5); // Get top 5 recent sales orders
@@ -79,7 +79,7 @@ const GenerateReportButton: React.FC<GenerateReportButtonProps> = ({ dateRange }
       .sort((a, b) => {
         const dateA = parseAndValidateDate(a.date);
         const dateB = parseAndValidateDate(b.date);
-        if (!dateA || !dateB) return 0;
+        if (!dateA || !dateB || !isValid(dateA) || !isValid(dateB)) return 0;
         return dateB.getTime() - dateB.getTime();
       })
       .slice(0, 5); // Get top 5 recent purchase orders

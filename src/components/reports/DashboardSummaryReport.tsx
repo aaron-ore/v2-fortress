@@ -32,8 +32,8 @@ const DashboardSummaryReport: React.FC<DashboardSummaryReportProps> = ({
   const [currentReportData, setCurrentReportData] = useState<any>(null);
 
   const generateReport = useCallback(() => {
-    const filterFrom = dateRange?.from ? startOfDay(dateRange.from) : null;
-    const filterTo = dateRange?.to ? endOfDay(dateRange.to) : (dateRange?.from ? endOfDay(dateRange.from) : null);
+    const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : null;
+    const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : (dateRange?.from && isValid(dateRange.from) ? endOfDay(dateRange.from) : null);
 
     const filteredInventory = inventoryItems.filter(item => {
       const itemLastUpdated = parseAndValidateDate(item.lastUpdated);
@@ -63,7 +63,7 @@ const DashboardSummaryReport: React.FC<DashboardSummaryReportProps> = ({
       .sort((a, b) => {
         const dateA = parseAndValidateDate(a.date);
         const dateB = parseAndValidateDate(b.date);
-        if (!dateA || !dateB) return 0;
+        if (!dateA || !dateB) return 0; // Handle null dates
         return dateB.getTime() - dateA.getTime();
       })
       .slice(0, 5);
