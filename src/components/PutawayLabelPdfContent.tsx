@@ -26,6 +26,7 @@ const PutawayLabelPdfContent: React.FC<PutawayLabelPdfContentProps> = ({
   printDate,
 }) => {
   const expirationDateObj = expirationDate ? parseAndValidateDate(expirationDate) : null;
+  const printDateObj = parseAndValidateDate(printDate);
 
   return (
     <div className="bg-white text-gray-900 font-sans text-xs p-2 w-[50mm] h-[50mm] border border-black flex flex-col overflow-hidden">
@@ -50,7 +51,7 @@ const PutawayLabelPdfContent: React.FC<PutawayLabelPdfContentProps> = ({
             <span className="font-bold">Lot:</span> {lotNumber}
           </div>
         )}
-        {expirationDateObj && (
+        {expirationDateObj && isValid(expirationDateObj) && (
           <div>
             <span className="font-bold">Exp:</span> {format(expirationDateObj, "MM/yy")}
           </div>
@@ -67,7 +68,7 @@ const PutawayLabelPdfContent: React.FC<PutawayLabelPdfContentProps> = ({
 
       {/* Footer Date */}
       <div className="text-right text-[0.5rem] mt-1 flex-shrink-0">
-        Date: {parseAndValidateDate(printDate) ? format(parseAndValidateDate(printDate)!, "MMM dd, yyyy HH:mm") : "N/A"}
+        Date: {printDateObj && isValid(printDateObj) ? format(printDateObj, "MMM dd, yyyy HH:mm") : "N/A"}
       </div>
     </div>
   );

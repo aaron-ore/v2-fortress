@@ -17,7 +17,7 @@ const RecentOrdersCard: React.FC = () => {
         const dateA = parseAndValidateDate(a.date);
         const dateB = parseAndValidateDate(b.date);
         // Ensure dates are valid before comparison
-        if (!dateA || !dateB) return 0; 
+        if (!dateA || !dateB) return 0;
         return dateB.getTime() - dateA.getTime();
       })
       .slice(0, 3);
@@ -30,7 +30,7 @@ const RecentOrdersCard: React.FC = () => {
         const dateA = parseAndValidateDate(a.date);
         const dateB = parseAndValidateDate(b.date);
         // Ensure dates are valid before comparison
-        if (!dateA || !dateB) return 0; 
+        if (!dateA || !dateB) return 0;
         return dateB.getTime() - dateA.getTime();
       })
       .slice(0, 3);
@@ -58,7 +58,7 @@ const RecentOrdersCard: React.FC = () => {
                       <li key={order.id} className="flex justify-between items-center">
                         <span>{order.id} - {order.customerSupplier}</span>
                         <span className="text-muted-foreground text-xs">
-                          {orderDate ? formatDistanceToNowStrict(orderDate, { addSuffix: true }) : "N/A"}
+                          {orderDate && isValid(orderDate) ? formatDistanceToNowStrict(orderDate, { addSuffix: true }) : "N/A"}
                         </span>
                       </li>
                     );
@@ -79,7 +79,7 @@ const RecentOrdersCard: React.FC = () => {
                       <li key={order.id} className="flex justify-between items-center">
                         <span>{order.id} - {order.customerSupplier}</span>
                         <span className="text-muted-foreground text-xs">
-                          {orderDate ? formatDistanceToNowStrict(orderDate, { addSuffix: true }) : "N/A"}
+                          {orderDate && isValid(orderDate) ? formatDistanceToNowStrict(orderDate, { addSuffix: true }) : "N/A"}
                         </span>
                       </li>
                     );

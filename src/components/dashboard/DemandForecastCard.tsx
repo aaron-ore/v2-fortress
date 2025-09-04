@@ -24,7 +24,7 @@ const DemandForecastCard: React.FC = () => {
 
     orders.filter(order => order.type === "Sales").forEach(order => {
       const orderDate = parseAndValidateDate(order.date);
-      if (!orderDate) return;
+      if (!orderDate || !isValid(orderDate)) return; // Ensure valid date
       const monthKey = format(orderDate, "MMM yyyy");
       if (historicalSales.hasOwnProperty(monthKey)) {
         historicalSales[monthKey] += order.totalAmount;
@@ -36,13 +36,13 @@ const DemandForecastCard: React.FC = () => {
     const historicalKeys = Object.keys(historicalSales).sort((a, b) => {
       const dateA = parseAndValidateDate(a);
       const dateB = parseAndValidateDate(b);
-      if (!dateA || !dateB) return 0;
+      if (!dateA || !dateB) return 0; // Handle null dates
       return dateA.getTime() - dateB.getTime();
     });
 
     historicalKeys.forEach(monthKey => {
       chartData.push({
-        name: format(parseAndValidateDate(monthKey)!, "MMM"),
+        name: format(parseAndValidateDate(monthKey) || new Date(), "MMM"),
         "Actual Sales": parseFloat(historicalSales[monthKey].toFixed(2)),
         "Projected Demand": null, // No projection for historical data
       });

@@ -25,7 +25,7 @@ const SalesOverviewChart: React.FC = () => {
 
     orders.filter(order => order.type === "Sales").forEach(order => {
       const orderDate = parseAndValidateDate(order.date);
-      if (!orderDate) return; // Skip invalid dates
+      if (!orderDate || !isValid(orderDate)) return; // Skip invalid dates
 
       const monthKey = format(orderDate, "MMM"); // e.g., "Jan"
 

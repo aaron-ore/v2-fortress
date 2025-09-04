@@ -42,9 +42,11 @@ const SalesInventoryTrendCard: React.FC = () => {
         simulatedSalesRevenue = totalCurrentSalesRevenue;
       } else {
         // Simulate values trending towards current values, with some fluctuation
-        const trendFactor = (i + 1) / 6;
-        simulatedInventoryValue = totalCurrentInventoryValue > 0 ? Math.max(0, totalCurrentInventoryValue * (0.7 + (0.3 * trendFactor)) + (Math.random() - 0.5) * (totalCurrentInventoryValue * 0.1)) : 0;
-        simulatedSalesRevenue = totalCurrentSalesRevenue > 0 ? Math.max(0, totalCurrentSalesRevenue * (0.7 + (0.3 * trendFactor)) + (Math.random() - 0.5) * (totalCurrentSalesRevenue * 0.1)) : 0;
+        const trendFactor = (i + 1) / 6; // Increases from 1/6 to 6/6
+        const baseValue = totalCurrentInventoryValue > 0 ? totalCurrentInventoryValue * (0.7 + (0.3 * trendFactor)) : 0; // Starts lower, trends towards current
+        simulatedInventoryValue = Math.max(0, baseValue + (Math.random() - 0.5) * (totalCurrentInventoryValue * 0.1)); // Add some random fluctuation
+        const baseSalesValue = totalCurrentSalesRevenue > 0 ? totalCurrentSalesRevenue * (0.7 + (0.3 * trendFactor)) : 0;
+        simulatedSalesRevenue = Math.max(0, baseSalesValue + (Math.random() - 0.5) * (totalCurrentSalesRevenue * 0.1)); // Add some random fluctuation
       }
 
       dataPoints.push({

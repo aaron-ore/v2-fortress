@@ -35,7 +35,7 @@ const IncomingShipmentsCard: React.FC = () => {
                   <li key={po.id} className="flex justify-between items-center">
                     <span>{po.id} - {po.customerSupplier}</span>
                     <span className="text-muted-foreground text-xs">
-                      ETA: {dueDate ? formatDistanceToNowStrict(dueDate, { addSuffix: true }) : "N/A"} ({po.status})
+                      ETA: {dueDate && isValid(dueDate) ? formatDistanceToNowStrict(dueDate, { addSuffix: true }) : "N/A"} ({po.status})
                     </span>
                   </li>
               );

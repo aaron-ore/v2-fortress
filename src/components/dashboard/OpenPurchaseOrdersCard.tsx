@@ -37,7 +37,7 @@ const OpenPurchaseOrdersCard: React.FC = () => {
                   <li key={po.id} className="flex justify-between items-center">
                     <span>{po.id} - {po.customerSupplier}</span>
                     <span className="text-muted-foreground text-xs">
-                      Due: {dueDate ? format(dueDate, "MMM dd") : "N/A"}
+                      Due: {dueDate && isValid(dueDate) ? format(dueDate, "MMM dd") : "N/A"}
                     </span>
                   </li>
                 );

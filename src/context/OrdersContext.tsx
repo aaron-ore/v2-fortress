@@ -5,8 +5,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
 import { generateSequentialNumber } from "@/utils/numberGenerator"; // Import generateSequentialNumber
-import { isValid } from "date-fns"; // Import isValid for date validation
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
+import { isValid } from "date-fns"; // Import isValid for date validation
 
 export interface POItem {
   id: number;
@@ -57,29 +57,31 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
     const itemCount = parseInt(order.item_count || '0');
     const items: POItem[] = (order.items || []).map((item: any) => ({
       id: item.id,
-      itemName: item.itemName,
+      itemName: item.itemName || "",
       quantity: parseInt(item.quantity || '0'),
       unitPrice: parseFloat(item.unitPrice || '0'),
-      inventoryItemId: item.inventoryItemId,
+      inventoryItemId: item.inventoryItemId || undefined,
     }));
 
     // Ensure created_at and due_date are always valid ISO strings
-    const validatedCreatedAt = parseAndValidateDate(order.created_at)?.toISOString() || new Date().toISOString(); // NEW: Use parseAndValidateDate
-    
-    const validatedDueDate = parseAndValidateDate(order.due_date)?.toISOString() || new Date().toISOString(); // NEW: Use parseAndValidateDate
+    const validatedCreatedAt = parseAndValidateDate(order.created_at);
+    const createdAtString = validatedCreatedAt ? validatedCreatedAt.toISOString() : new Date().toISOString(); // Fallback to current date if invalid
+
+    const validatedDueDate = parseAndValidateDate(order.due_date);
+    const dueDateString = validatedDueDate ? validatedDueDate.toISOString() : new Date().toISOString(); // Fallback to current date if invalid
 
     return {
-      id: order.id,
-      type: order.type,
-      customerSupplier: order.customer_supplier,
-      date: validatedCreatedAt, // Use validated date string
-      status: order.status,
+      id: order.id || "",
+      type: order.type || "Sales",
+      customerSupplier: order.customer_supplier || "",
+      date: createdAtString,
+      status: order.status || "New Order",
       totalAmount: isNaN(totalAmount) ? 0 : totalAmount,
-      dueDate: validatedDueDate, // Use validated date string
+      dueDate: dueDateString,
       itemCount: isNaN(itemCount) ? 0 : itemCount,
       notes: order.notes || "",
-      orderType: order.order_type,
-      shippingMethod: order.shipping_method,
+      orderType: order.order_type || "Retail",
+      shippingMethod: order.shipping_method || "Standard",
       deliveryRoute: order.delivery_route || undefined,
       items: items,
       organizationId: order.organization_id,

@@ -19,7 +19,7 @@ const PendingInvoicesCard: React.FC = () => {
           order.status !== "Shipped" &&
           order.status !== "Archived" &&
           order.status !== "Packed" &&
-          orderDueDate && isPast(orderDueDate) &&
+          orderDueDate && isValid(orderDueDate) && isPast(orderDueDate) &&
           orderDueDate < thirtyDaysAgo // More than 30 days late
         );
       })
@@ -48,7 +48,7 @@ const PendingInvoicesCard: React.FC = () => {
                   <li key={invoice.id} className="flex justify-between items-center text-destructive">
                     <span>{invoice.id} - {invoice.customerSupplier}</span>
                     <span className="text-xs">
-                      Due: {dueDate ? format(dueDate, "MMM dd") : "N/A"}
+                      Due: {dueDate && isValid(dueDate) ? format(dueDate, "MMM dd") : "N/A"}
                     </span>
                   </li>
                 );

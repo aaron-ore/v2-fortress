@@ -2,9 +2,8 @@ import React, { createContext, useState, useContext, ReactNode, useEffect, useCa
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
-// REMOVED: import { mockReplenishmentTasks } from "@/utils/mockData"; // Import mock data
-import { isValid } from "date-fns"; // Import isValid for date validation
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
+import { isValid } from "date-fns"; // Import isValid for date validation
 
 export interface ReplenishmentTask {
   id: string;
@@ -37,22 +36,24 @@ export const ReplenishmentProvider: React.FC<{ children: ReactNode }> = ({ child
     const quantity = parseInt(task.quantity || '0');
 
     // Ensure createdAt is always a valid ISO string
-    const validatedCreatedAt = parseAndValidateDate(task.created_at)?.toISOString() || new Date().toISOString(); // NEW: Use parseAndValidateDate
+    const validatedCreatedAt = parseAndValidateDate(task.created_at);
+    const createdAtString = validatedCreatedAt ? validatedCreatedAt.toISOString() : new Date().toISOString(); // Fallback to current date if invalid
 
     // Ensure completedAt is valid or keep undefined if not present
-    const validatedCompletedAt = parseAndValidateDate(task.completed_at)?.toISOString() || undefined; // NEW: Use parseAndValidateDate
+    const validatedCompletedAt = parseAndValidateDate(task.completed_at);
+    const completedAtString = validatedCompletedAt ? validatedCompletedAt.toISOString() : undefined; // Fallback to undefined if invalid
 
     return {
-      id: task.id,
-      itemId: task.item_id,
-      itemName: task.item_name,
-      fromLocation: task.from_location,
-      toLocation: task.to_location,
+      id: task.id || "",
+      itemId: task.item_id || "",
+      itemName: task.item_name || "",
+      fromLocation: task.from_location || "",
+      toLocation: task.to_location || "",
       quantity: isNaN(quantity) ? 0 : quantity,
-      status: task.status,
+      status: task.status || "Pending",
       assignedTo: task.assigned_to || undefined,
-      createdAt: validatedCreatedAt, // Use validated date string
-      completedAt: validatedCompletedAt, // Use validated date string or undefined
+      createdAt: createdAtString,
+      completedAt: completedAtString,
       organizationId: task.organization_id,
     };
   };

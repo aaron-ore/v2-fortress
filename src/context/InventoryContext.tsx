@@ -13,13 +13,10 @@ import React,
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
-// REMOVED: import { mockInventoryItems } from "@/utils/mockData";
 import { useOrders } from "./OrdersContext";
 import { useVendors } from "./VendorContext";
 import { processAutoReorder } from "@/utils/autoReorderLogic";
 import { useNotifications } from "./NotificationContext";
-// REMOVED: import { useActivityLogs } from "./ActivityLogContext";
-import { isValid } from "date-fns"; // Import isValid for date validation
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 export interface InventoryItem {
@@ -32,7 +29,7 @@ export interface InventoryItem {
   pickingBinQuantity: number;
   overstockQuantity: number;
   // Derived total quantity
-  quantity: number; 
+  quantity: number;
   reorderLevel: number; // This will now be the overall reorder level
   pickingReorderLevel: number; // NEW: Reorder level specifically for picking bins
   committedStock: number;
@@ -73,7 +70,6 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
   const { addOrder } = useOrders();
   const { vendors } = useVendors();
   const { addNotification } = useNotifications();
-  // REMOVED: const { addActivity } = useActivityLogs();
   const isInitialLoad = useRef(true);
 
   const mapSupabaseItemToInventoryItem = (item: any): InventoryItem => {
@@ -88,14 +84,15 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
     const autoReorderQuantity = parseInt(item.auto_reorder_quantity || '0');
 
     // Ensure last_updated is always a valid ISO string
-    const validatedLastUpdated = parseAndValidateDate(item.last_updated)?.toISOString() || new Date().toISOString(); // NEW: Use parseAndValidateDate
+    const validatedLastUpdated = parseAndValidateDate(item.last_updated);
+    const lastUpdatedString = validatedLastUpdated ? validatedLastUpdated.toISOString() : new Date().toISOString(); // Fallback to current date if invalid
 
     return {
       id: item.id,
-      name: item.name,
+      name: item.name || "",
       description: item.description || "",
-      sku: item.sku,
-      category: item.category,
+      sku: item.sku || "",
+      category: item.category || "",
       pickingBinQuantity: isNaN(pickingBinQuantity) ? 0 : pickingBinQuantity,
       overstockQuantity: isNaN(overstockQuantity) ? 0 : overstockQuantity,
       quantity: (isNaN(pickingBinQuantity) ? 0 : pickingBinQuantity) + (isNaN(overstockQuantity) ? 0 : overstockQuantity), // Derived
@@ -105,10 +102,10 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
       incomingStock: isNaN(incomingStock) ? 0 : incomingStock,
       unitCost: isNaN(unitCost) ? 0 : unitCost,
       retailPrice: isNaN(retailPrice) ? 0 : retailPrice,
-      location: item.location,
-      pickingBinLocation: item.picking_bin_location || item.location, // Default to main location if not set
-      status: item.status,
-      lastUpdated: validatedLastUpdated, // Use validated date string
+      location: item.location || "",
+      pickingBinLocation: item.picking_bin_location || item.location || "", // Default to main location if not set
+      status: item.status || "In Stock",
+      lastUpdated: lastUpdatedString,
       imageUrl: item.image_url || undefined,
       vendorId: item.vendor_id || undefined,
       barcodeUrl: item.barcode_url || undefined,
@@ -194,12 +191,10 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error adding inventory item:", error);
-      // REMOVED: addActivity("Inventory Add Failed", `Failed to add inventory item: ${item.name} (SKU: ${item.sku}).`, { error: error.message, item });
       throw error;
     } else if (data && data.length > 0) {
       const newItem: InventoryItem = mapSupabaseItemToInventoryItem(data[0]);
       setInventoryItems((prevItems) => [...prevItems, newItem]);
-      // REMOVED: addActivity("Inventory Added", `Added new inventory item: ${newItem.name} (SKU: ${newItem.sku}).`, { itemId: newItem.id, sku: newItem.sku, quantity: newItem.quantity });
       showSuccess(`Added new inventory item: ${newItem.name} (SKU: ${newItem.sku}).`);
       if (profile?.organizationId) {
         processAutoReorder([...inventoryItems, newItem], addOrder, vendors, profile.organizationId, addNotification);
@@ -207,7 +202,6 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
     } else {
       const errorMessage = "Failed to add item: No data returned after insert.";
       console.error(errorMessage);
-      // REMOVED: addActivity("Inventory Add Failed", errorMessage, { item });
       throw new Error(errorMessage);
     }
   };
@@ -253,7 +247,6 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error updating inventory item:", error);
-      // REMOVED: addActivity("Inventory Update Failed", `Failed to update inventory item: ${updatedItem.name} (SKU: ${updatedItem.sku}).`, { error: error.message, itemId: updatedItem.id, sku: updatedItem.sku });
       throw error;
     } else if (data && data.length > 0) {
       const updatedItemFromDB: InventoryItem = mapSupabaseItemToInventoryItem(data[0]);
@@ -262,7 +255,6 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
           item.id === updatedItemFromDB.id ? updatedItemFromDB : item,
         ),
       );
-      // REMOVED: addActivity("Inventory Updated", `Updated inventory item: ${updatedItemFromDB.name} (SKU: ${updatedItemFromDB.sku}).`, { itemId: updatedItemFromDB.id, sku: updatedItemFromDB.sku, newQuantity: updatedItemFromDB.quantity });
       showSuccess(`Updated inventory item: ${updatedItemFromDB.name} (SKU: ${updatedItemFromDB.sku}).`);
       if (profile?.organizationId) {
         processAutoReorder(inventoryItems.map(item => item.id === updatedItemFromDB.id ? updatedItemFromDB : item), addOrder, vendors, profile.organizationId, addNotification);
@@ -270,7 +262,6 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
     } else {
       const errorMessage = "Update might not have been saved. Check database permissions.";
       console.error(errorMessage);
-      // REMOVED: addActivity("Inventory Update Failed", errorMessage, { itemId: updatedItem.id, sku: updatedItem.sku });
       throw new Error(errorMessage);
     }
   };
@@ -292,11 +283,9 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error deleting inventory item:", error);
-      // REMOVED: addActivity("Inventory Delete Failed", `Failed to delete inventory item: ${itemToDelete?.name || itemId}.`, { error: error.message, itemId });
       showError(`Failed to delete item: ${error.message}`);
     } else {
       setInventoryItems((prevItems) => prevItems.filter(item => item.id !== itemId));
-      // REMOVED: addActivity("Inventory Deleted", `Deleted inventory item: ${itemToDelete?.name || itemId}.`, { itemId });
       showSuccess("Item deleted successfully!");
     }
   };

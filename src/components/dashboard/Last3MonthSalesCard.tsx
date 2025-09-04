@@ -41,7 +41,7 @@ const Last3MonthSalesCard: React.FC<Last3MonthSalesCardProps> = () => {
 
     orders.filter(order => order.type === "Sales").forEach(order => {
       const orderDate = parseAndValidateDate(order.date); // NEW: Use parseAndValidateDate
-      if (!orderDate) return;
+      if (!orderDate || !isValid(orderDate)) return; // Ensure valid date
       const monthKey = format(orderDate, "MMM yyyy");
       if (monthlyData[monthKey] && orderDate >= startDate && orderDate <= endDate) {
         monthlyData[monthKey].salesRevenue += order.totalAmount;
@@ -51,7 +51,7 @@ const Last3MonthSalesCard: React.FC<Last3MonthSalesCardProps> = () => {
 
     inventoryItems.forEach(item => {
       const itemDate = parseAndValidateDate(item.lastUpdated); // NEW: Use parseAndValidateDate
-      if (!itemDate) return;
+      if (!itemDate || !isValid(itemDate)) return; // Ensure valid date
       const monthKey = format(itemDate, "MMM yyyy");
       if (monthlyData[monthKey] && itemDate >= startDate && itemDate <= endDate) {
         monthlyData[monthKey].newInventory += Math.floor(item.quantity * 0.2);
@@ -61,10 +61,10 @@ const Last3MonthSalesCard: React.FC<Last3MonthSalesCardProps> = () => {
     return Object.keys(monthlyData).sort((a, b) => {
       const dateA = parseAndValidateDate(a); // NEW: Use parseAndValidateDate
       const dateB = parseAndValidateDate(b); // NEW: Use parseAndValidateDate
-      if (!dateA || !dateB) return 0;
+      if (!dateA || !dateB) return 0; // Handle null dates
       return dateA.getTime() - dateB.getTime();
     }).map(monthKey => ({
-      name: format(parseAndValidateDate(monthKey)!, "MMM"), // Assert non-null after sorting
+      name: format(parseAndValidateDate(monthKey) || new Date(), "MMM"), // Assert non-null after sorting, fallback for format
       "Sales Revenue": parseFloat(monthlyData[monthKey].salesRevenue.toFixed(2)),
       "New Inventory Added": parseFloat(monthlyData[monthKey].newInventory.toFixed(0)),
       "Items Shipped": parseFloat(monthlyData[monthKey].itemsShipped.toFixed(0)),

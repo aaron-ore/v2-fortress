@@ -27,7 +27,7 @@ const WeeklyRevenueBarChart: React.FC = () => {
     // Populate "This Week" revenue from actual sales orders
     orders.filter(order => order.type === "Sales").forEach(order => {
       const orderDate = parseAndValidateDate(order.date);
-      if (!orderDate) return; // Skip invalid dates
+      if (!orderDate || !isValid(orderDate)) return; // Ensure valid date
 
       const diffDays = Math.floor((today.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
 

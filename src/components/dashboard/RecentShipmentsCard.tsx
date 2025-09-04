@@ -37,7 +37,7 @@ const RecentShipmentsCard: React.FC = () => {
                   <li key={shipment.id} className="flex justify-between items-center">
                     <span>{shipment.id} - {shipment.customerSupplier}</span>
                     <span className="text-muted-foreground text-xs">
-                      {shipDate ? format(shipDate, "MMM dd") : "N/A"}
+                      {shipDate && isValid(shipDate) ? format(shipDate, "MMM dd") : "N/A"}
                     </span>
                   </li>
                 );

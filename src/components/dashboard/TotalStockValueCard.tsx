@@ -36,7 +36,7 @@ const TotalStockValueCard: React.FC = () => {
     for (let i = 0; i < 6; i++) {
       const month = subMonths(new Date(), 5 - i); // Get the actual month for the data point
       const monthName = format(month, "MMM");
-      
+
       // Simulate stock value for each month, with current month being actual totalStockValue
       let simulatedValue;
       if (i === 5) { // Current month

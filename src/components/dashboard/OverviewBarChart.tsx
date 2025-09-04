@@ -35,7 +35,7 @@ const OverviewBarChart: React.FC = () => {
 
       // Simulate sales for the day
       const dailySales = orders
-        .filter(order => order.type === "Sales" && (parseAndValidateDate(order.date) ? format(parseAndValidateDate(order.date)!, "MMM dd") : "N/A") === formattedDate)
+        .filter(order => order.type === "Sales" && (parseAndValidateDate(order.date) && format(parseAndValidateDate(order.date) || new Date(), "MMM dd")) === formattedDate)
         .reduce((sum, order) => sum + order.totalAmount, 0);
       // If no actual sales, simulated sales should also be 0
       const simulatedSales = dailySales > 0 ? dailySales : 0;

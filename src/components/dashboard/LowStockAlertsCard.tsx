@@ -36,7 +36,7 @@ const LowStockAlertsCard: React.FC = () => {
           <ScrollArea className="flex-grow max-h-[180px] pr-2">
             <ul className="text-sm space-y-2">
               {lowStockItems.slice(0, 5).map(item => (
-                <li key={item.id} className="flex items-center justify-between">
+                <li key={item.id} className="flex justify-between items-center">
                   <span>{item.name} <span className="text-yellow-400">({item.quantity} units)</span></span>
                   <Button variant="link" size="sm" onClick={() => handleReorder(item.name, item.sku)} className="text-primary">Reorder</Button>
                 </li>

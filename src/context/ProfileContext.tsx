@@ -1,10 +1,8 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
-// REMOVED: import { mockUserProfile, mockAllProfiles } from "@/utils/mockData";
-// REMOVED: import { useActivityLogs } from "./ActivityLogContext";
-import { isValid } from "date-fns"; // Import isValid for date validation
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
+import { isValid } from "date-fns"; // Import isValid for date validation
 
 export interface UserProfile {
   id: string;
@@ -39,23 +37,23 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const errorToastId = useRef<string | number | null>(null);
-  // REMOVED: const { addActivity } = useActivityLogs();
 
   const mapSupabaseProfileToUserProfile = (p: any, sessionEmail?: string): UserProfile => {
     // Ensure created_at is always a valid ISO string
-    const validatedCreatedAt = parseAndValidateDate(p.created_at)?.toISOString() || new Date().toISOString(); // NEW: Use parseAndValidateDate
+    const validatedCreatedAt = parseAndValidateDate(p.created_at);
+    const createdAtString = validatedCreatedAt ? validatedCreatedAt.toISOString() : new Date().toISOString(); // Fallback to current date if invalid
 
     return {
       id: p.id,
-      fullName: p.full_name,
-      email: p.email || sessionEmail || "",
+      fullName: p.full_name || "", // Ensure string fallback
+      email: p.email || sessionEmail || "", // Ensure string fallback
       phone: p.phone || undefined,
       address: p.address || undefined,
       avatarUrl: p.avatar_url || undefined,
-      role: p.role,
+      role: p.role || "viewer", // Default role
       organizationId: p.organization_id,
-      organizationCode: p.organizations?.unique_code || undefined,
-      createdAt: validatedCreatedAt, // Use validated date string
+      organizationCode: p.organizations?.[0]?.unique_code || undefined, // Access as array if it's a join
+      createdAt: createdAtString,
       quickbooksAccessToken: p.quickbooks_access_token || undefined,
       quickbooksRefreshToken: p.quickbooks_refresh_token || undefined,
       quickbooksRealmId: p.quickbooks_realm_id || undefined,

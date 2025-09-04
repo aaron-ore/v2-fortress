@@ -2,9 +2,8 @@ import React, { createContext, useState, useContext, ReactNode, useEffect, useCa
 import { supabase } from "@/lib/supabaseClient";
 import { showError } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
-// REMOVED: import { useActivityLogs } from "./ActivityLogContext";
-import { isValid } from "date-fns"; // Import isValid for date validation
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
+import { isValid } from "date-fns"; // Import isValid for date validation
 
 export interface StockMovement {
   id: string;
@@ -31,7 +30,6 @@ const StockMovementContext = createContext<StockMovementContextType | undefined>
 export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [stockMovements, setStockMovements] = useState<StockMovement[]>([]);
   const { profile, isLoadingProfile } = useProfile();
-  // REMOVED: const { addActivity } = useActivityLogs();
 
   const mapSupabaseMovementToStockMovement = (movement: any): StockMovement => {
     const amount = parseInt(movement.amount || '0');
@@ -39,20 +37,21 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
     const newQuantity = parseInt(movement.new_quantity || '0');
 
     // Ensure timestamp is always a valid ISO string
-    const validatedTimestamp = parseAndValidateDate(movement.timestamp)?.toISOString() || new Date().toISOString(); // NEW: Use parseAndValidateDate
+    const validatedTimestamp = parseAndValidateDate(movement.timestamp);
+    const timestampString = validatedTimestamp ? validatedTimestamp.toISOString() : new Date().toISOString(); // Fallback to current date if invalid
 
     return {
-      id: movement.id,
-      itemId: movement.item_id,
-      itemName: movement.item_name,
-      type: movement.type,
+      id: movement.id || "",
+      itemId: movement.item_id || "",
+      itemName: movement.item_name || "",
+      type: movement.type || "add",
       amount: isNaN(amount) ? 0 : amount,
       oldQuantity: isNaN(oldQuantity) ? 0 : oldQuantity,
       newQuantity: isNaN(newQuantity) ? 0 : newQuantity,
-      reason: movement.reason,
-      timestamp: validatedTimestamp, // Use validated date string
+      reason: movement.reason || "",
+      timestamp: timestampString,
       organizationId: movement.organization_id,
-      userId: movement.user_id, // Map user_id
+      userId: movement.user_id || "", // Map user_id
     };
   };
 
@@ -78,7 +77,6 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
     if (error) {
       console.error("Error fetching stock movements:", error);
       showError("Failed to load stock movements.");
-      // No mock data for stock movements as it's highly dynamic and item-specific
     } else {
       const fetchedMovements: StockMovement[] = data.map(mapSupabaseMovementToStockMovement);
       setStockMovements(fetchedMovements);
@@ -115,12 +113,10 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
 
     if (error) {
       console.error("Error adding stock movement:", error);
-      // REMOVED: addActivity("Stock Movement Failed", `Failed to log stock movement for ${movement.itemName} (Item ID: ${movement.itemId}).`, { error: error.message, movement });
       showError(`Failed to log stock movement: ${error.message}`);
     } else if (data && data.length > 0) {
       const newMovement: StockMovement = mapSupabaseMovementToStockMovement(data[0]);
       setStockMovements((prev) => [newMovement, ...prev]);
-      // REMOVED: addActivity("Stock Movement", `${movement.type === 'add' ? 'Added' : 'Subtracted'} ${movement.amount} units of ${movement.itemName}. Reason: ${movement.reason}.`, { itemId: movement.itemId, itemName: movement.itemName, type: movement.type, amount: movement.amount, newQuantity: movement.newQuantity });
     }
   };
 

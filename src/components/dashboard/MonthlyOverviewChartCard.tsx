@@ -41,7 +41,7 @@ const MonthlyOverviewChartCard: React.FC<MonthlyOverviewChartCardProps> = () => 
 
     orders.forEach(order => {
       const orderDate = parseAndValidateDate(order.date); // NEW: Use parseAndValidateDate
-      if (!orderDate) return;
+      if (!orderDate || !isValid(orderDate)) return; // Ensure valid date
       const monthKey = format(orderDate, "MMM yyyy");
       if (monthlyData[monthKey] && orderDate >= startDate && orderDate <= endDate) {
         if (order.type === "Sales") {
@@ -57,10 +57,10 @@ const MonthlyOverviewChartCard: React.FC<MonthlyOverviewChartCardProps> = () => 
     Object.keys(monthlyData).sort((a, b) => {
       const dateA = parseAndValidateDate(a); // NEW: Use parseAndValidateDate
       const dateB = parseAndValidateDate(b); // NEW: Use parseAndValidateDate
-      if (!dateA || !dateB) return 0;
+      if (!dateA || !dateB) return 0; // Handle null dates
       return dateA.getTime() - dateB.getTime();
     }).forEach((monthKey, index, array) => {
-      const monthName = format(parseAndValidateDate(monthKey)!, "MMM"); // Assert non-null after sorting
+      const monthName = format(parseAndValidateDate(monthKey) || new Date(), "MMM"); // Assert non-null after sorting, fallback for format
       if (monthKey === format(endDate, "MMM yyyy")) {
         monthlyData[monthKey].inventoryValue = totalCurrentInventoryValue;
       } else {
@@ -73,10 +73,10 @@ const MonthlyOverviewChartCard: React.FC<MonthlyOverviewChartCardProps> = () => 
     return Object.keys(monthlyData).sort((a, b) => {
       const dateA = parseAndValidateDate(a); // NEW: Use parseAndValidateDate
       const dateB = parseAndValidateDate(b); // NEW: Use parseAndValidateDate
-      if (!dateA || !dateB) return 0;
+      if (!dateA || !dateB) return 0; // Handle null dates
       return dateA.getTime() - dateB.getTime();
     }).map(monthKey => ({
-      name: format(parseAndValidateDate(monthKey)!, "MMM"), // Assert non-null after sorting
+      name: format(parseAndValidateDate(monthKey) || new Date(), "MMM"), // Assert non-null after sorting, fallback for format
       "Sales Revenue": parseFloat(monthlyData[monthKey].salesRevenue.toFixed(2)),
       "Inventory Value": parseFloat(monthlyData[monthKey].inventoryValue.toFixed(2)),
       "Purchase Volume": parseFloat(monthlyData[monthKey].purchaseVolume.toFixed(0)),
