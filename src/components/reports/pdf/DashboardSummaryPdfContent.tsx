@@ -120,24 +120,24 @@ const DashboardSummaryPdfContent: React.FC<DashboardSummaryPdfContentProps> = ({
       </div>
 
       {/* Detailed Low Stock Items */}
-      {lowStockItems.length > 0 && (
-        <div className="mb-8">
-          <p className="font-bold mb-2">LOW STOCK ITEMS:</p>
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-100 border border-gray-300">
-                <th className="py-2 px-4 text-left font-semibold border-r border-gray-300">Item Name</th>
-                <th className="py-2 px-4 text-left font-semibold border-r border-gray-300">SKU</th>
-                <th className="py-2 px-4 text-right font-semibold border-r border-gray-300">On Hand</th>
-                <th className="py-2 px-4 text-right font-semibold">Reorder Level</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lowStockItems.map((item) => (
+      <div className="mb-8">
+        <p className="font-bold mb-2">LOW STOCK ITEMS:</p>
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-gray-100 border border-gray-300">
+              <th className="py-2 px-4 text-left font-semibold border-r border-gray-300">Item Name</th>
+              <th className="py-2 px-4 text-left font-semibold border-r border-gray-300">SKU</th>
+              <th className="py-2 px-4 text-right font-semibold border-r border-gray-300">On Hand</th>
+              <th className="py-2 px-4 text-right font-semibold">Reorder Level</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lowStockItems.length > 0 ? (
+              lowStockItems.map((item) => (
                 <tr key={item.id} className="border-b border-gray-200">
                   <td className="py-2 px-4 border-r border-gray-200">{item.name}</td>
                   <td className="py-2 px-4 border-r border-gray-200">{item.sku}</td>
-                  <td className="py-2 px-4 text-right border-r border-gray-200">{item.quantity}</td>
+                  <td className="py-2 px-4 text-right border-r border-gray-200 text-red-600">{item.quantity}</td>
                   <td className="py-2 px-4 text-right">{item.reorderLevel}</td>
                 </tr>
               ))
@@ -151,18 +151,18 @@ const DashboardSummaryPdfContent: React.FC<DashboardSummaryPdfContentProps> = ({
       </div>
 
       {/* Detailed Out-of-Stock Items */}
-      {outOfStockItems.length > 0 && (
-        <div className="mb-8">
-          <p className="font-bold mb-2">OUT-OF-STOCK ITEMS:</p>
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-100 border border-gray-300">
-                <th className="py-2 px-4 text-left font-semibold border-r border-gray-300">Item Name</th>
-                <th className="py-2 px-4 text-left font-semibold">SKU</th>
-              </tr>
-            </thead>
-            <tbody>
-              {outOfStockItems.map((item) => (
+      <div className="mb-8">
+        <p className="font-bold mb-2">OUT-OF-STOCK ITEMS:</p>
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-gray-100 border border-gray-300">
+              <th className="py-2 px-4 text-left font-semibold border-r border-gray-300">Item Name</th>
+              <th className="py-2 px-4 text-left font-semibold">SKU</th>
+            </tr>
+          </thead>
+          <tbody>
+            {outOfStockItems.length > 0 ? (
+              outOfStockItems.map((item) => (
                 <tr key={item.id} className="border-b border-gray-200">
                   <td className="py-2 px-4 border-r border-gray-200">{item.name}</td>
                   <td className="py-2 px-4">{item.sku}</td>

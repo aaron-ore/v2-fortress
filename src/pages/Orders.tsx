@@ -57,8 +57,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabaseClient"; // Import supabase
-import { isValid } from "date-fns"; // Import isValid from date-fns
+import { isValid, format } from "date-fns"; // Import isValid and format from date-fns
 import { ColumnDef } from "@tanstack/react-table"; // NEW: Import ColumnDef
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
+import { cn } from "@/lib/utils"; // NEW: Import cn
 
 const formSchema = z.object({
   type: z.enum(["Sales", "Purchase"]),
