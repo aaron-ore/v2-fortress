@@ -8,24 +8,32 @@ import { useProfile } from "@/context/ProfileContext";
 import { showError, showSuccess } from "@/utils/toast";
 import { supabase } from "@/lib/supabaseClient";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTheme } from "next-themes"; // NEW: Import useTheme
 
 const Integrations: React.FC = () => {
   const { profile, isLoadingProfile, fetchProfile } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme } = useTheme(); // NEW: Get current theme
+
   const [isSyncingQuickBooks, setIsSyncingQuickBooks] = useState(false);
-  const [isSyncingShopify, setIsSyncingShopify] = useState(false); // NEW: State for Shopify sync loading
+  const [isSyncingShopify, setIsSyncingShopify] = useState(false);
 
   // Ref to prevent re-processing URL parameters on re-renders
   const qbCallbackProcessedRef = React.useRef(false);
-  const shopifyCallbackProcessedRef = React.useRef(false); // NEW: Ref for Shopify callback
+  const shopifyCallbackProcessedRef = React.useRef(false);
+
+  // NEW: Determine which Shopify logo to use based on theme
+  const shopifyLogoSrc = theme === 'dark' || theme === 'emerald' || theme === 'deep-forest'
+    ? "/shopify_logo_white.png"
+    : "/shopify_logo_black.png";
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const quickbooksSuccess = params.get('quickbooks_success');
     const quickbooksError = params.get('quickbooks_error');
-    const shopifySuccess = params.get('shopify_success'); // NEW: Get Shopify success param
-    const shopifyError = params.get('shopify_error');     // NEW: Get Shopify error param
+    const shopifySuccess = params.get('shopify_success');
+    const shopifyError = params.get('shopify_error');
 
     // Handle QuickBooks callback
     if ((quickbooksSuccess || quickbooksError) && !qbCallbackProcessedRef.current) {
@@ -41,7 +49,7 @@ const Integrations: React.FC = () => {
       navigate(location.pathname, { replace: true }); // Clear URL params
     }
 
-    // NEW: Handle Shopify callback
+    // Handle Shopify callback
     if ((shopifySuccess || shopifyError) && !shopifyCallbackProcessedRef.current) {
       if (shopifySuccess) {
         showSuccess("Shopify connected successfully!");
@@ -147,7 +155,7 @@ const Integrations: React.FC = () => {
     }
   };
 
-  // NEW: Shopify Integration Handlers
+  // Shopify Integration Handlers
   const handleConnectShopify = () => {
     if (!profile?.id) {
       showError("You must be logged in to connect to Shopify.");
@@ -246,7 +254,7 @@ const Integrations: React.FC = () => {
   };
 
   const isQuickBooksConnected = profile?.quickbooksAccessToken && profile?.quickbooksRefreshToken && profile?.quickbooksRealmId;
-  const isShopifyConnected = profile?.shopifyAccessToken && profile?.shopifyStoreName; // NEW: Check Shopify connection status
+  const isShopifyConnected = profile?.shopifyAccessToken && profile?.shopifyStoreName;
   const isAdmin = profile?.role === 'admin';
 
   if (isLoadingProfile) {
@@ -318,11 +326,12 @@ const Integrations: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* NEW: Shopify Integration Card */}
+      {/* Shopify Integration Card */}
       <Card className="bg-card border-border rounded-lg shadow-sm p-6">
         <CardHeader className="pb-4 flex flex-row items-center gap-4">
-          <img src="/Shopify_logo.png" alt="Shopify Logo" className="h-10 object-contain" />
-          <CardTitle className="text-xl font-semibold">Shopify</CardTitle>
+          {/* NEW: Dynamic Shopify Logo */}
+          <img src={shopifyLogoSrc} alt="Shopify Logo" className="h-10 object-contain" />
+          <CardTitle className="text-xl font-semibold">Shopify</CardTitle> {/* Kept title for clarity */}
         </CardHeader>
         <CardContent className="space-y-4">
           {isShopifyConnected ? (
