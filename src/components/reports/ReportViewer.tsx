@@ -12,6 +12,7 @@ import { showError, showSuccess } from "@/utils/toast";
 import { supabase } from "@/lib/supabaseClient";
 import { useProfile } from "@/context/ProfileContext";
 import { isValid } from "date-fns"; // Import isValid
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 // Import all report components (will be created in subsequent steps)
 import InventoryValuationReport from "./InventoryValuationReport";

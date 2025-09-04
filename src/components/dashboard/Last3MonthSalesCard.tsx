@@ -7,6 +7,7 @@ import { useOrders } from "@/context/OrdersContext";
 import { useInventory } from "@/context/InventoryContext";
 import { format, subMonths, isValid, startOfMonth, endOfMonth, startOfDay, endOfDay } from "date-fns";
 import { DateRange } from "react-day-picker";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface Last3MonthSalesCardProps {
   dateRange: DateRange | undefined;
@@ -39,8 +40,8 @@ const Last3MonthSalesCard: React.FC<Last3MonthSalesCardProps> = ({ dateRange }) 
     }
 
     orders.filter(order => order.type === "Sales").forEach(order => {
-      const orderDate = new Date(order.date);
-      if (!isValid(orderDate)) return;
+      const orderDate = parseAndValidateDate(order.date); // NEW: Use parseAndValidateDate
+      if (!orderDate) return;
       const monthKey = format(orderDate, "MMM yyyy");
       if (monthlyData[monthKey] && orderDate >= startDate && orderDate <= endDate) {
         monthlyData[monthKey].salesRevenue += order.totalAmount;
@@ -49,16 +50,21 @@ const Last3MonthSalesCard: React.FC<Last3MonthSalesCardProps> = ({ dateRange }) 
     });
 
     inventoryItems.forEach(item => {
-      const itemDate = new Date(item.lastUpdated);
-      if (!isValid(itemDate)) return;
+      const itemDate = parseAndValidateDate(item.lastUpdated); // NEW: Use parseAndValidateDate
+      if (!itemDate) return;
       const monthKey = format(itemDate, "MMM yyyy");
       if (monthlyData[monthKey] && itemDate >= startDate && itemDate <= endDate) {
         monthlyData[monthKey].newInventory += Math.floor(item.quantity * 0.2);
       }
     });
 
-    return Object.keys(monthlyData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime()).map(monthKey => ({
-      name: format(new Date(monthKey), "MMM"),
+    return Object.keys(monthlyData).sort((a, b) => {
+      const dateA = parseAndValidateDate(a); // NEW: Use parseAndValidateDate
+      const dateB = parseAndValidateDate(b); // NEW: Use parseAndValidateDate
+      if (!dateA || !dateB) return 0;
+      return dateA.getTime() - dateB.getTime();
+    }).map(monthKey => ({
+      name: format(parseAndValidateDate(monthKey)!, "MMM"), // Assert non-null after sorting
       "Sales Revenue": parseFloat(monthlyData[monthKey].salesRevenue.toFixed(2)),
       "New Inventory Added": parseFloat(monthlyData[monthKey].newInventory.toFixed(0)),
       "Items Shipped": parseFloat(monthlyData[monthKey].itemsShipped.toFixed(0)),

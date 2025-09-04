@@ -10,6 +10,7 @@ import { showError } from "@/utils/toast";
 import { format, startOfDay, endOfDay, subDays, isValid } from "date-fns";
 import { DateRange } from "react-day-picker";
 import StockDiscrepancyDetailsDialog from "./StockDiscrepancyDetailsDialog";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface StockDiscrepancyCardProps {
   dateRange: DateRange | undefined;
@@ -84,7 +85,7 @@ const StockDiscrepancyCard: React.FC<StockDiscrepancyCardProps> = ({ dateRange }
         },
         (payload) => {
           // Ensure timestamp is valid before creating a Date object
-          const newDiscrepancyDate = new Date(payload.new.timestamp && isValid(new Date(payload.new.timestamp)) ? payload.new.timestamp : new Date().toISOString());
+          const newDiscrepancyDate = parseAndValidateDate(payload.new.timestamp); // NEW: Use parseAndValidateDate
           const today = new Date();
           let currentPeriodStart: Date;
           let currentPeriodEnd: Date;
@@ -95,7 +96,7 @@ const StockDiscrepancyCard: React.FC<StockDiscrepancyCardProps> = ({ dateRange }
           currentPeriodStart = startOfDay(effectiveFrom);
           currentPeriodEnd = endOfDay(effectiveTo);
 
-          const isWithinCurrentPeriod = (isValid(newDiscrepancyDate) && newDiscrepancyDate >= currentPeriodStart && newDiscrepancyDate <= currentPeriodEnd);
+          const isWithinCurrentPeriod = (newDiscrepancyDate && newDiscrepancyDate >= currentPeriodStart && newDiscrepancyDate <= currentPeriodEnd); // Check for null newDiscrepancyDate
 
           if (isWithinCurrentPeriod) {
             setPendingDiscrepanciesCount((prev) => prev + 1);

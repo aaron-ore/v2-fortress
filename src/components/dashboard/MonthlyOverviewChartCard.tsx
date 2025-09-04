@@ -7,6 +7,7 @@ import { useOrders } from "@/context/OrdersContext";
 import { useInventory } from "@/context/InventoryContext";
 import { format, subMonths, isValid, startOfMonth, endOfMonth, startOfDay, endOfDay } from "date-fns";
 import { DateRange } from "react-day-picker";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface MonthlyOverviewChartCardProps {
   dateRange: DateRange | undefined;
@@ -39,8 +40,8 @@ const MonthlyOverviewChartCard: React.FC<MonthlyOverviewChartCardProps> = ({ dat
     }
 
     orders.forEach(order => {
-      const orderDate = new Date(order.date);
-      if (!isValid(orderDate)) return;
+      const orderDate = parseAndValidateDate(order.date); // NEW: Use parseAndValidateDate
+      if (!orderDate) return;
       const monthKey = format(orderDate, "MMM yyyy");
       if (monthlyData[monthKey] && orderDate >= startDate && orderDate <= endDate) {
         if (order.type === "Sales") {
@@ -53,8 +54,13 @@ const MonthlyOverviewChartCard: React.FC<MonthlyOverviewChartCardProps> = ({ dat
 
     const totalCurrentInventoryValue = inventoryItems.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
 
-    Object.keys(monthlyData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime()).forEach((monthKey, index, array) => {
-      const monthName = format(new Date(monthKey), "MMM");
+    Object.keys(monthlyData).sort((a, b) => {
+      const dateA = parseAndValidateDate(a); // NEW: Use parseAndValidateDate
+      const dateB = parseAndValidateDate(b); // NEW: Use parseAndValidateDate
+      if (!dateA || !dateB) return 0;
+      return dateA.getTime() - dateB.getTime();
+    }).forEach((monthKey, index, array) => {
+      const monthName = format(parseAndValidateDate(monthKey)!, "MMM"); // Assert non-null after sorting
       if (monthKey === format(endDate, "MMM yyyy")) {
         monthlyData[monthKey].inventoryValue = totalCurrentInventoryValue;
       } else {
@@ -64,8 +70,13 @@ const MonthlyOverviewChartCard: React.FC<MonthlyOverviewChartCardProps> = ({ dat
       }
     });
 
-    return Object.keys(monthlyData).sort((a, b) => new Date(a).getTime() - new Date(b).getTime()).map(monthKey => ({
-      name: format(new Date(monthKey), "MMM"),
+    return Object.keys(monthlyData).sort((a, b) => {
+      const dateA = parseAndValidateDate(a); // NEW: Use parseAndValidateDate
+      const dateB = parseAndValidateDate(b); // NEW: Use parseAndValidateDate
+      if (!dateA || !dateB) return 0;
+      return dateA.getTime() - dateB.getTime();
+    }).map(monthKey => ({
+      name: format(parseAndValidateDate(monthKey)!, "MMM"), // Assert non-null after sorting
       "Sales Revenue": parseFloat(monthlyData[monthKey].salesRevenue.toFixed(2)),
       "Inventory Value": parseFloat(monthlyData[monthKey].inventoryValue.toFixed(2)),
       "Purchase Volume": parseFloat(monthlyData[monthKey].purchaseVolume.toFixed(0)),

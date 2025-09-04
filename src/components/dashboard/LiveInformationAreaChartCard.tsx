@@ -7,6 +7,7 @@ import { useOrders } from "@/context/OrdersContext";
 import { useStockMovement } from "@/context/StockMovementContext";
 import { format, subDays, isValid, startOfDay, endOfDay } from "date-fns";
 import { DateRange } from "react-day-picker";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface LiveInformationAreaChartCardProps {
   dateRange: DateRange | undefined;
@@ -20,9 +21,9 @@ const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> 
     const dataPoints = [];
     const today = new Date();
 
-    // Ensure dateRange.from and dateRange.to are valid Date objects or fall back to defaults
-    const effectiveFrom = dateRange?.from && isValid(dateRange.from) ? dateRange.from : subDays(today, 6);
-    const effectiveTo = dateRange?.to && isValid(dateRange.to) ? dateRange.to : today;
+    // Use the dateRange directly, as it's now guaranteed to be sanitized by DateRangePicker
+    const effectiveFrom = dateRange?.from || subDays(today, 6);
+    const effectiveTo = dateRange?.to || today;
 
     let startDate = startOfDay(effectiveFrom);
     let endDate = endOfDay(effectiveTo);
@@ -41,8 +42,8 @@ const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> 
     }
 
     orders.forEach(order => {
-      const orderDate = new Date(order.date);
-      if (!isValid(orderDate)) return;
+      const orderDate = parseAndValidateDate(order.date); // NEW: Use parseAndValidateDate
+      if (!orderDate) return;
       const dateKey = format(orderDate, "MMM dd");
       if (dailyMetrics[dateKey] && orderDate >= startDate && orderDate <= endDate) {
         if (order.type === "Sales") {
@@ -54,23 +55,26 @@ const LiveInformationAreaChartCard: React.FC<LiveInformationAreaChartCardProps> 
     });
 
     stockMovements.forEach(movement => {
-      const moveDate = new Date(movement.timestamp);
-      if (!isValid(moveDate)) return;
+      const moveDate = parseAndValidateDate(movement.timestamp); // NEW: Use parseAndValidateDate
+      if (!moveDate) return;
       const dateKey = format(moveDate, "MMM dd");
       if (dailyMetrics[dateKey] && moveDate >= startDate && moveDate <= endDate) {
         dailyMetrics[dateKey].adjustments += movement.amount;
       }
     });
 
-    Object.keys(dailyMetrics).sort((a, b) => new Date(a).getTime() - new Date(b).getTime()).forEach(dateKey => {
+    return Object.keys(dailyMetrics).sort((a, b) => {
+      const dateA = parseAndValidateDate(a); // NEW: Use parseAndValidateDate
+      const dateB = parseAndValidateDate(b); // NEW: Use parseAndValidateDate
+      if (!dateA || !dateB) return 0;
+      return dateA.getTime() - dateB.getTime();
+    }).map(dateKey => {
       const totalDailyActivity = dailyMetrics[dateKey].salesVolume + dailyMetrics[dateKey].purchaseVolume + dailyMetrics[dateKey].adjustments;
-      dataPoints.push({
+      return {
         name: dateKey,
         "Total Daily Activity": totalDailyActivity,
-      });
+      };
     });
-
-    return dataPoints;
   }, [orders, stockMovements, dateRange]);
 
   return (

@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { DateRange } from "react-day-picker";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 const ClassicDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -29,15 +30,14 @@ const ClassicDashboard: React.FC = () => {
   const [isScanItemDialogOpen, setIsScanItemDialogOpen] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
-  // The DateRangePicker now handles its own internal normalization,
-  // so we can pass the raw dateRange state directly.
-
   // Helper function to check if a date falls within the selected range
   const isDateInRange = (dateString: string) => {
-    const itemDate = new Date(dateString);
-    if (!isValid(itemDate)) return false; // If itemDate is invalid, it can't be in range
+    const itemDate = parseAndValidateDate(dateString); // NEW: Use parseAndValidateDate
+    if (!itemDate) return false;
 
-    if (!dateRange?.from || !isValid(dateRange.from)) return true; // No valid 'from' date, so no filter applied
+    if (!dateRange?.from || !isValid(dateRange.from)) {
+      return true; // No valid date range filter applied
+    }
 
     const filterFrom = startOfDay(dateRange.from);
     const filterTo = dateRange.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
@@ -67,13 +67,13 @@ const ClassicDashboard: React.FC = () => {
     return orders
       .filter(order => order.status !== "Archived" && isDateInRange(order.date))
       .sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        if (!isValid(dateA) || !isValid(dateB)) return 0;
+        const dateA = parseAndValidateDate(a.date); // NEW: Use parseAndValidateDate
+        const dateB = parseAndValidateDate(b.date); // NEW: Use parseAndValidateDate
+        if (!dateA || !dateB) return 0; // Handle null dates
         return dateB.getTime() - dateA.getTime();
       })
       .slice(0, 5);
-  }, [orders, dateRange, isDateInRange]); // Use raw dateRange here
+  }, [orders, dateRange, isDateInRange]);
 
   const handleCreatePO = () => navigate("/create-po");
   const handleCreateInvoice = () => navigate("/create-invoice");
@@ -239,7 +239,9 @@ const ClassicDashboard: React.FC = () => {
                         <TableCell className="font-medium">{order.id}</TableCell>
                         <TableCell>{order.type}</TableCell>
                         <TableCell className="truncate max-w-[150px]">{order.customerSupplier}</TableCell>
-                        <TableCell className="text-right">{isValid(new Date(order.date)) ? format(new Date(order.date), "MMM dd, yyyy") : "N/A"}</TableCell>
+                        <TableCell className="text-right">
+                          {parseAndValidateDate(order.date) ? format(parseAndValidateDate(order.date)!, "MMM dd, yyyy") : "N/A"}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

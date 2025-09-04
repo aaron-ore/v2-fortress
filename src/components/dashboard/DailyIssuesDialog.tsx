@@ -17,6 +17,7 @@ import { useProfile, UserProfile } from "@/context/ProfileContext";
 import { showError } from "@/utils/toast";
 import { format, startOfDay, endOfDay, isValid } from "date-fns";
 import { DateRange } from "react-day-picker";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface DailyIssuesDialogProps {
   isOpen: boolean;
@@ -58,9 +59,8 @@ const DailyIssuesDialog: React.FC<DailyIssuesDialogProps> = ({ isOpen, onClose, 
           .order('timestamp', { ascending: false });
 
         const today = new Date();
-        // Use the dateRange directly, as it's now guaranteed to be sanitized by DateRangePicker
-        const filterFrom = dateRange?.from ? startOfDay(dateRange.from) : startOfDay(today);
-        const filterTo = dateRange?.to ? endOfDay(dateRange.to) : endOfDay(today);
+        const filterFrom = dateRange?.from && isValid(dateRange.from) ? startOfDay(dateRange.from) : startOfDay(today);
+        const filterTo = dateRange?.to && isValid(dateRange.to) ? endOfDay(dateRange.to) : endOfDay(today);
 
         query = query.gte('timestamp', filterFrom.toISOString()).lte('timestamp', filterTo.toISOString());
 
@@ -74,7 +74,7 @@ const DailyIssuesDialog: React.FC<DailyIssuesDialogProps> = ({ isOpen, onClose, 
           const fetchedIssues: IssueLog[] = data.map((log: any) => ({
             id: log.id,
             // Ensure timestamp is valid before storing
-            timestamp: (log.timestamp && isValid(new Date(log.timestamp))) ? log.timestamp : new Date().toISOString(),
+            timestamp: parseAndValidateDate(log.timestamp)?.toISOString() || new Date().toISOString(), // NEW: Use parseAndValidateDate
             userId: log.user_id,
             organizationId: log.organization_id,
             activityType: log.activity_type,
@@ -125,39 +125,42 @@ const DailyIssuesDialog: React.FC<DailyIssuesDialogProps> = ({ isOpen, onClose, 
           ) : (
             <ScrollArea className="flex-grow max-h-[calc(100vh-250px)] border border-border rounded-md p-3">
               <div className="space-y-4">
-                {issues.map((issue) => (
-                  <div key={issue.id} className="bg-muted/20 p-3 rounded-md border border-border">
-                    <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="font-semibold flex items-center gap-1">
-                        <User className="h-4 w-4 text-muted-foreground" /> {getUserName(issue.userId)}
-                      </span>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> {format(new Date(issue.timestamp), "MMM dd, yyyy HH:mm")}
-                      </span>
+                {issues.map((issue) => {
+                  const issueTimestamp = parseAndValidateDate(issue.timestamp); // NEW: Use parseAndValidateDate
+                  return (
+                    <div key={issue.id} className="bg-muted/20 p-3 rounded-md border border-border">
+                      <div className="flex items-center justify-between text-sm mb-2">
+                        <span className="font-semibold flex items-center gap-1">
+                          <User className="h-4 w-4 text-muted-foreground" /> {getUserName(issue.userId)}
+                        </span>
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" /> {issueTimestamp ? format(issueTimestamp, "MMM dd, yyyy HH:mm") : "N/A"}
+                        </span>
+                      </div>
+                      <p className="font-medium text-foreground mb-1 flex items-center gap-1">
+                        <AlertTriangle className="h-4 w-4 text-destructive" /> {issue.details.issueType}
+                      </p>
+                      {issue.details.itemName !== "N/A" && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Package className="h-4 w-4" /> Product: {issue.details.itemName} (ID: {issue.details.itemId})
+                        </p>
+                      )}
+                      {issue.details.location !== "N/A" && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <MapPin className="h-4 w-4" /> Location: {issue.details.location}
+                        </p>
+                      )}
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Description: {issue.details.description}
+                      </p>
+                      {issue.details.contactInfo !== "N/A" && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Contact: {issue.details.contactInfo}
+                        </p>
+                      )}
                     </div>
-                    <p className="font-medium text-foreground mb-1 flex items-center gap-1">
-                      <AlertTriangle className="h-4 w-4 text-destructive" /> {issue.details.issueType}
-                    </p>
-                    {issue.details.itemName !== "N/A" && (
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Package className="h-4 w-4" /> Product: {issue.details.itemName} (ID: {issue.details.itemId})
-                      </p>
-                    )}
-                    {issue.details.location !== "N/A" && (
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <MapPin className="h-4 w-4" /> Location: {issue.details.location}
-                      </p>
-                    )}
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Description: {issue.details.description}
-                    </p>
-                    {issue.details.contactInfo !== "N/A" && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Contact: {issue.details.contactInfo}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </ScrollArea>
           )}
