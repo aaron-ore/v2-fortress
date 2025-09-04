@@ -8,13 +8,13 @@ import { useProfile } from "@/context/ProfileContext";
 import { showError, showSuccess } from "@/utils/toast";
 import { supabase } from "@/lib/supabaseClient";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useTheme } from "next-themes"; // NEW: Import useTheme
+import { useTheme } from "next-themes";
 
 const Integrations: React.FC = () => {
   const { profile, isLoadingProfile, fetchProfile } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
-  const { theme } = useTheme(); // NEW: Get current theme
+  const { theme } = useTheme();
 
   const [isSyncingQuickBooks, setIsSyncingQuickBooks] = useState(false);
   const [isSyncingShopify, setIsSyncingShopify] = useState(false);
@@ -23,7 +23,7 @@ const Integrations: React.FC = () => {
   const qbCallbackProcessedRef = React.useRef(false);
   const shopifyCallbackProcessedRef = React.useRef(false);
 
-  // NEW: Determine which Shopify logo to use based on theme
+  // Determine which Shopify logo to use based on theme
   const shopifyLogoSrc = theme === 'dark' || theme === 'emerald' || theme === 'deep-forest'
     ? "/shopify_logo_white.png"
     : "/shopify_logo_black.png";
@@ -46,7 +46,7 @@ const Integrations: React.FC = () => {
         showError(`QuickBooks connection failed: ${quickbooksError}`);
       }
       qbCallbackProcessedRef.current = true;
-      navigate(location.pathname, { replace: true }); // Clear URL params
+      navigate(location.pathname, { replace: true });
     }
 
     // Handle Shopify callback
@@ -60,7 +60,7 @@ const Integrations: React.FC = () => {
         showError(`Shopify connection failed: ${shopifyError}`);
       }
       shopifyCallbackProcessedRef.current = true;
-      navigate(location.pathname, { replace: true }); // Clear URL params
+      navigate(location.pathname, { replace: true });
     }
   }, [location.search, location.pathname, navigate, fetchProfile]);
 
@@ -146,7 +146,7 @@ const Integrations: React.FC = () => {
 
       showSuccess(data.message || "Sales orders synced successfully!");
       console.log("QuickBooks Sync Results:", data.results);
-      await fetchProfile(); // Refresh profile to ensure latest QuickBooks tokens/status
+      await fetchProfile();
     } catch (error: any) {
       console.error("Error syncing sales orders to QuickBooks:", error);
       showError(`Failed to sync sales orders: ${error.message}`);
@@ -217,7 +217,7 @@ const Integrations: React.FC = () => {
       
       if (updateError) throw updateError;
 
-      await fetchProfile(); // Refresh profile to update Shopify connection status
+      await fetchProfile();
       showSuccess("Disconnected from Shopify.");
     } catch (error: any) {
       console.error("Error disconnecting Shopify:", error);
@@ -329,9 +329,9 @@ const Integrations: React.FC = () => {
       {/* Shopify Integration Card */}
       <Card className="bg-card border-border rounded-lg shadow-sm p-6">
         <CardHeader className="pb-4 flex flex-row items-center gap-4">
-          {/* NEW: Dynamic Shopify Logo */}
+          {/* Dynamic Shopify Logo */}
           <img src={shopifyLogoSrc} alt="Shopify Logo" className="h-10 object-contain" />
-          <CardTitle className="text-xl font-semibold">Shopify</CardTitle> {/* Kept title for clarity */}
+          {/* Removed CardTitle for Shopify */}
         </CardHeader>
         <CardContent className="space-y-4">
           {isShopifyConnected ? (
