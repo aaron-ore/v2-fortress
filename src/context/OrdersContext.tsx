@@ -6,6 +6,7 @@ import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
 import { generateSequentialNumber } from "@/utils/numberGenerator"; // Import generateSequentialNumber
 import { isValid } from "date-fns"; // Import isValid for date validation
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 export interface POItem {
   id: number;
@@ -63,13 +64,9 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
     }));
 
     // Ensure created_at and due_date are always valid ISO strings
-    const validatedCreatedAt = (order.created_at && isValid(new Date(order.created_at)))
-      ? order.created_at
-      : new Date().toISOString(); // Fallback to current valid ISO string
+    const validatedCreatedAt = parseAndValidateDate(order.created_at)?.toISOString() || new Date().toISOString(); // NEW: Use parseAndValidateDate
     
-    const validatedDueDate = (order.due_date && isValid(new Date(order.due_date)))
-      ? order.due_date
-      : new Date().toISOString(); // Fallback to current valid ISO string
+    const validatedDueDate = parseAndValidateDate(order.due_date)?.toISOString() || new Date().toISOString(); // NEW: Use parseAndValidateDate
 
     return {
       id: order.id,

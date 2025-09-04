@@ -20,6 +20,7 @@ import { processAutoReorder } from "@/utils/autoReorderLogic";
 import { useNotifications } from "./NotificationContext";
 // REMOVED: import { useActivityLogs } from "./ActivityLogContext";
 import { isValid } from "date-fns"; // Import isValid for date validation
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 export interface InventoryItem {
   id: string;
@@ -87,9 +88,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
     const autoReorderQuantity = parseInt(item.auto_reorder_quantity || '0');
 
     // Ensure last_updated is always a valid ISO string
-    const validatedLastUpdated = (item.last_updated && isValid(new Date(item.last_updated)))
-      ? item.last_updated
-      : new Date().toISOString(); // Fallback to current valid ISO string
+    const validatedLastUpdated = parseAndValidateDate(item.last_updated)?.toISOString() || new Date().toISOString(); // NEW: Use parseAndValidateDate
 
     return {
       id: item.id,

@@ -8,6 +8,7 @@ import { useOnboarding } from "@/context/OnboardingContext";
 import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { Loader2, Users, DollarSign, Receipt, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface CustomerSalesData {
   customerName: string;
@@ -43,8 +44,8 @@ const SalesByCustomerReport: React.FC<SalesByCustomerReportProps> = ({
     const filteredOrders = orders.filter(order => {
       if (order.type !== "Sales") return false;
       if (!filterFrom || !filterTo) return true;
-      const orderDate = new Date(order.date);
-      return isValid(orderDate) && isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
+      const orderDate = parseAndValidateDate(order.date); // NEW: Use parseAndValidateDate
+      return orderDate && isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
     });
 
     const customerSalesMap: { [key: string]: { totalSales: number; totalItems: number; lastOrderDate: Date } } = {};
@@ -55,8 +56,8 @@ const SalesByCustomerReport: React.FC<SalesByCustomerReportProps> = ({
       }
       customerSalesMap[order.customerSupplier].totalSales += order.totalAmount;
       customerSalesMap[order.customerSupplier].totalItems += order.itemCount;
-      const currentOrderDate = new Date(order.date);
-      if (currentOrderDate > customerSalesMap[order.customerSupplier].lastOrderDate) {
+      const currentOrderDate = parseAndValidateDate(order.date); // NEW: Use parseAndValidateDate
+      if (currentOrderDate && currentOrderDate > customerSalesMap[order.customerSupplier].lastOrderDate) {
         customerSalesMap[order.customerSupplier].lastOrderDate = currentOrderDate;
       }
     });

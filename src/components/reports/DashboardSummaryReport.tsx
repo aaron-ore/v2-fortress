@@ -9,6 +9,7 @@ import { useOnboarding } from "@/context/OnboardingContext";
 import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { Loader2, Package, Receipt, AlertTriangle, DollarSign, FileText } from "lucide-react"; // Added FileText
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface DashboardSummaryReportProps {
   dateRange: DateRange | undefined;
@@ -37,14 +38,14 @@ const DashboardSummaryReport: React.FC<DashboardSummaryReportProps> = ({
 
     const filteredInventory = inventoryItems.filter(item => {
       if (!filterFrom || !filterTo) return true; // No date filter applied
-      const itemDate = new Date(item.lastUpdated);
-      return isValid(itemDate) && isWithinInterval(itemDate, { start: filterFrom, end: filterTo });
+      const itemDate = parseAndValidateDate(item.lastUpdated); // NEW: Use parseAndValidateDate
+      return itemDate && isWithinInterval(itemDate, { start: filterFrom, end: filterTo });
     });
 
     const filteredOrders = orders.filter(order => {
       if (!filterFrom || !filterTo) return true; // No date filter applied
-      const orderDate = new Date(order.date);
-      return isValid(orderDate) && isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
+      const orderDate = parseAndValidateDate(order.date); // NEW: Use parseAndValidateDate
+      return orderDate && isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
     });
 
     const totalStockValue = filteredInventory.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
@@ -54,12 +55,22 @@ const DashboardSummaryReport: React.FC<DashboardSummaryReportProps> = ({
 
     const recentSalesOrders = filteredOrders
       .filter(order => order.type === "Sales")
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .sort((a, b) => {
+        const dateA = parseAndValidateDate(a.date);
+        const dateB = parseAndValidateDate(b.date);
+        if (!dateA || !dateB) return 0;
+        return dateB.getTime() - dateA.getTime();
+      })
       .slice(0, 5);
 
     const recentPurchaseOrders = filteredOrders
       .filter(order => order.type === "Purchase")
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .sort((a, b) => {
+        const dateA = parseAndValidateDate(a.date);
+        const dateB = parseAndValidateDate(b.date);
+        if (!dateA || !dateB) return 0;
+        return dateB.getTime() - dateA.getTime();
+      })
       .slice(0, 5);
 
     const reportProps = {

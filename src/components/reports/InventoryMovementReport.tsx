@@ -12,6 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label"; // Added Label import
 import { showError } from "@/utils/toast";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface InventoryMovementReportProps {
   dateRange: DateRange | undefined;
@@ -47,8 +48,8 @@ const InventoryMovementReport: React.FC<InventoryMovementReportProps> = ({
         return false;
       }
       if (!filterFrom || !filterTo) return true;
-      const movementDate = new Date(movement.timestamp);
-      return isValid(movementDate) && isWithinInterval(movementDate, { start: filterFrom, end: filterTo });
+      const movementDate = parseAndValidateDate(movement.timestamp); // NEW: Use parseAndValidateDate
+      return movementDate && isWithinInterval(movementDate, { start: filterFrom, end: filterTo });
     });
 
     const reportProps = {
@@ -154,7 +155,7 @@ const InventoryMovementReport: React.FC<InventoryMovementReportProps> = ({
                       <TableCell className="text-right">{movement.newQuantity}</TableCell>
                       <TableCell>{movement.reason}</TableCell>
                       <TableCell>{getUserName(movement.userId)}</TableCell>
-                      <TableCell>{format(new Date(movement.timestamp), "MMM dd, HH:mm")}</TableCell>
+                      <TableCell>{format(parseAndValidateDate(movement.timestamp)!, "MMM dd, HH:mm")}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

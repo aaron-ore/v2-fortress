@@ -10,6 +10,7 @@ import { Loader2, AlertTriangle, Package, MapPin, FileText } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label"; // Added Label import
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface LowStockReportProps {
   dateRange: DateRange | undefined;
@@ -39,8 +40,8 @@ const LowStockReport: React.FC<LowStockReportProps> = ({
 
     const filteredItems = inventoryItems.filter(item => {
       if (!filterFrom || !filterTo) return true;
-      const itemDate = new Date(item.lastUpdated);
-      return isValid(itemDate) && isWithinInterval(itemDate, { start: filterFrom, end: filterTo });
+      const itemDate = parseAndValidateDate(item.lastUpdated); // NEW: Use parseAndValidateDate
+      return itemDate && isWithinInterval(itemDate, { start: filterFrom, end: filterTo });
     });
 
     let itemsToDisplay: InventoryItem[] = [];

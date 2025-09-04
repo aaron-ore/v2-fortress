@@ -4,6 +4,7 @@ import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
 // REMOVED: import { mockReplenishmentTasks } from "@/utils/mockData"; // Import mock data
 import { isValid } from "date-fns"; // Import isValid for date validation
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 export interface ReplenishmentTask {
   id: string;
@@ -36,14 +37,10 @@ export const ReplenishmentProvider: React.FC<{ children: ReactNode }> = ({ child
     const quantity = parseInt(task.quantity || '0');
 
     // Ensure createdAt is always a valid ISO string
-    const validatedCreatedAt = (task.created_at && isValid(new Date(task.created_at)))
-      ? task.created_at
-      : new Date().toISOString(); // Fallback to current valid ISO string
+    const validatedCreatedAt = parseAndValidateDate(task.created_at)?.toISOString() || new Date().toISOString(); // NEW: Use parseAndValidateDate
 
     // Ensure completedAt is valid or keep undefined if not present
-    const validatedCompletedAt = (task.completed_at && isValid(new Date(task.completed_at)))
-      ? task.completed_at
-      : undefined;
+    const validatedCompletedAt = parseAndValidateDate(task.completed_at)?.toISOString() || undefined; // NEW: Use parseAndValidateDate
 
     return {
       id: task.id,

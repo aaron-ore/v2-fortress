@@ -12,6 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label"; // Added Label import
 import { showError } from "@/utils/toast";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface DiscrepancyLog {
   id: string;
@@ -81,7 +82,7 @@ const DiscrepancyReport: React.FC<DiscrepancyReportProps> = ({
     } else {
       const fetchedDiscrepancies: DiscrepancyLog[] = data.map((log: any) => ({
         id: log.id,
-        timestamp: log.timestamp,
+        timestamp: parseAndValidateDate(log.timestamp)?.toISOString() || new Date().toISOString(), // NEW: Use parseAndValidateDate
         userId: log.user_id,
         organizationId: log.organization_id,
         itemId: log.item_id,
@@ -208,7 +209,7 @@ const DiscrepancyReport: React.FC<DiscrepancyReportProps> = ({
                       <TableCell>{discrepancy.reason}</TableCell>
                       <TableCell>{discrepancy.status}</TableCell>
                       <TableCell>{getUserName(discrepancy.userId)}</TableCell>
-                      <TableCell>{format(new Date(discrepancy.timestamp), "MMM dd, HH:mm")}</TableCell>
+                      <TableCell>{format(parseAndValidateDate(discrepancy.timestamp)!, "MMM dd, yyyy HH:mm")}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

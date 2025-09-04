@@ -4,6 +4,7 @@ import { showError, showSuccess } from "@/utils/toast";
 // REMOVED: import { mockUserProfile, mockAllProfiles } from "@/utils/mockData";
 // REMOVED: import { useActivityLogs } from "./ActivityLogContext";
 import { isValid } from "date-fns"; // Import isValid for date validation
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 export interface UserProfile {
   id: string;
@@ -42,9 +43,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const mapSupabaseProfileToUserProfile = (p: any, sessionEmail?: string): UserProfile => {
     // Ensure created_at is always a valid ISO string
-    const validatedCreatedAt = (p.created_at && isValid(new Date(p.created_at)))
-      ? p.created_at
-      : new Date().toISOString(); // Fallback to current valid ISO string
+    const validatedCreatedAt = parseAndValidateDate(p.created_at)?.toISOString() || new Date().toISOString(); // NEW: Use parseAndValidateDate
 
     return {
       id: p.id,

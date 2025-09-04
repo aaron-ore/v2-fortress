@@ -10,6 +10,7 @@ import { Loader2, FileText, Truck, DollarSign } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label"; // Added Label import
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface PurchaseOrderStatusReportProps {
   dateRange: DateRange | undefined;
@@ -40,8 +41,8 @@ const PurchaseOrderStatusReport: React.FC<PurchaseOrderStatusReportProps> = ({
       if (order.type !== "Purchase") return false;
       if (statusFilter !== "all" && order.status.toLowerCase() !== statusFilter.toLowerCase()) return false;
       if (!filterFrom || !filterTo) return true;
-      const orderDate = new Date(order.date);
-      return isValid(orderDate) && isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
+      const orderDate = parseAndValidateDate(order.date); // NEW: Use parseAndValidateDate
+      return orderDate && isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
     });
 
     const reportProps = {
@@ -149,9 +150,9 @@ const PurchaseOrderStatusReport: React.FC<PurchaseOrderStatusReportProps> = ({
                   {ordersToDisplay.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">{order.id}</TableCell>
-                      <TableCell>{format(new Date(order.date), "MMM dd, yyyy")}</TableCell>
+                      <TableCell>{format(parseAndValidateDate(order.date)!, "MMM dd, yyyy")}</TableCell>
                       <TableCell>{order.customerSupplier}</TableCell>
-                      <TableCell>{format(new Date(order.dueDate), "MMM dd, yyyy")}</TableCell>
+                      <TableCell>{format(parseAndValidateDate(order.dueDate)!, "MMM dd, yyyy")}</TableCell>
                       <TableCell>{order.status}</TableCell>
                       <TableCell className="text-right">${order.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     </TableRow>

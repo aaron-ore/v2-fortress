@@ -4,6 +4,7 @@ import { showError } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
 // REMOVED: import { useActivityLogs } from "./ActivityLogContext";
 import { isValid } from "date-fns"; // Import isValid for date validation
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 export interface StockMovement {
   id: string;
@@ -38,9 +39,7 @@ export const StockMovementProvider: React.FC<{ children: ReactNode }> = ({ child
     const newQuantity = parseInt(movement.new_quantity || '0');
 
     // Ensure timestamp is always a valid ISO string
-    const validatedTimestamp = (movement.timestamp && isValid(new Date(movement.timestamp)))
-      ? movement.timestamp
-      : new Date().toISOString(); // Fallback to current valid ISO string
+    const validatedTimestamp = parseAndValidateDate(movement.timestamp)?.toISOString() || new Date().toISOString(); // NEW: Use parseAndValidateDate
 
     return {
       id: movement.id,

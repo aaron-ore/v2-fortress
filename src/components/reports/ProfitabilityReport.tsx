@@ -9,6 +9,7 @@ import { useOnboarding } from "@/context/OnboardingContext";
 import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { Loader2, DollarSign, BarChart, FileText } from "lucide-react"; // NEW: Import FileText
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface ProfitabilityMetricsData {
   name: string;
@@ -44,8 +45,8 @@ const ProfitabilityReport: React.FC<ProfitabilityReportProps> = ({
     const filteredOrders = orders.filter(order => {
       if (order.type !== "Sales") return false;
       if (!filterFrom || !filterTo) return true;
-      const orderDate = new Date(order.date);
-      return isValid(orderDate) && isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
+      const orderDate = parseAndValidateDate(order.date); // NEW: Use parseAndValidateDate
+      return orderDate && isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
     });
 
     let totalSalesRevenue = 0;

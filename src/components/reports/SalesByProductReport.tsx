@@ -10,6 +10,7 @@ import { useOnboarding } from "@/context/OnboardingContext";
 import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { Loader2, Package, Receipt, BarChart, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 
 interface ProductSalesData {
   productName: string;
@@ -48,8 +49,8 @@ const SalesByProductReport: React.FC<SalesByProductReportProps> = ({
     const filteredOrders = orders.filter(order => {
       if (order.type !== "Sales") return false;
       if (!filterFrom || !filterTo) return true;
-      const orderDate = new Date(order.date);
-      return isValid(orderDate) && isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
+      const orderDate = parseAndValidateDate(order.date); // NEW: Use parseAndValidateDate
+      return orderDate && isWithinInterval(orderDate, { start: filterFrom, end: filterTo });
     });
 
     const productSalesMap: { [key: string]: { productName: string; sku: string; category: string; unitsSold: number; totalRevenue: number } } = {};
