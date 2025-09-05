@@ -5,7 +5,7 @@ import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAn
 interface LocationLabelPdfContentProps {
   area: string;
   row: string;
-  bay: string; // Still passed, but not visually displayed to match reference
+  bay: string;
   level: string;
   pos: string;
   // Removed 'color' prop as the top bar is no longer needed
@@ -17,8 +17,8 @@ interface LocationLabelPdfContentProps {
 
 const LocationLabelPdfContent = React.forwardRef<HTMLDivElement, LocationLabelPdfContentProps>(({
   area,
-  row, // Used for 'BAY' in the new format
-  // bay, // Not used in the new visual format to match the reference image
+  row,
+  bay,
   level,
   pos,
   // color, // No longer used
@@ -44,8 +44,12 @@ const LocationLabelPdfContent = React.forwardRef<HTMLDivElement, LocationLabelPd
           <span className="text-3xl font-extrabold text-black">{area}</span>
         </div>
         <div className="flex flex-col items-center leading-none">
-          <span className="text-[0.6rem] font-bold uppercase text-gray-700 mb-[1mm]">BAY</span>
+          <span className="text-[0.6rem] font-bold uppercase text-gray-700 mb-[1mm]">ROW</span> {/* Corrected to ROW */}
           <span className="text-3xl font-extrabold text-black">{row}</span>
+        </div>
+        <div className="flex flex-col items-center leading-none">
+          <span className="text-[0.6rem] font-bold uppercase text-gray-700 mb-[1mm]">BAY</span> {/* Added BAY */}
+          <span className="text-3xl font-extrabold text-black">{bay}</span>
         </div>
         <div className="flex flex-col items-center leading-none">
           <span className="text-[0.6rem] font-bold uppercase text-gray-700 mb-[1mm]">LEVEL</span>
