@@ -28,20 +28,20 @@ const LocationLabelPdfContent: React.FC<LocationLabelPdfContentProps> = ({
   const printDateObj = parseAndValidateDate(printDate);
 
   return (
-    <div className="bg-white text-gray-900 font-sans text-xs p-[1mm] w-[101.6mm] h-[50.8mm] border border-black flex flex-col overflow-hidden"> {/* 4x2 inches (rectangular) */}
+    <div className="bg-white text-gray-900 font-sans text-xs p-[1mm] w-[101.6mm] h-[50.8mm] border border-black flex flex-col"> {/* 4x2 inches (rectangular) */}
       {/* Top Color Bar */}
       <div className="h-[5mm] w-full flex-shrink-0" style={{ backgroundColor: color, zIndex: 10 }}></div>
 
       {/* Main Content Area: QR Code on Left, Text Details on Right */}
-      <div className="flex flex-grow items-center px-[2mm] py-[2mm] gap-x-[2mm]">
+      <div className="flex flex-grow items-center px-[2mm] py-[2mm] gap-x-[4mm]"> {/* Increased gap-x */}
         {/* QR Code on Left */}
-        <div className="flex-shrink-0 w-[16mm] h-[16mm] flex items-center justify-center border border-gray-200 p-[1mm]">
+        <div className="flex-shrink-0 w-[20mm] h-[20mm] flex items-center justify-center border border-gray-200 p-[1mm]"> {/* Slightly larger QR container */}
           <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-full h-full object-contain" />
         </div>
 
         {/* Text Details on Right */}
         <div className="flex-grow flex flex-col justify-center min-w-0">
-          <p className="text-xl font-extrabold text-black leading-tight text-center mb-1">{locationString}</p> {/* Larger font for main string */}
+          <p className="text-xl font-extrabold text-black leading-tight text-center mb-1">{locationString}</p> {/* Main string */}
           <div className="text-right flex flex-col space-y-0.5">
             <p className="text-[0.7rem] text-black"><span className="font-semibold">Area:</span> {area}</p>
             <p className="text-[0.7rem] text-black"><span className="font-semibold">Row:</span> {row}</p>
