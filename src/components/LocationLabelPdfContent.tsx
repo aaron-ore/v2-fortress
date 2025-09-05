@@ -33,9 +33,9 @@ const LocationLabelPdfContent: React.FC<LocationLabelPdfContentProps> = ({
       <div className="h-[5mm] w-full flex-shrink-0" style={{ backgroundColor: color, zIndex: 10 }}></div>
 
       {/* Main Content Area: QR Code on Left, Text Details on Right */}
-      <div className="flex flex-grow items-center px-[2mm] py-[2mm] gap-x-[4mm]"> {/* Increased gap-x */}
+      <div className="flex flex-grow items-center px-[2mm] py-[2mm] gap-x-[4mm]">
         {/* QR Code on Left */}
-        <div className="flex-shrink-0 w-[18mm] h-[18mm] flex items-start justify-center"> {/* Adjusted size, removed border and padding, aligned to start */}
+        <div className="flex-shrink-0 w-[40mm] h-[40mm] flex items-center justify-center"> {/* Adjusted size to fit 150px QR code */}
           <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-full h-full object-contain" />
         </div>
 
@@ -53,7 +53,7 @@ const LocationLabelPdfContent: React.FC<LocationLabelPdfContentProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="flex-shrink-0 text-right text-[0.4rem] text-gray-500 pt-[1mm] pb-[1mm]">
+      <div className="flex-shrink-0 text-right text-[0.5rem] text-gray-500 pt-[1mm] pb-[1mm]">
         Printed: {printDateObj && isValid(printDateObj) ? format(printDateObj, "MMM dd, yyyy HH:mm") : "N/A"}
       </div>
     </div>
