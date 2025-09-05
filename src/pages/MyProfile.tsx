@@ -92,6 +92,9 @@ const MyProfile: React.FC = () => {
               <Mail className="h-4 w-4 text-muted-foreground" /> Email
             </Label>
             <Input id="email" type="email" value={email} disabled /> {/* Email is disabled as it's from auth */}
+            <p className="text-xs text-muted-foreground">
+              Your email is tied to your authentication and cannot be changed directly here.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="phone" className="flex items-center gap-2">
