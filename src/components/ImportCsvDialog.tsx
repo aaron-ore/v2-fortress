@@ -1,34 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { showSuccess, showError } from "@/utils/toast";
-import { Download } from "lucide-react";
-import { generateInventoryCsvTemplate } from "@/utils/csvGenerator";
-import * as XLSX from 'xlsx';
-import { useInventory } from "@/context/InventoryContext";
-import { useCategories } from "@/context/CategoryContext";
-import { useOnboarding } from "@/context/OnboardingContext";
-import { useStockMovement } from "@/context/StockMovementContext"; // Import useStockMovement
-import ConfirmDialog from "@/components/ConfirmDialog";
-import DuplicateItemsWarningDialog from "./DuplicateItemsWarningDialog"; // Import the new dialog
-
-interface ImportCsvDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-interface CsvDuplicateItem {
-  sku: string;
-  csvQuantity: number;
+csvQuantity: number;
   itemName: string;
 }
 
@@ -38,7 +8,7 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
 }) => {
   const { addInventoryItem, updateInventoryItem, inventoryItems } = useInventory();
   const { categories, addCategory } = useCategories();
-  const { locations, addLocation } = useOnboarding();
+  const { locations, addLocation } = useOnboarding(); // Now contains Location[]
   const { addStockMovement } = useStockMovement(); // Use addStockMovement
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -92,7 +62,7 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
     const uniquePickingBinLocationsInCsv = Array.from(new Set(data.map(row => String(row.pickingBinLocation || '').trim())));
     const allUniqueLocationsInCsv = Array.from(new Set([...uniqueLocationsInCsv, ...uniquePickingBinLocationsInCsv]));
 
-    const existingLocationsLower = new Set(locations.map(loc => loc.toLowerCase()));
+    const existingLocationsLower = new Set(locations.map(loc => loc.fullLocationString.toLowerCase()));
     const newLocations = allUniqueLocationsInCsv.filter(loc => loc && !existingLocationsLower.has(loc.toLowerCase()));
 
     if (newLocations.length > 0) {
@@ -108,14 +78,18 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
   };
 
   // Main processing function, now accepts duplicateAction
-  const processCsvData = async (data: any[], confirmedNewLocations: string[], actionForDuplicates: "skip" | "add_to_stock") => {
+  const processCsvData = async (data: any[], confirmedNewLocationStrings: string[], actionForDuplicates: "skip" | "add_to_stock") => {
     setIsUploading(true);
     let successCount = 0;
     let errorCount = 0;
     const errors: string[] = [];
 
     const currentCategoriesMap = new Map(categories.map(cat => [cat.name.toLowerCase(), cat.id]));
-    const currentLocationsSet = new Set([...locations.map(loc => loc.toLowerCase()), ...confirmedNewLocations.map(loc => loc.toLowerCase())]);
+    // Combine existing structured locations with newly confirmed ones
+    const currentLocationsSet = new Set([
+      ...locations.map(loc => loc.fullLocationString.toLowerCase()),
+      ...confirmedNewLocationStrings.map(locString => locString.toLowerCase())
+    ]);
     
     // Ensure all categories from CSV exist
     const uniqueCategoriesInCsv = Array.from(new Set(data.map(row => String(row.category || '').trim())));
@@ -130,6 +104,22 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
           errorCount++;
         }
       }
+    }
+
+    // Add any newly confirmed locations to the context
+    for (const locString of confirmedNewLocationStrings) {
+      const parsed = parseLocationString(locString);
+      const newLocation: Omit<Location, "id" | "createdAt" | "userId" | "organizationId"> = {
+        fullLocationString: locString,
+        displayName: locString, // Use full string as display name for auto-added
+        area: parsed.area || "N/A",
+        row: parsed.row || "N/A",
+        bay: parsed.bay || "N/A",
+        level: parsed.level || "N/A",
+        pos: parsed.pos || "N/A",
+        color: "#CCCCCC", // Default color for auto-added locations
+      };
+      await addLocation(newLocation);
     }
     
     // Process inventory items
@@ -161,7 +151,7 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
       }
       // Validate location exists
       if (!currentLocationsSet.has(location.toLowerCase())) {
-        errors.push(`Row with SKU '${sku}': Location '${location}' does not exist and was not confirmed to be added. Item skipped.`);
+        errors.push(`Row with SKU '${sku}': Main Storage Location '${location}' does not exist and was not confirmed to be added. Item skipped.`);
         errorCount++;
         continue;
       }
@@ -188,7 +178,6 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
 
             const updatedItem = {
               ...existingItem,
-              quantity: newQuantity, // This will be derived in context
               pickingBinQuantity: existingItem.pickingBinQuantity + pickingBinQuantity, // Add to picking bin
               overstockQuantity: existingItem.overstockQuantity + overstockQuantity, // Add to overstock
               lastUpdated: new Date().toISOString().split('T')[0],
@@ -400,8 +389,22 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
     setIsConfirmNewLocationsDialogOpen(false);
     setIsUploading(true);
 
-    for (const loc of newLocationsToConfirm) {
-      addLocation(loc);
+    // The `addLocation` function in context now expects a structured object.
+    // We need to convert the simple string names from `newLocationsToConfirm`
+    // into `Location` objects before passing them.
+    for (const locString of newLocationsToConfirm) {
+      const parsed = parseLocationString(locString);
+      const newLocation: Omit<Location, "id" | "createdAt" | "userId" | "organizationId"> = {
+        fullLocationString: locString,
+        displayName: locString, // Use full string as display name for auto-added
+        area: parsed.area || "N/A",
+        row: parsed.row || "N/A",
+        bay: parsed.bay || "N/A",
+        level: parsed.level || "N/A",
+        pos: parsed.pos || "N/A",
+        color: "#CCCCCC", // Default color for auto-added locations
+      };
+      await addLocation(newLocation);
     }
     showSuccess(`Added new locations: ${newLocationsToConfirm.join(", ")}`);
 

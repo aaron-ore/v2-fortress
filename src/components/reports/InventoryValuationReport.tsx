@@ -69,7 +69,7 @@ const InventoryValuationReport: React.FC<InventoryValuationReportProps> = ({
         totalQuantity: data.totalQuantity,
       })).sort((a, b) => b.totalValue - a.totalValue);
     } else { // groupBy === "location"
-      const locationMap: { [key: string]: { totalValue: number; totalQuantity: number } } = {};
+      const locationMap: { [key: string]: { totalValue: number; totalQuantity: number, displayName: string } } = {};
       filteredItems.forEach(item => {
         // Use the fullLocationString as the key, but display the displayName if available
         const locationKey = item.location;
