@@ -1,6 +1,7 @@
 import React from "react";
 import { format, isValid } from "date-fns";
 import { parseAndValidateDate } from "@/utils/dateUtils";
+import { Diamond } from "lucide-react"; // NEW: Import Diamond icon
 
 interface LocationLabelPdfContentProps {
   area: string;
@@ -29,42 +30,19 @@ const LocationLabelPdfContent = React.forwardRef<HTMLDivElement, LocationLabelPd
   // const printDateObj = parseAndValidateDate(printDate);
 
   return (
-    <div ref={ref} className={`bg-white text-gray-900 font-sans w-[101.6mm] h-[50.8mm] border border-black flex flex-col overflow-hidden ${className || ''}`}>
-      {/* Top Section: QR Code (left) and Fortress Logo (right) */}
-      <div className="flex justify-between items-start flex-shrink-0 h-[29mm]"> {/* Adjusted height for top section */}
-        {/* QR Code */}
-        <div className="ml-[2mm] mt-[2mm] w-[25mm] h-[25mm] flex items-center justify-center">
-          <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-full h-full object-contain" />
-        </div>
-
-        {/* Fortress Logo (SVG + Text) */}
-        <div className="mr-[2mm] mt-[2mm] flex items-center space-x-1">
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="text-primary"
-          >
-            <path
-              d="M12 2L2 12L12 22L22 12L12 2Z"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M12 2L2 12L12 22L22 12L12 2Z"
-              fill="currentColor"
-              fillOpacity="0.2"
-            />
-          </svg>
-          <span className="text-xl font-semibold text-foreground">Fortress</span>
-        </div>
+    <div ref={ref} className={`bg-white text-gray-900 font-sans w-[101.6mm] h-[50.8mm] border border-black relative overflow-hidden ${className || ''}`}>
+      {/* QR Code at the top left, behind text */}
+      <div className="absolute top-[2mm] left-[2mm] w-[45mm] h-[45mm] flex items-center justify-center z-0">
+        <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-full h-full object-contain" />
       </div>
 
-      {/* Bottom Section: Location Details */}
-      <div className="flex justify-between items-end flex-grow px-[2mm] pb-[2mm]"> {/* Added padding */}
+      {/* Diamond Icon at the top right */}
+      <div className="absolute top-[2mm] right-[2mm] z-10">
+        <Diamond className="h-6 w-6 text-gray-700" />
+      </div>
+
+      {/* Location Details - positioned at the bottom, spanning width, over QR code */}
+      <div className="absolute bottom-[2mm] left-[2mm] right-[2mm] flex justify-between items-end z-10">
         {/* Individual location parts */}
         <div className="flex flex-col items-center leading-none">
           <span className="text-[0.6rem] font-bold uppercase text-gray-700">AREA</span>
