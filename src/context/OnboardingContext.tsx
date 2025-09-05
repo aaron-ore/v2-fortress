@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } = "react";
+import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { showSuccess, showError } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
 import { supabase } from "@/lib/supabaseClient";
