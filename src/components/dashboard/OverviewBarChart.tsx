@@ -70,7 +70,7 @@ const OverviewBarChart: React.FC = () => {
             <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" strokeOpacity={0.3} />
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" strokeOpacity={0.3} vertical={false} />
         <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
         <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(value) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`} />
         <Tooltip

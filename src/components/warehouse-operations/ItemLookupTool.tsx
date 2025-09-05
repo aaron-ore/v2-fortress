@@ -8,6 +8,7 @@ import { Search, Barcode, Package, Tag, MapPin, Info, Image } from "lucide-react
 import { useInventory } from "@/context/InventoryContext";
 import { showError, showSuccess } from "@/utils/toast";
 import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
+import { useOnboarding } from "@/context/OnboardingContext"; // NEW: Import useOnboarding
 
 interface ItemLookupToolProps {
   onScanRequest: (callback: (scannedData: string) => void) => void;
@@ -17,6 +18,7 @@ interface ItemLookupToolProps {
 
 const ItemLookupTool: React.FC<ItemLookupToolProps> = ({ onScanRequest, scannedDataFromGlobal, onScannedDataProcessed }) => {
   const { inventoryItems } = useInventory();
+  const { locations: structuredLocations } = useOnboarding(); // NEW: Get structured locations
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [qrCodeSvg, setQrCodeSvg] = useState<string | null>(null); // State for QR code SVG
@@ -96,6 +98,11 @@ const ItemLookupTool: React.FC<ItemLookupToolProps> = ({ onScanRequest, scannedD
     showSuccess(`Selected item: ${item.name}`);
   };
 
+  const getLocationDisplayName = (fullLocationString: string) => {
+    const foundLoc = structuredLocations.find(loc => loc.fullLocationString === fullLocationString);
+    return foundLoc?.displayName || fullLocationString;
+  };
+
   return (
     <div className="flex flex-col h-full space-y-4">
       <h2 className="text-xl font-bold text-center">Item Lookup & Stock Check</h2>
@@ -167,7 +174,7 @@ const ItemLookupTool: React.FC<ItemLookupToolProps> = ({ onScanRequest, scannedD
               </p>
               <p className="flex items-center gap-2 text-sm">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="font-semibold">Location:</span> {selectedItem.location}
+                <span className="font-semibold">Location:</span> {getLocationDisplayName(selectedItem.location)}
               </p>
               <p className="flex items-center gap-2 text-sm">
                 <Info className="h-4 w-4 text-muted-foreground" />

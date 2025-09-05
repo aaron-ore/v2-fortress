@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DateRange } from "react-day-picker";
 import { useStockMovement, StockMovement } from "@/context/StockMovementContext";
-import { useOnboarding } from "@/context/OnboardingContext";
+import { useOnboarding } from "@/context/OnboardingContext"; // Now contains Location[]
 import { useProfile } from "@/context/ProfileContext";
 import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { Loader2, Scale, User, Clock, FileText } from "lucide-react";
@@ -30,6 +30,7 @@ const InventoryMovementReport: React.FC<InventoryMovementReportProps> = ({
   const { stockMovements, fetchStockMovements } = useStockMovement();
   const { companyProfile } = useOnboarding();
   const { allProfiles, fetchAllProfiles } = useProfile();
+  const { locations: structuredLocations } = useOnboarding(); // NEW: Get structured locations
 
   const [reportGenerated, setReportGenerated] = useState(false);
   const [currentReportData, setCurrentReportData] = useState<any>(null);
@@ -63,12 +64,13 @@ const InventoryMovementReport: React.FC<InventoryMovementReportProps> = ({
       movements: filteredMovements,
       dateRange, // NEW: Pass dateRange to reportProps
       allProfiles,
+      structuredLocations, // NEW: Pass structuredLocations to resolve display names
     };
 
     setCurrentReportData(reportProps);
     onGenerateReport({ pdfProps: reportProps, printType: "inventory-movement-report" });
     setReportGenerated(true);
-  }, [stockMovements, movementTypeFilter, companyProfile, onGenerateReport, allProfiles, fetchStockMovements, fetchAllProfiles, dateRange]); // NEW: Added dateRange to dependencies
+  }, [stockMovements, movementTypeFilter, companyProfile, onGenerateReport, allProfiles, fetchStockMovements, fetchAllProfiles, dateRange, structuredLocations]); // NEW: Added dateRange to dependencies
 
   useEffect(() => {
     generateReport();
@@ -77,6 +79,11 @@ const InventoryMovementReport: React.FC<InventoryMovementReportProps> = ({
   const getUserName = (userId: string) => {
     const user = allProfiles.find(p => p.id === userId);
     return user?.fullName || user?.email || "Unknown User";
+  };
+
+  const getLocationDisplayName = (fullLocationString: string) => {
+    const foundLoc = structuredLocations.find(loc => loc.fullLocationString === fullLocationString);
+    return foundLoc?.displayName || fullLocationString;
   };
 
   if (isLoading) {

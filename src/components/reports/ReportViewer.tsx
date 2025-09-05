@@ -45,7 +45,7 @@ const reportComponents: { [key: string]: React.ElementType } = {
 
 const ReportViewer: React.FC<ReportViewerProps> = ({ reportId, dateRange }) => { // NEW: Destructure dateRange
   const { initiatePrint } = usePrint();
-  const { companyProfile } = useOnboarding();
+  const { companyProfile, locations: structuredLocations } = useOnboarding(); // NEW: Get structured locations
   const { profile } = useProfile();
 
   const [reportData, setReportData] = useState<any>(null);
@@ -100,12 +100,13 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId, dateRange }) => {
       companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
       reportDate: new Date().toLocaleDateString(),
       dateRange, // NEW: Pass dateRange to PDF props
+      structuredLocations, // NEW: Pass structuredLocations to PDF props
       ...reportData.pdfProps, // Specific props from the generated report
     };
 
     initiatePrint({ type: reportData.printType, props: pdfProps });
     showSuccess("Report sent to printer!");
-  }, [reportData, companyProfile, initiatePrint, dateRange]); // NEW: Add dateRange to dependencies
+  }, [reportData, companyProfile, initiatePrint, dateRange, structuredLocations]); // NEW: Add dateRange and structuredLocations to dependencies
 
   const handleSummarizeReport = async () => {
     if (!reportData) {

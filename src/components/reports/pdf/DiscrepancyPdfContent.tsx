@@ -3,6 +3,7 @@ import { format, isValid } from "date-fns"; // Import isValid
 import { UserProfile } from "@/context/ProfileContext";
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 import { DateRange } from "react-day-picker"; // NEW: Import DateRange
+import { Location } from "@/context/OnboardingContext"; // NEW: Import Location interface
 
 interface DiscrepancyLog {
   id: string;
@@ -11,7 +12,7 @@ interface DiscrepancyLog {
   organizationId: string;
   itemId: string;
   itemName: string;
-  locationString: string;
+  locationString: string; // This is the fullLocationString
   locationType: string;
   originalQuantity: number;
   countedQuantity: number;
@@ -30,6 +31,7 @@ interface DiscrepancyPdfContentProps {
   statusFilter: "all" | "pending" | "resolved";
   dateRange?: DateRange; // NEW: Add dateRange prop
   allProfiles: UserProfile[];
+  structuredLocations: Location[]; // NEW: Add structuredLocations prop
 }
 
 const DiscrepancyPdfContent: React.FC<DiscrepancyPdfContentProps> = ({
@@ -42,6 +44,7 @@ const DiscrepancyPdfContent: React.FC<DiscrepancyPdfContentProps> = ({
   statusFilter,
   dateRange, // NEW: Destructure dateRange
   allProfiles,
+  structuredLocations, // NEW: Destructure structuredLocations
 }) => {
   const formattedDateRange = (dateRange?.from && isValid(dateRange.from))
     ? `${format(dateRange.from, "MMM dd, yyyy")} - ${dateRange.to && isValid(dateRange.to) ? format(dateRange.to, "MMM dd, yyyy") : format(dateRange.from, "MMM dd, yyyy")}`
@@ -56,6 +59,11 @@ const DiscrepancyPdfContent: React.FC<DiscrepancyPdfContentProps> = ({
   const getUserName = (userId: string) => {
     const user = allProfiles.find(p => p.id === userId);
     return user?.fullName || user?.email || "Unknown User";
+  };
+
+  const getLocationDisplayName = (fullLocationString: string) => {
+    const foundLoc = structuredLocations.find(loc => loc.fullLocationString === fullLocationString);
+    return foundLoc?.displayName || fullLocationString;
   };
 
   return (
@@ -124,7 +132,7 @@ const DiscrepancyPdfContent: React.FC<DiscrepancyPdfContentProps> = ({
                 return (
                   <tr key={discrepancy.id} className="border-b border-gray-200">
                     <td className="py-2 px-4 border-r border-gray-200">{discrepancy.itemName}</td>
-                    <td className="py-2 px-4 border-r border-gray-200">{discrepancy.locationString} ({discrepancy.locationType.replace('_', ' ')})</td>
+                    <td className="py-2 px-4 border-r border-gray-200">{getLocationDisplayName(discrepancy.locationString)} ({discrepancy.locationType.replace('_', ' ')})</td>
                     <td className="py-2 px-4 text-right border-r border-gray-200">{discrepancy.originalQuantity}</td>
                     <td className="py-2 px-4 text-right border-r border-gray-200">{discrepancy.countedQuantity}</td>
                     <td className="py-2 px-4 text-right border-r border-gray-200 text-red-600">{discrepancy.difference}</td>

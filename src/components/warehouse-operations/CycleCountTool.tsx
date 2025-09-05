@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle, Package, MapPin, Barcode } from "lucide-react";
 import { useInventory } from "@/context/InventoryContext";
-import { useOnboarding } from "@/context/OnboardingContext";
+import { useOnboarding } from "@/context/OnboardingContext"; // Now contains Location[]
 import { useStockMovement } from "@/context/StockMovementContext";
 import { showError, showSuccess } from "@/utils/toast";
 import { supabase } from "@/lib/supabaseClient"; // Import supabase
@@ -20,8 +20,8 @@ interface CountedItem {
   systemOverstockQuantity: number; // Track system quantity for overstock
   countedPickingBinQuantity: number; // User input for picking bin
   countedOverstockQuantity: number; // User input for overstock
-  location: string; // Main location
-  pickingBinLocation: string; // Specific picking bin location
+  location: string; // Main location (fullLocationString)
+  pickingBinLocation: string; // Specific picking bin location (fullLocationString)
   isScanned: boolean;
   barcodeUrl?: string;
 }
@@ -34,10 +34,10 @@ interface CycleCountToolProps {
 
 const CycleCountTool: React.FC<CycleCountToolProps> = ({ onScanRequest, scannedDataFromGlobal, onScannedDataProcessed }) => {
   const { inventoryItems, refreshInventory } = useInventory();
-  const { locations } = useOnboarding();
+  const { locations } = useOnboarding(); // Now contains Location[]
   // Removed useStockMovement as updates will go through Edge Function
 
-  const [selectedLocation, setSelectedLocation] = useState("all");
+  const [selectedLocation, setSelectedLocation] = useState("all"); // This will be fullLocationString or "all"
   const [itemsToCount, setItemsToCount] = useState<CountedItem[]>([]);
   const [isCounting, setIsCounting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
@@ -80,7 +80,7 @@ const CycleCountTool: React.FC<CycleCountToolProps> = ({ onScanRequest, scannedD
     }));
     setItemsToCount(initialItems);
     setIsCounting(true);
-    showSuccess(`Cycle count started for ${selectedLocation === "all" ? "all locations" : selectedLocation}.`);
+    showSuccess(`Cycle count started for ${selectedLocation === "all" ? "all locations" : locations.find(loc => loc.fullLocationString === selectedLocation)?.displayName || selectedLocation}.`);
   };
 
   const handleCountedQuantityChange = (itemId: string, locationType: 'pickingBin' | 'overstock', quantity: string) => {
@@ -225,8 +225,8 @@ const CycleCountTool: React.FC<CycleCountToolProps> = ({ onScanRequest, scannedD
                 <SelectContent>
                   <SelectItem value="all">All Locations</SelectItem>
                   {locations.map(loc => (
-                    <SelectItem key={loc} value={loc}>
-                      {loc}
+                    <SelectItem key={loc.id} value={loc.fullLocationString}>
+                      {loc.displayName || loc.fullLocationString}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -257,12 +257,12 @@ const CycleCountTool: React.FC<CycleCountToolProps> = ({ onScanRequest, scannedD
                       <h3 className="font-semibold text-lg">{item.name}</h3>
                       <span className="text-sm text-muted-foreground">SKU: {item.sku}</span>
                     </div>
-                    <p className="text-muted-foreground text-sm mb-2">Main Location: {item.location}</p>
+                    <p className="text-muted-foreground text-sm mb-2">Main Location: {locations.find(loc => loc.fullLocationString === item.location)?.displayName || item.location}</p>
                     
                     {/* Picking Bin Quantity */}
                     <div className="flex items-center justify-between mb-2">
                       <Label htmlFor={`counted-picking-qty-${item.id}`} className="font-semibold">
-                        Picking Bin ({item.pickingBinLocation}):
+                        Picking Bin ({locations.find(loc => loc.fullLocationString === item.pickingBinLocation)?.displayName || item.pickingBinLocation}):
                       </Label>
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">System: {item.systemPickingBinQuantity}</span>

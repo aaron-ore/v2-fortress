@@ -7,11 +7,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { PlusCircle, Trash2, MapPin, QrCode, Printer, Edit } from "lucide-react"; // NEW: Import Edit icon
 import { showError, showSuccess } from "@/utils/toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { useOnboarding } from "@/context/OnboardingContext";
+import { useOnboarding, Location } from "@/context/OnboardingContext"; // NEW: Import Location interface
 import { usePrint, PrintContentData } from "@/context/PrintContext";
 import LocationLabelGenerator from "@/components/LocationLabelGenerator"; // Import the new component
 import { parseLocationString, LocationParts } from "@/utils/locationParser"; // NEW: Import parseLocationString and LocationParts
 import LocationInventoryViewDialog from "@/components/LocationInventoryViewDialog"; // NEW: Import LocationInventoryViewDialog
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"; // NEW: Import Dialog components
 
 // Predefined colors for labels, matching some of the designs
 const labelColors = [
@@ -24,45 +25,37 @@ const labelColors = [
 ];
 
 const Locations: React.FC = () => {
-  const { locations, addLocation, removeLocation } = useOnboarding();
+  const { locations, addLocation, updateLocation, removeLocation } = useOnboarding();
   const { initiatePrint } = usePrint();
 
-  const [newLocationName, setNewLocationName] = useState("");
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
-  const [locationToDelete, setLocationToDelete] = useState<string | null>(null);
+  const [locationToDelete, setLocationToDelete] = useState<Location | null>(null); // NEW: Store full Location object
 
-  const [selectedLocationForLabel, setSelectedLocationForLabel] = useState<string | null>(null);
-  const [isLocationInventoryViewDialogOpen, setIsLocationInventoryViewDialogOpen] = useState(false); // NEW: State for inventory view dialog
-  const [locationToViewInventory, setLocationToViewInventory] = useState<string | null>(null); // NEW: State for location to view inventory
+  const [isLocationLabelGeneratorOpen, setIsLocationLabelGeneratorOpen] = useState(false); // NEW: State for generator dialog
+  const [locationToEdit, setLocationToEdit] = useState<Location | null>(null); // NEW: Store Location object for editing
 
-  const handleAddLocation = () => {
-    if (newLocationName.trim() === "") {
-      showError("Location name cannot be empty.");
-      return;
-    }
-    if (locations.some(loc => loc.toLowerCase() === newLocationName.trim().toLowerCase())) {
-      showError("This location already exists."); // Added toast for existing location
-      return;
-    }
-    addLocation(newLocationName.trim());
-    showSuccess(`Location "${newLocationName.trim()}" added.`);
-    setSelectedLocationForLabel(newLocationName.trim()); // Automatically select for label generation
-    setNewLocationName("");
+  const [isLocationInventoryViewDialogOpen, setIsLocationInventoryViewDialogOpen] = useState(false);
+  const [locationToViewInventory, setLocationToViewInventory] = useState<string | null>(null);
+
+  const handleAddLocationClick = () => {
+    setLocationToEdit(null); // Clear for new location
+    setIsLocationLabelGeneratorOpen(true);
   };
 
-  const handleRemoveLocationClick = (location: string) => {
+  const handleEditLocationClick = (location: Location) => { // NEW: Pass full Location object
+    setLocationToEdit(location);
+    setIsLocationLabelGeneratorOpen(true);
+  };
+
+  const handleDeleteLocationClick = (location: Location) => { // NEW: Pass full Location object
     setLocationToDelete(location);
     setIsConfirmDeleteDialogOpen(true);
   };
 
-  const confirmRemoveLocation = () => {
+  const confirmRemoveLocation = async () => { // NEW: Async function
     if (locationToDelete) {
-      removeLocation(locationToDelete);
-      showSuccess(`Location "${locationToDelete}" removed.`);
-      if (selectedLocationForLabel === locationToDelete) {
-        setSelectedLocationForLabel(null); // Deselect if the deleted one was selected
-      }
-      if (locationToViewInventory === locationToDelete) { // NEW: Also deselect if it was selected for inventory view
+      await removeLocation(locationToDelete.id); // NEW: Pass ID to removeLocation
+      if (locationToViewInventory === locationToDelete.fullLocationString) {
         setLocationToViewInventory(null);
         setIsLocationInventoryViewDialogOpen(false);
       }
@@ -71,13 +64,18 @@ const Locations: React.FC = () => {
     setLocationToDelete(null);
   };
 
-  const handleEditLabelClick = (location: string) => {
-    setSelectedLocationForLabel(location);
+  const handleViewInventoryClick = (locationString: string) => { // Now takes fullLocationString
+    setLocationToViewInventory(locationString);
+    setIsLocationInventoryViewDialogOpen(true);
   };
 
-  const handleViewInventoryClick = (location: string) => { // NEW: Handler to open inventory view dialog
-    setLocationToViewInventory(location);
-    setIsLocationInventoryViewDialogOpen(true);
+  const handleSaveLocation = async (newLocationData: Omit<Location, 'id' | 'createdAt' | 'userId' | 'organizationId'>, isNew: boolean) => {
+    if (isNew) {
+      await addLocation(newLocationData);
+    } else if (locationToEdit) {
+      await updateLocation({ ...locationToEdit, ...newLocationData });
+    }
+    setIsLocationLabelGeneratorOpen(false);
   };
 
   const handleGenerateAndPrintFromGenerator = (labelsToPrint: PrintContentData[]) => {
@@ -86,13 +84,6 @@ const Locations: React.FC = () => {
     }
     showSuccess(`Generated and sent ${labelsToPrint.length} location labels to printer!`);
   };
-
-  const initialLabelProps: Partial<LocationParts> = useMemo(() => { // Explicitly type as Partial<LocationParts>
-    if (selectedLocationForLabel) {
-      return parseLocationString(selectedLocationForLabel);
-    }
-    return { area: "A", row: "01", bay: "01", level: "1", pos: "A" }; // Default values if no location is selected
-  }, [selectedLocationForLabel]);
 
   return (
     <div className="flex flex-col h-full space-y-6 p-6">
@@ -108,54 +99,38 @@ const Locations: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-4 flex-grow flex flex-col">
-            <div className="space-y-2">
-              <Label htmlFor="newLocation">Add New Location</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="newLocation"
-                  value={newLocationName}
-                  onChange={(e) => setNewLocationName(e.target.value.toUpperCase())}
-                  placeholder="e.g., Main Warehouse, Shelf A"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleAddLocation();
-                    }
-                  }}
-                />
-                <Button onClick={handleAddLocation} aria-label="Add new location">
-                  <PlusCircle className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+            <Button onClick={handleAddLocationClick} aria-label="Add new location">
+              <PlusCircle className="h-4 w-4 mr-2" /> Add New Location
+            </Button>
 
             {locations.length > 0 ? (
               <div className="space-y-2 flex-grow flex flex-col">
                 <Label>Current Locations</Label>
                 <ScrollArea className="flex-grow border border-border rounded-md p-3 bg-muted/20">
                   <ul className="space-y-1">
-                    {locations.map((loc, index) => (
-                      <li key={index} className="flex items-center justify-between py-1 text-foreground">
+                    {locations.map((loc) => (
+                      <li key={loc.id} className="flex items-center justify-between py-1 text-foreground">
                         <Button
-                          variant="ghost" // Changed to ghost for better text visibility
-                          className="p-0 h-auto text-left font-normal text-foreground hover:underline" // Explicitly set text-foreground
-                          onClick={() => handleViewInventoryClick(loc)} // NEW: View inventory on click
+                          variant="ghost"
+                          className="p-0 h-auto text-left font-normal text-foreground hover:underline"
+                          onClick={() => handleViewInventoryClick(loc.fullLocationString)}
                         >
-                          {loc}
+                          {loc.displayName || loc.fullLocationString}
                         </Button>
                         <div className="flex items-center space-x-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleEditLabelClick(loc)}
-                            aria-label={`Edit label for ${loc}`}
+                            onClick={() => handleEditLocationClick(loc)}
+                            aria-label={`Edit label for ${loc.displayName || loc.fullLocationString}`}
                           >
                             <Edit className="h-4 w-4 text-primary" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleRemoveLocationClick(loc)}
-                            aria-label={`Remove location ${loc}`}
+                            onClick={() => handleDeleteLocationClick(loc)}
+                            aria-label={`Remove location ${loc.displayName || loc.fullLocationString}`}
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
@@ -171,24 +146,16 @@ const Locations: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Generate Labels Card */}
+        {/* Generate Labels Card (now just a placeholder for the dialog) */}
         <Card className="bg-card border-border shadow-sm flex flex-col">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <QrCode className="h-5 w-5 text-accent" /> Generate Location Labels
+              <QrCode className="h-5 w-5 text-accent" /> Location Label Preview
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 flex-grow flex flex-col">
-            <LocationLabelGenerator
-              initialArea={initialLabelProps.area}
-              initialRow={initialLabelProps.row}
-              initialBay={initialLabelProps.bay}
-              initialLevel={initialLabelProps.level}
-              initialPos={initialLabelProps.pos}
-              initialColor={labelColors[0].hex} // Always pass a default color, as LocationParts doesn't store it
-              initialLocationString={selectedLocationForLabel || undefined} // NEW: Pass selectedLocationForLabel
-              onGenerateAndPrint={handleGenerateAndPrintFromGenerator}
-            />
+          <CardContent className="p-4 flex-grow flex flex-col items-center justify-center text-muted-foreground">
+            <p>Use the "Add New Location" or "Edit" buttons to manage location details and generate labels.</p>
+            <QrCode className="h-24 w-24 mt-4 text-muted-foreground/50" />
           </CardContent>
         </Card>
       </div>
@@ -199,13 +166,31 @@ const Locations: React.FC = () => {
           onClose={() => setIsConfirmDeleteDialogOpen(false)}
           onConfirm={confirmRemoveLocation}
           title="Confirm Location Deletion"
-          description={`Are you sure you want to delete the location "${locationToDelete}"? This cannot be undone.`}
+          description={`Are you sure you want to delete the location "${locationToDelete.displayName || locationToDelete.fullLocationString}"? This cannot be undone.`}
           confirmText="Delete"
           cancelText="Cancel"
         />
       )}
 
-      {/* NEW: Location Inventory View Dialog */}
+      {/* Location Label Generator Dialog */}
+      <Dialog open={isLocationLabelGeneratorOpen} onOpenChange={setIsLocationLabelGeneratorOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{locationToEdit ? "Edit Location & Generate Labels" : "Add New Location & Generate Labels"}</DialogTitle>
+            <DialogDescription>
+              {locationToEdit ? "Update details for this location and generate new labels." : "Define a new location and generate scannable QR code labels."}
+            </DialogDescription>
+          </DialogHeader>
+          <LocationLabelGenerator
+            initialLocation={locationToEdit} // Pass the full object
+            onSave={handleSaveLocation}
+            onGenerateAndPrint={handleGenerateAndPrintFromGenerator}
+            onClose={() => setIsLocationLabelGeneratorOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Location Inventory View Dialog */}
       {locationToViewInventory && (
         <LocationInventoryViewDialog
           isOpen={isLocationInventoryViewDialogOpen}

@@ -126,8 +126,9 @@ const AppContent = () => {
   const [loadingAuth, setLoadingAuth] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
-  const { isLoadingProfile, fetchProfile } = useProfile(); // Removed 'profile' as it's not directly used here
+  const { isLoadingProfile, fetchProfile, profile } = useProfile(); // Added profile
   const { isPrinting, printContentData, resetPrintState } = usePrint();
+  const { locations: structuredLocations } = useOnboarding(); // NEW: Get structured locations
 
   const qbCallbackProcessedRef = useRef(false);
 
@@ -227,7 +228,7 @@ const AppContent = () => {
             <AdvancedDemandForecastPdfContent {...printContentData.props} />
           )}
           {printContentData.type === "putaway-label" && (
-            <PutawayLabelPdfContent {...printContentData.props} />
+            <PutawayLabelPdfContent {...printContentData.props} structuredLocations={structuredLocations} />
           )}
           {printContentData.type === "location-label" && (
             <LocationLabelPdfContent {...printContentData.props} />
@@ -239,10 +240,10 @@ const AppContent = () => {
             <InventoryValuationPdfContent {...printContentData.props} />
           )}
           {printContentData.type === "low-stock-report" && (
-            <LowStockPdfContent {...printContentData.props} />
+            <LowStockPdfContent {...printContentData.props} structuredLocations={structuredLocations} />
           )}
           {printContentData.type === "inventory-movement-report" && (
-            <InventoryMovementPdfContent {...printContentData.props} />
+            <InventoryMovementPdfContent {...printContentData.props} structuredLocations={structuredLocations} />
           )}
           {printContentData.type === "sales-by-customer-report" && (
             <SalesByCustomerPdfContent {...printContentData.props} />
@@ -257,7 +258,7 @@ const AppContent = () => {
             <ProfitabilityPdfContent {...printContentData.props} />
           )}
           {printContentData.type === "discrepancy-report" && (
-            <DiscrepancyPdfContent {...printContentData.props} />
+            <DiscrepancyPdfContent {...printContentData.props} structuredLocations={structuredLocations} />
           )}
         </PrintWrapper>
       )}

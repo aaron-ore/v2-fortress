@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DateRange } from "react-day-picker";
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
-import { useOnboarding } from "@/context/OnboardingContext";
+import { useOnboarding } from "@/context/OnboardingContext"; // Now contains Location[]
 import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { Loader2, AlertTriangle, Package, MapPin, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,7 +26,7 @@ const LowStockReport: React.FC<LowStockReportProps> = ({
   reportContentRef,
 }) => {
   const { inventoryItems } = useInventory();
-  const { locations } = useOnboarding();
+  const { locations: structuredLocations } = useOnboarding(); // NEW: Get structured locations
   const { companyProfile } = useOnboarding();
 
   const [statusFilter, setStatusFilter] = useState<"all" | "low-stock" | "out-of-stock">("all");
@@ -65,12 +65,13 @@ const LowStockReport: React.FC<LowStockReportProps> = ({
       items: itemsToDisplay,
       statusFilter,
       dateRange, // NEW: Pass dateRange to reportProps
+      structuredLocations, // NEW: Pass structuredLocations to resolve display names
     };
 
     setCurrentReportData(reportProps);
     onGenerateReport({ pdfProps: reportProps, printType: "low-stock-report" });
     setReportGenerated(true);
-  }, [inventoryItems, locations, statusFilter, companyProfile, onGenerateReport, dateRange]); // NEW: Added dateRange to dependencies
+  }, [inventoryItems, structuredLocations, statusFilter, companyProfile, onGenerateReport, dateRange]); // NEW: Added dateRange to dependencies
 
   useEffect(() => {
     generateReport();
@@ -148,7 +149,7 @@ const LowStockReport: React.FC<LowStockReportProps> = ({
                       <TableCell>{item.sku}</TableCell>
                       <TableCell className="text-right text-destructive">{item.quantity}</TableCell>
                       <TableCell className="text-right">{item.reorderLevel}</TableCell>
-                      <TableCell>{item.location}</TableCell>
+                      <TableCell>{structuredLocations.find(loc => loc.fullLocationString === item.location)?.displayName || item.location}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

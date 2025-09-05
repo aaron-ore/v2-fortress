@@ -15,11 +15,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { MapPin, Package, Search } from "lucide-react";
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
 import { Input } from "@/components/ui/input";
+import { useOnboarding } from "@/context/OnboardingContext"; // NEW: Import useOnboarding
 
 interface LocationInventoryViewDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  locationName: string;
+  locationName: string; // This is the fullLocationString
 }
 
 const LocationInventoryViewDialog: React.FC<LocationInventoryViewDialogProps> = ({
@@ -28,7 +29,13 @@ const LocationInventoryViewDialog: React.FC<LocationInventoryViewDialogProps> = 
   locationName,
 }) => {
   const { inventoryItems } = useInventory();
+  const { locations: structuredLocations } = useOnboarding(); // NEW: Get structured locations
   const [searchTerm, setSearchTerm] = useState("");
+
+  const locationDisplayName = useMemo(() => {
+    const foundLoc = structuredLocations.find(loc => loc.fullLocationString === locationName);
+    return foundLoc?.displayName || locationName;
+  }, [structuredLocations, locationName]);
 
   const itemsInLocation = useMemo(() => {
     return inventoryItems.filter(item =>
@@ -56,15 +63,15 @@ const LocationInventoryViewDialog: React.FC<LocationInventoryViewDialogProps> = 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
-        <DialogHeader className="px-6 pt-6"> {/* Added horizontal padding here */}
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle className="flex items-center gap-2">
-            <MapPin className="h-6 w-6 text-primary" /> Inventory in "{locationName}"
+            <MapPin className="h-6 w-6 text-primary" /> Inventory in "{locationDisplayName}"
           </DialogTitle>
           <DialogDescription>
-            Viewing all inventory items currently stored in {locationName}.
+            Viewing all inventory items currently stored in {locationDisplayName}.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-grow flex flex-col gap-4 py-4 px-6 overflow-hidden"> {/* Added horizontal padding here */}
+        <div className="flex-grow flex flex-col gap-4 py-4 px-6 overflow-hidden">
           <div className="flex items-center gap-2">
             <Input
               placeholder="Search items by name or SKU..."
@@ -77,7 +84,7 @@ const LocationInventoryViewDialog: React.FC<LocationInventoryViewDialogProps> = 
 
           {filteredItems.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
-              No inventory items found in "{locationName}" matching your search.
+              No inventory items found in "{locationDisplayName}" matching your search.
             </p>
           ) : (
             <ScrollArea className="flex-grow border border-border rounded-md">
@@ -108,7 +115,7 @@ const LocationInventoryViewDialog: React.FC<LocationInventoryViewDialogProps> = 
             </ScrollArea>
           )}
         </div>
-        <DialogFooter className="px-6 pb-6"> {/* Added horizontal padding here */}
+        <DialogFooter className="px-6 pb-6">
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>

@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DateRange } from "react-day-picker";
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
 import { useCategories } from "@/context/CategoryContext";
-import { useOnboarding } from "@/context/OnboardingContext";
+import { useOnboarding } from "@/context/OnboardingContext"; // Now contains Location[]
 import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { Loader2, DollarSign, Package, MapPin, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,7 +28,7 @@ const InventoryValuationReport: React.FC<InventoryValuationReportProps> = ({
 }) => {
   const { inventoryItems } = useInventory();
   const { categories } = useCategories();
-  const { locations } = useOnboarding();
+  const { locations: structuredLocations } = useOnboarding(); // NEW: Get structured locations
   const { companyProfile } = useOnboarding();
 
   const [groupBy, setGroupBy] = useState<"category" | "location">("category");
@@ -71,16 +71,20 @@ const InventoryValuationReport: React.FC<InventoryValuationReportProps> = ({
     } else { // groupBy === "location"
       const locationMap: { [key: string]: { totalValue: number; totalQuantity: number } } = {};
       filteredItems.forEach(item => {
-        if (!locationMap[item.location]) {
-          locationMap[item.location] = { totalValue: 0, totalQuantity: 0 };
+        // Use the fullLocationString as the key, but display the displayName if available
+        const locationKey = item.location;
+        const display = structuredLocations.find(loc => loc.fullLocationString === locationKey)?.displayName || locationKey;
+
+        if (!locationMap[locationKey]) {
+          locationMap[locationKey] = { totalValue: 0, totalQuantity: 0, displayName: display };
         }
-        locationMap[item.location].totalValue += item.quantity * item.unitCost;
-        locationMap[item.location].totalQuantity += item.quantity;
+        locationMap[locationKey].totalValue += item.quantity * item.unitCost;
+        locationMap[locationKey].totalQuantity += item.quantity;
         totalOverallValue += item.quantity * item.unitCost;
         totalOverallQuantity += item.quantity;
       });
-      groupedData = Object.entries(locationMap).map(([name, data]) => ({
-        name,
+      groupedData = Object.entries(locationMap).map(([key, data]) => ({
+        name: data.displayName, // Use displayName for the report
         totalValue: data.totalValue,
         totalQuantity: data.totalQuantity,
       })).sort((a, b) => b.totalValue - a.totalValue);
@@ -102,7 +106,7 @@ const InventoryValuationReport: React.FC<InventoryValuationReportProps> = ({
     setCurrentReportData(reportProps);
     onGenerateReport({ pdfProps: reportProps, printType: "inventory-valuation-report" });
     setReportGenerated(true);
-  }, [inventoryItems, categories, locations, groupBy, companyProfile, onGenerateReport, dateRange]); // NEW: Added dateRange to dependencies
+  }, [inventoryItems, categories, structuredLocations, groupBy, companyProfile, onGenerateReport, dateRange]); // NEW: Added dateRange to dependencies
 
   useEffect(() => {
     generateReport();

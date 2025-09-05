@@ -14,6 +14,7 @@ import { useInventory } from "@/context/InventoryContext";
 import { useNotifications } from "@/context/NotificationContext";
 import { supabase } from "@/lib/supabaseClient";
 import { useProfile } from "@/context/ProfileContext";
+import { useOnboarding } from "@/context/OnboardingContext"; // NEW: Import useOnboarding
 
 interface IssueReportToolProps {
   onScanRequest: (callback: (scannedData: string) => void) => void;
@@ -25,10 +26,11 @@ const IssueReportTool: React.FC<IssueReportToolProps> = ({ onScanRequest, scanne
   const { inventoryItems } = useInventory();
   const { addNotification } = useNotifications();
   const { profile } = useProfile();
+  const { locations } = useOnboarding(); // NEW: Get locations from OnboardingContext
 
   const [issueType, setIssueType] = useState("");
   const [itemId, setItemId] = useState("");
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState(""); // This will be fullLocationString
   const [description, setDescription] = useState("");
   const [contactInfo, setContactInfo] = useState("");
   const [isScanning, setIsScanning] = useState(false);
@@ -53,7 +55,7 @@ const IssueReportTool: React.FC<IssueReportToolProps> = ({ onScanRequest, scanne
 
     if (foundItem) {
       setItemId(foundItem.id);
-      setLocation(foundItem.location); // Pre-fill location if item found
+      setLocation(foundItem.location); // Pre-fill location if item found (fullLocationString)
       showSuccess(`Scanned item: ${foundItem.name}. Item and location pre-filled.`);
     } else {
       showError(`No item found with SKU/Barcode: "${scannedData}".`);
@@ -171,12 +173,19 @@ const IssueReportTool: React.FC<IssueReportToolProps> = ({ onScanRequest, scanne
 
               <div className="space-y-2">
                 <Label htmlFor="location" className="font-semibold">Location (Optional)</Label>
-                <Input
-                  id="location"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g., Aisle 3, Bin 12"
-                />
+                <Select value={location} onValueChange={setLocation}>
+                  <SelectTrigger id="location">
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="N/A">N/A (General Location)</SelectItem>
+                    {locations.map(loc => (
+                      <SelectItem key={loc.id} value={loc.fullLocationString}>
+                        {loc.displayName || loc.fullLocationString}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">

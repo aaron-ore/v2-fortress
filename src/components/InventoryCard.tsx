@@ -6,6 +6,7 @@ import { InventoryItem } from "@/context/InventoryContext";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { generateQrCodeSvg } from "@/utils/qrCodeGenerator"; // Import QR code generator
+import { useOnboarding } from "@/context/OnboardingContext"; // NEW: Import useOnboarding
 
 interface InventoryCardProps {
   item: InventoryItem;
@@ -25,6 +26,7 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
   isSidebarCollapsed,
 }) => {
   const [qrCodeSvg, setQrCodeSvg] = useState<string | null>(null); // State for QR code SVG
+  const { locations: structuredLocations } = useOnboarding(); // NEW: Get structured locations
 
   useEffect(() => {
     const generateAndSetQr = async () => {
@@ -55,6 +57,11 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
       statusVariant = "destructive";
       break;
   }
+
+  const getLocationDisplayName = (fullLocationString: string) => {
+    const foundLoc = structuredLocations.find(loc => loc.fullLocationString === fullLocationString);
+    return foundLoc?.displayName || fullLocationString;
+  };
 
   return (
     <Card className="group relative bg-card border-border rounded-lg shadow-sm overflow-hidden transition-all duration-200 hover:shadow-lg flex flex-col aspect-square">
@@ -87,7 +94,7 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
             <Tag className="h-3 w-3" /> SKU: {item.sku}
           </p>
           <p className="flex items-center gap-1">
-            <MapPin className="h-3 w-3" /> Location: {item.location}
+            <MapPin className="h-3 w-3" /> Location: {getLocationDisplayName(item.location)}
           </p>
         </div>
         <div className="flex items-baseline justify-between mt-3 flex-shrink-0">

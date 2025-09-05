@@ -4,6 +4,7 @@ import { StockMovement } from "@/context/StockMovementContext";
 import { UserProfile } from "@/context/ProfileContext";
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 import { DateRange } from "react-day-picker"; // NEW: Import DateRange
+import { Location } from "@/context/OnboardingContext"; // NEW: Import Location interface
 
 interface InventoryMovementPdfContentProps {
   companyName: string;
@@ -14,6 +15,7 @@ interface InventoryMovementPdfContentProps {
   movements: StockMovement[];
   dateRange?: DateRange; // NEW: Add dateRange prop
   allProfiles: UserProfile[];
+  structuredLocations: Location[]; // NEW: Add structuredLocations prop
 }
 
 const InventoryMovementPdfContent: React.FC<InventoryMovementPdfContentProps> = ({
@@ -25,6 +27,7 @@ const InventoryMovementPdfContent: React.FC<InventoryMovementPdfContentProps> = 
   movements,
   dateRange, // NEW: Destructure dateRange
   allProfiles,
+  structuredLocations, // NEW: Destructure structuredLocations
 }) => {
   const formattedDateRange = (dateRange?.from && isValid(dateRange.from))
     ? `${format(dateRange.from, "MMM dd, yyyy")} - ${dateRange.to && isValid(dateRange.to) ? format(dateRange.to, "MMM dd, yyyy") : format(dateRange.from, "MMM dd, yyyy")}`
@@ -33,6 +36,11 @@ const InventoryMovementPdfContent: React.FC<InventoryMovementPdfContentProps> = 
   const getUserName = (userId: string) => {
     const user = allProfiles.find(p => p.id === userId);
     return user?.fullName || user?.email || "Unknown User";
+  };
+
+  const getLocationDisplayName = (fullLocationString: string) => {
+    const foundLoc = structuredLocations.find(loc => loc.fullLocationString === fullLocationString);
+    return foundLoc?.displayName || fullLocationString;
   };
 
   return (

@@ -3,6 +3,7 @@ import { format, isValid } from "date-fns"; // Import isValid
 import { InventoryItem } from "@/context/InventoryContext";
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 import { DateRange } from "react-day-picker"; // NEW: Import DateRange
+import { Location } from "@/context/OnboardingContext"; // NEW: Import Location interface
 
 interface LowStockPdfContentProps {
   companyName: string;
@@ -13,6 +14,7 @@ interface LowStockPdfContentProps {
   items: InventoryItem[];
   statusFilter: "all" | "low-stock" | "out-of-stock";
   dateRange?: DateRange; // NEW: Add dateRange prop
+  structuredLocations: Location[]; // NEW: Add structuredLocations prop
 }
 
 const LowStockPdfContent: React.FC<LowStockPdfContentProps> = ({
@@ -24,6 +26,7 @@ const LowStockPdfContent: React.FC<LowStockPdfContentProps> = ({
   items,
   statusFilter,
   dateRange, // NEW: Destructure dateRange
+  structuredLocations, // NEW: Destructure structuredLocations
 }) => {
   const formattedDateRange = (dateRange?.from && isValid(dateRange.from))
     ? `${format(dateRange.from, "MMM dd, yyyy")} - ${dateRange.to && isValid(dateRange.to) ? format(dateRange.to, "MMM dd, yyyy") : format(dateRange.from, "MMM dd, yyyy")}`
@@ -34,6 +37,11 @@ const LowStockPdfContent: React.FC<LowStockPdfContentProps> = ({
     : statusFilter === "out-of-stock"
       ? "OUT OF STOCK ITEMS"
       : "LOW & OUT OF STOCK ITEMS";
+
+  const getLocationDisplayName = (fullLocationString: string) => {
+    const foundLoc = structuredLocations.find(loc => loc.fullLocationString === fullLocationString);
+    return foundLoc?.displayName || fullLocationString;
+  };
 
   return (
     <div className="bg-white text-gray-900 font-sans text-sm p-[20mm]">
@@ -98,7 +106,7 @@ const LowStockPdfContent: React.FC<LowStockPdfContentProps> = ({
                   <td className="py-2 px-4 border-r border-gray-200">{item.sku}</td>
                   <td className="py-2 px-4 text-right border-r border-gray-200 text-red-600">{item.quantity}</td>
                   <td className="py-2 px-4 text-right">{item.reorderLevel}</td>
-                  <td className="py-2 px-4">{item.location}</td>
+                  <td className="py-2 px-4">{getLocationDisplayName(item.location)}</td>
                 </tr>
               ))
             ) : (

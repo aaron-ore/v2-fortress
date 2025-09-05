@@ -11,7 +11,7 @@ import { showSuccess, showError } from "@/utils/toast";
 import { useOrders, OrderItem, POItem } from "@/context/OrdersContext";
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
 import { useStockMovement } from "@/context/StockMovementContext";
-import { useOnboarding } from "@/context/OnboardingContext";
+import { useOnboarding } from "@/context/OnboardingContext"; // Now contains Location[]
 import { usePrint } from "@/context/PrintContext";
 import { generateQrCodeSvg } from "@/utils/qrCodeGenerator";
 import { format } from "date-fns";
@@ -19,7 +19,7 @@ import { format } from "date-fns";
 interface ReceivedItemDisplay extends POItem {
   receivedQuantity: number;
   inventoryItemDetails?: InventoryItem;
-  suggestedPutawayLocation?: string;
+  suggestedPutawayLocation?: string; // fullLocationString
   lotNumber?: string;
   expirationDate?: string;
   serialNumber?: string; // Added for future use
@@ -35,7 +35,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
   const { orders, fetchOrders, updateOrder } = useOrders();
   const { inventoryItems, refreshInventory, updateInventoryItem } = useInventory();
   const { addStockMovement } = useStockMovement();
-  const { locations } = useOnboarding();
+  const { locations } = useOnboarding(); // Now contains Location[]
   const { initiatePrint } = usePrint();
 
   const [poNumberInput, setPoNumberInput] = useState("");
@@ -43,7 +43,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
   const [receivedItems, setReceivedItems] = useState<ReceivedItemDisplay[]>([]);
   const [isScanning, setIsScanning] = useState(false);
 
-  const availableLocations = useMemo(() => locations.filter(loc => loc !== "Returns Area"), [locations]);
+  const availableLocations = useMemo(() => locations.filter(loc => loc.fullLocationString !== "RETURNS-AREA-01-1-A"), [locations]);
 
   useEffect(() => {
     setSelectedPO(null);
@@ -65,11 +65,17 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
   const getSuggestedPutawayLocation = (itemCategory: string): string => {
     if (availableLocations.length === 0) return "Unassigned";
 
-    if (itemCategory === "Electronics" && availableLocations.includes("Main Warehouse")) return "Main Warehouse";
-    if (itemCategory === "Office Supplies" && availableLocations.includes("Store Front")) return "Store Front";
-    if (itemCategory === "Perishables" && availableLocations.includes("Cold Storage")) return "Cold Storage";
+    // Find location objects by display name or full string
+    const mainWarehouse = availableLocations.find(loc => loc.displayName === "Main Warehouse" || loc.fullLocationString === "MAIN-WAREHOUSE-01-01-1-A");
+    const coldStorage = availableLocations.find(loc => loc.displayName === "Cold Storage" || loc.fullLocationString === "COLD-STORAGE-01-01-1-A");
+    const storeFront = availableLocations.find(loc => loc.displayName === "Store Front" || loc.fullLocationString === "STORE-FRONT-01-01-1-A");
 
-    return availableLocations[Math.floor(Math.random() * availableLocations.length)];
+    if (itemCategory === "Electronics" && mainWarehouse) return mainWarehouse.fullLocationString;
+    if (itemCategory === "Office Supplies" && storeFront) return storeFront.fullLocationString;
+    if (itemCategory === "Perishables" && coldStorage) return coldStorage.fullLocationString;
+
+    // Fallback to a random available location's fullLocationString
+    return availableLocations[Math.floor(Math.random() * availableLocations.length)].fullLocationString;
   };
 
   const handlePoNumberSubmit = async (poNum?: string) => {
@@ -159,7 +165,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
     }
   };
 
-  const handleScanItem = () => {
+  const handleScanClick = () => {
     setIsScanning(true);
     onScanRequest(handleScannedBarcode);
   };
@@ -242,16 +248,16 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
     }
 
     if (updatesSuccessful) {
-      const newStatus = allItemsReceived ? "Shipped" : "Processing";
-      const updatedPO = { ...selectedPO, status: newStatus as OrderItem['status'] };
+      // Update PO status (e.g., to 'Shipped' or 'Partially Received')
+      const updatedPO = { ...selectedPO, status: "Shipped", notes: selectedPO.notes }; // Assuming 'Shipped' means fully received for POs
       await updateOrder(updatedPO);
-      showSuccess(`Receiving for PO ${selectedPO.id} completed. Status updated to "${newStatus}".`);
-      refreshInventory();
+      showSuccess(`Shipment for PO ${selectedPO.id} received successfully! Inventory updated.`);
+      refreshInventory(); // Ensure inventory context is refreshed
       setPoNumberInput("");
       setSelectedPO(null);
       setReceivedItems([]);
     } else {
-      showError("Some items could not be updated. Please check the console for details.");
+      showError("Some items could not be updated. Check console for details.");
     }
   };
 
@@ -280,7 +286,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
         </div>
         <Button
           className="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg py-3 flex items-center justify-center gap-2"
-          onClick={handleScanItem}
+          onClick={handleScanClick}
           disabled={isScanning || !selectedPO}
         >
           <Barcode className="h-6 w-6" />
@@ -311,9 +317,9 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
                           type="number"
                           value={item.receivedQuantity === 0 ? "" : item.receivedQuantity}
                           onChange={(e) => handleReceivedQuantityChange(item.id, e.target.value)}
-                          className="w-24 text-right"
+                          placeholder="Qty"
                           min="0"
-                          max={item.quantity}
+                          className="w-24 text-right"
                         />
                       </div>
                       <div className="space-y-2 mb-2">
@@ -336,7 +342,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
                       </div>
                       <div className="flex items-center justify-between mt-2 flex-wrap gap-y-1">
                         <p className="text-muted-foreground text-sm flex items-center gap-1 flex-grow min-w-0 truncate">
-                          <MapPin className="h-4 w-4 flex-shrink-0" /> Putaway: <span className="font-semibold text-primary flex-shrink-0">{item.suggestedPutawayLocation}</span>
+                          <MapPin className="h-4 w-4 flex-shrink-0" /> Putaway: <span className="font-semibold text-primary flex-shrink-0">{locations.find(loc => loc.fullLocationString === item.suggestedPutawayLocation)?.displayName || item.suggestedPutawayLocation}</span>
                         </p>
                         {item.receivedQuantity > 0 && (
                           <Button variant="outline" size="sm" onClick={() => handlePrintPutawayLabel(item)} className="flex-shrink-0">

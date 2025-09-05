@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Truck, Package, MapPin, ArrowRight, Barcode } from "lucide-react";
 import { useInventory } from "@/context/InventoryContext";
-import { useOnboarding } from "@/context/OnboardingContext";
+import { useOnboarding } from "@/context/OnboardingContext"; // Now contains Location[]
 import { useStockMovement } from "@/context/StockMovementContext";
 import { showError, showSuccess } from "@/utils/toast";
 
@@ -20,13 +20,13 @@ interface StockTransferToolProps {
 
 const StockTransferTool: React.FC<StockTransferToolProps> = ({ onScanRequest, scannedDataFromGlobal, onScannedDataProcessed }) => {
   const { inventoryItems, updateInventoryItem, refreshInventory } = useInventory();
-  const { locations } = useOnboarding();
+  const { locations } = useOnboarding(); // Now contains Location[]
   const { addStockMovement } = useStockMovement();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItemId, setSelectedItemId] = useState("");
-  const [fromLocation, setFromLocation] = useState("");
-  const [toLocation, setToLocation] = useState("");
+  const [fromLocation, setFromLocation] = useState(""); // This will be fullLocationString
+  const [toLocation, setToLocation] = useState(""); // This will be fullLocationString
   const [transferQuantity, setTransferQuantity] = useState("");
   const [notes, setNotes] = useState("");
   const [isScanning, setIsScanning] = useState(false);
@@ -48,7 +48,7 @@ const StockTransferTool: React.FC<StockTransferToolProps> = ({ onScanRequest, sc
   // Reset form when item changes or component mounts
   useEffect(() => {
     if (selectedItem) {
-      setFromLocation(selectedItem.location);
+      setFromLocation(selectedItem.location); // Use item's current location
       setTransferQuantity("");
       setNotes("");
       setToLocation(""); // Reset toLocation when item changes
@@ -213,15 +213,15 @@ const StockTransferTool: React.FC<StockTransferToolProps> = ({ onScanRequest, sc
               <Input id="fromLocation" value={fromLocation} disabled />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="toLocation" className="font-semibold">To Location</Label>
+              <Label htmlFor="toLocation">To Location</Label>
               <Select value={toLocation} onValueChange={setToLocation}>
                 <SelectTrigger id="toLocation">
                   <SelectValue placeholder="Select destination location" />
                 </SelectTrigger>
                 <SelectContent>
-                  {locations.filter(loc => loc !== fromLocation).map(loc => (
-                    <SelectItem key={loc} value={loc}>
-                      {loc}
+                  {locations.filter(loc => loc.fullLocationString !== fromLocation).map(loc => (
+                    <SelectItem key={loc.id} value={loc.fullLocationString}>
+                      {loc.displayName || loc.fullLocationString}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -37,8 +37,8 @@ export interface InventoryItem {
   incomingStock: number;
   unitCost: number;
   retailPrice: number;
-  location: string; // Overall primary storage location
-  pickingBinLocation: string; // NEW: Specific location for picking bin
+  location: string; // Overall primary storage location (fullLocationString)
+  pickingBinLocation: string; // NEW: Specific location for picking bin (fullLocationString)
   status: string;
   lastUpdated: string;
   imageUrl?: string;

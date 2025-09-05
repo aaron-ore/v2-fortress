@@ -61,7 +61,7 @@ const EditInventoryItem: React.FC = () => {
   const { inventoryItems, updateInventoryItem } = useInventory();
   const { categories, addCategory } = useCategories();
   const { vendors } = useVendors();
-  const { locations: savedLocations } = useOnboarding(); // NEW: Get saved locations
+  const { locations: savedLocations } = useOnboarding(); // Now contains Location[]
   const [itemNotFound, setItemNotFound] = useState(false);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -70,12 +70,12 @@ const EditInventoryItem: React.FC = () => {
 
   const item = useMemo(() => inventoryItems.find((i) => i.id === id), [inventoryItems, id]);
 
-  // Derived unique options for dropdowns
-  const uniqueAreas = getUniqueLocationParts(savedLocations, 'area');
-  const uniqueRows = getUniqueLocationParts(savedLocations, 'row');
-  const uniqueBays = getUniqueLocationParts(savedLocations, 'bay');
-  const uniqueLevels = getUniqueLocationParts(savedLocations, 'level');
-  const uniquePositions = getUniqueLocationParts(savedLocations, 'pos');
+  // Derived unique options for dropdowns from all existing locations
+  const uniqueAreas = getUniqueLocationParts(savedLocations.map(loc => loc.fullLocationString), 'area');
+  const uniqueRows = getUniqueLocationParts(savedLocations.map(loc => loc.fullLocationString), 'row');
+  const uniqueBays = getUniqueLocationParts(savedLocations.map(loc => loc.fullLocationString), 'bay');
+  const uniqueLevels = getUniqueLocationParts(savedLocations.map(loc => loc.fullLocationString), 'level');
+  const uniquePositions = getUniqueLocationParts(savedLocations.map(loc => loc.fullLocationString), 'pos');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -393,7 +393,7 @@ const EditInventoryItem: React.FC = () => {
                   name="overstockQuantity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Overstock Quantity</FormLabel>
+                      <FormLabel>Overstock Quantity</Label>
                       <FormControl>
                         <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value || '0'))} />
                       </FormControl>
@@ -500,31 +500,31 @@ const EditInventoryItem: React.FC = () => {
                           <Select value={parsed.area} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, area: val }))} disabled={savedLocations.length === 0}>
                             <SelectTrigger><SelectValue placeholder="Area" /></SelectTrigger>
                             <SelectContent>
-                              {uniqueAreas.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                              {savedLocations.map(loc => loc.area).filter((value, index, self) => self.indexOf(value) === index).map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
                             </SelectContent>
                           </Select>
                           <Select value={parsed.row} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, row: val }))} disabled={savedLocations.length === 0}>
                             <SelectTrigger><SelectValue placeholder="Row" /></SelectTrigger>
                             <SelectContent>
-                              {uniqueRows.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                              {savedLocations.map(loc => loc.row).filter((value, index, self) => self.indexOf(value) === index).map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
                             </SelectContent>
                           </Select>
                           <Select value={parsed.bay} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, bay: val }))} disabled={savedLocations.length === 0}>
                             <SelectTrigger><SelectValue placeholder="Bay" /></SelectTrigger>
                             <SelectContent>
-                              {uniqueBays.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                              {savedLocations.map(loc => loc.bay).filter((value, index, self) => self.indexOf(value) === index).map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
                             </SelectContent>
                           </Select>
                           <Select value={parsed.level} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, level: val }))} disabled={savedLocations.length === 0}>
                             <SelectTrigger><SelectValue placeholder="Level" /></SelectTrigger>
                             <SelectContent>
-                              {uniqueLevels.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                              {savedLocations.map(loc => loc.level).filter((value, index, self) => self.indexOf(value) === index).map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
                             </SelectContent>
                           </Select>
                           <Select value={parsed.pos} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, pos: val }))} disabled={savedLocations.length === 0}>
                             <SelectTrigger><SelectValue placeholder="Pos" /></SelectTrigger>
                             <SelectContent>
-                              {uniquePositions.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                              {savedLocations.map(loc => loc.pos).filter((value, index, self) => self.indexOf(value) === index).map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
                             </SelectContent>
                           </Select>
                         </>
@@ -548,31 +548,31 @@ const EditInventoryItem: React.FC = () => {
                           <Select value={parsed.area} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, area: val }))} disabled={savedLocations.length === 0}>
                             <SelectTrigger><SelectValue placeholder="Area" /></SelectTrigger>
                             <SelectContent>
-                              {uniqueAreas.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                              {savedLocations.map(loc => loc.area).filter((value, index, self) => self.indexOf(value) === index).map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
                             </SelectContent>
                           </Select>
                           <Select value={parsed.row} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, row: val }))} disabled={savedLocations.length === 0}>
                             <SelectTrigger><SelectValue placeholder="Row" /></SelectTrigger>
                             <SelectContent>
-                              {uniqueRows.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                              {savedLocations.map(loc => loc.row).filter((value, index, self) => self.indexOf(value) === index).map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
                             </SelectContent>
                           </Select>
                           <Select value={parsed.bay} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, bay: val }))} disabled={savedLocations.length === 0}>
                             <SelectTrigger><SelectValue placeholder="Bay" /></SelectTrigger>
                             <SelectContent>
-                              {uniqueBays.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                              {savedLocations.map(loc => loc.bay).filter((value, index, self) => self.indexOf(value) === index).map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
                             </SelectContent>
                           </Select>
                           <Select value={parsed.level} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, level: val }))} disabled={savedLocations.length === 0}>
                             <SelectTrigger><SelectValue placeholder="Level" /></SelectTrigger>
                             <SelectContent>
-                              {uniqueLevels.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                              {savedLocations.map(loc => loc.level).filter((value, index, self) => self.indexOf(value) === index).map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
                             </SelectContent>
                           </Select>
                           <Select value={parsed.pos} onValueChange={(val) => field.onChange(buildLocationString({ ...parsed, pos: val }))} disabled={savedLocations.length === 0}>
                             <SelectTrigger><SelectValue placeholder="Pos" /></SelectTrigger>
                             <SelectContent>
-                              {uniquePositions.map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
+                              {savedLocations.map(loc => loc.pos).filter((value, index, self) => self.indexOf(value) === index).map(val => <SelectItem key={val} value={val}>{val}</SelectItem>)}
                             </SelectContent>
                           </Select>
                         </>
@@ -584,31 +584,10 @@ const EditInventoryItem: React.FC = () => {
               </div>
               <FormField
                 control={form.control}
-                name="autoReorderEnabled"
+                name="committedStock"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Enable Auto-Reorder</FormLabel>
-                      <FormDescription>
-                        Automatically create purchase orders when stock hits reorder level.
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-              {form.watch("autoReorderEnabled") && (
-                <FormField
-                  control={form.control}
-                  name="autoReorderQuantity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Auto-Reorder Quantity</FormLabel>
+                  <FormItem>
+                      <FormLabel>Committed Stock</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value || '0'))} />
                       </FormControl>
@@ -616,6 +595,115 @@ const EditInventoryItem: React.FC = () => {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="incomingStock"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Incoming Stock</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value || '0'))} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="unitCost">Unit Cost <span className="text-red-500">*</span></Label>
+              <Input
+                id="unitCost"
+                type="number"
+                value={unitCost}
+                onChange={(e) => setUnitCost(e.target.value)}
+                placeholder="e.g., 900.00"
+                step="0.01"
+                min="0"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="retailPrice">Retail Price <span className="text-red-500">*</span></Label>
+              <Input
+                id="retailPrice"
+                type="number"
+                value={retailPrice}
+                onChange={(e) => setRetailPrice(e.target.value)}
+                placeholder="e.g., 1200.00"
+                step="0.01"
+                min="0"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="vendor">Primary Vendor</Label>
+              <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
+                <SelectTrigger id="vendor">
+                  <SelectValue placeholder="Select a vendor (Optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Vendor</SelectItem>
+                  {vendors.map((vendor) => (
+                    <SelectItem key={vendor.id} value={vendor.id}>
+                      {vendor.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="barcodeValue">QR Code Value (from SKU)</Label>
+              <Input
+                id="barcodeValue"
+                value={barcodeValue}
+                onChange={(e) => setSku(e.target.value)}
+                placeholder="Enter SKU or custom value"
+                disabled
+              />
+              {qrCodeSvgPreview && (
+                <div className="mt-2 p-4 border border-border rounded-md bg-white flex justify-center">
+                  <div dangerouslySetInnerHTML={{ __html: qrCodeSvgPreview }} />
+                </div>
+              )}
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="itemImage">Product Image</Label>
+              <Input
+                id="itemImage"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+              />
+              {imageUrlPreview && (
+                <div className="mt-2">
+                  <img src={imageUrlPreview} alt="Product Preview" className="max-w-[100px] max-h-[100px] object-contain border border-border p-1 rounded-md" />
+                </div>
+              )}
+            </div>
+            <div className="space-y-2 md:col-span-2 border-t border-border pt-4 mt-4">
+              <h3 className="text-lg font-semibold">Auto-Reorder Settings</h3>
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="autoReorderEnabled">Enable Auto-Reorder</Label>
+                <Switch
+                  id="autoReorderEnabled"
+                  checked={autoReorderEnabled}
+                  onCheckedChange={setAutoReorderEnabled}
+                />
+              </div>
+              {autoReorderEnabled && (
+                <div className="space-y-2 mt-2">
+                  <Label htmlFor="autoReorderQuantity">Quantity to Auto-Reorder</Label>
+                  <Input
+                    id="autoReorderQuantity"
+                    type="number"
+                    value={autoReorderQuantity}
+                    onChange={(e) => setAutoReorderQuantity(e.target.value)}
+                    placeholder="e.g., 50"
+                    min="1"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This quantity will be ordered when stock drops to or below the overall reorder level.
+                  </p>
+                </div>
               )}
             </div>
           </div>

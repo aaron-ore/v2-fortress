@@ -23,6 +23,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Package } from "lucide-react";
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
 import { showSuccess } from "@/utils/toast";
+import { useOnboarding } from "@/context/OnboardingContext"; // NEW: Import useOnboarding
 
 interface InventorySelectionDialogProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ const InventorySelectionDialog: React.FC<InventorySelectionDialogProps> = ({
   itemType,
 }) => {
   const { inventoryItems } = useInventory();
+  const { locations: structuredLocations } = useOnboarding(); // NEW: Get structured locations
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
 
@@ -87,6 +89,11 @@ const InventorySelectionDialog: React.FC<InventorySelectionDialogProps> = ({
     }
   };
 
+  const getLocationDisplayName = (fullLocationString: string) => {
+    const foundLoc = structuredLocations.find(loc => loc.fullLocationString === fullLocationString);
+    return foundLoc?.displayName || fullLocationString;
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
@@ -128,6 +135,7 @@ const InventorySelectionDialog: React.FC<InventorySelectionDialogProps> = ({
                   <TableHead>Item Name</TableHead>
                   <TableHead>SKU</TableHead>
                   <TableHead>Category</TableHead>
+                  <TableHead>Location</TableHead> {/* NEW: Added Location column */}
                   <TableHead className="text-right">On Hand</TableHead>
                   <TableHead className="text-right">
                     {itemType === "purchase" ? "Unit Cost" : "Retail Price"}
@@ -137,7 +145,7 @@ const InventorySelectionDialog: React.FC<InventorySelectionDialogProps> = ({
               <TableBody>
                 {filteredItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8"> {/* Adjusted colspan */}
                       No inventory items found.
                     </TableCell>
                   </TableRow>
@@ -155,6 +163,7 @@ const InventorySelectionDialog: React.FC<InventorySelectionDialogProps> = ({
                       <TableCell className="font-medium">{item.name}</TableCell>
                       <TableCell>{item.sku}</TableCell>
                       <TableCell>{item.category}</TableCell>
+                      <TableCell>{getLocationDisplayName(item.location)}</TableCell> {/* NEW: Display location */}
                       <TableCell className="text-right">{item.quantity}</TableCell>
                       <TableCell className="text-right">
                         ${itemType === "purchase" ? item.unitCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : item.retailPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DateRange } from "react-day-picker";
 import { useProfile } from "@/context/ProfileContext";
-import { useOnboarding } from "@/context/OnboardingContext";
+import { useOnboarding } from "@/context/OnboardingContext"; // Now contains Location[]
 import { supabase } from "@/lib/supabaseClient";
 import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { Loader2, AlertTriangle, Scale, User, Clock, FileText } from "lucide-react";
@@ -21,7 +21,7 @@ interface DiscrepancyLog {
   organizationId: string;
   itemId: string;
   itemName: string;
-  locationString: string;
+  locationString: string; // This is the fullLocationString
   locationType: string;
   originalQuantity: number;
   countedQuantity: number;
@@ -44,6 +44,7 @@ const DiscrepancyReport: React.FC<DiscrepancyReportProps> = ({
   reportContentRef,
 }) => {
   const { profile, allProfiles, fetchAllProfiles } = useProfile();
+  const { locations: structuredLocations } = useOnboarding(); // NEW: Get structured locations
   const { companyProfile } = useOnboarding();
 
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "resolved">("all");
@@ -112,12 +113,13 @@ const DiscrepancyReport: React.FC<DiscrepancyReportProps> = ({
       statusFilter,
       dateRange, // NEW: Pass dateRange to reportProps
       allProfiles, // Pass all profiles to resolve user names in PDF
+      structuredLocations, // NEW: Pass structuredLocations to resolve display names
     };
 
     setCurrentReportData(reportProps);
     onGenerateReport({ pdfProps: reportProps, printType: "discrepancy-report" });
     setReportGenerated(true);
-  }, [fetchDiscrepancies, companyProfile, statusFilter, onGenerateReport, allProfiles, fetchAllProfiles, dateRange]); // NEW: Added dateRange to dependencies
+  }, [fetchDiscrepancies, companyProfile, statusFilter, onGenerateReport, allProfiles, fetchAllProfiles, dateRange, structuredLocations]); // NEW: Added dateRange to dependencies
 
   useEffect(() => {
     generateReport();
@@ -126,6 +128,11 @@ const DiscrepancyReport: React.FC<DiscrepancyReportProps> = ({
   const getUserName = (userId: string) => {
     const user = allProfiles.find(p => p.id === userId);
     return user?.fullName || user?.email || "Unknown User";
+  };
+
+  const getLocationDisplayName = (fullLocationString: string) => {
+    const foundLoc = structuredLocations.find(loc => loc.fullLocationString === fullLocationString);
+    return foundLoc?.displayName || fullLocationString;
   };
 
   if (isLoading) {
@@ -203,7 +210,7 @@ const DiscrepancyReport: React.FC<DiscrepancyReportProps> = ({
                     return (
                       <TableRow key={discrepancy.id}>
                         <TableCell className="font-medium">{discrepancy.itemName}</TableCell>
-                        <TableCell>{discrepancy.locationString} ({discrepancy.locationType.replace('_', ' ')})</TableCell>
+                        <TableCell>{getLocationDisplayName(discrepancy.locationString)} ({discrepancy.locationType.replace('_', ' ')})</TableCell>
                         <TableCell className="text-right">{discrepancy.originalQuantity}</TableCell>
                         <TableCell className="text-right">{discrepancy.countedQuantity}</TableCell>
                         <TableCell className="text-right text-destructive">{discrepancy.difference}</TableCell>

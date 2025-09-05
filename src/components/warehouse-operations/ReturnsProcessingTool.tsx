@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Undo2, Scan, Package, MapPin, AlertTriangle, CheckCircle } from "lucide-react";
 import { showError, showSuccess } from "@/utils/toast";
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
-import { useOnboarding } from "@/context/OnboardingContext";
+import { useOnboarding } from "@/context/OnboardingContext"; // Now contains Location[]
 import { useStockMovement } from "@/context/StockMovementContext";
 
 interface ReturnsProcessingToolProps {
@@ -26,7 +26,7 @@ const ReturnsProcessingTool: React.FC<ReturnsProcessingToolProps> = ({ onScanReq
   const [scannedItem, setScannedItem] = useState<InventoryItem | null>(null);
   const [returnQuantity, setReturnQuantity] = useState("");
   const [returnReason, setReturnReason] = useState("");
-  const [returnDestination, setReturnDestination] = useState(""); // Suggested or user-selected
+  const [returnDestination, setReturnDestination] = useState(""); // Suggested or user-selected (fullLocationString)
   const [notes, setNotes] = useState("");
   const [isScanning, setIsScanning] = useState(false);
 
@@ -34,8 +34,17 @@ const ReturnsProcessingTool: React.FC<ReturnsProcessingToolProps> = ({ onScanReq
 
   useEffect(() => {
     // Ensure 'Returns Area' exists as a location
-    if (!locations.includes("Returns Area")) {
-      addLocation("Returns Area");
+    const returnsAreaString = "RETURNS-AREA-01-1-A"; // Standardized string for Returns Area
+    const returnsAreaDisplayName = "Returns Area";
+
+    const existingReturnsArea = locations.find(loc => loc.fullLocationString === returnsAreaString);
+    if (!existingReturnsArea) {
+      addLocation({
+        fullLocationString: returnsAreaString,
+        displayName: returnsAreaDisplayName,
+        area: "RETURNS", row: "AREA", bay: "01", level: "1", pos: "A",
+        color: "#F44336", // Red for returns
+      });
     }
   }, [locations, addLocation]);
 
@@ -87,18 +96,15 @@ const ReturnsProcessingTool: React.FC<ReturnsProcessingToolProps> = ({ onScanReq
     }
 
     const oldQuantity = scannedItem.quantity;
-    const newQuantity = oldQuantity + quantity;
-
-    // Determine which quantity to update (picking bin or overstock)
     let newPickingBinQuantity = scannedItem.pickingBinQuantity;
     let newOverstockQuantity = scannedItem.overstockQuantity;
 
+    const returnsAreaString = "RETURNS-AREA-01-1-A";
+
     if (returnDestination === scannedItem.pickingBinLocation) {
       newPickingBinQuantity += quantity;
-    } else if (returnDestination === "Returns Area") {
-      // If returning to a dedicated returns area, it might go to overstock or a specific returns bin
-      // For simplicity, let's add to overstock if it's not the primary picking bin
-      newOverstockQuantity += quantity;
+    } else if (returnDestination === returnsAreaString) {
+      newOverstockQuantity += quantity; // For simplicity, returns area items go to overstock
     } else {
       // If a different location is selected, for simplicity, add to overstock
       newOverstockQuantity += quantity;
@@ -120,7 +126,7 @@ const ReturnsProcessingTool: React.FC<ReturnsProcessingToolProps> = ({ onScanReq
       type: "add",
       amount: quantity,
       oldQuantity: oldQuantity,
-      newQuantity: newQuantity,
+      newQuantity: newPickingBinQuantity + newOverstockQuantity,
       reason: `Return: ${returnReason} to ${returnDestination}`,
     });
 
@@ -189,9 +195,10 @@ const ReturnsProcessingTool: React.FC<ReturnsProcessingToolProps> = ({ onScanReq
               <Label htmlFor="returnReason">Reason for Return</Label>
               <Select value={returnReason} onValueChange={(value) => {
                 setReturnReason(value);
+                const returnsAreaString = "RETURNS-AREA-01-1-A";
                 // Suggest 'Returns Area' if damaged/defective, otherwise original picking bin
                 if (value.includes("Damaged") || value.includes("Defective")) {
-                  setReturnDestination("Returns Area");
+                  setReturnDestination(returnsAreaString);
                 } else {
                   setReturnDestination(scannedItem.pickingBinLocation);
                 }
@@ -216,8 +223,8 @@ const ReturnsProcessingTool: React.FC<ReturnsProcessingToolProps> = ({ onScanReq
                 </SelectTrigger>
                 <SelectContent>
                   {locations.map((loc) => (
-                    <SelectItem key={loc} value={loc}>
-                      {loc}
+                    <SelectItem key={loc.id} value={loc.fullLocationString}>
+                      {loc.displayName || loc.fullLocationString}
                     </SelectItem>
                   ))}
                 </SelectContent>

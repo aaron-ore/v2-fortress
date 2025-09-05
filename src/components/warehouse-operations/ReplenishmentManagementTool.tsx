@@ -64,8 +64,8 @@ const ReplenishmentManagementTool: React.FC = () => {
     await addReplenishmentTask({
       itemId: item.id,
       itemName: item.name,
-      fromLocation: item.location, // Assuming overstock is in main location
-      toLocation: item.pickingBinLocation,
+      fromLocation: item.location, // Assuming overstock is in main location (fullLocationString)
+      toLocation: item.pickingBinLocation, // Picking bin location (fullLocationString)
       quantity: quantityToMove,
     });
   };

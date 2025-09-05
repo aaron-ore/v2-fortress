@@ -33,7 +33,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
 import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
-import { useOnboarding } from "@/context/OnboardingContext";
+import { useOnboarding } from "@/context/OnboardingContext"; // Now contains Location[]
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { showError, showSuccess } from "@/utils/toast";
@@ -51,7 +51,7 @@ import InventoryItemQuickViewDialog from "@/components/InventoryItemQuickViewDia
 import AddInventoryDialog from "@/components/AddInventoryDialog";
 import { useSidebar } from "@/context/SidebarContext";
 
-export const createInventoryColumns = (handleQuickView: (item: InventoryItem) => void): ColumnDef<InventoryItem>[] => [
+export const createInventoryColumns = (handleQuickView: (item: InventoryItem) => void, structuredLocations: any[]): ColumnDef<InventoryItem>[] => [ // NEW: Pass structuredLocations
   {
     accessorKey: "name",
     header: "Item Name",
@@ -85,6 +85,11 @@ export const createInventoryColumns = (handleQuickView: (item: InventoryItem) =>
   {
     accessorKey: "location",
     header: "Location",
+    cell: ({ row }) => { // NEW: Resolve display name for location
+      const fullLocationString = row.original.location;
+      const foundLoc = structuredLocations.find(loc => loc.fullLocationString === fullLocationString);
+      return foundLoc?.displayName || fullLocationString;
+    },
   },
   {
     accessorKey: "status",
@@ -121,7 +126,7 @@ const Inventory: React.FC = () => {
   const { inventoryItems, deleteInventoryItem, refreshInventory } = useInventory();
   const { categories } = useCategories();
   const { vendors } = useVendors();
-  const { locations } = useOnboarding();
+  const { locations: structuredLocations } = useOnboarding(); // Now contains Location[]
   const navigate = useNavigate();
   const { isCollapsed } = useSidebar();
 
@@ -141,7 +146,7 @@ const Inventory: React.FC = () => {
   const [selectedItemForQuickView, setSelectedItemForQuickView] = useState<InventoryItem | null>(null);
 
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
-  const [locationFilter, setLocationFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all"); // This will be fullLocationString or "all"
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -164,7 +169,7 @@ const Inventory: React.FC = () => {
           item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (item.vendorId ? (vendorNameMap.get(item.vendorId) || "").toLowerCase().includes(searchTerm.toLowerCase()) : false);
 
-        const matchesLocation = locationFilter === "all" || item.location === locationFilter;
+        const matchesLocation = locationFilter === "all" || item.location === locationFilter || item.pickingBinLocation === locationFilter;
         const matchesCategory = categoryFilter === "all" || item.category === categoryFilter;
         const matchesStatus = statusFilter === "all" || item.status === statusFilter;
 
@@ -210,7 +215,7 @@ const Inventory: React.FC = () => {
     showSuccess(`Create order for ${item.name} (placeholder)`);
   }, []);
 
-  const columnsForDataTable = useMemo(() => createInventoryColumns(handleQuickView), [handleQuickView]);
+  const columnsForDataTable = useMemo(() => createInventoryColumns(handleQuickView, structuredLocations), [handleQuickView, structuredLocations]); // NEW: Pass structuredLocations
 
   return (
     <div className="flex flex-col space-y-6" data-testid="inventory-page-root">
@@ -229,8 +234,8 @@ const Inventory: React.FC = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Locations</SelectItem>
-            {locations.map(loc => (
-              <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+            {structuredLocations.map(loc => (
+              <SelectItem key={loc.id} value={loc.fullLocationString}>{loc.displayName || loc.fullLocationString}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -299,7 +304,7 @@ const Inventory: React.FC = () => {
             <Button variant="outline" onClick={() => setIsManageCategoriesDialogOpen(true)} size="sm">
               Manage Categories
             </Button>
-            <Button variant="outline" onClick={() => setIsManageLocationsDialogOpen(true)} size="sm">
+            <Button variant="outline" onClick={() => navigate("/locations")} size="sm"> {/* Changed to navigate to /locations */}
               <MapPin className="h-4 w-4 mr-2" /> Manage Locations
             </Button>
             <DropdownMenu>

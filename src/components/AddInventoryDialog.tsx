@@ -37,7 +37,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   onClose,
 }) => {
   const { addInventoryItem } = useInventory();
-  const { locations } = useOnboarding();
+  const { locations } = useOnboarding(); // Now contains Location[]
   const { categories } = useCategories();
   const { vendors } = useVendors();
   const { profile } = useProfile();
@@ -69,16 +69,16 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   const [autoReorderEnabled, setAutoReorderEnabled] = useState(false);
   const [autoReorderQuantity, setAutoReorderQuantity] = useState("");
 
-  // Derived unique options for dropdowns
-  const uniqueAreas = getUniqueLocationParts(locations, 'area');
-  const uniqueRows = getUniqueLocationParts(locations, 'row');
-  const uniqueBays = getUniqueLocationParts(locations, 'bay');
-  const uniqueLevels = getUniqueLocationParts(locations, 'level');
-  const uniquePositions = getUniqueLocationParts(locations, 'pos');
+  // Derived unique options for dropdowns from all existing locations
+  const uniqueAreas = getUniqueLocationParts(locations.map(loc => loc.fullLocationString), 'area');
+  const uniqueRows = getUniqueLocationParts(locations.map(loc => loc.fullLocationString), 'row');
+  const uniqueBays = getUniqueLocationParts(locations.map(loc => loc.fullLocationString), 'bay');
+  const uniqueLevels = getUniqueLocationParts(locations.map(loc => loc.fullLocationString), 'level');
+  const uniquePositions = getUniqueLocationParts(locations.map(loc => loc.fullLocationString), 'pos');
 
   // Get a default location string for simple mode
-  const defaultLocationString = locations.length > 0 ? locations[0] : "Main Warehouse-01-01-1-A";
-  const defaultPickingBinLocationString = locations.length > 0 ? locations[0] : "Picking Bin-01-01-1-A";
+  const defaultLocationString = locations.length > 0 ? locations[0].fullLocationString : "Main Warehouse-01-01-1-A";
+  const defaultPickingBinLocationString = locations.length > 0 ? locations[0].fullLocationString : "Picking Bin-01-01-1-A";
 
 
   // Reset form when dialog opens

@@ -28,7 +28,7 @@ const PickingWaveManagementTool: React.FC = () => {
   const { initiatePrint } = usePrint();
 
   const [selectedDeliveryRoute, setSelectedDeliveryRoute] = useState("all");
-  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
+  const [selectedOrderIds, setSelectedOrderIds] = new Set<string>();
   const [generatedPickList, setGeneratedPickList] = useState<PickListItem[]>([]);
   const [currentWaveId, setCurrentWaveId] = useState<string | null>(null);
 
@@ -93,7 +93,7 @@ const PickingWaveManagementTool: React.FC = () => {
             pickListItemsMap.set(key, {
               itemName: inventoryItem.name,
               itemSku: inventoryItem.sku,
-              pickingBinLocation: inventoryItem.pickingBinLocation,
+              pickingBinLocation: inventoryItem.pickingBinLocation, // fullLocationString
               quantityToPick: orderItem.quantity,
             });
           }
@@ -235,7 +235,7 @@ const PickingWaveManagementTool: React.FC = () => {
             <Button onClick={handlePrintPickList} className="w-full">
               <Printer className="h-4 w-4 mr-2" /> Print Pick List
             </Button>
-            <Button variant="secondary" className="w-full" onClick={() => { setGeneratedPickList([]); setSelectedOrderIds(new Set()); setCurrentWaveId(null); showSuccess("Picking wave cleared."); }}>
+            <Button variant="secondary" className="w-full" onClick={() => { setSelectedOrderIds(new Set()); setGeneratedPickList([]); setCurrentWaveId(null); showSuccess("Picking wave cleared."); }}>
               <CheckCircle className="h-4 w-4 mr-2" /> Complete Wave (Clear)
             </Button>
           </CardContent>

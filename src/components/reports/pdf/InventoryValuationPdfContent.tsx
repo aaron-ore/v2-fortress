@@ -2,6 +2,7 @@ import React from "react";
 import { format, isValid } from "date-fns"; // Import isValid
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 import { DateRange } from "react-day-picker"; // NEW: Import DateRange
+import { Location } from "@/context/OnboardingContext"; // NEW: Import Location interface
 
 interface GroupedDataItem {
   name: string;
