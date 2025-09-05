@@ -32,23 +32,25 @@ const LocationLabelPdfContent: React.FC<LocationLabelPdfContentProps> = ({
       {/* Top Color Bar */}
       <div className="h-[5mm] w-full flex-shrink-0" style={{ backgroundColor: color, zIndex: 10 }}></div>
 
-      {/* Content Area */}
-      <div className="flex flex-grow items-center justify-start p-1">
+      {/* Main Location String */}
+      <div className="flex-shrink-0 text-center mt-1">
+        <p className="text-xl font-extrabold text-black leading-tight">{locationString}</p>
+      </div>
+
+      {/* Content Area: QR Code and Stacked Details */}
+      <div className="flex flex-grow items-start justify-start p-1">
         {/* QR Code on Left */}
-        <div className="flex-shrink-0 w-[20mm] h-[20mm] flex items-center justify-center">
+        <div className="flex-shrink-0 w-[20mm] h-[20mm] flex items-center justify-center mr-2"> {/* Added right margin */}
           <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-full h-full object-contain" />
         </div>
 
-        {/* Location Details on Right, stacked */}
-        <div className="flex-grow ml-2 text-left flex flex-col justify-center">
-          <p className="text-xl font-extrabold text-black leading-tight">{locationString}</p> {/* Main location string, larger */}
-          <div className="mt-1 text-[0.6rem] text-black"> {/* Smaller details, stacked */}
-            <p><span className="font-semibold">Area:</span> {area}</p>
-            <p><span className="font-semibold">Row:</span> {row}</p>
-            <p><span className="font-semibold">Bay:</span> {bay}</p>
-            <p><span className="font-semibold">Level:</span> {level}</p>
-            <p><span className="font-semibold">Pos:</span> {pos}</p>
-          </div>
+        {/* Stacked Location Details on Right */}
+        <div className="flex-grow text-left flex flex-col justify-center space-y-0.5"> {/* Added vertical spacing */}
+          <p className="text-[0.6rem] text-black"><span className="font-semibold">Area:</span> {area}</p>
+          <p className="text-[0.6rem] text-black"><span className="font-semibold">Row:</span> {row}</p>
+          <p className="text-[0.6rem] text-black"><span className="font-semibold">Bay:</span> {bay}</p>
+          <p className="text-[0.6rem] text-black"><span className="font-semibold">Level:</span> {level}</p>
+          <p className="text-[0.6rem] text-black"><span className="font-semibold">Pos:</span> {pos}</p>
         </div>
       </div>
 
