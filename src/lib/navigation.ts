@@ -46,6 +46,7 @@ export interface NavItem {
 
 export const mainNavItems: NavItem[] = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },
+  { title: "Reports", href: "/reports", icon: BarChart }, // Moved Reports here
   { title: "Inventory", href: "/inventory", icon: Package },
   { title: "Orders", href: "/orders", icon: Receipt },
   { title: "Customers", href: "/customers", icon: UserRound },
@@ -53,7 +54,6 @@ export const mainNavItems: NavItem[] = [
   { title: "Locations", href: "/locations", icon: MapPin },
   // { title: "Floor Plan", href: "/floor-plan", icon: Layout }, // REMOVED: Add Floor Plan NavItem
   { title: "Integrations", href: "/integrations", icon: Plug },
-  { title: "Reports", href: "/reports", icon: BarChart },
   {
     title: "Warehouse Operations",
     href: "/warehouse-operations",
