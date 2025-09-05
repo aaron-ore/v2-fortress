@@ -115,7 +115,8 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         if (orgError) {
           console.error("[ProfileContext] Error fetching organization separately:", orgError);
         } else if (orgData) {
-          userProfileData.organizations = orgData; // Attach fetched organization data
+          // Create a new object with the merged organization data
+          userProfileData = { ...userProfileData, organizations: orgData };
           console.log("[ProfileContext] Successfully fetched and attached organization data separately:", orgData);
         }
       }
@@ -124,6 +125,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (profileFetchError) {
       setProfile(null);
     } else if (userProfileData) {
+      console.log("[ProfileContext] userProfileData BEFORE mapping:", userProfileData); // NEW LOG
       const mappedProfile = mapSupabaseProfileToUserProfile(userProfileData, session.user.email);
       setProfile(mappedProfile);
       console.log("[ProfileContext] Mapped profile object:", mappedProfile);
