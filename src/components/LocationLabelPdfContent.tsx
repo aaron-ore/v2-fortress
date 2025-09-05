@@ -1,7 +1,7 @@
 import React from "react";
 import { format, isValid } from "date-fns";
 import { parseAndValidateDate } from "@/utils/dateUtils";
-import { Diamond } from "lucide-react"; // NEW: Import Diamond icon
+import { Diamond } from "lucide-react";
 
 interface LocationLabelPdfContentProps {
   area: string;
@@ -26,12 +26,9 @@ const LocationLabelPdfContent = React.forwardRef<HTMLDivElement, LocationLabelPd
   locationString,
   className,
 }, ref) => {
-  // The printDateObj is no longer displayed on the label itself, but kept for potential debugging or internal use.
-  // const printDateObj = parseAndValidateDate(printDate);
-
   return (
     <div ref={ref} className={`bg-white text-gray-900 font-sans w-[101.6mm] h-[50.8mm] border border-black relative overflow-hidden ${className || ''}`}>
-      {/* QR Code at the top left, behind text */}
+      {/* QR Code at the top left */}
       <div className="absolute top-[2mm] left-[2mm] w-[45mm] h-[45mm] flex items-center justify-center z-0">
         <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-full h-full object-contain" />
       </div>
@@ -41,10 +38,10 @@ const LocationLabelPdfContent = React.forwardRef<HTMLDivElement, LocationLabelPd
         <Diamond className="h-6 w-6 text-gray-700" />
       </div>
 
-      {/* Location Details - positioned at the bottom, spanning width, over QR code */}
-      <div className="absolute bottom-[2mm] left-[2mm] right-[2mm] flex flex-col items-center justify-end z-10">
+      {/* Location Details - positioned on the right side of the label */}
+      <div className="absolute top-[2mm] right-[2mm] w-[50mm] h-[45mm] flex flex-col justify-center items-center z-10">
         {/* Row for Area and Row */}
-        <div className="flex w-full justify-around mb-1"> {/* Added mb-1 for vertical spacing */}
+        <div className="flex w-full justify-around mb-1">
           <div className="flex flex-col items-center leading-none">
             <span className="text-[0.6rem] font-bold uppercase text-gray-700">AREA</span>
             <span className="text-3xl font-extrabold text-black">{area}</span>
