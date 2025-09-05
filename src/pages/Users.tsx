@@ -114,7 +114,7 @@ const Users: React.FC = () => {
         </CardHeader>
         <CardContent className="flex items-center gap-4">
           <Input
-            value={profile?.organizationCode || "Loading..."}
+            value={profile?.organizationCode || "Not available"} {/* NEW: Display 'Not available' */}
             readOnly
             className="font-mono text-lg flex-grow"
           />

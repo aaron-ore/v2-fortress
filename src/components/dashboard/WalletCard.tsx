@@ -33,6 +33,8 @@ const WalletCard: React.FC = () => {
   }, [editableCashBalance]);
 
   const totalStockValue = useMemo(() => {
+    // NOTE: If your Supabase inventory_items table is empty, this will fall back to mock data.
+    // Ensure your inventory is populated in Supabase for real values.
     return inventoryItems.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
   }, [inventoryItems]);
 

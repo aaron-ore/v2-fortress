@@ -54,12 +54,16 @@ const Sidebar: React.FC<SidebarProps> = () => { // REMOVED: Props from function 
     navigate(path);
   };
 
+  const handleLogoClick = () => { // NEW: Handler for logo click
+    navigate("/"); // Navigate to dashboard
+  };
+
   const baseButtonClass = "justify-start text-base font-medium transition-colors w-full";
   const activeLinkClass = "text-sidebar-active-foreground bg-sidebar-active-background hover:bg-sidebar-active-background/80 rounded-md"; // Added rounded-md
   const inactiveLinkClass = "text-sidebar-foreground hover:bg-sidebar-background/50 rounded-md"; // Added rounded-md
 
   const renderFortressLogo = (isCollapsedState: boolean) => (
-    <div className={cn("flex items-center space-x-2", isCollapsedState ? "justify-center" : "justify-start")}>
+    <div className={cn("flex items-center space-x-2 cursor-pointer", isCollapsedState ? "justify-center" : "justify-start")} onClick={handleLogoClick}> {/* NEW: Add onClick */}
       <svg
         width="24"
         height="24"

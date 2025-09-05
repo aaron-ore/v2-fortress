@@ -16,6 +16,12 @@ import MobileDrawerContent from "@/components/MobileDrawerContent"; // Import th
 
 const MobileNav: React.FC = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const navigate = useNavigate(); // NEW: Import useNavigate
+
+  const handleLogoClick = () => { // NEW: Handler for logo click
+    setIsSheetOpen(false); // Close the sheet
+    navigate("/"); // Navigate to dashboard
+  };
 
   return (
     <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -26,7 +32,7 @@ const MobileNav: React.FC = () => {
       </SheetTrigger>
       <SheetContent side="left" className="w-[280px] sm:w-[320px] flex flex-col">
         <SheetHeader className="flex flex-row items-center justify-between pb-4 border-b border-border">
-          <SheetTitle className="flex items-center space-x-2">
+          <SheetTitle className="flex items-center space-x-2 cursor-pointer" onClick={handleLogoClick}> {/* NEW: Add onClick */}
             <svg
               width="24"
               height="24"

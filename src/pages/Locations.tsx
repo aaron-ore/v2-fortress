@@ -4,13 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PlusCircle, Trash2, MapPin, QrCode, Printer } from "lucide-react";
+import { PlusCircle, Trash2, MapPin, QrCode, Printer, Edit } from "lucide-react"; // NEW: Import Edit icon
 import { showError, showSuccess } from "@/utils/toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { usePrint, PrintContentData } from "@/context/PrintContext";
 import LocationLabelGenerator from "@/components/LocationLabelGenerator"; // Import the new component
 import { parseLocationString, LocationParts } from "@/utils/locationParser"; // NEW: Import parseLocationString and LocationParts
+import LocationInventoryViewDialog from "@/components/LocationInventoryViewDialog"; // NEW: Import LocationInventoryViewDialog
 
 const Locations: React.FC = () => {
   const { locations, addLocation, removeLocation } = useOnboarding();
@@ -21,19 +22,8 @@ const Locations: React.FC = () => {
   const [locationToDelete, setLocationToDelete] = useState<string | null>(null);
 
   const [selectedLocationForLabel, setSelectedLocationForLabel] = useState<string | null>(null);
-
-  // Parse location string into its components for the label generator
-  // MOVED: This function is now imported from locationParser.ts
-  // const parseLocationString = (locationStr: string) => {
-  //   const parts = locationStr.split('-');
-  //   return {
-  //     area: parts[0] || "A",
-  //     row: parts[1] || "01",
-  //     bay: parts[2] || "01",
-  //     level: parts[3] || "1",
-  //     pos: parts[4] || "A",
-  //   };
-  // };
+  const [isLocationInventoryViewDialogOpen, setIsLocationInventoryViewDialogOpen] = useState(false); // NEW: State for inventory view dialog
+  const [locationToViewInventory, setLocationToViewInventory] = useState<string | null>(null); // NEW: State for location to view inventory
 
   const handleAddLocation = () => {
     if (newLocationName.trim() === "") {
@@ -62,6 +52,10 @@ const Locations: React.FC = () => {
       if (selectedLocationForLabel === locationToDelete) {
         setSelectedLocationForLabel(null); // Deselect if the deleted one was selected
       }
+      if (locationToViewInventory === locationToDelete) { // NEW: Also deselect if it was selected for inventory view
+        setLocationToViewInventory(null);
+        setIsLocationInventoryViewDialogOpen(false);
+      }
     }
     setIsConfirmDeleteDialogOpen(false);
     setLocationToDelete(null);
@@ -69,6 +63,11 @@ const Locations: React.FC = () => {
 
   const handleEditLabelClick = (location: string) => {
     setSelectedLocationForLabel(location);
+  };
+
+  const handleViewInventoryClick = (location: string) => { // NEW: Handler to open inventory view dialog
+    setLocationToViewInventory(location);
+    setIsLocationInventoryViewDialogOpen(true);
   };
 
   const handleGenerateAndPrintFromGenerator = (labelsToPrint: PrintContentData[]) => {
@@ -119,7 +118,7 @@ const Locations: React.FC = () => {
               </div>
             </div>
 
-            {locations.length > 0 && (
+            {locations.length > 0 ? (
               <div className="space-y-2 flex-grow flex flex-col">
                 <Label>Current Locations</Label>
                 <ScrollArea className="flex-grow border border-border rounded-md p-3 bg-muted/20">
@@ -127,25 +126,37 @@ const Locations: React.FC = () => {
                     {locations.map((loc, index) => (
                       <li key={index} className="flex items-center justify-between py-1 text-foreground">
                         <Button
-                          variant="ghost"
+                          variant="link" // Changed to link for clickable text
                           className="p-0 h-auto text-left font-normal hover:underline"
-                          onClick={() => handleEditLabelClick(loc)}
+                          onClick={() => handleViewInventoryClick(loc)} // NEW: View inventory on click
                         >
                           {loc}
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveLocationClick(loc)}
-                          aria-label={`Remove location ${loc}`}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditLabelClick(loc)}
+                            aria-label={`Edit label for ${loc}`}
+                          >
+                            <Edit className="h-4 w-4 text-primary" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveLocationClick(loc)}
+                            aria-label={`Remove location ${loc}`}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       </li>
                     ))}
                   </ul>
                 </ScrollArea>
               </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">No locations defined yet. Add your first location!</p>
             )}
           </CardContent>
         </Card>
@@ -180,6 +191,15 @@ const Locations: React.FC = () => {
           description={`Are you sure you want to delete the location "${locationToDelete}"? This cannot be undone.`}
           confirmText="Delete"
           cancelText="Cancel"
+        />
+      )}
+
+      {/* NEW: Location Inventory View Dialog */}
+      {locationToViewInventory && (
+        <LocationInventoryViewDialog
+          isOpen={isLocationInventoryViewDialogOpen}
+          onClose={() => setIsLocationInventoryViewDialogOpen(false)}
+          locationName={locationToViewInventory}
         />
       )}
     </div>

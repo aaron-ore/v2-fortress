@@ -25,7 +25,7 @@ const Settings: React.FC = () => {
   const [companyAddress, setCompanyAddress] = useState(companyProfile?.address || "");
   const [companyCurrency, setCompanyCurrency] = useState(companyProfile?.currency || "USD");
   const [isSavingCompanyProfile, setIsSavingCompanyProfile] = useState(false);
-  const [selectedOrganizationTheme, setSelectedOrganizationTheme] = useState(profile?.organizationTheme || "dark"); // NEW: State for organization theme
+  // const [selectedOrganizationTheme, setSelectedOrganizationTheme] = useState(profile?.organizationTheme || "dark"); // NEW: State for organization theme - REMOVED
 
   useEffect(() => {
     if (companyProfile) {
@@ -35,12 +35,12 @@ const Settings: React.FC = () => {
     }
   }, [companyProfile]);
 
-  // NEW: Update selectedOrganizationTheme when profile.organizationTheme changes
-  useEffect(() => {
-    if (profile?.organizationTheme) {
-      setSelectedOrganizationTheme(profile.organizationTheme);
-    }
-  }, [profile?.organizationTheme]);
+  // NEW: Update selectedOrganizationTheme when profile.organizationTheme changes - REMOVED
+  // useEffect(() => {
+  //   if (profile?.organizationTheme) {
+  //     setSelectedOrganizationTheme(profile.organizationTheme);
+  //   }
+  // }, [profile?.organizationTheme]);
 
   const handleSaveCompanyProfile = async () => {
     setIsSavingCompanyProfile(true);
@@ -58,28 +58,28 @@ const Settings: React.FC = () => {
     }
   };
 
-  // NEW: Handle saving organization theme
-  const handleSaveOrganizationTheme = async () => {
-    if (!profile || profile.role !== 'admin' || !profile.organizationId) {
-      showError("You do not have permission to update the organization's theme.");
-      return;
-    }
-    if (selectedOrganizationTheme === profile.organizationTheme) {
-      showSuccess("No changes to save for organization theme.");
-      return;
-    }
-    await updateOrganizationTheme(selectedOrganizationTheme);
-    // Also apply the theme locally immediately
-    setTheme(selectedOrganizationTheme);
-  };
+  // NEW: Handle saving organization theme - REMOVED
+  // const handleSaveOrganizationTheme = async () => {
+  //   if (!profile || profile.role !== 'admin' || !profile.organizationId) {
+  //     showError("You do not have permission to update the organization's theme.");
+  //     return;
+  //   }
+  //   if (selectedOrganizationTheme === profile.organizationTheme) {
+  //     showSuccess("No changes to save for organization theme.");
+  //     return;
+  //   }
+  //   await updateOrganizationTheme(selectedOrganizationTheme);
+  //   // Also apply the theme locally immediately
+  //   setTheme(selectedOrganizationTheme);
+  // };
 
   const hasCompanyProfileChanges =
     companyName !== (companyProfile?.name || "") ||
     companyAddress !== (companyProfile?.address || "") ||
     companyCurrency !== (companyProfile?.currency || "USD");
 
-  // NEW: Check for organization theme changes
-  const hasOrganizationThemeChanges = selectedOrganizationTheme !== (profile?.organizationTheme || "dark");
+  // NEW: Check for organization theme changes - REMOVED
+  // const hasOrganizationThemeChanges = selectedOrganizationTheme !== (profile?.organizationTheme || "dark");
 
   return (
     <div className="flex flex-col space-y-6 p-6">
@@ -135,8 +135,8 @@ const Settings: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* NEW: Organization Theme Settings */}
-      {profile?.role === 'admin' && (
+      {/* NEW: Organization Theme Settings - REMOVED */}
+      {/* {profile?.role === 'admin' && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -166,7 +166,7 @@ const Settings: React.FC = () => {
             </Button>
           </CardContent>
         </Card>
-      )}
+      )} */}
     </div>
   );
 };
