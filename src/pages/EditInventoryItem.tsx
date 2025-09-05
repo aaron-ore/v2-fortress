@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom"; // NEW: Import Link
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch"; // NEW: Import Switch
+import { Switch } from "@/components/ui/switch";
 import { useInventory } from "@/context/InventoryContext";
 import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
@@ -61,16 +61,16 @@ const EditInventoryItem: React.FC = () => {
   const { inventoryItems, updateInventoryItem } = useInventory();
   const { categories, addCategory } = useCategories();
   const { vendors } = useVendors();
-  const { locations: savedLocations } = useOnboarding(); // Now contains Location[]
+  const { locations: savedLocations } = useOnboarding();
   const [itemNotFound, setItemNotFound] = useState(false);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [qrCodeSvg, setQrCodeSvg] = useState<string | undefined>(undefined);
 
-  // NEW: State for main location parts
+  // State for main location parts
   const [mainLocationParts, setMainLocationParts] = useState<LocationParts>({ area: '', row: '', bay: '', level: '', pos: '' });
-  // NEW: State for picking bin location parts
+  // State for picking bin location parts
   const [pickingBinLocationParts, setPickingBinLocationParts] = useState<LocationParts>({ area: '', row: '', bay: '', level: '', pos: '' });
 
   const item = useMemo(() => inventoryItems.find((i) => i.id === id), [inventoryItems, id]);
@@ -451,7 +451,7 @@ const EditInventoryItem: React.FC = () => {
                   )}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4"> {/* Corrected: Added this wrapper div */}
                 <FormField
                   control={form.control}
                   name="committedStock"
@@ -478,7 +478,7 @@ const EditInventoryItem: React.FC = () => {
                     </FormItem>
                   )}
                 />
-              </div>
+              </div> {/* Corrected: Closed this wrapper div */}
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -507,7 +507,7 @@ const EditInventoryItem: React.FC = () => {
                   )}
                 />
               </div>
-              {/* NEW: Main Storage Location Dropdowns */}
+              {/* Main Storage Location Dropdowns */}
               <div className="space-y-2 col-span-2">
                 <FormLabel>Primary Location</FormLabel>
                 <div className="grid grid-cols-3 gap-2">
@@ -551,7 +551,7 @@ const EditInventoryItem: React.FC = () => {
                   </p>
                 )}
               </div>
-              {/* NEW: Picking Bin Location Dropdowns */}
+              {/* Picking Bin Location Dropdowns */}
               <div className="space-y-2 col-span-2">
                 <FormLabel>Picking Bin Location</FormLabel>
                 <div className="grid grid-cols-3 gap-2">
