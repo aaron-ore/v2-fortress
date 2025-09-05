@@ -31,7 +31,7 @@ const Locations: React.FC = () => {
       return;
     }
     if (locations.some(loc => loc.toLowerCase() === newLocationName.trim().toLowerCase())) {
-      showError("This location already exists.");
+      showError("This location already exists."); // Added toast for existing location
       return;
     }
     addLocation(newLocationName.trim());
@@ -175,6 +175,7 @@ const Locations: React.FC = () => {
               initialBay={initialLabelProps.bay}
               initialLevel={initialLabelProps.level}
               initialPos={initialLabelProps.pos}
+              initialColor={initialLabelProps.color}
               initialLocationString={selectedLocationForLabel || undefined} // NEW: Pass selectedLocationForLabel
               onGenerateAndPrint={handleGenerateAndPrintFromGenerator}
             />
