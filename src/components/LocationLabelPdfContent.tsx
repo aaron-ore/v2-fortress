@@ -38,24 +38,24 @@ const LocationLabelPdfContent: React.FC<LocationLabelPdfContentProps> = ({
       </div>
 
       {/* Content Area: QR Code and Stacked Details */}
-      <div className="flex flex-grow items-center justify-between px-1"> {/* Added horizontal padding */}
+      <div className="flex flex-grow items-center justify-between px-3"> {/* Increased horizontal padding to px-3 */}
         {/* QR Code on Left */}
-        <div className="flex-shrink-0 w-[22mm] h-[22mm] flex items-center justify-center"> {/* Fixed size, prominent */}
+        <div className="flex-shrink-0 w-[20mm] h-[20mm] flex items-center justify-center"> {/* Slightly reduced size to 20mm */}
           <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-full h-full object-contain" />
         </div>
 
         {/* Stacked Location Details on Right */}
-        <div className="flex-shrink-0 text-right flex flex-col justify-center space-y-0.5"> {/* Pushed to right, added vertical spacing */}
-          <p className="text-[0.7rem] text-black"><span className="font-semibold">Area:</span> {area}</p>
-          <p className="text-[0.7rem] text-black"><span className="font-semibold">Row:</span> {row}</p>
-          <p className="text-[0.7rem] text-black"><span className="font-semibold">Bay:</span> {bay}</p>
-          <p className="text-[0.7rem] text-black"><span className="font-semibold">Level:</span> {level}</p>
-          <p className="text-[0.7rem] text-black"><span className="font-semibold">Pos:</span> {pos}</p>
+        <div className="flex-shrink-0 text-right flex flex-col justify-center space-y-0.5">
+          <p className="text-[0.75rem] text-black"><span className="font-semibold">Area:</span> {area}</p> {/* Increased font size */}
+          <p className="text-[0.75rem] text-black"><span className="font-semibold">Row:</span> {row}</p> {/* Increased font size */}
+          <p className="text-[0.75rem] text-black"><span className="font-semibold">Bay:</span> {bay}</p> {/* Increased font size */}
+          <p className="text-[0.75rem] text-black"><span className="font-semibold">Level:</span> {level}</p> {/* Increased font size */}
+          <p className="text-[0.75rem] text-black"><span className="font-semibold">Pos:</span> {pos}</p> {/* Increased font size */}
         </div>
       </div>
 
       {/* Footer */}
-      <div className="flex-shrink-0 text-right text-[0.4rem] text-gray-500 mt-1"> {/* Added top margin */}
+      <div className="flex-shrink-0 text-right text-[0.4rem] text-gray-500 mt-1">
         Printed: {printDateObj && isValid(printDateObj) ? format(printDateObj, "MMM dd, yyyy HH:mm") : "N/A"}
       </div>
     </div>
