@@ -81,13 +81,16 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
 
   const setCompanyProfile = async (profileData: CompanyProfile) => {
     setCompanyProfileState(profileData);
+    console.log("[OnboardingContext] setCompanyProfile called with profileData:", profileData);
 
     if (profile) {
+      console.log("[OnboardingContext] Current profile:", profile);
       try {
         let organizationIdToUse = profile.organizationId;
         let uniqueCodeToUse = profile.organizationCode;
 
         if (!profile.organizationId) {
+          console.log("[OnboardingContext] User has no organization_id. Creating new organization.");
           // Case 1: User has no organization yet, create a new one
           const newUniqueCode = generateUniqueCode();
           const { data: orgData, error: orgError } = await supabase
@@ -100,6 +103,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
 
           organizationIdToUse = orgData.id;
           uniqueCodeToUse = newUniqueCode;
+          console.log("[OnboardingContext] New organization created:", orgData);
 
           const { error: profileUpdateError } = await supabase
             .from('profiles')
@@ -107,9 +111,11 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
             .eq('id', profile.id);
 
           if (profileUpdateError) throw profileUpdateError;
+          console.log("[OnboardingContext] Profile updated with new organization_id and role.");
 
           showSuccess(`Organization "${profileData.name}" created and assigned! You are now an admin. Your unique company code is: ${uniqueCodeToUse}`);
         } else {
+          console.log("[OnboardingContext] User already has organization_id:", profile.organizationId);
           // Case 2: User already has an organization, update it
           const { data: existingOrg, error: fetchOrgError } = await supabase
             .from('organizations')
@@ -120,6 +126,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
           if (fetchOrgError && fetchOrgError.code !== 'PGRST116') { // PGRST116 means no rows found
             throw fetchOrgError;
           }
+          console.log("[OnboardingContext] Existing organization fetched:", existingOrg);
 
           if (!existingOrg?.unique_code) {
             // If unique_code is missing, generate one
@@ -127,6 +134,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
             console.log(`[OnboardingContext] Generated missing unique_code: ${uniqueCodeToUse} for organization ${profile.organizationId}`);
           } else {
             uniqueCodeToUse = existingOrg.unique_code;
+            console.log(`[OnboardingContext] Existing unique_code found: ${uniqueCodeToUse}`);
           }
 
           const { error: updateOrgError } = await supabase
@@ -134,21 +142,27 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
             .update({
               name: profileData.name,
               unique_code: uniqueCodeToUse, // Update even if it was already there, or set if missing
+              default_theme: profile.organizationTheme, // Ensure theme is also passed if it exists in profile
             })
             .eq('id', profile.organizationId);
 
           if (updateOrgError) throw updateOrgError;
+          console.log("[OnboardingContext] Organization updated with name and unique_code:", { name: profileData.name, unique_code: uniqueCodeToUse });
 
           showSuccess(`Company profile for "${profileData.name}" updated successfully!`);
         }
         
         // Always refresh profile to get the latest organization data (including unique_code)
+        console.log("[OnboardingContext] Calling fetchProfile to refresh user data.");
         await fetchProfile();
+        console.log("[OnboardingContext] fetchProfile completed after organization update.");
 
       } catch (error: any) {
-        console.error("Error during organization setup/update:", error);
+        console.error("[OnboardingContext] Error during organization setup/update:", error);
         showError(`Failed to set up/update organization: ${error.message}`);
       }
+    } else {
+      console.warn("[OnboardingContext] Profile is null, cannot save company profile to Supabase.");
     }
   };
 
