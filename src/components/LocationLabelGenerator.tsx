@@ -128,7 +128,7 @@ const LocationLabelGenerator: React.FC<LocationLabelGeneratorProps> = ({
           bay,
           level,
           pos,
-          color: selectedColor,
+          color: selectedColor, // NEW: Pass selectedColor
           qrCodeSvg: qrSvg,
           printDate: format(new Date(), "MMM dd, yyyy HH:mm"),
           locationString,
@@ -243,7 +243,7 @@ const LocationLabelGenerator: React.FC<LocationLabelGeneratorProps> = ({
               bay={bay}
               level={level}
               pos={pos}
-              color={selectedColor}
+              color={selectedColor} // NEW: Pass selectedColor
               qrCodeSvg={qrCodeSvg}
               printDate={format(new Date(), "MMM dd, yyyy HH:mm")}
               locationString={locationString}

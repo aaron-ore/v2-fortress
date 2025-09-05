@@ -19,13 +19,15 @@ export interface UserProfile {
   quickbooksAccessToken?: string; // NEW: Add QuickBooks Access Token
   quickbooksRefreshToken?: string; // NEW: Add QuickBooks Refresh Token
   quickbooksRealmId?: string; // NEW: Add QuickBooks Realm ID
+  shopifyAccessToken?: string; // NEW: Add Shopify Access Token
+  shopifyStoreName?: string; // NEW: Add Shopify Store Name
 }
 
 interface ProfileContextType {
   profile: UserProfile | null;
   allProfiles: UserProfile[];
   isLoadingProfile: boolean;
-  updateProfile: (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "organizationTheme" | "quickbooksAccessToken" | "quickbooksRefreshToken" | "quickbooksRealmId">>) => Promise<void>;
+  updateProfile: (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "organizationTheme" | "quickbooksAccessToken" | "quickbooksRefreshToken" | "quickbooksRealmId" | "shopifyAccessToken" | "shopifyStoreName">>) => Promise<void>;
   updateUserRole: (userId: string, newRole: string, organizationId: string | null) => Promise<void>;
   updateOrganizationTheme: (theme: string) => Promise<void>; // NEW: Add updateOrganizationTheme
   fetchProfile: () => Promise<void>;
@@ -50,6 +52,8 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     
     const organizationCode = organizationData?.unique_code || undefined;
     const organizationTheme = organizationData?.default_theme || 'dark';
+    const shopifyAccessToken = organizationData?.shopify_access_token || undefined; // NEW: Map shopify_access_token
+    const shopifyStoreName = organizationData?.shopify_store_name || undefined; // NEW: Map shopify_store_name
 
     if (p.organization_id && !organizationCode) {
       console.warn(`[ProfileContext] User ${p.id} has organization_id ${p.organization_id} but no unique_code found for organization.`);
@@ -70,6 +74,8 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       quickbooksAccessToken: p.quickbooks_access_token || undefined,
       quickbooksRefreshToken: p.quickbooks_refresh_token || undefined,
       quickbooksRealmId: p.quickbooks_realm_id || undefined,
+      shopifyAccessToken: shopifyAccessToken, // NEW: Assign shopifyAccessToken
+      shopifyStoreName: shopifyStoreName, // NEW: Assign shopifyStoreName
     };
   };
 
@@ -89,7 +95,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     // 1. Fetch profile without the organizations join
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code, default_theme), quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id")
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id")
       .eq("id", session.user.id)
       .single();
 
@@ -101,14 +107,14 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       profileFetchError = profileError;
     } else if (profileData) {
       userProfileData = profileData;
-      console.log("[ProfileContext] Raw data from Supabase (with join attempt):", userProfileData);
+      console.log("[ProfileContext] Raw profile data (without join):", userProfileData);
 
-      // If organizations data is missing from the join, fetch it separately
-      if (userProfileData.organization_id && (!userProfileData.organizations || (Array.isArray(userProfileData.organizations) && userProfileData.organizations.length === 0))) {
-        console.log(`[ProfileContext] Organizations data missing from join for organization_id: ${userProfileData.organization_id}. Fetching separately.`);
+      // 2. If organization_id exists, fetch organization details separately
+      if (userProfileData.organization_id) {
+        console.log(`[ProfileContext] Fetching organization details separately for organization_id: ${userProfileData.organization_id}.`);
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
-          .select('unique_code, default_theme')
+          .select('unique_code, default_theme, shopify_access_token, shopify_store_name') // NEW: Select Shopify fields
           .eq('id', userProfileData.organization_id)
           .single();
 
@@ -116,7 +122,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
           console.error("[ProfileContext] Error fetching organization separately:", orgError);
           // Don't fail the whole profile fetch, just log the error and proceed without org data
         } else if (orgData) {
-          // Create a new object with the merged organization data
+          // 3. Merge organization data into userProfileData
           userProfileData = { ...userProfileData, organizations: orgData };
           console.log("[ProfileContext] Successfully fetched and attached organization data separately:", orgData);
         }
@@ -140,10 +146,9 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       return;
     }
 
-    // NEW: Include organizations join in fetchAllProfiles
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code, default_theme), quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id")
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code, default_theme, shopify_access_token, shopify_store_name), quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id") // NEW: Select Shopify fields in organizations join
       .eq("organization_id", profile.organizationId);
 
     if (error) {
@@ -177,7 +182,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   }, [profile?.role, profile?.organizationId, fetchAllProfiles]);
 
-  const updateProfile = async (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "organizationTheme" | "quickbooksAccessToken" | "quickbooksRefreshToken" | "quickbooksRealmId">>) => {
+  const updateProfile = async (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "organizationTheme" | "quickbooksAccessToken" | "quickbooksRefreshToken" | "quickbooksRealmId" | "shopifyAccessToken" | "shopifyStoreName">>) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       showError("You must be logged in to update your profile.");

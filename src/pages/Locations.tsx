@@ -13,6 +13,16 @@ import LocationLabelGenerator from "@/components/LocationLabelGenerator"; // Imp
 import { parseLocationString, LocationParts } from "@/utils/locationParser"; // NEW: Import parseLocationString and LocationParts
 import LocationInventoryViewDialog from "@/components/LocationInventoryViewDialog"; // NEW: Import LocationInventoryViewDialog
 
+// Predefined colors for labels, matching some of the designs
+const labelColors = [
+  { name: "Green", hex: "#4CAF50" },
+  { name: "Blue", hex: "#2196F3" },
+  { name: "Purple", hex: "#9C27B0" },
+  { name: "Yellow", hex: "#FFEB3B" },
+  { name: "Red", hex: "#F44336" },
+  { name: "Orange", hex: "#FF9800" },
+];
+
 const Locations: React.FC = () => {
   const { locations, addLocation, removeLocation } = useOnboarding();
   const { initiatePrint } = usePrint();
@@ -175,7 +185,7 @@ const Locations: React.FC = () => {
               initialBay={initialLabelProps.bay}
               initialLevel={initialLabelProps.level}
               initialPos={initialLabelProps.pos}
-              initialColor={initialLabelProps.color}
+              initialColor={labelColors[0].hex} // Always pass a default color, as LocationParts doesn't store it
               initialLocationString={selectedLocationForLabel || undefined} // NEW: Pass selectedLocationForLabel
               onGenerateAndPrint={handleGenerateAndPrintFromGenerator}
             />

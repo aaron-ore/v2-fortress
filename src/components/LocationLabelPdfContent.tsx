@@ -9,6 +9,7 @@ interface LocationLabelPdfContentProps {
   bay: string;
   level: string;
   pos: string;
+  color: string; // NEW: Add color prop
   qrCodeSvg: string; // SVG string for the QR code
   printDate: string;
   locationString: string; // The full string encoded in QR code
@@ -21,6 +22,7 @@ const LocationLabelPdfContent = React.forwardRef<HTMLDivElement, LocationLabelPd
   bay,
   level,
   pos,
+  color, // NEW: Destructure color
   qrCodeSvg,
   printDate,
   locationString,
@@ -59,7 +61,7 @@ const LocationLabelPdfContent = React.forwardRef<HTMLDivElement, LocationLabelPd
           </div>
           <div className="flex flex-col items-center leading-none">
             <span className="text-[0.6rem] font-bold uppercase text-gray-700">LEVEL</span>
-            <span className="text-3xl font-extrabold text-black bg-green-500 text-white px-2 rounded-sm">{level}</span>
+            <span className="text-3xl font-extrabold text-white px-2 rounded-sm" style={{ backgroundColor: color }}>{level}</span> {/* NEW: Apply color here */}
           </div>
           <div className="flex flex-col items-center leading-none">
             <span className="text-[0.6rem] font-bold uppercase text-gray-700">POS</span>
