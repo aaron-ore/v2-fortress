@@ -11,7 +11,7 @@ import { showSuccess, showError } from "@/utils/toast";
 import { useOrders, OrderItem, POItem } from "@/context/OrdersContext";
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
 import { useStockMovement } from "@/context/StockMovementContext";
-import { useOnboarding } from "@/context/OnboardingContext"; // Now contains Location[]
+import { useOnboarding } from "@/context/OnboardingContext";
 import { usePrint } from "@/context/PrintContext";
 import { generateQrCodeSvg } from "@/utils/qrCodeGenerator";
 import { format } from "date-fns";
@@ -249,7 +249,7 @@ const ReceiveInventoryTool: React.FC<ReceiveInventoryToolProps> = ({ onScanReque
 
     if (updatesSuccessful) {
       // Update PO status (e.g., to 'Shipped' or 'Partially Received')
-      const updatedPO = { ...selectedPO, status: "Shipped", notes: selectedPO.notes }; // Assuming 'Shipped' means fully received for POs
+      const updatedPO = { ...selectedPO, status: "Shipped" as OrderItem['status'], notes: selectedPO.notes }; // Explicitly cast status
       await updateOrder(updatedPO);
       showSuccess(`Shipment for PO ${selectedPO.id} received successfully! Inventory updated.`);
       refreshInventory(); // Ensure inventory context is refreshed

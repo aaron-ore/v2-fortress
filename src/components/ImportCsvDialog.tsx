@@ -1,5 +1,38 @@
-csvQuantity: number;
+"use client";
+
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Download, Upload } from "lucide-react";
+import * as XLSX from 'xlsx';
+import { useInventory } from "@/context/InventoryContext";
+import { useCategories } from "@/context/CategoryContext";
+import { useOnboarding, Location } from "@/context/OnboardingContext";
+import { useStockMovement } from "@/context/StockMovementContext";
+import { showError, showSuccess } from "@/utils/toast";
+import { generateInventoryCsvTemplate } from "@/utils/csvGenerator";
+import DuplicateItemsWarningDialog from "@/components/DuplicateItemsWarningDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { parseLocationString } from "@/utils/locationParser";
+
+interface CsvDuplicateItem {
+  sku: string;
+  csvQuantity: number;
   itemName: string;
+}
+
+interface ImportCsvDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
@@ -8,8 +41,8 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
 }) => {
   const { addInventoryItem, updateInventoryItem, inventoryItems } = useInventory();
   const { categories, addCategory } = useCategories();
-  const { locations, addLocation } = useOnboarding(); // Now contains Location[]
-  const { addStockMovement } = useStockMovement(); // Use addStockMovement
+  const { locations, addLocation } = useOnboarding();
+  const { addStockMovement } = useStockMovement();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);

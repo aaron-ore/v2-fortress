@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom"; // NEW: Import Link
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -24,15 +24,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch"; // NEW: Import Switch
 import { useInventory } from "@/context/InventoryContext";
 import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { showError, showSuccess } from "@/utils/toast";
 import { generateQrCodeSvg } from "@/utils/qrCodeGenerator";
-import { useOnboarding } from "@/context/OnboardingContext"; // NEW: Import useOnboarding
-import { parseLocationString, buildLocationString, getUniqueLocationParts, LocationParts } from "@/utils/locationParser"; // NEW
+import { useOnboarding } from "@/context/OnboardingContext";
+import { parseLocationString, buildLocationString, getUniqueLocationParts, LocationParts } from "@/utils/locationParser";
 
 const formSchema = z.object({
   name: z.string().min(1, "Item name is required"),
@@ -414,7 +414,7 @@ const EditInventoryItem: React.FC = () => {
                   name="overstockQuantity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Overstock Quantity</Label>
+                      <FormLabel>Overstock Quantity</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value || '0'))} />
                       </FormControl>

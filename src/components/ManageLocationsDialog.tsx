@@ -11,9 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { useOnboarding } from "@/context/OnboardingContext";
+import { useOnboarding, Location } from "@/context/OnboardingContext";
 import { showSuccess, showError } from "@/utils/toast";
 import { PlusCircle, Trash2, MapPin } from "lucide-react";
+import { parseLocationString, buildLocationString } from "@/utils/locationParser"; // NEW: Import location parsers
 
 interface ManageLocationsDialogProps {
   isOpen: boolean;
@@ -29,31 +30,68 @@ const ManageLocationsDialog: React.FC<ManageLocationsDialogProps> = ({
 
   // State for delete confirmation dialog
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
-  const [locationToDelete, setLocationToDelete] = useState<string | null>(null);
+  const [locationToDelete, setLocationToDelete] = useState<Location | null>(null);
 
-  const handleAddLocation = () => {
+  const handleAddLocation = async () => { // NEW: Made async
     if (newLocationName.trim() === "") {
       showError("Location name cannot be empty.");
       return;
     }
-    if (locations.some(loc => loc.toLowerCase() === newLocationName.trim().toLowerCase())) {
+    // Check if display name or full location string already exists
+    const existingLocation = locations.find(loc => 
+      loc.displayName?.toLowerCase() === newLocationName.trim().toLowerCase() ||
+      loc.fullLocationString.toLowerCase() === newLocationName.trim().toLowerCase()
+    );
+    if (existingLocation) {
       showError("This location already exists.");
       return;
     }
-    addLocation(newLocationName.trim());
+
+    // For simplicity in this dialog, we'll try to parse it or use it as a display name
+    const parsed = parseLocationString(newLocationName.trim());
+    let fullLocationString = newLocationName.trim();
+    let displayName = newLocationName.trim();
+
+    // If it looks like a structured string, use it as such
+    if (parsed.area && parsed.row && parsed.bay && parsed.level && parsed.pos) {
+      fullLocationString = buildLocationString(parsed);
+      displayName = newLocationName.trim(); // Keep display name as entered
+    } else {
+      // If not a structured string, assume it's just a display name, generate a simple structured string
+      // This is a simplified approach for onboarding. In a full system, you'd guide the user to create structured locations.
+      const baseName = newLocationName.trim().replace(/[^a-zA-Z0-9]/g, '');
+      fullLocationString = `${baseName.substring(0,2).toUpperCase()}-01-01-1-A`;
+      displayName = newLocationName.trim();
+    }
+
+    // Default color for new locations
+    const defaultColor = "#4CAF50"; // Green
+
+    const newLocation: Omit<Location, "id" | "createdAt" | "userId" | "organizationId"> = {
+      fullLocationString,
+      displayName,
+      area: parsed.area || "N/A", // Fallback if not parsed
+      row: parsed.row || "N/A",
+      bay: parsed.bay || "N/A",
+      level: parsed.level || "N/A",
+      pos: parsed.pos || "N/A",
+      color: defaultColor,
+    };
+
+    await addLocation(newLocation); // NEW: Call addLocation with structured object
     showSuccess(`Location "${newLocationName.trim()}" added.`);
     setNewLocationName("");
   };
 
-  const handleRemoveLocationClick = (location: string) => {
+  const handleRemoveLocationClick = (location: Location) => { // NEW: Pass full Location object
     setLocationToDelete(location);
     setIsConfirmDeleteDialogOpen(true);
   };
 
-  const confirmRemoveLocation = () => {
+  const confirmRemoveLocation = async () => { // NEW: Async function
     if (locationToDelete) {
-      removeLocation(locationToDelete);
-      showSuccess(`Location "${locationToDelete}" removed.`);
+      await removeLocation(locationToDelete.id); // NEW: Pass ID to removeLocation
+      showSuccess(`Location "${locationToDelete.displayName || locationToDelete.fullLocationString}" removed.`);
     }
     setIsConfirmDeleteDialogOpen(false);
     setLocationToDelete(null);
@@ -95,13 +133,13 @@ const ManageLocationsDialog: React.FC<ManageLocationsDialogProps> = ({
             <div className="space-y-2">
               <Label>Existing Locations</Label>
               <ul className="border border-border rounded-md p-3 bg-muted/20 max-h-40 overflow-y-auto">
-                {locations.map((loc, index) => (
-                  <li key={index} className="flex items-center justify-between py-1 text-foreground">
-                    <span>{loc}</span>
+                {locations.map((loc) => ( // Iterate over Location objects
+                  <li key={loc.id} className="flex items-center justify-between py-1 text-foreground">
+                    <span>{loc.displayName || loc.fullLocationString}</span> {/* Display name or full string */}
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleRemoveLocationClick(loc)}
+                      onClick={() => handleRemoveLocationClick(loc)} // Pass full Location object
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -123,7 +161,7 @@ const ManageLocationsDialog: React.FC<ManageLocationsDialogProps> = ({
           onClose={() => setIsConfirmDeleteDialogOpen(false)}
           onConfirm={confirmRemoveLocation}
           title="Confirm Location Deletion"
-          description={`Are you sure you want to delete the location "${locationToDelete}"? This cannot be undone.`}
+          description={`Are you sure you want to delete the location "${locationToDelete.displayName || locationToDelete.fullLocationString}"? This cannot be undone.`}
           confirmText="Delete"
           cancelText="Cancel"
         />

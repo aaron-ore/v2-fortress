@@ -155,9 +155,9 @@ const TransferStockDialog: React.FC<TransferStockDialogProps> = ({ isOpen, onClo
                       <SelectValue placeholder="Select destination location" />
                     </SelectTrigger>
                     <SelectContent>
-                      {locations.filter(loc => loc !== fromLocation).map(loc => (
-                        <SelectItem key={loc} value={loc}>
-                          {loc}
+                      {locations.filter(loc => loc.fullLocationString !== fromLocation).map(loc => (
+                        <SelectItem key={loc.id} value={loc.fullLocationString}>
+                          {loc.displayName || loc.fullLocationString}
                         </SelectItem>
                       ))}
                     </SelectContent>

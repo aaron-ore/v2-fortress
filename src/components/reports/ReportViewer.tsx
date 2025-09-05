@@ -1,4 +1,23 @@
-tabilityReport";
+"use client";
+
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { DateRange } from "react-day-picker";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Printer, Brain } from "lucide-react";
+import { usePrint } from "@/context/PrintContext";
+import { useOnboarding } from "@/context/OnboardingContext";
+import { useProfile } from "@/context/ProfileContext";
+import { supabase } from "@/lib/supabaseClient";
+import { showError, showSuccess } from "@/utils/toast";
+
+import InventoryValuationReport from "./InventoryValuationReport";
+import LowStockReport from "./LowStockReport";
+import InventoryMovementReport from "./InventoryMovementReport";
+import SalesByCustomerReport from "./SalesByCustomerReport";
+import SalesByProductReport from "./SalesByProductReport";
+import PurchaseOrderStatusReport from "./PurchaseOrderStatusReport";
+import ProfitabilityReport from "./ProfitabilityReport";
 import DiscrepancyReport from "./DiscrepancyReport";
 import DashboardSummaryReport from "./DashboardSummaryReport"; // For the overview report
 

@@ -28,7 +28,7 @@ const PickingWaveManagementTool: React.FC = () => {
   const { initiatePrint } = usePrint();
 
   const [selectedDeliveryRoute, setSelectedDeliveryRoute] = useState("all");
-  const [selectedOrderIds, setSelectedOrderIds] = new Set<string>();
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set()); // Corrected useState initialization
   const [generatedPickList, setGeneratedPickList] = useState<PickListItem[]>([]);
   const [currentWaveId, setCurrentWaveId] = useState<string | null>(null);
 
@@ -53,7 +53,7 @@ const PickingWaveManagementTool: React.FC = () => {
 
   useEffect(() => {
     // Clear selected orders when route filter changes
-    setSelectedOrderIds(new Set());
+    setSelectedOrderIds(new Set<string>()); // Corrected usage
     setGeneratedPickList([]);
     setCurrentWaveId(null);
   }, [selectedDeliveryRoute]);
@@ -71,7 +71,7 @@ const PickingWaveManagementTool: React.FC = () => {
   };
 
   const handleCreatePickingWave = () => {
-    if (selectedOrderIds.size === 0) {
+    if (selectedOrderIds.size === 0) { // Corrected usage
       showError("Please select at least one order to create a picking wave.");
       return;
     }
@@ -117,7 +117,7 @@ const PickingWaveManagementTool: React.FC = () => {
       updateOrder({ ...order, status: "Processing" });
     });
 
-    showSuccess(`Picking Wave ${newWaveId} created for ${selectedOrderIds.size} orders.`);
+    showSuccess(`Picking Wave ${newWaveId} created for ${selectedOrderIds.size} orders.`); // Corrected usage
   };
 
   const handlePrintPickList = () => {
@@ -190,7 +190,7 @@ const PickingWaveManagementTool: React.FC = () => {
                       <Label htmlFor={`order-${order.id}`} className="flex items-center gap-2 cursor-pointer">
                         <Checkbox
                           id={`order-${order.id}`}
-                          checked={selectedOrderIds.has(order.id)}
+                          checked={selectedOrderIds.has(order.id)} // Corrected usage
                           onCheckedChange={(checked: boolean) => handleOrderSelection(order.id, checked)}
                         />
                         <span>{order.id} - {order.customerSupplier} (Route: {order.deliveryRoute || 'N/A'})</span>
@@ -202,8 +202,8 @@ const PickingWaveManagementTool: React.FC = () => {
               )}
             </ScrollArea>
           </div>
-          <Button onClick={handleCreatePickingWave} className="w-full" disabled={selectedOrderIds.size === 0}>
-            <ListOrdered className="h-4 w-4 mr-2" /> Create Picking Wave ({selectedOrderIds.size} Orders)
+          <Button onClick={handleCreatePickingWave} className="w-full" disabled={selectedOrderIds.size === 0}> {/* Corrected usage */}
+            <ListOrdered className="h-4 w-4 mr-2" /> Create Picking Wave ({selectedOrderIds.size} Orders) {/* Corrected usage */}
           </Button>
         </CardContent>
       </Card>
@@ -235,7 +235,7 @@ const PickingWaveManagementTool: React.FC = () => {
             <Button onClick={handlePrintPickList} className="w-full">
               <Printer className="h-4 w-4 mr-2" /> Print Pick List
             </Button>
-            <Button variant="secondary" className="w-full" onClick={() => { setSelectedOrderIds(new Set()); setGeneratedPickList([]); setCurrentWaveId(null); showSuccess("Picking wave cleared."); }}>
+            <Button variant="secondary" className="w-full" onClick={() => { setSelectedOrderIds(new Set<string>()); setGeneratedPickList([]); setCurrentWaveId(null); showSuccess("Picking wave cleared."); }}> {/* Corrected usage */}
               <CheckCircle className="h-4 w-4 mr-2" /> Complete Wave (Clear)
             </Button>
           </CardContent>
