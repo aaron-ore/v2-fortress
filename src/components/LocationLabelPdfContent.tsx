@@ -33,14 +33,14 @@ const LocationLabelPdfContent: React.FC<LocationLabelPdfContentProps> = ({
       <div className="h-[5mm] w-full flex-shrink-0" style={{ backgroundColor: color, zIndex: 10 }}></div>
 
       {/* Main Location String (most prominent) */}
-      <div className="flex-shrink-0 text-center mt-1 mb-1">
+      <div className="flex-shrink-0 text-center pt-1"> {/* Reduced top padding, removed bottom margin */}
         <p className="text-lg font-extrabold text-black leading-tight">{locationString}</p>
       </div>
 
       {/* Content Area: QR Code and Stacked Details */}
-      <div className="flex flex-grow items-center justify-between px-3"> {/* Increased horizontal padding to px-3 */}
+      <div className="flex flex-grow items-center justify-between px-4 py-2 gap-x-4"> {/* Increased horizontal padding, added vertical padding, added gap-x */}
         {/* QR Code on Left */}
-        <div className="flex-shrink-0 w-[20mm] h-[20mm] flex items-center justify-center"> {/* Slightly reduced size to 20mm */}
+        <div className="flex-shrink-0 w-[18mm] h-[18mm] flex items-center justify-center"> {/* Reduced size to 18mm */}
           <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-full h-full object-contain" />
         </div>
 
@@ -55,7 +55,7 @@ const LocationLabelPdfContent: React.FC<LocationLabelPdfContentProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="flex-shrink-0 text-right text-[0.4rem] text-gray-500 mt-1">
+      <div className="flex-shrink-0 text-right text-[0.4rem] text-gray-500 pb-1"> {/* Removed top margin, added bottom padding */}
         Printed: {printDateObj && isValid(printDateObj) ? format(printDateObj, "MMM dd, yyyy HH:mm") : "N/A"}
       </div>
     </div>
