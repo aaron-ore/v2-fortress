@@ -143,16 +143,19 @@ const Reports: React.FC = () => {
       </p>
 
       <Card className="mb-4 bg-card border-border shadow-sm">
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2 flex flex-row items-center justify-between"> {/* Added flex-row and justify-between */}
           <CardTitle className="text-xl font-semibold">Report Configuration</CardTitle>
+          <div className="flex items-center gap-2"> {/* Wrapped date picker and button in a div */}
+            <DateRangePicker dateRange={dateRange} onSelect={setDateRange} className="w-[240px]" /> {/* Added fixed width */}
+            {dateRange?.from && isValid(dateRange.from) && ( // Only show clear button if a valid 'from' date exists
+              <Button variant="outline" onClick={handleClearDateFilter} size="icon">
+                <FilterX className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-4">
-          <DateRangePicker dateRange={dateRange} onSelect={setDateRange} />
-          {dateRange?.from && isValid(dateRange.from) && ( // Only show clear button if a valid 'from' date exists
-            <Button variant="outline" onClick={handleClearDateFilter} size="icon">
-              <FilterX className="h-4 w-4" />
-            </Button>
-          )}
+          {/* Content moved to CardHeader */}
         </CardContent>
       </Card>
 
