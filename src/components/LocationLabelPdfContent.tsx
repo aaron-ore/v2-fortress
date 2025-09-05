@@ -28,14 +28,14 @@ const LocationLabelPdfContent: React.FC<LocationLabelPdfContentProps> = ({
   const printDateObj = parseAndValidateDate(printDate);
 
   return (
-    <div className="bg-white text-gray-900 font-sans text-xs p-[1mm] w-[101.6mm] h-[50.8mm] border border-black flex flex-col"> {/* 4x2 inches (rectangular) */}
+    <div className="bg-white text-gray-900 font-sans text-xs p-[1mm] w-[101.6mm] h-[50.8mm] border border-black flex flex-col overflow-hidden"> {/* 4x2 inches (rectangular) */}
       {/* Top Color Bar */}
       <div className="h-[5mm] w-full flex-shrink-0" style={{ backgroundColor: color, zIndex: 10 }}></div>
 
       {/* Main Content Area: QR Code on Left, Text Details on Right */}
       <div className="flex flex-grow items-center px-[2mm] py-[2mm] gap-x-[4mm]"> {/* Increased gap-x */}
         {/* QR Code on Left */}
-        <div className="flex-shrink-0 w-[20mm] h-[20mm] flex items-center justify-center border border-gray-200 p-[1mm]"> {/* Slightly larger QR container */}
+        <div className="flex-shrink-0 w-[18mm] h-[18mm] flex items-start justify-center"> {/* Adjusted size, removed border and padding, aligned to start */}
           <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-full h-full object-contain" />
         </div>
 
