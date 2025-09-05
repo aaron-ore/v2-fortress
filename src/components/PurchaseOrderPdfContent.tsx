@@ -71,7 +71,7 @@ const PurchaseOrderPdfContent: React.FC<PurchaseOrderPdfContentProps> = ({
           <p className="text-sm font-semibold">DATE: {poDateObj && isValid(poDateObj) ? format(poDateObj, "MMM dd, yyyy") : "N/A"}</p>
           <p className="text-sm font-semibold">PO: {poNumber}</p>
           {poQrCodeSvg && ( // NEW: Display QR code here
-            <div className="mt-2 flex justify-end">
+            <div className="mt-2 flex justify-end p-2 bg-white">
               <div dangerouslySetInnerHTML={{ __html: poQrCodeSvg }} className="w-[20mm] h-[20mm] object-contain" />
             </div>
           )}

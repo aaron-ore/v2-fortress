@@ -271,7 +271,7 @@ const EditInventoryItem: React.FC = () => {
                 <FormItem>
                   <FormLabel>QR Code</FormLabel>
                   <FormControl>
-                    <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="max-w-[100px] h-auto border p-2 rounded-md bg-white" />
+                    <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="max-w-[100px] h-auto border p-4 rounded-md bg-white" />
                   </FormControl>
                   <FormDescription>This QR code is generated from the SKU.</FormDescription>
                 </FormItem>

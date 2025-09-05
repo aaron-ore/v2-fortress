@@ -31,7 +31,7 @@ const LocationLabelPdfContent = React.forwardRef<HTMLDivElement, LocationLabelPd
   return (
     <div ref={ref} className={`bg-white text-gray-900 font-sans w-[101.6mm] h-[50.8mm] border border-black relative overflow-hidden ${className || ''}`}>
       {/* QR Code at the top left */}
-      <div className="absolute top-[2mm] left-[2mm] w-[45mm] h-[45mm] flex items-center justify-center z-0">
+      <div className="absolute top-[2mm] left-[2mm] w-[45mm] h-[45mm] flex items-center justify-center z-0 p-1 bg-white">
         <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-full h-full object-contain" />
       </div>
 

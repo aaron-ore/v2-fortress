@@ -71,7 +71,7 @@ const InvoicePdfContent: React.FC<InvoicePdfContentProps> = ({
           <p className="text-sm font-semibold">DATE: {invoiceDateObj && isValid(invoiceDateObj) ? format(invoiceDateObj, "MMM dd, yyyy") : "N/A"}</p>
           <p className="text-sm font-semibold">INVOICE #: {invoiceNumber}</p>
           {invoiceQrCodeSvg && ( // NEW: Display QR code here
-            <div className="mt-2 flex justify-end">
+            <div className="mt-2 flex justify-end p-2 bg-white">
               <div dangerouslySetInnerHTML={{ __html: invoiceQrCodeSvg }} className="w-[20mm] h-[20mm] object-contain" />
             </div>
           )}

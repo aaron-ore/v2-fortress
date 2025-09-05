@@ -97,7 +97,7 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
           </Badge>
         </div>
         {qrCodeSvg && ( // Display QR code if available
-          <div className="mt-2 flex justify-center flex-shrink-0">
+          <div className="mt-2 flex justify-center flex-shrink-0 p-2 bg-white rounded-md">
             <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-12 h-12 object-contain" />
           </div>
         )}

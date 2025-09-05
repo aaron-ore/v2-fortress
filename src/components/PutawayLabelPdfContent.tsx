@@ -31,7 +31,7 @@ const PutawayLabelPdfContent: React.FC<PutawayLabelPdfContentProps> = ({
   return (
     <div className="bg-white text-gray-900 font-sans text-xs p-2 w-[50mm] h-[50mm] border border-black flex flex-col overflow-hidden">
       {/* QR Code at the top */}
-      <div className="flex justify-center mb-1 flex-shrink-0">
+      <div className="flex justify-center mb-1 flex-shrink-0 p-1 bg-white">
         <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-[25mm] h-[25mm] object-contain" />
       </div>
 

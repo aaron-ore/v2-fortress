@@ -179,7 +179,7 @@ const ItemLookupTool: React.FC<ItemLookupToolProps> = ({ onScanRequest, scannedD
                 </p>
               )}
               {qrCodeSvg && ( // Display QR code if available
-                <div className="mt-2 p-2 border border-border rounded-md bg-muted/20 flex justify-center">
+                <div className="mt-2 p-4 border border-border rounded-md bg-white flex justify-center">
                   <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} />
                 </div>
               )}

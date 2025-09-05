@@ -570,7 +570,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
               disabled
             />
             {qrCodeSvgPreview && (
-              <div className="mt-2 p-2 border border-border rounded-md bg-muted/20 flex justify-center">
+              <div className="mt-2 p-4 border border-border rounded-md bg-white flex justify-center">
                 <div dangerouslySetInnerHTML={{ __html: qrCodeSvgPreview }} />
               </div>
             )}

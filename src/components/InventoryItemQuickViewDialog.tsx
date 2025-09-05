@@ -352,7 +352,7 @@ const InventoryItemQuickViewDialog: React.FC<InventoryItemQuickViewDialogProps> 
               <span className="font-semibold text-base text-foreground ml-4">Overstock: {currentItem.overstockQuantity} units</span>
             </div>
             {qrCodeSvg && ( // Display QR code if available
-              <div className="col-span-2 mt-2 p-2 border border-border rounded-md bg-muted/20 flex justify-center">
+              <div className="col-span-2 mt-2 p-4 border border-border rounded-md bg-white flex justify-center">
                 <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} />
               </div>
             )}
