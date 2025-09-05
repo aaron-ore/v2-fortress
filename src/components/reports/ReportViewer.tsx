@@ -1,27 +1,4 @@
-"use client";
-
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { DateRangePicker } from "@/components/DateRangePicker";
-import { DateRange } from "react-day-picker";
-import { Printer, FileText, Loader2, Brain } from "lucide-react";
-import { usePrint } from "@/context/PrintContext";
-import { useOnboarding } from "@/context/OnboardingContext";
-import { showError, showSuccess } from "@/utils/toast";
-import { supabase } from "@/lib/supabaseClient";
-import { useProfile } from "@/context/ProfileContext";
-import { isValid } from "date-fns"; // Import isValid
-import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
-
-// Import all report components (will be created in subsequent steps)
-import InventoryValuationReport from "./InventoryValuationReport";
-import LowStockReport from "./LowStockReport";
-import InventoryMovementReport from "./InventoryMovementReport";
-import SalesByCustomerReport from "./SalesByCustomerReport";
-import SalesByProductReport from "./SalesByProductReport";
-import PurchaseOrderStatusReport from "./PurchaseOrderStatusReport";
-import ProfitabilityReport from "./ProfitabilityReport";
+tabilityReport";
 import DiscrepancyReport from "./DiscrepancyReport";
 import DashboardSummaryReport from "./DashboardSummaryReport"; // For the overview report
 
