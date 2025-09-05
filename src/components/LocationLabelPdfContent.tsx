@@ -28,9 +28,9 @@ const LocationLabelPdfContent: React.FC<LocationLabelPdfContentProps> = ({
   const printDateObj = parseAndValidateDate(printDate);
 
   return (
-    <div className="bg-white text-gray-900 font-sans text-xs p-2 w-[101.6mm] h-[152.4mm] border border-black flex flex-col overflow-hidden"> {/* Changed to 4x6 inches (portrait) */}
+    <div className="bg-white text-gray-900 font-sans text-xs p-2 w-[152.4mm] h-[101.6mm] border border-black flex flex-col overflow-hidden"> {/* Changed to 6x4 inches (landscape) */}
       {/* Top Color Bar */}
-      <div className="h-[8mm] w-full flex-shrink-0" style={{ backgroundColor: color }}></div>
+      <div className="h-[8mm] w-full flex-shrink-0" style={{ backgroundColor: color, zIndex: 10 }}></div> {/* Added zIndex to ensure visibility */}
 
       {/* Content Area */}
       <div className="flex flex-grow items-center justify-between p-1">
