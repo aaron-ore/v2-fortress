@@ -45,8 +45,10 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     const validatedCreatedAt = parseAndValidateDate(p.created_at);
     const createdAtString = validatedCreatedAt ? validatedCreatedAt.toISOString() : new Date().toISOString(); // Fallback to current date if invalid
 
+    console.log("[ProfileContext] mapSupabaseProfileToUserProfile - raw p.organizations:", p.organizations); // NEW LOG
     // Safely access organization data, whether it's an array or a direct object
     const organizationData = Array.isArray(p.organizations) ? p.organizations[0] : p.organizations;
+    console.log("[ProfileContext] mapSupabaseProfileToUserProfile - derived organizationData:", organizationData); // NEW LOG
     
     const organizationCode = organizationData?.unique_code || undefined;
     const organizationTheme = organizationData?.default_theme || 'dark';
@@ -125,7 +127,6 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (profileFetchError) {
       setProfile(null);
     } else if (userProfileData) {
-      console.log("[ProfileContext] userProfileData BEFORE mapping:", userProfileData); // NEW LOG
       const mappedProfile = mapSupabaseProfileToUserProfile(userProfileData, session.user.email);
       setProfile(mappedProfile);
       console.log("[ProfileContext] Mapped profile object:", mappedProfile);
