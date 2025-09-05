@@ -45,6 +45,11 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     const validatedCreatedAt = parseAndValidateDate(p.created_at);
     const createdAtString = validatedCreatedAt ? validatedCreatedAt.toISOString() : new Date().toISOString(); // Fallback to current date if invalid
 
+    const organizationCode = p.organizations?.[0]?.unique_code || undefined;
+    if (p.organization_id && !organizationCode) {
+      console.warn(`[ProfileContext] User ${p.id} has organization_id ${p.organization_id} but no unique_code found for organization.`);
+    }
+
     return {
       id: p.id,
       fullName: p.full_name || "", // Ensure string fallback
@@ -54,7 +59,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       avatarUrl: p.avatar_url || undefined,
       role: p.role || "viewer", // Default role
       organizationId: p.organization_id,
-      organizationCode: p.organizations?.[0]?.unique_code || undefined, // Access as array if it's a join
+      organizationCode: organizationCode, // Access as array if it's a join
       organizationTheme: p.organizations?.[0]?.default_theme || 'dark', // NEW: Get default_theme from organizations
       createdAt: createdAtString,
       quickbooksAccessToken: p.quickbooks_access_token || undefined,
@@ -90,12 +95,15 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       profileFetchError = error;
     } else if (data) {
       userProfileData = data;
+      console.log("[ProfileContext] Raw data from Supabase:", userProfileData); // ADDED LOG
     }
 
     if (profileFetchError) {
       setProfile(null);
     } else if (userProfileData) {
-      setProfile(mapSupabaseProfileToUserProfile(userProfileData, session.user.email));
+      const mappedProfile = mapSupabaseProfileToUserProfile(userProfileData, session.user.email);
+      setProfile(mappedProfile);
+      console.log("[ProfileContext] Mapped profile object:", mappedProfile); // ADDED LOG
     }
     setIsLoadingProfile(false);
   }, []);
