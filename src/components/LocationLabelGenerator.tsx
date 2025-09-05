@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Printer, QrCode, Palette } from "lucide-react";
+import { Printer, QrCode, Palette, Download } from "lucide-react"; // NEW: Import Download icon
 import { showError, showSuccess } from "@/utils/toast";
 import { usePrint, PrintContentData } from "@/context/PrintContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { generateQrCodeSvg } from "@/utils/qrCodeGenerator";
 import { format } from "date-fns";
 import LocationLabelPdfContent from "@/components/LocationLabelPdfContent";
+import html2canvas from 'html2canvas'; // NEW: Import html2canvas
 
 // Predefined colors for labels, matching some of the designs
 const labelColors = [
@@ -53,6 +54,8 @@ const LocationLabelGenerator: React.FC<LocationLabelGeneratorProps> = ({
   const [selectedColor, setSelectedColor] = useState(initialColor);
   const [quantity, setQuantity] = useState("1");
   const [qrCodeSvg, setQrCodeSvg] = useState<string | null>(null);
+
+  const labelPreviewRef = useRef<HTMLDivElement>(null); // NEW: Ref for the label preview
 
   // Update internal state when initial props change
   useEffect(() => {
@@ -145,6 +148,34 @@ const LocationLabelGenerator: React.FC<LocationLabelGeneratorProps> = ({
     }
   };
 
+  // NEW: Handle Download as PNG
+  const handleDownloadPng = async () => {
+    if (!labelPreviewRef.current) {
+      showError("No label preview available to download.");
+      return;
+    }
+
+    try {
+      const canvas = await html2canvas(labelPreviewRef.current, {
+        scale: 3, // Increase scale for higher resolution PNG
+        useCORS: true, // Enable CORS if images are from external sources
+        backgroundColor: '#ffffff', // Ensure white background
+      });
+
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `location-label-${locationString}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showSuccess("Label downloaded as PNG!");
+    } catch (error: any) {
+      console.error("Error downloading label as PNG:", error);
+      showError(`Failed to download label as PNG: ${error.message}`);
+    }
+  };
+
   return (
     <div className="space-y-4 flex-grow flex flex-col">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -206,6 +237,7 @@ const LocationLabelGenerator: React.FC<LocationLabelGeneratorProps> = ({
         {qrCodeSvg ? (
           <div className="w-[101.6mm] h-[50.8mm] flex items-center justify-center overflow-hidden"> {/* Set preview container to 4x2 inches rectangular */}
             <LocationLabelPdfContent
+              ref={labelPreviewRef} // NEW: Pass ref to the component
               area={area}
               row={row}
               bay={bay}
@@ -221,9 +253,14 @@ const LocationLabelGenerator: React.FC<LocationLabelGeneratorProps> = ({
           <p className="text-muted-foreground text-sm">Enter details to see a preview.</p>
         )}
       </div>
-      <Button onClick={handleGenerateAndPrint} className="w-full mt-auto" aria-label="Generate and print labels">
-        <Printer className="h-4 w-4 mr-2" /> Generate & Print Labels
-      </Button>
+      <div className="flex gap-2 w-full mt-auto"> {/* NEW: Group buttons */}
+        <Button onClick={handleGenerateAndPrint} className="flex-grow" aria-label="Generate and print labels">
+          <Printer className="h-4 w-4 mr-2" /> Generate & Print Labels
+        </Button>
+        <Button onClick={handleDownloadPng} className="flex-grow" variant="outline" aria-label="Download label as PNG"> {/* NEW: Download PNG button */}
+          <Download className="h-4 w-4 mr-2" /> Download PNG
+        </Button>
+      </div>
     </div>
   );
 };

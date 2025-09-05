@@ -12,9 +12,10 @@ interface LocationLabelPdfContentProps {
   qrCodeSvg: string; // SVG string for the QR code
   printDate: string;
   locationString: string; // The full string encoded in QR code
+  className?: string; // NEW: Add className prop
 }
 
-const LocationLabelPdfContent: React.FC<LocationLabelPdfContentProps> = ({
+const LocationLabelPdfContent = React.forwardRef<HTMLDivElement, LocationLabelPdfContentProps>(({
   area,
   row,
   bay,
@@ -24,11 +25,12 @@ const LocationLabelPdfContent: React.FC<LocationLabelPdfContentProps> = ({
   qrCodeSvg,
   printDate,
   locationString,
-}) => {
+  className, // NEW: Destructure className
+}, ref) => {
   const printDateObj = parseAndValidateDate(printDate);
 
   return (
-    <div className="bg-white text-gray-900 font-sans text-xs p-[1mm] w-[101.6mm] h-[50.8mm] border border-black flex flex-col overflow-hidden"> {/* 4x2 inches (rectangular) */}
+    <div ref={ref} className={`bg-white text-gray-900 font-sans text-xs p-[1mm] w-[101.6mm] h-[50.8mm] border border-black flex flex-col overflow-hidden ${className || ''}`}> {/* 4x2 inches (rectangular) */}
       {/* Top Color Bar */}
       <div className="h-[5mm] w-full flex-shrink-0" style={{ backgroundColor: color, zIndex: 10 }}></div>
 
@@ -58,6 +60,8 @@ const LocationLabelPdfContent: React.FC<LocationLabelPdfContentProps> = ({
       </div>
     </div>
   );
-};
+});
+
+LocationLabelPdfContent.displayName = "LocationLabelPdfContent";
 
 export default LocationLabelPdfContent;

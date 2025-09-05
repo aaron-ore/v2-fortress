@@ -325,10 +325,10 @@
     overflow: visible !important; /* Allow content to overflow if needed for pagination */
   }
 
-  /* Set physical page margins for A4 size */
+  /* Set physical page margins for the specific label size */
   @page {
-    size: A4; /* 210mm x 297mm */
-    margin: 0 !important; /* Force browser to use 0 margins, we'll apply them to content */
+    size: 101.6mm 50.8mm; /* 4x2 inches */
+    margin: 0 !important; /* Force browser to use 0 margins */
   }
 
   /* Hide the main application layout */
@@ -355,19 +355,20 @@
     overflow: visible !important;
   }
 
-  /* The actual content container for the PDF (e.g., PurchaseOrderPdfContent) */
-  .print-only-content > div { /* Target the direct child of print-only-content */
+  /* Target the specific location label content for printing */
+  .print-location-label {
     display: block !important;
-    width: 210mm !important; /* A4 width */
-    min-height: 297mm !important; /* A4 height */
-    margin: 0 auto !important; /* Center on page */
+    width: 101.6mm !important; /* Exact label width */
+    height: 50.8mm !important; /* Exact label height */
+    margin: 0 !important; /* No margins around the label */
+    padding: 0 !important; /* No internal padding */
     box-shadow: none !important;
     border: none !important;
     background-color: white !important;
     color: black !important;
     transform: none !important; /* Remove any scaling */
-    /* The padding is already applied by the component itself (p-[20mm]) */
     box-sizing: border-box !important;
+    page-break-after: always; /* Ensure each label prints on a new 'page' */
   }
 
   /* Ensure text color is black for printing */
