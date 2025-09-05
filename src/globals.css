@@ -29,7 +29,7 @@
     --destructive: 0 80% 60%; /* Red for negative changes */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 5% 20%; /* Subtle light grey border - Made darker for dark theme */
+    --border: 220 5% 35%; /* Adjusted for better contrast in dark themes */
     --input: 220 10% 12%; /* Similar to card background */
     --ring: 250 80% 60%; /* Primary accent color */
 
@@ -64,7 +64,7 @@
     --accent-foreground: 0 0% 100%;
     --destructive: 0 80% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 5% 20%;
+    --border: 220 5% 35%; /* Adjusted for better contrast in dark themes */
     --input: 220 10% 12%;
     --ring: 250 80% 60%;
 
@@ -105,7 +105,7 @@
     --destructive: 0 80% 40%; /* Standard red */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 60%; /* Darker grey border for light themes */
+    --border: 210 20% 45%; /* Adjusted for better contrast in light themes */
     --input: 210 20% 92%; /* Slightly darker input background for light themes */
     --ring: 232 96% 87%; /* Primary color */
 
@@ -146,7 +146,7 @@
     --destructive: 0 80% 40%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 60%; /* Darker grey border for light themes */
+    --border: 210 20% 45%; /* Adjusted for better contrast in light themes */
     --input: 210 20% 92%; /* Slightly darker input background for light themes */
     --ring: 0 69% 72%; /* Primary color */
 
@@ -187,7 +187,7 @@
     --destructive: 0 80% 40%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 60%; /* Darker grey border for light themes */
+    --border: 210 20% 45%; /* Adjusted for better contrast in light themes */
     --input: 210 20% 92%; /* Slightly darker input background for light themes */
     --ring: 168 48% 85%; /* Primary color */
 
@@ -228,7 +228,7 @@
     --destructive: 0 80% 60%; /* Red */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 160 15% 25%; /* Emerald border */
+    --border: 160 15% 40%; /* Adjusted for better contrast in emerald theme */
     --input: 160 20% 20%; /* Similar to card background */
     --ring: 160 60% 70%; /* Primary color */
 
@@ -269,7 +269,7 @@
     --destructive: 0 80% 60%; /* Standard red */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 5% 20%; /* Dark border */
+    --border: 240 5% 35%; /* Adjusted for better contrast in dark themes */
     --input: 180 25% 16%; /* Same as card */
     --ring: 168 43% 27%; /* Primary color */
 
