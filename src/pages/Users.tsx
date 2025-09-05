@@ -13,20 +13,19 @@ import {
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { Users as UsersIcon, Mail, UserPlus, Trash2, Copy, Settings as SettingsIcon } from "lucide-react"; // NEW: Import Copy and SettingsIcon
+import { Users as UsersIcon, Mail, UserPlus, Trash2, Copy, Settings as SettingsIcon } from "lucide-react";
 import { useProfile, UserProfile } from "@/context/ProfileContext";
 import { showError, showSuccess } from "@/utils/toast";
 import { supabase } from "@/lib/supabaseClient";
-import ManageCustomRolesDialog from "@/components/ManageCustomRolesDialog"; // NEW: Import ManageCustomRolesDialog
+import ManageCustomRolesDialog from "@/components/ManageCustomRolesDialog";
 
 const Users: React.FC = () => {
   const { profile, allProfiles, updateUserRole, fetchAllProfiles } = useProfile();
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
-  const [isManageCustomRolesDialogOpen, setIsManageCustomRolesDialogOpen] = useState(false); // NEW: State for custom roles dialog
+  const [isManageCustomRolesDialogOpen, setIsManageCustomRolesDialogOpen] = useState(false);
 
   useEffect(() => {
-    // Fetch all profiles when component mounts or profile changes (especially role)
     if (profile?.role === 'admin') {
       fetchAllProfiles();
     }
@@ -40,21 +39,17 @@ const Users: React.FC = () => {
   const confirmDeleteUser = async () => {
     if (!userToDelete || !profile?.organizationId) return;
 
-    // Note: Deleting a user from `auth.users` requires admin privileges
-    // and is typically done via a server-side function or Supabase dashboard.
-    // Here, we're only deleting the profile entry.
-    // For a full user deletion, you'd need a Supabase Edge Function or similar.
     const { error } = await supabase
       .from("profiles")
       .delete()
       .eq("id", userToDelete.id)
-      .eq("organization_id", profile.organizationId); // Ensure admin can only delete within their org
+      .eq("organization_id", profile.organizationId);
 
     if (error) {
       showError(`Failed to delete profile: ${error.message}`);
     } else {
       showSuccess(`Profile for ${userToDelete.fullName || userToDelete.email} deleted.`);
-      fetchAllProfiles(); // Refresh the list
+      fetchAllProfiles();
     }
     setIsConfirmDeleteDialogOpen(false);
     setUserToDelete(null);
@@ -65,9 +60,6 @@ const Users: React.FC = () => {
       showError("Organization ID not found for role update.");
       return;
     }
-    const targetUser = allProfiles.find(p => p.id === userId);
-    const oldRole = targetUser?.role;
-
     try {
       await updateUserRole(userId, newRole, profile.organizationId);
     } catch (error: any) {
@@ -102,7 +94,6 @@ const Users: React.FC = () => {
       <h1 className="text-3xl font-bold">User Management</h1>
       <p className="text-muted-foreground">Manage user accounts and assign roles within Fortress.</p>
 
-      {/* NEW: Organization Code Display */}
       <Card className="bg-card border-border rounded-lg shadow-sm p-6">
         <CardHeader className="pb-4">
           <CardTitle className="text-xl font-semibold flex items-center gap-2">
@@ -114,7 +105,7 @@ const Users: React.FC = () => {
         </CardHeader>
         <CardContent className="flex items-center gap-4">
           <Input
-            value={profile?.organizationCode || "Not available"} {/* NEW: Display 'Not available' */}
+            value={profile?.organizationCode || "Not available"}
             readOnly
             className="font-mono text-lg flex-grow"
           />
@@ -124,14 +115,12 @@ const Users: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* NEW: Manage Custom Roles Button */}
       <div className="flex justify-end">
         <Button onClick={() => setIsManageCustomRolesDialogOpen(true)}>
           <SettingsIcon className="h-4 w-4 mr-2" /> Manage Custom Roles
         </Button>
       </div>
 
-      {/* All Users Table */}
       <Card className="bg-card border-border rounded-lg shadow-sm p-6">
         <CardHeader className="pb-4">
           <CardTitle className="text-xl font-semibold">All Users ({allProfiles.length})</CardTitle>
@@ -157,14 +146,14 @@ const Users: React.FC = () => {
                       <TableCell className="font-medium">{user.fullName || "N/A"}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
-                        {user.id === profile?.id ? ( // Current user's role is not editable here
+                        {user.id === profile?.id ? (
                           <span className="font-semibold">{user.role === 'admin' ? 'Admin (Full Access)' : user.role === 'inventory_manager' ? 'Manager (Inventory & Orders)' : 'Viewer (Warehouse/Sales Associate)'}</span>
                         ) : (
                           <Select
                             value={user.role}
                             onValueChange={(newRole) => handleUpdateUserRole(user.id, newRole)}
                           >
-                            <SelectTrigger className="w-[250px]"> {/* Increased width for longer labels */}
+                            <SelectTrigger className="w-[250px]">
                               <SelectValue placeholder="Select role" />
                             </SelectTrigger>
                             <SelectContent>
@@ -177,7 +166,7 @@ const Users: React.FC = () => {
                       </TableCell>
                       <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell className="text-center">
-                        {user.id !== profile?.id && ( // Cannot delete self
+                        {user.id !== profile?.id && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -208,7 +197,6 @@ const Users: React.FC = () => {
         />
       )}
 
-      {/* NEW: Custom Roles Dialog */}
       <ManageCustomRolesDialog
         isOpen={isManageCustomRolesDialogOpen}
         onClose={() => setIsManageCustomRolesDialogOpen(false)}
