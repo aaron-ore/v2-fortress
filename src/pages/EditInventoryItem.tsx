@@ -451,7 +451,7 @@ const EditInventoryItem: React.FC = () => {
                   )}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4"> {/* Corrected: Added this wrapper div */}
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="committedStock"
@@ -478,7 +478,7 @@ const EditInventoryItem: React.FC = () => {
                     </FormItem>
                   )}
                 />
-              </div> {/* Corrected: Closed this wrapper div */}
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -586,116 +586,6 @@ const EditInventoryItem: React.FC = () => {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-              <FormField
-                control={form.control}
-                name="committedStock"
-                render={({ field }) => (
-                  <FormItem>
-                      <FormLabel>Committed Stock</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value || '0'))} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="incomingStock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Incoming Stock</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value || '0'))} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="unitCost"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Unit Cost</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" {...field} onChange={e => field.onChange(parseFloat(e.target.value || '0'))} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="retailPrice"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Retail Price</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" {...field} onChange={e => field.onChange(parseFloat(e.target.value || '0'))} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="space-y-2">
-                <FormLabel>Primary Vendor</FormLabel>
-                <FormField
-                  control={form.control}
-                  name="vendorId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a vendor (optional)" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="null-vendor">None</SelectItem>
-                          {vendors.map((vendor) => (
-                            <SelectItem key={vendor.id} value={vendor.id}>
-                              {vendor.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="space-y-2">
-                <FormLabel>QR Code Value (from SKU)</FormLabel>
-                <Input
-                  id="barcodeValue"
-                  value={watchSku} // Use watchSku directly
-                  disabled
-                />
-                {qrCodeSvg && (
-                  <div className="mt-2 p-4 border border-border rounded-md bg-white flex justify-center">
-                    <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} />
-                  </div>
-                )}
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <FormLabel>Image URL (Optional)</FormLabel>
-                <FormField
-                  control={form.control}
-                  name="imageUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
             </div>
           </div>
