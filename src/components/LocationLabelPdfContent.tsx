@@ -5,58 +5,56 @@ import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAn
 interface LocationLabelPdfContentProps {
   area: string;
   row: string;
-  bay: string;
+  bay: string; // Still passed, but not visually displayed to match reference
   level: string;
   pos: string;
-  color: string; // Hex color string for the top bar
+  // Removed 'color' prop as the top bar is no longer needed
   qrCodeSvg: string; // SVG string for the QR code
   printDate: string;
   locationString: string; // The full string encoded in QR code
-  className?: string; // NEW: Add className prop
+  className?: string;
 }
 
 const LocationLabelPdfContent = React.forwardRef<HTMLDivElement, LocationLabelPdfContentProps>(({
   area,
-  row,
-  bay,
+  row, // Used for 'BAY' in the new format
+  // bay, // Not used in the new visual format to match the reference image
   level,
   pos,
-  color,
+  // color, // No longer used
   qrCodeSvg,
   printDate,
   locationString,
-  className, // NEW: Destructure className
+  className,
 }, ref) => {
-  const printDateObj = parseAndValidateDate(printDate);
+  // The printDateObj is no longer displayed on the label itself, but kept for potential debugging or internal use.
+  // const printDateObj = parseAndValidateDate(printDate);
 
   return (
-    <div ref={ref} className={`bg-white text-gray-900 font-sans text-xs p-[1mm] w-[101.6mm] h-[50.8mm] border border-black flex flex-col overflow-hidden ${className || ''}`}> {/* 4x2 inches (rectangular) */}
-      {/* Top Color Bar */}
-      <div className="h-[5mm] w-full flex-shrink-0" style={{ backgroundColor: color, zIndex: 10 }}></div>
-
-      {/* Main Content Area: QR Code on Left, Text Details on Right */}
-      <div className="flex flex-grow items-center px-[2mm] py-[2mm] gap-x-[4mm]">
-        {/* QR Code on Left */}
-        <div className="flex-shrink-0 w-[40mm] h-[40mm] flex items-center justify-center"> {/* Adjusted size to fit 150px QR code */}
-          <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-full h-full object-contain" />
-        </div>
-
-        {/* Text Details on Right */}
-        <div className="flex-grow flex flex-col justify-center min-w-0">
-          <p className="text-xl font-extrabold text-black leading-tight text-center mb-1">{locationString}</p> {/* Main string */}
-          <div className="text-right flex flex-col space-y-0.5">
-            <p className="text-[0.7rem] text-black"><span className="font-semibold">Area:</span> {area}</p>
-            <p className="text-[0.7rem] text-black"><span className="font-semibold">Row:</span> {row}</p>
-            <p className="text-[0.7rem] text-black"><span className="font-semibold">Bay:</span> {bay}</p>
-            <p className="text-[0.7rem] text-black"><span className="font-semibold">Level:</span> {level}</p>
-            <p className="text-[0.7rem] text-black"><span className="font-semibold">Pos:</span> {pos}</p>
-          </div>
-        </div>
+    <div ref={ref} className={`bg-white text-gray-900 font-sans p-[2mm] w-[101.6mm] h-[50.8mm] border border-black flex flex-col items-center justify-center overflow-hidden ${className || ''}`}> {/* 4x2 inches (rectangular) */}
+      {/* QR Code at the top */}
+      <div className="flex-shrink-0 w-[30mm] h-[30mm] flex items-center justify-center mb-[2mm]"> {/* Adjusted size for QR code */}
+        <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-full h-full object-contain" />
       </div>
 
-      {/* Footer */}
-      <div className="flex-shrink-0 text-right text-[0.5rem] text-gray-500 pt-[1mm] pb-[1mm]">
-        Printed: {printDateObj && isValid(printDateObj) ? format(printDateObj, "MMM dd, yyyy HH:mm") : "N/A"}
+      {/* Location Details */}
+      <div className="flex w-full justify-around items-end flex-grow">
+        <div className="flex flex-col items-center leading-none">
+          <span className="text-[0.6rem] font-bold uppercase text-gray-700 mb-[1mm]">AISLE</span>
+          <span className="text-3xl font-extrabold text-black">{area}</span>
+        </div>
+        <div className="flex flex-col items-center leading-none">
+          <span className="text-[0.6rem] font-bold uppercase text-gray-700 mb-[1mm]">BAY</span>
+          <span className="text-3xl font-extrabold text-black">{row}</span>
+        </div>
+        <div className="flex flex-col items-center leading-none">
+          <span className="text-[0.6rem] font-bold uppercase text-gray-700 mb-[1mm]">LEVEL</span>
+          <span className="text-3xl font-extrabold text-black bg-green-500 text-white px-2 rounded-sm">{level}</span>
+        </div>
+        <div className="flex flex-col items-center leading-none">
+          <span className="text-[0.6rem] font-bold uppercase text-gray-700 mb-[1mm]">SLOT</span>
+          <span className="text-3xl font-extrabold text-black">{pos}</span>
+        </div>
       </div>
     </div>
   );
