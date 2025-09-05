@@ -32,7 +32,7 @@ interface OnboardingContextType {
   companyProfile: CompanyProfile | null;
   locations: Location[]; // Changed to Location[]
   markOnboardingComplete: () => void;
-  setCompanyProfile: (profile: CompanyProfile) => void;
+  setCompanyProfile: (profile: CompanyProfile, uniqueCode?: string) => void; // Add uniqueCode parameter
   addLocation: (location: Omit<Location, "id" | "createdAt" | "userId" | "organizationId">) => Promise<void>; // Takes structured data
   updateLocation: (location: Omit<Location, "createdAt" | "userId" | "organizationId">) => Promise<void>; // Takes structured data
   removeLocation: (locationId: string) => Promise<void>; // Removes by ID
@@ -133,29 +133,30 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     showSuccess("Onboarding complete! Welcome to Fortress.");
   };
 
-  const setCompanyProfile = async (profileData: CompanyProfile) => {
+  const setCompanyProfile = async (profileData: CompanyProfile, newUniqueCode?: string) => { // Add newUniqueCode parameter
     setCompanyProfileState(profileData);
-    console.log("[OnboardingContext] setCompanyProfile called with profileData:", profileData);
+    console.log("[OnboardingContext] setCompanyProfile called with profileData:", profileData, "newUniqueCode:", newUniqueCode);
 
     if (profile) {
       console.log("[OnboardingContext] Current profile:", profile);
       try {
         let organizationIdToUse = profile.organizationId;
-        let uniqueCodeToUse = profile.organizationCode;
+        let uniqueCodeToPersist = newUniqueCode; // Use provided newUniqueCode if available
 
         if (!profile.organizationId) {
           console.log("[OnboardingContext] User has no organization_id. Creating new organization.");
-          const newUniqueCode = generateUniqueCode();
+          if (!uniqueCodeToPersist) { // If no uniqueCode provided, generate one
+            uniqueCodeToPersist = generateUniqueCode();
+          }
           const { data: orgData, error: orgError } = await supabase
             .from('organizations')
-            .insert({ name: profileData.name, unique_code: newUniqueCode })
+            .insert({ name: profileData.name, unique_code: uniqueCodeToPersist }) // Use uniqueCodeToPersist
             .select()
             .single();
 
           if (orgError) throw orgError;
 
           organizationIdToUse = orgData.id;
-          uniqueCodeToUse = newUniqueCode;
           console.log("[OnboardingContext] New organization created:", orgData);
 
           const { error: profileUpdateError } = await supabase
@@ -166,7 +167,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
           if (profileUpdateError) throw profileUpdateError;
           console.log("[OnboardingContext] Profile updated with new organization_id and role.");
 
-          showSuccess(`Organization "${profileData.name}" created and assigned! You are now an admin. Your unique company code is: ${uniqueCodeToUse}`);
+          showSuccess(`Organization "${profileData.name}" created and assigned! You are now an admin. Your unique company code is: ${uniqueCodeToPersist}`);
         } else {
           console.log("[OnboardingContext] User already has organization_id:", profile.organizationId);
           const { data: existingOrg, error: fetchOrgError } = await supabase
@@ -180,25 +181,30 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
           }
           console.log("[OnboardingContext] Existing organization fetched:", existingOrg);
 
-          if (!existingOrg?.unique_code) {
-            uniqueCodeToUse = generateUniqueCode();
-            console.log(`[OnboardingContext] Generated missing unique_code: ${uniqueCodeToUse} for organization ${profile.organizationId}`);
+          if (!uniqueCodeToPersist) { // If no newUniqueCode provided, use existing or generate if missing
+            if (!existingOrg?.unique_code) {
+              uniqueCodeToPersist = generateUniqueCode();
+              console.log(`[OnboardingContext] Generated missing unique_code: ${uniqueCodeToPersist} for organization ${profile.organizationId}`);
+            } else {
+              uniqueCodeToPersist = existingOrg.unique_code;
+              console.log(`[OnboardingContext] Existing unique_code found: ${uniqueCodeToPersist}`);
+            }
           } else {
-            uniqueCodeToUse = existingOrg.unique_code;
-            console.log(`[OnboardingContext] Existing unique_code found: ${uniqueCodeToUse}`);
+             console.log(`[OnboardingContext] Using provided newUniqueCode: ${uniqueCodeToPersist}`);
           }
+
 
           const { error: updateOrgError } = await supabase
             .from('organizations')
             .update({
               name: profileData.name,
-              unique_code: uniqueCodeToUse,
+              unique_code: uniqueCodeToPersist, // Use uniqueCodeToPersist
               default_theme: profile.organizationTheme,
             })
             .eq('id', profile.organizationId);
 
           if (updateOrgError) throw updateOrgError;
-          console.log("[OnboardingContext] Organization updated with name and unique_code:", { name: profileData.name, unique_code: uniqueCodeToUse });
+          console.log("[OnboardingContext] Organization updated with name and unique_code:", { name: profileData.name, unique_code: uniqueCodeToPersist });
 
           showSuccess(`Company profile for "${profileData.name}" updated successfully!`);
         }
