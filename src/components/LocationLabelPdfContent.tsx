@@ -32,30 +32,30 @@ const LocationLabelPdfContent: React.FC<LocationLabelPdfContentProps> = ({
       {/* Top Color Bar */}
       <div className="h-[5mm] w-full flex-shrink-0" style={{ backgroundColor: color, zIndex: 10 }}></div>
 
-      {/* Main Content Area */}
-      <div className="flex flex-grow flex-col items-center justify-center p-1">
-        {/* Main Location String (most prominent) */}
-        <p className="text-lg font-extrabold text-black leading-tight mb-1">{locationString}</p>
+      {/* Main Location String (most prominent) */}
+      <div className="flex-shrink-0 text-center mt-1 mb-1">
+        <p className="text-lg font-extrabold text-black leading-tight">{locationString}</p>
+      </div>
 
-        <div className="flex items-start justify-between w-full flex-grow">
-          {/* QR Code on Left */}
-          <div className="flex-shrink-0 w-[25mm] h-[25mm] flex items-center justify-center mr-1"> {/* Increased size, added right margin */}
-            <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-full h-full object-contain" />
-          </div>
+      {/* Content Area: QR Code and Stacked Details */}
+      <div className="flex flex-grow items-center justify-between px-1"> {/* Added horizontal padding */}
+        {/* QR Code on Left */}
+        <div className="flex-shrink-0 w-[22mm] h-[22mm] flex items-center justify-center"> {/* Fixed size, prominent */}
+          <div dangerouslySetInnerHTML={{ __html: qrCodeSvg }} className="w-full h-full object-contain" />
+        </div>
 
-          {/* Stacked Location Details on Right */}
-          <div className="flex-grow text-right flex flex-col justify-center space-y-0.5 ml-1"> {/* Pushed to right, added left margin */}
-            <p className="text-[0.6rem] text-black"><span className="font-semibold">Area:</span> {area}</p>
-            <p className="text-[0.6rem] text-black"><span className="font-semibold">Row:</span> {row}</p>
-            <p className="text-[0.6rem] text-black"><span className="font-semibold">Bay:</span> {bay}</p>
-            <p className="text-[0.6rem] text-black"><span className="font-semibold">Level:</span> {level}</p>
-            <p className="text-[0.6rem] text-black"><span className="font-semibold">Pos:</span> {pos}</p>
-          </div>
+        {/* Stacked Location Details on Right */}
+        <div className="flex-shrink-0 text-right flex flex-col justify-center space-y-0.5"> {/* Pushed to right, added vertical spacing */}
+          <p className="text-[0.7rem] text-black"><span className="font-semibold">Area:</span> {area}</p>
+          <p className="text-[0.7rem] text-black"><span className="font-semibold">Row:</span> {row}</p>
+          <p className="text-[0.7rem] text-black"><span className="font-semibold">Bay:</span> {bay}</p>
+          <p className="text-[0.7rem] text-black"><span className="font-semibold">Level:</span> {level}</p>
+          <p className="text-[0.7rem] text-black"><span className="font-semibold">Pos:</span> {pos}</p>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="flex-shrink-0 text-right text-[0.4rem] text-gray-500 mt-0.5">
+      <div className="flex-shrink-0 text-right text-[0.4rem] text-gray-500 mt-1"> {/* Added top margin */}
         Printed: {printDateObj && isValid(printDateObj) ? format(printDateObj, "MMM dd, yyyy HH:mm") : "N/A"}
       </div>
     </div>
