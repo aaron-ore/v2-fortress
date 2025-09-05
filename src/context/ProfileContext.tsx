@@ -89,7 +89,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     // 1. Fetch profile without the organizations join
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id")
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code, default_theme), quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id")
       .eq("id", session.user.id)
       .single();
 
@@ -101,11 +101,11 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       profileFetchError = profileError;
     } else if (profileData) {
       userProfileData = profileData;
-      console.log("[ProfileContext] Raw profile data (without join):", userProfileData);
+      console.log("[ProfileContext] Raw data from Supabase (with join attempt):", userProfileData);
 
-      // 2. If organization_id exists, fetch organization details separately
-      if (userProfileData.organization_id) {
-        console.log(`[ProfileContext] Fetching organization details separately for organization_id: ${userProfileData.organization_id}.`);
+      // If organizations data is missing from the join, fetch it separately
+      if (userProfileData.organization_id && (!userProfileData.organizations || (Array.isArray(userProfileData.organizations) && userProfileData.organizations.length === 0))) {
+        console.log(`[ProfileContext] Organizations data missing from join for organization_id: ${userProfileData.organization_id}. Fetching separately.`);
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
           .select('unique_code, default_theme')
@@ -116,7 +116,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
           console.error("[ProfileContext] Error fetching organization separately:", orgError);
           // Don't fail the whole profile fetch, just log the error and proceed without org data
         } else if (orgData) {
-          // 3. Merge organization data into userProfileData
+          // Create a new object with the merged organization data
           userProfileData = { ...userProfileData, organizations: orgData };
           console.log("[ProfileContext] Successfully fetched and attached organization data separately:", orgData);
         }
@@ -126,7 +126,6 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (profileFetchError) {
       setProfile(null);
     } else if (userProfileData) {
-      console.log("[ProfileContext] userProfileData BEFORE mapping:", userProfileData);
       const mappedProfile = mapSupabaseProfileToUserProfile(userProfileData, session.user.email);
       setProfile(mappedProfile);
       console.log("[ProfileContext] Mapped profile object:", mappedProfile);
@@ -141,9 +140,10 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       return;
     }
 
+    // NEW: Include organizations join in fetchAllProfiles
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id")
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code, default_theme), quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id")
       .eq("organization_id", profile.organizationId);
 
     if (error) {
