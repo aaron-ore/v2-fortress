@@ -1,3 +1,5 @@
+"use client";
+
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
@@ -83,9 +85,12 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     setIsLoadingProfile(true);
     const { data: { session } } = await supabase.auth.getSession();
 
+    console.log("[ProfileContext] fetchProfile called. Session:", session); // NEW LOG
+
     if (!session) {
       setProfile(null);
       setIsLoadingProfile(false);
+      console.log("[ProfileContext] No session found. Profile set to null."); // NEW LOG
       return;
     }
 
@@ -99,6 +104,9 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       .eq("id", session.user.id)
       .single();
 
+    console.log("[ProfileContext] Raw profile data from DB (before org join):", profileData); // NEW LOG
+    console.log("[ProfileContext] Profile fetch error:", profileError); // NEW LOG
+
     if (profileError && profileError.code === 'PGRST116') {
       console.warn(`[ProfileContext] No profile found for user ${session.user.id}.`);
       profileFetchError = new Error("User profile not found after authentication.");
@@ -107,7 +115,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       profileFetchError = profileError;
     } else if (profileData) {
       userProfileData = profileData;
-      console.log("[ProfileContext] Raw profile data (without join):", userProfileData);
+      // console.log("[ProfileContext] Raw profile data (without join):", userProfileData); // Already logged above
 
       // 2. If organization_id exists, fetch organization details separately
       if (userProfileData.organization_id) {
@@ -117,6 +125,9 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
           .select('unique_code, default_theme, shopify_access_token, shopify_store_name') // NEW: Select Shopify fields
           .eq('id', userProfileData.organization_id)
           .single();
+
+        console.log("[ProfileContext] Raw organization data:", orgData); // NEW LOG
+        console.log("[ProfileContext] Organization fetch error:", orgError); // NEW LOG
 
         if (orgError) {
           console.error("[ProfileContext] Error fetching organization separately:", orgError);
@@ -131,12 +142,15 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     if (profileFetchError) {
       setProfile(null);
+      console.log("[ProfileContext] Profile fetch error occurred. Profile set to null."); // NEW LOG
     } else if (userProfileData) {
       const mappedProfile = mapSupabaseProfileToUserProfile(userProfileData, session.user.email);
       setProfile(mappedProfile);
-      console.log("[ProfileContext] Mapped profile object:", mappedProfile);
+      console.log("[ProfileContext] Mapped profile object:", mappedProfile); // NEW LOG
+      console.log("[ProfileContext] Loaded user role:", mappedProfile.role); // NEW LOG
     }
     setIsLoadingProfile(false);
+    console.log("[ProfileContext] fetchProfile finished."); // NEW LOG
   }, []);
 
   const fetchAllProfiles = useCallback(async () => {
