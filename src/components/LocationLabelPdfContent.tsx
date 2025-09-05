@@ -42,27 +42,32 @@ const LocationLabelPdfContent = React.forwardRef<HTMLDivElement, LocationLabelPd
       </div>
 
       {/* Location Details - positioned at the bottom, spanning width, over QR code */}
-      <div className="absolute bottom-[2mm] left-[2mm] right-[2mm] flex justify-between items-end z-10">
-        {/* Individual location parts */}
-        <div className="flex flex-col items-center leading-none">
-          <span className="text-[0.6rem] font-bold uppercase text-gray-700">AREA</span>
-          <span className="text-3xl font-extrabold text-black">{area}</span>
+      <div className="absolute bottom-[2mm] left-[2mm] right-[2mm] flex flex-col items-center justify-end z-10">
+        {/* Row for Area and Row */}
+        <div className="flex w-full justify-around mb-1"> {/* Added mb-1 for vertical spacing */}
+          <div className="flex flex-col items-center leading-none">
+            <span className="text-[0.6rem] font-bold uppercase text-gray-700">AREA</span>
+            <span className="text-3xl font-extrabold text-black">{area}</span>
+          </div>
+          <div className="flex flex-col items-center leading-none">
+            <span className="text-[0.6rem] font-bold uppercase text-gray-700">ROW</span>
+            <span className="text-3xl font-extrabold text-black">{row}</span>
+          </div>
         </div>
-        <div className="flex flex-col items-center leading-none">
-          <span className="text-[0.6rem] font-bold uppercase text-gray-700">ROW</span>
-          <span className="text-3xl font-extrabold text-black">{row}</span>
-        </div>
-        <div className="flex flex-col items-center leading-none">
-          <span className="text-[0.6rem] font-bold uppercase text-gray-700">BAY</span>
-          <span className="text-3xl font-extrabold text-black">{bay}</span>
-        </div>
-        <div className="flex flex-col items-center leading-none">
-          <span className="text-[0.6rem] font-bold uppercase text-gray-700">LEVEL</span>
-          <span className="text-3xl font-extrabold text-black bg-green-500 text-white px-2 rounded-sm">{level}</span>
-        </div>
-        <div className="flex flex-col items-center leading-none">
-          <span className="text-[0.6rem] font-bold uppercase text-gray-700">POS</span>
-          <span className="text-3xl font-extrabold text-black">{pos}</span>
+        {/* Row for Bay, Level, Pos */}
+        <div className="flex w-full justify-around">
+          <div className="flex flex-col items-center leading-none">
+            <span className="text-[0.6rem] font-bold uppercase text-gray-700">BAY</span>
+            <span className="text-3xl font-extrabold text-black">{bay}</span>
+          </div>
+          <div className="flex flex-col items-center leading-none">
+            <span className="text-[0.6rem] font-bold uppercase text-gray-700">LEVEL</span>
+            <span className="text-3xl font-extrabold text-black bg-green-500 text-white px-2 rounded-sm">{level}</span>
+          </div>
+          <div className="flex flex-col items-center leading-none">
+            <span className="text-[0.6rem] font-bold uppercase text-gray-700">POS</span>
+            <span className="text-3xl font-extrabold text-black">{pos}</span>
+          </div>
         </div>
       </div>
     </div>
