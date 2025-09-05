@@ -45,7 +45,12 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     const validatedCreatedAt = parseAndValidateDate(p.created_at);
     const createdAtString = validatedCreatedAt ? validatedCreatedAt.toISOString() : new Date().toISOString(); // Fallback to current date if invalid
 
-    const organizationCode = p.organizations?.[0]?.unique_code || undefined;
+    // Safely access organization data, whether it's an array or a direct object
+    const organizationData = Array.isArray(p.organizations) ? p.organizations[0] : p.organizations;
+    
+    const organizationCode = organizationData?.unique_code || undefined;
+    const organizationTheme = organizationData?.default_theme || 'dark';
+
     if (p.organization_id && !organizationCode) {
       console.warn(`[ProfileContext] User ${p.id} has organization_id ${p.organization_id} but no unique_code found for organization.`);
     }
@@ -59,8 +64,8 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       avatarUrl: p.avatar_url || undefined,
       role: p.role || "viewer", // Default role
       organizationId: p.organization_id,
-      organizationCode: organizationCode, // Access as array if it's a join
-      organizationTheme: p.organizations?.[0]?.default_theme || 'dark', // NEW: Get default_theme from organizations
+      organizationCode: organizationCode,
+      organizationTheme: organizationTheme,
       createdAt: createdAtString,
       quickbooksAccessToken: p.quickbooks_access_token || undefined,
       quickbooksRefreshToken: p.quickbooks_refresh_token || undefined,
@@ -81,9 +86,10 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     let userProfileData = null;
     let profileFetchError = null;
 
+    // Attempt to fetch profile with organization join
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code, default_theme), quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id") // NEW: Select default_theme
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code, default_theme), quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id")
       .eq("id", session.user.id)
       .single();
 
@@ -91,11 +97,28 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       console.warn(`[ProfileContext] No profile found for user ${session.user.id}. This indicates the 'on_auth_user_created' trigger might not have run, or the SELECT RLS policy is too restrictive.`);
       profileFetchError = new Error("User profile not found after authentication. Please ensure the 'on_auth_user_created' trigger is active in Supabase.");
     } else if (error) {
-      console.error("[ProfileContext] Error fetching profile:", error);
+      console.error("[ProfileContext] Error fetching profile with organization join:", error);
       profileFetchError = error;
     } else if (data) {
       userProfileData = data;
-      console.log("[ProfileContext] Raw data from Supabase:", userProfileData); // ADDED LOG
+      console.log("[ProfileContext] Raw data from Supabase (with join attempt):", userProfileData);
+
+      // If organizations data is missing from the join, fetch it separately
+      if (userProfileData.organization_id && (!userProfileData.organizations || (Array.isArray(userProfileData.organizations) && userProfileData.organizations.length === 0))) {
+        console.log(`[ProfileContext] Organizations data missing from join for organization_id: ${userProfileData.organization_id}. Fetching separately.`);
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('unique_code, default_theme')
+          .eq('id', userProfileData.organization_id)
+          .single();
+
+        if (orgError) {
+          console.error("[ProfileContext] Error fetching organization separately:", orgError);
+        } else if (orgData) {
+          userProfileData.organizations = orgData; // Attach fetched organization data
+          console.log("[ProfileContext] Successfully fetched and attached organization data separately:", orgData);
+        }
+      }
     }
 
     if (profileFetchError) {
@@ -103,7 +126,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     } else if (userProfileData) {
       const mappedProfile = mapSupabaseProfileToUserProfile(userProfileData, session.user.email);
       setProfile(mappedProfile);
-      console.log("[ProfileContext] Mapped profile object:", mappedProfile); // ADDED LOG
+      console.log("[ProfileContext] Mapped profile object:", mappedProfile);
     }
     setIsLoadingProfile(false);
   }, []);
