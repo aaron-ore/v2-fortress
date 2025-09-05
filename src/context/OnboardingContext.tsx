@@ -54,10 +54,10 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   });
 
   useEffect(() => {
-    if (!isLoadingProfile && profile) {
+    if (!isLoadingProfile) {
       const storedProfile = localStorage.getItem("companyProfile");
       const hasCompanyProfile = storedProfile !== null;
-      const hasOrganizationId = profile.organizationId !== null;
+      const hasOrganizationId = profile?.organizationId !== null; // Check profile?.organizationId
 
       setIsOnboardingComplete(hasCompanyProfile && hasOrganizationId);
     } else if (!isLoadingProfile && !profile) {
@@ -82,38 +82,73 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   const setCompanyProfile = async (profileData: CompanyProfile) => {
     setCompanyProfileState(profileData);
 
-    if (profile && !profile.organizationId) {
+    if (profile) {
       try {
-        const newUniqueCode = generateUniqueCode();
+        let organizationIdToUse = profile.organizationId;
+        let uniqueCodeToUse = profile.organizationCode;
 
-        const { data: orgData, error: orgError } = await supabase
-          .from('organizations')
-          .insert({ name: profileData.name, unique_code: newUniqueCode })
-          .select()
-          .single();
+        if (!profile.organizationId) {
+          // Case 1: User has no organization yet, create a new one
+          const newUniqueCode = generateUniqueCode();
+          const { data: orgData, error: orgError } = await supabase
+            .from('organizations')
+            .insert({ name: profileData.name, unique_code: newUniqueCode })
+            .select()
+            .single();
 
-        if (orgError) throw orgError;
+          if (orgError) throw orgError;
 
-        const newOrganizationId = orgData.id;
+          organizationIdToUse = orgData.id;
+          uniqueCodeToUse = newUniqueCode;
 
-        const { error: profileUpdateError } = await supabase
-          .from('profiles')
-          .update({ organization_id: newOrganizationId, role: 'admin' })
-          .eq('id', profile.id);
+          const { error: profileUpdateError } = await supabase
+            .from('profiles')
+            .update({ organization_id: organizationIdToUse, role: 'admin' })
+            .eq('id', profile.id);
 
-        if (profileUpdateError) throw profileUpdateError;
+          if (profileUpdateError) throw profileUpdateError;
 
+          showSuccess(`Organization "${profileData.name}" created and assigned! You are now an admin. Your unique company code is: ${uniqueCodeToUse}`);
+        } else {
+          // Case 2: User already has an organization, update it
+          const { data: existingOrg, error: fetchOrgError } = await supabase
+            .from('organizations')
+            .select('unique_code')
+            .eq('id', profile.organizationId)
+            .single();
+
+          if (fetchOrgError && fetchOrgError.code !== 'PGRST116') { // PGRST116 means no rows found
+            throw fetchOrgError;
+          }
+
+          if (!existingOrg?.unique_code) {
+            // If unique_code is missing, generate one
+            uniqueCodeToUse = generateUniqueCode();
+            console.log(`[OnboardingContext] Generated missing unique_code: ${uniqueCodeToUse} for organization ${profile.organizationId}`);
+          } else {
+            uniqueCodeToUse = existingOrg.unique_code;
+          }
+
+          const { error: updateOrgError } = await supabase
+            .from('organizations')
+            .update({
+              name: profileData.name,
+              unique_code: uniqueCodeToUse, // Update even if it was already there, or set if missing
+            })
+            .eq('id', profile.organizationId);
+
+          if (updateOrgError) throw updateOrgError;
+
+          showSuccess(`Company profile for "${profileData.name}" updated successfully!`);
+        }
+        
+        // Always refresh profile to get the latest organization data (including unique_code)
         await fetchProfile();
-        // REMOVED: addActivity("Organization Created", `New organization "${profileData.name}" created with code: ${newUniqueCode}.`, { organizationId: newOrganizationId, companyName: profileData.name, uniqueCode: newUniqueCode });
-        showSuccess(`Organization "${profileData.name}" created and assigned! You are now an admin. Your unique company code is: ${newUniqueCode}`);
 
       } catch (error: any) {
-        console.error("Error during initial organization setup:", error);
-        // REMOVED: addActivity("Organization Creation Failed", `Failed to create new organization "${profileData.name}".`, { error: error.message, companyName: profileData.name });
-        showError(`Failed to set up organization: ${error.message}`);
+        console.error("Error during organization setup/update:", error);
+        showError(`Failed to set up/update organization: ${error.message}`);
       }
-    } else {
-      // REMOVED: addActivity("Company Profile Updated", `Company profile updated to: ${profileData.name}.`, { companyName: profileData.name, currency: profileData.currency, address: profileData.address });
     }
   };
 
