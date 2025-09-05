@@ -325,10 +325,20 @@
     overflow: visible !important; /* Allow content to overflow if needed for pagination */
   }
 
-  /* Set physical page margins for the specific label size */
+  /* Default @page rule for standard reports (8.5x11 or A4) */
   @page {
+    margin: 10mm; /* Default margin for reports */
+  }
+
+  /* Named @page rule for labels */
+  @page label-page {
     size: 101.6mm 50.8mm; /* 4x2 inches */
-    margin: 0 !important; /* Force browser to use 0 margins */
+    margin: 0 !important; /* Force browser to use 0 margins for labels */
+  }
+
+  /* Apply label-page to the root element when printing labels */
+  html.print-mode-label {
+    page: label-page;
   }
 
   /* Hide the main application layout */
@@ -355,7 +365,8 @@
     overflow: visible !important;
   }
 
-  /* Target the specific location label content for printing */
+  /* The .print-location-label class is for styling the content, not the page itself. */
+  /* The page size is now controlled by html.print-mode-label and @page label-page */
   .print-location-label {
     display: block !important;
     width: 101.6mm !important; /* Exact label width */

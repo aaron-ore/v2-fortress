@@ -175,6 +175,15 @@ const AppContent = () => {
     }
   }, [location.search, navigate, fetchProfile]);
 
+  // NEW: Effect to manage print-mode-label class on <html>
+  useEffect(() => {
+    if (isPrinting && printContentData?.type === "location-label") {
+      document.documentElement.classList.add("print-mode-label");
+    } else {
+      document.documentElement.classList.remove("print-mode-label");
+    }
+  }, [isPrinting, printContentData]);
+
   if (loadingAuth || isLoadingProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
