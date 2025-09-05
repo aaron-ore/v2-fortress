@@ -56,7 +56,7 @@ const LocationInventoryViewDialog: React.FC<LocationInventoryViewDialogProps> = 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
-        <DialogHeader>
+        <DialogHeader className="px-6 pt-6"> {/* Added horizontal padding here */}
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="h-6 w-6 text-primary" /> Inventory in "{locationName}"
           </DialogTitle>
@@ -64,7 +64,7 @@ const LocationInventoryViewDialog: React.FC<LocationInventoryViewDialogProps> = 
             Viewing all inventory items currently stored in {locationName}.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-grow flex flex-col gap-4 py-4 overflow-hidden">
+        <div className="flex-grow flex flex-col gap-4 py-4 px-6 overflow-hidden"> {/* Added horizontal padding here */}
           <div className="flex items-center gap-2">
             <Input
               placeholder="Search items by name or SKU..."
@@ -108,7 +108,7 @@ const LocationInventoryViewDialog: React.FC<LocationInventoryViewDialogProps> = 
             </ScrollArea>
           )}
         </div>
-        <DialogFooter>
+        <DialogFooter className="px-6 pb-6"> {/* Added horizontal padding here */}
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>

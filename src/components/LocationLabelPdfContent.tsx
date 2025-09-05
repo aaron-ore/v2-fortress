@@ -28,7 +28,7 @@ const LocationLabelPdfContent: React.FC<LocationLabelPdfContentProps> = ({
   const printDateObj = parseAndValidateDate(printDate);
 
   return (
-    <div className="bg-white text-gray-900 font-sans text-xs p-2 w-[100mm] h-[50mm] border border-black flex flex-col overflow-hidden">
+    <div className="bg-white text-gray-900 font-sans text-xs p-2 w-[101.6mm] h-[152.4mm] border border-black flex flex-col overflow-hidden"> {/* Changed to 4x6 inches (portrait) */}
       {/* Top Color Bar */}
       <div className="h-[8mm] w-full flex-shrink-0" style={{ backgroundColor: color }}></div>
 
@@ -41,21 +41,21 @@ const LocationLabelPdfContent: React.FC<LocationLabelPdfContentProps> = ({
 
         {/* Location Details on Right */}
         <div className="flex-grow ml-2 text-left">
-          <div className="grid grid-cols-2 gap-x-1 gap-y-0.5 text-[0.6rem] font-semibold uppercase">
+          <div className="grid grid-cols-5 gap-x-1 gap-y-0.5 text-[0.6rem] font-semibold uppercase text-black"> {/* Explicitly set text-black */}
             <div>AREA</div>
             <div>ROW</div>
             <div>BAY</div>
             <div>LEVEL</div>
             <div>POS</div>
           </div>
-          <div className="grid grid-cols-5 gap-x-1 gap-y-0.5 text-lg font-extrabold mt-0.5">
+          <div className="grid grid-cols-5 gap-x-1 gap-y-0.5 text-lg font-extrabold mt-0.5 text-black"> {/* Explicitly set text-black */}
             <div className="col-span-1">{area}</div>
             <div className="col-span-1">{row}</div>
             <div className="col-span-1">{bay}</div>
             <div className="col-span-1">{level}</div>
             <div className="col-span-1">{pos}</div>
           </div>
-          <p className="text-[0.6rem] mt-1 font-mono break-all">{locationString}</p>
+          <p className="text-[0.6rem] mt-1 font-mono break-all text-black">{locationString}</p> {/* Explicitly set text-black */}
         </div>
       </div>
 

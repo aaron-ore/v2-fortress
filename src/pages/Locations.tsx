@@ -126,8 +126,8 @@ const Locations: React.FC = () => {
                     {locations.map((loc, index) => (
                       <li key={index} className="flex items-center justify-between py-1 text-foreground">
                         <Button
-                          variant="link" // Changed to link for clickable text
-                          className="p-0 h-auto text-left font-normal hover:underline"
+                          variant="ghost" // Changed to ghost for better text visibility
+                          className="p-0 h-auto text-left font-normal text-foreground hover:underline" // Explicitly set text-foreground
                           onClick={() => handleViewInventoryClick(loc)} // NEW: View inventory on click
                         >
                           {loc}

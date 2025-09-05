@@ -203,7 +203,7 @@ const LocationLabelGenerator: React.FC<LocationLabelGeneratorProps> = ({
       <div className="flex-grow flex flex-col items-center justify-center min-h-[150px] border border-dashed border-muted-foreground/50 rounded-md p-2">
         <h3 className="text-sm font-semibold text-muted-foreground mb-2">Label Preview</h3>
         {qrCodeSvg ? (
-          <div className="scale-75">
+          <div className="w-[101.6mm] h-[152.4mm] flex items-center justify-center overflow-hidden"> {/* Set preview container to 4x6 inches */}
             <LocationLabelPdfContent
               area={area}
               row={row}
