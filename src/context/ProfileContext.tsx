@@ -45,10 +45,8 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     const validatedCreatedAt = parseAndValidateDate(p.created_at);
     const createdAtString = validatedCreatedAt ? validatedCreatedAt.toISOString() : new Date().toISOString(); // Fallback to current date if invalid
 
-    console.log("[ProfileContext] mapSupabaseProfileToUserProfile - raw p.organizations:", p.organizations); // NEW LOG
     // Safely access organization data, whether it's an array or a direct object
     const organizationData = Array.isArray(p.organizations) ? p.organizations[0] : p.organizations;
-    console.log("[ProfileContext] mapSupabaseProfileToUserProfile - derived organizationData:", organizationData); // NEW LOG
     
     const organizationCode = organizationData?.unique_code || undefined;
     const organizationTheme = organizationData?.default_theme || 'dark';
@@ -88,26 +86,26 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     let userProfileData = null;
     let profileFetchError = null;
 
-    // Attempt to fetch profile with organization join
-    const { data, error } = await supabase
+    // 1. Fetch profile without the organizations join
+    const { data: profileData, error: profileError } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code, default_theme), quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id")
+      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id")
       .eq("id", session.user.id)
       .single();
 
-    if (error && error.code === 'PGRST116') {
-      console.warn(`[ProfileContext] No profile found for user ${session.user.id}. This indicates the 'on_auth_user_created' trigger might not have run, or the SELECT RLS policy is too restrictive.`);
-      profileFetchError = new Error("User profile not found after authentication. Please ensure the 'on_auth_user_created' trigger is active in Supabase.");
-    } else if (error) {
-      console.error("[ProfileContext] Error fetching profile with organization join:", error);
-      profileFetchError = error;
-    } else if (data) {
-      userProfileData = data;
-      console.log("[ProfileContext] Raw data from Supabase (with join attempt):", userProfileData);
+    if (profileError && profileError.code === 'PGRST116') {
+      console.warn(`[ProfileContext] No profile found for user ${session.user.id}.`);
+      profileFetchError = new Error("User profile not found after authentication.");
+    } else if (profileError) {
+      console.error("[ProfileContext] Error fetching profile:", profileError);
+      profileFetchError = profileError;
+    } else if (profileData) {
+      userProfileData = profileData;
+      console.log("[ProfileContext] Raw profile data (without join):", userProfileData);
 
-      // If organizations data is missing from the join, fetch it separately
-      if (userProfileData.organization_id && (!userProfileData.organizations || (Array.isArray(userProfileData.organizations) && userProfileData.organizations.length === 0))) {
-        console.log(`[ProfileContext] Organizations data missing from join for organization_id: ${userProfileData.organization_id}. Fetching separately.`);
+      // 2. If organization_id exists, fetch organization details separately
+      if (userProfileData.organization_id) {
+        console.log(`[ProfileContext] Fetching organization details separately for organization_id: ${userProfileData.organization_id}.`);
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
           .select('unique_code, default_theme')
@@ -116,8 +114,9 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
         if (orgError) {
           console.error("[ProfileContext] Error fetching organization separately:", orgError);
+          // Don't fail the whole profile fetch, just log the error and proceed without org data
         } else if (orgData) {
-          // Create a new object with the merged organization data
+          // 3. Merge organization data into userProfileData
           userProfileData = { ...userProfileData, organizations: orgData };
           console.log("[ProfileContext] Successfully fetched and attached organization data separately:", orgData);
         }
@@ -127,6 +126,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (profileFetchError) {
       setProfile(null);
     } else if (userProfileData) {
+      console.log("[ProfileContext] userProfileData BEFORE mapping:", userProfileData);
       const mappedProfile = mapSupabaseProfileToUserProfile(userProfileData, session.user.email);
       setProfile(mappedProfile);
       console.log("[ProfileContext] Mapped profile object:", mappedProfile);
