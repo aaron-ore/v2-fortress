@@ -10,10 +10,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PlusCircle, Edit, Trash2, Users as UsersIcon } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Users as UsersIcon, Upload, ChevronDown } from "lucide-react"; // NEW: Import Upload and ChevronDown
 import { useCustomers, Customer } from "@/context/CustomerContext";
 import AddEditCustomerDialog from "@/components/AddEditCustomerDialog";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import ImportCustomersDialog from "@/components/ImportCustomersDialog"; // NEW: Import ImportCustomersDialog
+import {
+  DropdownMenu, // NEW: Import DropdownMenu components
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Customers: React.FC = () => {
   const { customers, deleteCustomer } = useCustomers();
@@ -23,6 +32,8 @@ const Customers: React.FC = () => {
 
   const [isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<{ id: string; name: string } | null>(null);
+
+  const [isImportCustomersDialogOpen, setIsImportCustomersDialogOpen] = useState(false); // NEW: State for import dialog
 
   const handleAddCustomerClick = () => {
     setCustomerToEdit(null);
@@ -73,9 +84,23 @@ const Customers: React.FC = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <Button onClick={handleAddCustomerClick}>
-          <PlusCircle className="h-4 w-4 mr-2" /> Add New Customer
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button>
+              <PlusCircle className="h-4 w-4 mr-2" /> Add Customer <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Customer Actions</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleAddCustomerClick}>
+              <PlusCircle className="h-4 w-4 mr-2" /> Add New Customer
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsImportCustomersDialogOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" /> Import CSV
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <Card className="bg-card border-border rounded-lg p-4">
@@ -141,6 +166,10 @@ const Customers: React.FC = () => {
           cancelText="Cancel"
         />
       )}
+      <ImportCustomersDialog
+        isOpen={isImportCustomersDialogOpen}
+        onClose={() => setIsImportCustomersDialogOpen(false)}
+      />
     </div>
   );
 };

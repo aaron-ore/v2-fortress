@@ -40,3 +40,30 @@ export const generateInventoryCsvTemplate = (): string => {
 
   return csvContent;
 };
+
+export const generateCustomerCsvTemplate = (): string => {
+  const headers = [
+    "name",
+    "contactPerson",
+    "email",
+    "phone",
+    "address",
+    "notes",
+  ];
+
+  const exampleRow = [
+    "Acme Corp",
+    "Jane Doe",
+    "jane.doe@acmecorp.com",
+    "555-123-4567",
+    "123 Main St, Anytown, USA",
+    "Key account, always offers discounts.",
+  ];
+
+  const csvContent = [
+    headers.join(","),
+    exampleRow.join(","),
+  ].join("\n");
+
+  return csvContent;
+};
