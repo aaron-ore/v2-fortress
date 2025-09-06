@@ -97,10 +97,13 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     let userProfileData = null;
     let profileFetchError = null;
 
+    const selectString = "id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id";
+    console.log("[ProfileContext] fetchProfile - Attempting to select string:", selectString);
+
     // 1. Fetch profile without the organizations join
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id")
+      .select(selectString)
       .eq("id", session.user.id)
       .single();
 
@@ -160,16 +163,36 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       return;
     }
 
+    // Simplified select statement for fetchAllProfiles
+    const selectString = "id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id";
+    console.log("[ProfileContext] fetchAllProfiles - Attempting to select string:", selectString);
+
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, phone, address, avatar_url, role, organization_id, created_at, email, organizations(unique_code, default_theme, shopify_access_token, shopify_store_name), quickbooks_access_token, quickbooks_refresh_token, quickbooks_realm_id") // NEW: Select Shopify fields in organizations join
+      .select(selectString) // Removed organizations(...) join here
       .eq("organization_id", profile.organizationId);
 
     if (error) {
       console.error("Error fetching all profiles:", error);
       setAllProfiles([]);
     } else if (data) {
-      const fetchedProfiles: UserProfile[] = data.map((p: any) => mapSupabaseProfileToUserProfile(p));
+      // For each profile, manually fetch organization details if needed (or accept null for list view)
+      const fetchedProfiles: UserProfile[] = await Promise.all(data.map(async (p: any) => {
+        let profileWithOrg = p;
+        if (p.organization_id) {
+          const { data: orgData, error: orgError } = await supabase
+            .from('organizations')
+            .select('unique_code, default_theme, shopify_access_token, shopify_store_name')
+            .eq('id', p.organization_id)
+            .single();
+          if (orgError) {
+            console.warn(`[ProfileContext] Error fetching organization for profile ${p.id}:`, orgError);
+          } else if (orgData) {
+            profileWithOrg = { ...p, organizations: orgData };
+          }
+        }
+        return mapSupabaseProfileToUserProfile(profileWithOrg);
+      }));
       setAllProfiles(fetchedProfiles);
     }
   }, [profile?.role, profile?.organizationId]);
