@@ -42,6 +42,12 @@ interface OnboardingContextType {
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
+// Helper function to extract storage path from URL (replicated from SQL function)
+const getStoragePathFromUrl = (url: string): string | null => {
+  const match = url.match(/public\/company-logos\/(.*)/);
+  return match ? match[1] : null;
+};
+
 export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { profile, isLoadingProfile, fetchProfile } = useProfile();
   const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean>(() => {
@@ -191,7 +197,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
 
           const { data: existingOrg, error: fetchOrgError } = await supabase
             .from('organizations')
-            .select('unique_code')
+            .select('unique_code, company_logo_url') // Fetch existing company_logo_url
             .eq('id', profile.organizationId)
             .single();
 
@@ -212,6 +218,24 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
              console.log(`[OnboardingContext] Using provided newUniqueCode: ${uniqueCodeToPersist}`);
           }
 
+          const oldCompanyLogoUrl = existingOrg?.company_logo_url;
+          // If the new logo URL is null/undefined/empty AND an old one existed, delete the old file
+          if ((profileData.companyLogoUrl === undefined || profileData.companyLogoUrl === null || profileData.companyLogoUrl === "") && oldCompanyLogoUrl) {
+              const oldFilePath = getStoragePathFromUrl(oldCompanyLogoUrl);
+              if (oldFilePath) {
+                  console.log(`[OnboardingContext] Deleting old logo file: ${oldFilePath}`);
+                  const { error: deleteError } = await supabase.storage
+                      .from('company-logos')
+                      .remove([oldFilePath]);
+
+                  if (deleteError) {
+                      console.error("[OnboardingContext] Error deleting old company logo from storage:", deleteError);
+                      showError(`Failed to delete old company logo from storage: ${deleteError.message}`);
+                  } else {
+                      console.log(`[OnboardingContext] Old logo file ${oldFilePath} deleted successfully.`);
+                  }
+              }
+          }
 
           const { error: updateOrgError } = await supabase
             .from('organizations')
@@ -219,7 +243,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
               name: profileData.name,
               unique_code: uniqueCodeToPersist, // Use uniqueCodeToPersist
               default_theme: profile.organizationTheme,
-              company_logo_url: profileData.companyLogoUrl, // NEW: Save company_logo_url
+              company_logo_url: profileData.companyLogoUrl, // This will be null if user cleared it
             })
             .eq('id', profile.organizationId);
 
