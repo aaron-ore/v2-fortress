@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { PlusCircle, Search, Info, MoreHorizontal, Eye, Edit, Trash2, List, LayoutGrid, MapPin, PackagePlus, Upload, Repeat, Scan as ScanIcon, ChevronDown } from "lucide-react";
+import { PlusCircle, Search, Info, MoreHorizontal, Eye, Edit, Trash2, List, LayoutGrid, MapPin, PackagePlus, Upload, Repeat, Scan as ScanIcon, ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -123,7 +123,7 @@ export const createInventoryColumns = (handleQuickView: (item: InventoryItem) =>
 ];
 
 const Inventory: React.FC = () => {
-  const { inventoryItems, deleteInventoryItem, refreshInventory } = useInventory();
+  const { inventoryItems, deleteInventoryItem, refreshInventory, isLoadingInventory } = useInventory();
   const { categories } = useCategories();
   const { vendors } = useVendors();
   const { locations: structuredLocations } = useOnboarding(); // Now contains Location[]
@@ -332,7 +332,12 @@ const Inventory: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {filteredItems.length === 0 ? (
+          {isLoadingInventory ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2 text-muted-foreground">Loading inventory...</span>
+            </div>
+          ) : filteredItems.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No inventory items found.</p>
           ) : (
             <>

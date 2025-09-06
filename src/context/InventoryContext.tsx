@@ -18,7 +18,7 @@ import { useVendors } from "./VendorContext";
 import { processAutoReorder } from "@/utils/autoReorderLogic";
 import { useNotifications } from "./NotificationContext";
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
-import { mockInventoryItems } from "@/utils/mockData"; // Import mock data
+// REMOVED: import { mockInventoryItems } from "@/utils/mockData"; // Import mock data
 
 export interface InventoryItem {
   id: string;
@@ -51,6 +51,7 @@ export interface InventoryItem {
 
 interface InventoryContextType {
   inventoryItems: InventoryItem[];
+  isLoadingInventory: boolean; // NEW: Add loading state
   addInventoryItem: (item: Omit<InventoryItem, "id" | "status" | "lastUpdated" | "organizationId" | "quantity">) => Promise<void>;
   updateInventoryItem: (updatedItem: Omit<InventoryItem, "quantity"> & { id: string }) => Promise<void>;
   deleteInventoryItem: (itemId: string) => Promise<void>;
@@ -65,20 +66,8 @@ const InventoryContext = createContext<InventoryContextType | undefined>(
 export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(() => {
-    // Attempt to load from local storage first, then fallback to mock data
-    if (typeof window !== 'undefined') {
-      const storedItems = localStorage.getItem("inventoryItems");
-      if (storedItems) {
-        return JSON.parse(storedItems).map((item: any) => ({
-          ...item,
-          // Ensure dates are parsed correctly if stored as strings
-          lastUpdated: parseAndValidateDate(item.lastUpdated)?.toISOString() || new Date().toISOString(),
-        }));
-      }
-    }
-    return mockInventoryItems;
-  });
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]); // Initialize as empty
+  const [isLoadingInventory, setIsLoadingInventory] = useState(true); // NEW: Add loading state
   const { profile, isLoadingProfile } = useProfile();
   const { addOrder } = useOrders();
   const { vendors } = useVendors();
@@ -129,11 +118,13 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const fetchInventoryItems = useCallback(async (): Promise<InventoryItem[]> => {
+    setIsLoadingInventory(true); // NEW: Set loading true at start
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session || !profile?.organizationId) {
-      setInventoryItems(mockInventoryItems); // Fallback to mock data if no session or orgId
-      return mockInventoryItems;
+      setInventoryItems([]); // Ensure empty if no session/orgId
+      setIsLoadingInventory(false); // NEW: Set loading false
+      return [];
     }
 
     const { data, error } = await supabase
@@ -143,11 +134,14 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
     if (error) {
       console.error("Error fetching inventory items:", error);
-      setInventoryItems(mockInventoryItems); // Fallback to mock data on error
-      return mockInventoryItems;
+      setInventoryItems([]); // Empty on error
+      showError("Failed to load inventory items.");
+      setIsLoadingInventory(false); // NEW: Set loading false
+      return [];
     } else {
       const fetchedItems: InventoryItem[] = data.map(mapSupabaseItemToInventoryItem);
-      setInventoryItems(fetchedItems); // Set fetched data, could be empty
+      setInventoryItems(fetchedItems);
+      setIsLoadingInventory(false); // NEW: Set loading false
       return fetchedItems;
     }
   }, [profile?.organizationId]);
@@ -312,7 +306,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
   return (
     <InventoryContext.Provider
-      value={{ inventoryItems, addInventoryItem, updateInventoryItem, deleteInventoryItem, refreshInventory }}
+      value={{ inventoryItems, isLoadingInventory, addInventoryItem, updateInventoryItem, deleteInventoryItem, refreshInventory }}
     >
       {children}
     </InventoryContext.Provider>
