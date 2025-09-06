@@ -59,8 +59,9 @@ const Sidebar: React.FC<SidebarProps> = () => { // REMOVED: Props from function 
   };
 
   const baseButtonClass = "justify-start text-base font-medium transition-colors w-full";
-  const activeLinkClass = "text-sidebar-active-foreground bg-sidebar-active-background hover:bg-sidebar-active-background/80 rounded-md"; // Added rounded-md
-  const inactiveLinkClass = "text-sidebar-foreground hover:bg-sidebar-background/50 rounded-md"; // Added rounded-md
+  // Simplified active and inactive link classes to rely on Button's ghost variant hover styles
+  const activeLinkClass = "text-sidebar-active-foreground bg-sidebar-active-background rounded-md"; 
+  const inactiveLinkClass = "text-sidebar-foreground rounded-md"; 
 
   const renderFortressLogo = (isCollapsedState: boolean) => (
     <div className={cn("flex items-center space-x-2 cursor-pointer", isCollapsedState ? "justify-center" : "justify-start")} onClick={handleLogoClick}> {/* NEW: Add onClick */}
@@ -115,7 +116,7 @@ const Sidebar: React.FC<SidebarProps> = () => { // REMOVED: Props from function 
                     )}
                     onClick={() => handleNavigation(item.href)} // Navigate to parent link when collapsed
                   >
-                    <item.icon className="h-5 w-5" />
+                    <item.icon className="h-5 w-5 text-current" /> {/* Ensure icon inherits color */}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="right" className="ml-2"> {/* NEW: TooltipContent */}
@@ -138,8 +139,8 @@ const Sidebar: React.FC<SidebarProps> = () => { // REMOVED: Props from function 
                   isCollapsed && "justify-center px-0"
                 )}>
                   <div className="flex items-center">
-                    <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
-                    {!isCollapsed && <span className="truncate">{item.title}</span>}
+                    <item.icon className={cn("h-5 w-5 text-current", !isCollapsed && "mr-3")} /> {/* Ensure icon inherits color */}
+                    {!isCollapsed && <span className="truncate text-current">{item.title}</span>} {/* Ensure text inherits color */}
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-1">
@@ -169,8 +170,8 @@ const Sidebar: React.FC<SidebarProps> = () => { // REMOVED: Props from function 
                     }
                   }}
                 >
-                  <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
-                  {!isCollapsed && <span className="truncate">{item.title}</span>}
+                  <item.icon className={cn("h-5 w-5 text-current", !isCollapsed && "mr-3")} /> {/* Ensure icon inherits color */}
+                  {!isCollapsed && <span className="truncate text-current">{item.title}</span>} {/* Ensure text inherits color */}
                   {item.title === "Notifications" && unreadCount > 0 && !isCollapsed && (
                     <span className="ml-auto px-2 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full">
                       {unreadCount}
