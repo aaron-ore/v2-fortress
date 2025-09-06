@@ -171,6 +171,24 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
           showSuccess(`Organization "${profileData.name}" created and assigned! You are now an admin. Your unique company code is: ${uniqueCodeToPersist}`);
         } else {
           console.log("[OnboardingContext] User already has organization_id:", profile.organizationId);
+
+          // --- NEW CHECK FOR DUPLICATE ORGANIZATION NAME ---
+          const { data: existingOrgWithName, error: checkNameError } = await supabase
+            .from('organizations')
+            .select('id')
+            .eq('name', profileData.name)
+            .neq('id', profile.organizationId) // Exclude the current organization
+            .single();
+
+          if (checkNameError && checkNameError.code !== 'PGRST116') { // PGRST116 means no rows found
+            throw checkNameError; // Re-throw if it's a real error, not just no match
+          }
+
+          if (existingOrgWithName) {
+            throw new Error(`An organization with the name "${profileData.name}" already exists. Please choose a different name.`);
+          }
+          // --- END NEW CHECK ---
+
           const { data: existingOrg, error: fetchOrgError } = await supabase
             .from('organizations')
             .select('unique_code')
