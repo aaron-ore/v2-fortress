@@ -261,7 +261,7 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
           pickingBinLocation: pickingBinLocation,
           imageUrl: String(row.imageUrl || '').trim() || undefined,
           vendorId: String(row.vendorId || '').trim() || undefined,
-          barcodeUrl: String(row.barcodeUrl || '').trim() || undefined,
+          barcodeUrl: String(row.barcodeUrl || '').trim() || sku, // If barcodeUrl is not provided, use SKU
           autoReorderEnabled: String(row.autoReorderEnabled || 'false').toLowerCase() === 'true',
           autoReorderQuantity: parseInt(String(row.autoReorderQuantity || '0')),
         };
@@ -292,78 +292,6 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
     }
     setIsUploading(false);
     onClose();
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      showError("Please select a CSV file to upload.");
-      return;
-    }
-
-    setIsUploading(true);
-    const reader = new FileReader();
-
-    reader.onload = async (e) => {
-      try {
-        const binaryString = e.target?.result;
-        if (typeof binaryString !== 'string') {
-          showError("Failed to read file content.");
-          setIsUploading(false);
-          return;
-        }
-
-        const workbook = XLSX.read(binaryString, { type: 'binary' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
-
-        if (jsonData.length === 0) {
-          showError("The CSV file is empty or contains no data rows.");
-          setIsUploading(false);
-          return;
-        }
-
-        setJsonDataToProcess(jsonData); // Store data for later processing
-
-        // --- Step 1: Check for duplicate SKUs in CSV against existing inventory ---
-        const foundDuplicates: CsvDuplicateItem[] = [];
-        jsonData.forEach(row => {
-          const sku = String(row.sku || '').trim();
-          if (sku && existingInventorySkus.has(sku.toLowerCase())) {
-            foundDuplicates.push({
-              sku: sku,
-              csvQuantity: parseInt(String(row.quantity || '0')) || 0, // Ensure quantity is parsed safely
-              itemName: String(row.name || '').trim(),
-            });
-          }
-        });
-
-        if (foundDuplicates.length > 0) {
-          setDuplicateSkusInCsv(foundDuplicates);
-          setIsDuplicateItemsWarningDialogOpen(true);
-          setIsUploading(false); // Stop loading until user confirms duplicates
-          return; // Exit handleUpload, wait for duplicate confirmation
-        }
-
-        // --- Step 2: If no duplicates, proceed to check for new locations (defaulting duplicate action to 'skip') ---
-        await checkForNewLocationsAndProceed(jsonData, "skip");
-        
-      } catch (parseError: any) {
-        showError(`Error parsing CSV file: ${parseError.message}`);
-        console.error("CSV Parse Error:", parseError);
-      } finally {
-        // This finally block will run after the try/catch, but before the dialog is handled
-        // if new locations are found. So, we manage setIsUploading within the logic.
-      }
-    };
-
-    reader.onerror = () => {
-      showError("Failed to read file.");
-      setIsUploading(false);
-      setSelectedFile(null);
-    };
-
-    reader.readAsBinaryString(selectedFile);
   };
 
   const handleDownloadTemplate = () => {

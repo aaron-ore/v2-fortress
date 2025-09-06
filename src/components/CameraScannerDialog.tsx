@@ -133,6 +133,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
               )}
               <div className="absolute inset-0">
                 <QrScanner
+                  key={manualInputMode ? "manual-mode" : "camera-mode"}
                   ref={qrScannerRef}
                   onScan={handleScannerScan}
                   onError={handleScannerError}
