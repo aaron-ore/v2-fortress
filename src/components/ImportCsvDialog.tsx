@@ -294,6 +294,80 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
     onClose();
   };
 
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      showError("Please select a CSV file to upload.");
+      return;
+    }
+
+    setIsUploading(true);
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+      try {
+        const binaryString = e.target?.result;
+        if (typeof binaryString !== 'string') {
+          showError("Failed to read file content.");
+          setIsUploading(false);
+          return;
+        }
+
+        const workbook = XLSX.read(binaryString, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
+
+        if (jsonData.length === 0) {
+          showError("The CSV file is empty or contains no data rows.");
+          setIsUploading(false);
+          return;
+        }
+
+        setJsonDataToProcess(jsonData); // Store data for later processing
+
+        // Check for duplicate SKUs first
+        const duplicates: CsvDuplicateItem[] = [];
+        const seenSkus = new Set<string>();
+        jsonData.forEach(row => {
+          const sku = String(row.sku || '').trim();
+          if (sku && existingInventorySkus.has(sku.toLowerCase())) {
+            if (!seenSkus.has(sku.toLowerCase())) { // Only add to duplicates list once
+              duplicates.push({
+                sku: sku,
+                csvQuantity: parseInt(String(row.pickingBinQuantity || '0')) + parseInt(String(row.overstockQuantity || '0')),
+                itemName: String(row.name || '').trim(),
+              });
+              seenSkus.add(sku.toLowerCase());
+            }
+          }
+        });
+
+        if (duplicates.length > 0) {
+          setDuplicateSkusInCsv(duplicates);
+          setIsDuplicateItemsWarningDialogOpen(true);
+        } else {
+          // If no duplicates, proceed directly to checking for new locations
+          await checkForNewLocationsAndProceed(jsonData, "skip"); // Default to skip if no duplicates
+        }
+
+      } catch (parseError: any) {
+        showError(`Error parsing CSV file: ${parseError.message}`);
+        console.error("CSV Parse Error:", parseError);
+      } finally {
+        // setIsUploading(false); // Keep loading true if dialogs are open
+        // setSelectedFile(null); // Keep file selected until final processing
+      }
+    };
+
+    reader.onerror = () => {
+      showError("Failed to read file.");
+      setIsUploading(false);
+      setSelectedFile(null);
+    };
+
+    reader.readAsBinaryString(selectedFile);
+  };
+
   const handleDownloadTemplate = () => {
     const csv = generateInventoryCsvTemplate();
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
