@@ -4,8 +4,10 @@ export const generateInventoryCsvTemplate = (): string => {
     "description",
     "sku",
     "category",
-    "quantity",
+    "pickingBinQuantity",
+    "overstockQuantity",
     "reorderLevel",
+    "pickingReorderLevel",
     "committedStock",
     "incomingStock",
     "unitCost",
@@ -14,6 +16,8 @@ export const generateInventoryCsvTemplate = (): string => {
     "imageUrl",
     "vendorId",
     "barcodeUrl",
+    "autoReorderEnabled",
+    "autoReorderQuantity",
   ];
 
   const exampleRow = [
@@ -21,16 +25,18 @@ export const generateInventoryCsvTemplate = (): string => {
     "Description for Product A",
     "SKU-001",
     "Electronics",
-    "100",
-    "20",
+    "50", // pickingBinQuantity
+    "50", // overstockQuantity
+    "20", // reorderLevel
+    "10", // pickingReorderLevel
     "5",
     "10",
-    "50.00",
-    "75.00",
-    "Main Warehouse",
+    "Main Warehouse-A-01-01", // Example structured location
     "http://example.com/imageA.jpg",
     "vendor-uuid-123",
     "SKU-001", // Barcode value, not the SVG itself
+    "TRUE", // autoReorderEnabled
+    "100", // autoReorderQuantity
   ];
 
   const csvContent = [

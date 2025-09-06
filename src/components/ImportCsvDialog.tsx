@@ -160,38 +160,106 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
     for (const row of data) {
       const itemName = String(row.name || '').trim();
       const sku = String(row.sku || '').trim();
-      const categoryName = String(row.category || '').trim();
-      const pickingBinQuantity = parseInt(String(row.pickingBinQuantity || '0')); // NEW: Default to '0'
-      const overstockQuantity = parseInt(String(row.overstockQuantity || '0')); // NEW: Default to '0'
-      const reorderLevel = parseInt(String(row.reorderLevel || '0'));
-      const pickingReorderLevel = parseInt(String(row.pickingReorderLevel || '0')); // NEW: Default to '0'
-      const unitCost = parseFloat(String(row.unitCost || '0'));
-      const retailPrice = parseFloat(String(row.retailPrice || '0'));
-      const location = String(row.location || '').trim();
-      const pickingBinLocation = String(row.pickingBinLocation || '').trim(); // NEW: Default to empty string
+      const description = String(row.description || '').trim();
+      const imageUrl = String(row.imageUrl || '').trim() || undefined;
+      const vendorId = String(row.vendorId || '').trim() || undefined;
+      const barcodeUrl = String(row.barcodeUrl || '').trim() || sku; // Default to SKU if empty
+      const autoReorderEnabled = String(row.autoReorderEnabled || 'false').toLowerCase() === 'true';
 
-      // Basic validation for required fields
-      if (!itemName || !sku || !categoryName || isNaN(pickingBinQuantity) || pickingBinQuantity < 0 || isNaN(overstockQuantity) || overstockQuantity < 0 || isNaN(reorderLevel) || reorderLevel < 0 || isNaN(pickingReorderLevel) || pickingReorderLevel < 0 || isNaN(unitCost) || unitCost < 0 || isNaN(retailPrice) || retailPrice < 0 || !location || !pickingBinLocation) {
-        errors.push(`Row with SKU '${sku || 'N/A'}': Missing or invalid required fields (name, sku, category, pickingBinQuantity, overstockQuantity, reorderLevel, pickingReorderLevel, unitCost, retailPrice, location, pickingBinLocation).`);
+      // --- Strict validation for required fields (itemName, sku) ---
+      if (!itemName) {
+        errors.push(`Row with SKU '${sku || 'N/A'}': Item Name is required.`);
+        errorCount++;
+        continue;
+      }
+      if (!sku) {
+        errors.push(`Row with Item Name '${itemName || 'N/A'}': SKU is required.`);
         errorCount++;
         continue;
       }
 
-      // Validate category exists
-      if (!currentCategoriesMap.has(categoryName.toLowerCase())) {
-        errors.push(`Row with SKU '${sku}': Category '${categoryName}' could not be found or created.`);
+      // --- Numeric fields with defaults and warnings ---
+      let pickingBinQuantity = parseInt(String(row.pickingBinQuantity || '0'));
+      if (isNaN(pickingBinQuantity) || pickingBinQuantity < 0) {
+        errors.push(`SKU '${sku}': Invalid or negative Picking Bin Quantity. Defaulting to 0.`);
+        pickingBinQuantity = 0;
+      }
+
+      let overstockQuantity = parseInt(String(row.overstockQuantity || '0'));
+      if (isNaN(overstockQuantity) || overstockQuantity < 0) {
+        errors.push(`SKU '${sku}': Invalid or negative Overstock Quantity. Defaulting to 0.`);
+        overstockQuantity = 0;
+      }
+
+      let reorderLevel = parseInt(String(row.reorderLevel || '0'));
+      if (isNaN(reorderLevel) || reorderLevel < 0) {
+        errors.push(`SKU '${sku}': Invalid or negative Reorder Level. Defaulting to 0.`);
+        reorderLevel = 0;
+      }
+
+      let pickingReorderLevel = parseInt(String(row.pickingReorderLevel || '0'));
+      if (isNaN(pickingReorderLevel) || pickingReorderLevel < 0) {
+        errors.push(`SKU '${sku}': Invalid or negative Picking Reorder Level. Defaulting to 0.`);
+        pickingReorderLevel = 0;
+      }
+
+      let committedStock = parseInt(String(row.committedStock || '0'));
+      if (isNaN(committedStock) || committedStock < 0) {
+        errors.push(`SKU '${sku}': Invalid or negative Committed Stock. Defaulting to 0.`);
+        committedStock = 0;
+      }
+
+      let incomingStock = parseInt(String(row.incomingStock || '0'));
+      if (isNaN(incomingStock) || incomingStock < 0) {
+        errors.push(`SKU '${sku}': Invalid or negative Incoming Stock. Defaulting to 0.`);
+        incomingStock = 0;
+      }
+
+      let unitCost = parseFloat(String(row.unitCost || '0'));
+      if (isNaN(unitCost) || unitCost < 0) {
+        errors.push(`SKU '${sku}': Invalid or negative Unit Cost. Defaulting to 0.`);
+        unitCost = 0;
+      }
+
+      let retailPrice = parseFloat(String(row.retailPrice || '0'));
+      if (isNaN(retailPrice) || retailPrice < 0) {
+        errors.push(`SKU '${sku}': Invalid or negative Retail Price. Defaulting to 0.`);
+        retailPrice = 0;
+      }
+
+      let autoReorderQuantity = parseInt(String(row.autoReorderQuantity || '0'));
+      if (isNaN(autoReorderQuantity) || autoReorderQuantity < 0) {
+        errors.push(`SKU '${sku}': Invalid or negative Auto-Reorder Quantity. Defaulting to 0.`);
+        autoReorderQuantity = 0;
+      }
+
+      // --- Category and Location handling (optional in CSV, but must exist or default) ---
+      let finalCategory = String(row.category || '').trim();
+      if (!finalCategory) {
+        finalCategory = 'Uncategorized';
+        errors.push(`SKU '${sku}': Category is empty. Defaulting to 'Uncategorized'.`);
+      } else if (!currentCategoriesMap.has(finalCategory.toLowerCase())) {
+        errors.push(`SKU '${sku}': Category '${finalCategory}' could not be found or created. Item skipped.`);
         errorCount++;
         continue;
       }
-      // Validate location exists
-      if (!currentLocationsSet.has(location.toLowerCase())) {
-        errors.push(`Row with SKU '${sku}': Main Storage Location '${location}' does not exist and was not confirmed to be added. Item skipped.`);
+
+      let finalLocation = String(row.location || '').trim();
+      if (!finalLocation) {
+        finalLocation = 'Unassigned';
+        errors.push(`SKU '${sku}': Main Storage Location is empty. Defaulting to 'Unassigned'.`);
+      } else if (!currentLocationsSet.has(finalLocation.toLowerCase())) {
+        errors.push(`SKU '${sku}': Main Storage Location '${finalLocation}' does not exist and was not confirmed to be added. Item skipped.`);
         errorCount++;
         continue;
       }
-      // Validate pickingBinLocation exists
-      if (!currentLocationsSet.has(pickingBinLocation.toLowerCase())) {
-        errors.push(`Row with SKU '${sku}': Picking Bin Location '${pickingBinLocation}' does not exist and was not confirmed to be added. Item skipped.`);
+
+      let finalPickingBinLocation = String(row.pickingBinLocation || '').trim();
+      if (!finalPickingBinLocation) {
+        finalPickingBinLocation = 'Unassigned';
+        errors.push(`SKU '${sku}': Picking Bin Location is empty. Defaulting to 'Unassigned'.`);
+      } else if (!currentLocationsSet.has(finalPickingBinLocation.toLowerCase())) {
+        errors.push(`SKU '${sku}': Picking Bin Location '${finalPickingBinLocation}' does not exist and was not confirmed to be added. Item skipped.`);
         errorCount++;
         continue;
       }
@@ -247,24 +315,24 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
       try {
         const newItemData = {
           name: itemName,
-          description: String(row.description || '').trim(),
+          description: description,
           sku: sku,
-          category: categoryName,
+          category: finalCategory,
           pickingBinQuantity: pickingBinQuantity,
           overstockQuantity: overstockQuantity,
           reorderLevel: reorderLevel,
           pickingReorderLevel: pickingReorderLevel,
-          committedStock: parseInt(String(row.committedStock || '0')),
-          incomingStock: parseInt(String(row.incomingStock || '0')),
+          committedStock: committedStock,
+          incomingStock: incomingStock,
           unitCost: unitCost,
           retailPrice: retailPrice,
-          location: location,
-          pickingBinLocation: pickingBinLocation,
-          imageUrl: String(row.imageUrl || '').trim() || undefined,
-          vendorId: String(row.vendorId || '').trim() || undefined,
-          barcodeUrl: String(row.barcodeUrl || '').trim() || sku, // If barcodeUrl is not provided, use SKU
-          autoReorderEnabled: String(row.autoReorderEnabled || 'false').toLowerCase() === 'true',
-          autoReorderQuantity: parseInt(String(row.autoReorderQuantity || '0')),
+          location: finalLocation,
+          pickingBinLocation: finalPickingBinLocation,
+          imageUrl: imageUrl,
+          vendorId: vendorId,
+          barcodeUrl: barcodeUrl,
+          autoReorderEnabled: autoReorderEnabled,
+          autoReorderQuantity: autoReorderQuantity,
         };
         await addInventoryItem(newItemData);
         successCount++;
