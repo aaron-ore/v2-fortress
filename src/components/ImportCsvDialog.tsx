@@ -152,6 +152,7 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
         pos: parsed.pos || "N/A",
         color: "#CCCCCC", // Default color for auto-added locations
       };
+      // Use the updated addLocation that handles duplicates
       await addLocation(newLocation);
     }
     
@@ -439,7 +440,7 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
         pos: parsed.pos || "N/A",
         color: "#CCCCCC", // Default color for auto-added locations
       };
-      await addLocation(newLocation);
+      await addLocation(newLocation); // Use the updated addLocation
     }
     showSuccess(`Added new locations: ${newLocationsToConfirm.join(", ")}`);
 
@@ -519,7 +520,7 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
         onConfirm={handleConfirmAddLocations}
         title="New Locations Detected"
         description={
-          <React.Fragment>
+          <div> {/* NEW: Wrap content in a div */}
             The following new inventory locations were found in your CSV:
             <ul className="list-disc list-inside mt-2 ml-4 text-left">
               {newLocationsToConfirm.map((loc, index) => (
@@ -527,7 +528,7 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
               ))}
             </ul>
             Would you like to add these to your available locations? Items with these locations will only be imported if confirmed.
-          </React.Fragment>
+          </div>
         }
         confirmText="Add Locations & Continue"
         cancelText="Cancel Import"

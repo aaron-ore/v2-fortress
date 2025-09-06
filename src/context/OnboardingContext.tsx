@@ -34,7 +34,7 @@ interface OnboardingContextType {
   locations: Location[]; // Changed to Location[]
   markOnboardingComplete: () => void;
   setCompanyProfile: (profile: CompanyProfile, uniqueCode?: string) => void; // Add uniqueCode parameter
-  addLocation: (location: Omit<Location, "id" | "createdAt" | "userId" | "organizationId">) => Promise<void>; // Takes structured data
+  addLocation: (location: Omit<Location, "id" | "createdAt" | "userId" | "organizationId">) => Promise<Location | null>; // Takes structured data, returns Location or null
   updateLocation: (location: Omit<Location, "createdAt" | "userId" | "organizationId">) => Promise<void>; // Takes structured data
   removeLocation: (locationId: string) => Promise<void>; // Removes by ID
   fetchLocations: () => Promise<void>; // Added fetch function
@@ -86,7 +86,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     localStorage.setItem("companyProfile", JSON.stringify(companyProfile));
   }, [companyProfile]);
 
-  // Helper to map Supabase data to Location interface
+  // Helper function to map Supabase data to Location interface
   const mapSupabaseLocationToLocation = (data: any): Location => ({
     id: data.id,
     organizationId: data.organization_id,
@@ -267,11 +267,38 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   };
 
   // Add a new structured location
-  const addLocation = async (location: Omit<Location, "id" | "createdAt" | "userId" | "organizationId">) => {
+  const addLocation = async (location: Omit<Location, "id" | "createdAt" | "userId" | "organizationId">): Promise<Location | null> => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session || !profile?.organizationId) {
       showError("You must be logged in and have an organization ID to add locations.");
-      return;
+      return null;
+    }
+
+    // NEW: Check if location already exists in DB before inserting
+    const { data: existingDbLocation, error: fetchError } = await supabase
+      .from("locations")
+      .select("*")
+      .eq("organization_id", profile.organizationId)
+      .eq("full_location_string", location.fullLocationString)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine
+      console.error("Error checking for existing location:", fetchError);
+      showError(`Failed to check for existing location: ${fetchError.message}`);
+      return null;
+    }
+
+    if (existingDbLocation) {
+      console.log(`Location "${location.fullLocationString}" already exists in DB. Skipping insert.`);
+      const mappedExistingLocation = mapSupabaseLocationToLocation(existingDbLocation);
+      // Ensure it's in the local state if not already
+      setLocations(prev => {
+        if (!prev.some(loc => loc.id === mappedExistingLocation.id)) {
+          return [...prev, mappedExistingLocation];
+        }
+        return prev;
+      });
+      return mappedExistingLocation;
     }
 
     const { data, error } = await supabase
@@ -294,10 +321,14 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     if (error) {
       console.error("Error adding location:", error);
       showError(`Failed to add location: ${error.message}`);
+      return null;
     } else if (data) {
-      setLocations((prev) => [...prev, mapSupabaseLocationToLocation(data)]);
+      const newLocation = mapSupabaseLocationToLocation(data);
+      setLocations((prev) => [...prev, newLocation]);
       showSuccess(`Location "${location.displayName || location.fullLocationString}" added.`);
+      return newLocation;
     }
+    return null;
   };
 
   // Update an existing structured location
