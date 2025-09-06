@@ -283,6 +283,47 @@
 
     --scrollbar-background: 240 5% 40%; /* Lighter scrollbar for deep-forest theme */
   }
+
+  /* NEW: Natural Light Theme Palette */
+  html.natural-light {
+    --background: 40 10% 96%; /* F5F5F4 - Off-white */
+    --foreground: 220 10% 8%; /* Dark text */
+
+    --card: 40 29% 84%; /* E1DBCB - Very light beige */
+    --card-foreground: 220 10% 8%;
+
+    --popover: 40 29% 84%;
+    --popover-foreground: 220 10% 8%;
+
+    --primary: 80 10% 70%; /* B6BAAB - Sage green */
+    --primary-foreground: 0 0% 100%; /* White text for primary buttons */
+
+    --secondary: 40 19% 70%; /* C5B99F - Medium-light beige */
+    --secondary-foreground: 220 10% 8%;
+
+    --muted: 75 8% 88%; /* E1E2DD - Light grey-green */
+    --muted-foreground: 220 5% 50%;
+
+    --accent: 40 19% 70%; /* C5B99F - Same as secondary for cohesion */
+    --accent-foreground: 220 10% 8%;
+
+    --destructive: 0 80% 40%; /* Standard red */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 75 8% 80%; /* Slightly darker E1E2DD for better visibility */
+    --input: 75 8% 90%; /* Slightly lighter E1E2DD for input fields */
+    --ring: 80 10% 70%; /* Primary color */
+
+    /* Sidebar specific colors for Natural Light theme */
+    --sidebar-background: var(--background);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-active-background: var(--secondary);
+    --sidebar-active-foreground: var(--foreground); /* Dark text on active background */
+    --sidebar-border: var(--border);
+    --sidebar-toggle-background: var(--secondary);
+
+    --scrollbar-background: 75 8% 75%; /* Darker than muted for contrast */
+  }
 }
 
 @layer base {
