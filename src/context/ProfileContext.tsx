@@ -85,12 +85,12 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     setIsLoadingProfile(true);
     const { data: { session } } = await supabase.auth.getSession();
 
-    console.log("[ProfileContext] fetchProfile called. Session:", session); // NEW LOG
+    console.log("[ProfileContext] fetchProfile called. Session:", session);
 
     if (!session) {
       setProfile(null);
       setIsLoadingProfile(false);
-      console.log("[ProfileContext] No session found. Profile set to null."); // NEW LOG
+      console.log("[ProfileContext] No session found. Profile set to null.");
       return;
     }
 
@@ -104,18 +104,18 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       .eq("id", session.user.id)
       .single();
 
-    console.log("[ProfileContext] Raw profile data from DB (before org join):", profileData); // NEW LOG
-    console.log("[ProfileContext] Profile fetch error:", profileError); // NEW LOG
+    console.log("[ProfileContext] Raw profile data from DB (before org join):", profileData);
+    console.log("[ProfileContext] Profile fetch error:", profileError);
 
     if (profileError && profileError.code === 'PGRST116') {
-      console.warn(`[ProfileContext] No profile found for user ${session.user.id}.`);
+      console.warn(`[ProfileContext] No profile found for user ${session.user.id}. This might be a new user or a missing profile entry.`);
       profileFetchError = new Error("User profile not found after authentication.");
     } else if (profileError) {
       console.error("[ProfileContext] Error fetching profile:", profileError);
       profileFetchError = profileError;
     } else if (profileData) {
       userProfileData = profileData;
-      // console.log("[ProfileContext] Raw profile data (without join):", userProfileData); // Already logged above
+      console.log("[ProfileContext] Successfully fetched basic profile data:", userProfileData);
 
       // 2. If organization_id exists, fetch organization details separately
       if (userProfileData.organization_id) {
@@ -126,8 +126,8 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
           .eq('id', userProfileData.organization_id)
           .single();
 
-        console.log("[ProfileContext] Raw organization data:", orgData); // NEW LOG
-        console.log("[ProfileContext] Organization fetch error:", orgError); // NEW LOG
+        console.log("[ProfileContext] Raw organization data:", orgData);
+        console.log("[ProfileContext] Organization fetch error:", orgError);
 
         if (orgError) {
           console.error("[ProfileContext] Error fetching organization separately:", orgError);
@@ -142,15 +142,15 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     if (profileFetchError) {
       setProfile(null);
-      console.log("[ProfileContext] Profile fetch error occurred. Profile set to null."); // NEW LOG
+      console.log("[ProfileContext] Profile fetch error occurred. Profile set to null.");
     } else if (userProfileData) {
       const mappedProfile = mapSupabaseProfileToUserProfile(userProfileData, session.user.email);
       setProfile(mappedProfile);
-      console.log("[ProfileContext] Mapped profile object:", mappedProfile); // NEW LOG
-      console.log("[ProfileContext] Loaded user role:", mappedProfile.role); // NEW LOG
+      console.log("[ProfileContext] Mapped profile object:", mappedProfile);
+      console.log("[ProfileContext] Loaded user role:", mappedProfile.role);
     }
     setIsLoadingProfile(false);
-    console.log("[ProfileContext] fetchProfile finished."); // NEW LOG
+    console.log("[ProfileContext] fetchProfile finished.");
   }, []);
 
   const fetchAllProfiles = useCallback(async () => {
