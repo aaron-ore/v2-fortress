@@ -95,7 +95,7 @@ const GenerateReportButton: React.FC<GenerateReportButtonProps> = ({ dateRange }
       companyName: companyProfile.name,
       companyAddress: companyProfile.address,
       companyContact: companyProfile.currency, // Using currency as a generic contact for company
-      companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
+      companyLogoUrl: companyProfile.companyLogoUrl || undefined, // NEW: Use companyProfile.companyLogoUrl
       reportDate: format(new Date(), "MMM dd, yyyy HH:mm"),
       totalStockValue,
       totalUnitsOnHand,

@@ -10,6 +10,7 @@ export interface CompanyProfile {
   name: string;
   currency: string;
   address: string;
+  companyLogoUrl?: string; // NEW: Add companyLogoUrl
 }
 
 export interface Location {
@@ -150,7 +151,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
           }
           const { data: orgData, error: orgError } = await supabase
             .from('organizations')
-            .insert({ name: profileData.name, unique_code: uniqueCodeToPersist }) // Use uniqueCodeToPersist
+            .insert({ name: profileData.name, unique_code: uniqueCodeToPersist, company_logo_url: profileData.companyLogoUrl }) // NEW: Save company_logo_url
             .select()
             .single();
 
@@ -200,6 +201,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
               name: profileData.name,
               unique_code: uniqueCodeToPersist, // Use uniqueCodeToPersist
               default_theme: profile.organizationTheme,
+              company_logo_url: profileData.companyLogoUrl, // NEW: Save company_logo_url
             })
             .eq('id', profile.organizationId);
 

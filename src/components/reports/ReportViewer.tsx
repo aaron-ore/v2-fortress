@@ -15,7 +15,7 @@ import InventoryValuationReport from "./InventoryValuationReport";
 import LowStockReport from "./LowStockReport";
 import InventoryMovementReport from "./InventoryMovementReport";
 import SalesByCustomerReport from "./SalesByCustomerReport";
-import SalesByProductReport from "./SalesByProductReport";
+import SalesByProductReport from "././SalesByProductReport";
 import PurchaseOrderStatusReport from "./PurchaseOrderStatusReport";
 import ProfitabilityReport from "./ProfitabilityReport";
 import DiscrepancyReport from "./DiscrepancyReport";
@@ -93,7 +93,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ reportId, dateRange }) => {
       companyName: companyProfile.name,
       companyAddress: companyProfile.address,
       companyContact: companyProfile.currency, // Using currency as a generic contact for company
-      companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
+      companyLogoUrl: companyProfile.companyLogoUrl || undefined, // NEW: Pass companyLogoUrl
       reportDate: new Date().toLocaleDateString(),
       dateRange, // NEW: Pass dateRange to PDF props
       structuredLocations, // NEW: Pass structuredLocations to PDF props

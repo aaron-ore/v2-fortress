@@ -290,7 +290,7 @@ const CreatePurchaseOrder: React.FC = () => {
       items,
       notes,
       taxRate,
-      companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
+      companyLogoUrl: companyProfile.companyLogoUrl || undefined, // NEW: Use companyProfile.companyLogoUrl
       poQrCodeSvg: poQrCodeSvg, // Pass QR code SVG to PDF
     };
 

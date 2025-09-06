@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProfile } from "@/context/ProfileContext";
 import { showError, showSuccess } from "@/utils/toast";
-import { Loader2, Palette, Settings as SettingsIcon } from "lucide-react"; // NEW: Import SettingsIcon
+import { Loader2, Palette, Settings as SettingsIcon, Image } from "lucide-react"; // NEW: Import Image icon
 import { useOnboarding } from "@/context/OnboardingContext";
 import { Link } from "react-router-dom";
 // REMOVED: import { FileText, Plug, CheckCircle, RefreshCw, AlertTriangle } from "lucide-react";
@@ -24,6 +24,7 @@ const Settings: React.FC = () => {
   const [companyName, setCompanyName] = useState(companyProfile?.name || "");
   const [companyAddress, setCompanyAddress] = useState(companyProfile?.address || "");
   const [companyCurrency, setCompanyCurrency] = useState(companyProfile?.currency || "USD");
+  const [companyLogoUrl, setCompanyLogoUrl] = useState(companyProfile?.companyLogoUrl || ""); // NEW: State for company logo URL
   const [isSavingCompanyProfile, setIsSavingCompanyProfile] = useState(false);
   const [organizationCodeInput, setOrganizationCodeInput] = useState(profile?.organizationCode || ""); // NEW: State for organization code input
   const [isSavingOrganizationCode, setIsSavingOrganizationCode] = useState(false); // NEW: State for saving organization code
@@ -33,6 +34,7 @@ const Settings: React.FC = () => {
       setCompanyName(companyProfile.name);
       setCompanyAddress(companyProfile.address);
       setCompanyCurrency(companyProfile.currency);
+      setCompanyLogoUrl(companyProfile.companyLogoUrl || ""); // NEW: Set companyLogoUrl from context
     }
   }, [companyProfile]);
 
@@ -51,6 +53,7 @@ const Settings: React.FC = () => {
         name: companyName,
         address: companyAddress,
         currency: companyCurrency,
+        companyLogoUrl: companyLogoUrl.trim() || undefined, // NEW: Pass companyLogoUrl
       }, organizationCodeInput); // Pass organizationCodeInput
       showSuccess("Company profile updated successfully!");
     } catch (error: any) {
@@ -81,6 +84,7 @@ const Settings: React.FC = () => {
         name: companyName,
         address: companyAddress,
         currency: companyCurrency,
+        companyLogoUrl: companyLogoUrl.trim() || undefined, // NEW: Pass companyLogoUrl
       }, organizationCodeInput.trim());
       showSuccess("Organization Code updated successfully!");
     } catch (error: any) {
@@ -93,7 +97,8 @@ const Settings: React.FC = () => {
   const hasCompanyProfileChanges =
     companyName !== (companyProfile?.name || "") ||
     companyAddress !== (companyProfile?.address || "") ||
-    companyCurrency !== (companyProfile?.currency || "USD");
+    companyCurrency !== (companyProfile?.currency || "USD") ||
+    companyLogoUrl !== (companyProfile?.companyLogoUrl || ""); // NEW: Check for logo changes
 
   const hasOrganizationCodeChanges = organizationCodeInput !== (profile?.organizationCode || "");
 
@@ -138,6 +143,26 @@ const Settings: React.FC = () => {
               value={companyAddress}
               onChange={(e) => setCompanyAddress(e.target.value)}
             />
+          </div>
+          {/* NEW: Company Logo URL Input and Preview */}
+          <div className="space-y-2">
+            <Label htmlFor="companyLogoUrl">Company Logo URL (Optional)</Label>
+            <Input
+              id="companyLogoUrl"
+              value={companyLogoUrl}
+              onChange={(e) => setCompanyLogoUrl(e.target.value)}
+              placeholder="e.g., https://yourcompany.com/logo.png"
+            />
+            {companyLogoUrl && (
+              <div className="mt-2 p-2 border border-border rounded-md flex items-center justify-center bg-muted/20">
+                <img src={companyLogoUrl} alt="Company Logo Preview" className="max-h-24 object-contain" />
+              </div>
+            )}
+            {!companyLogoUrl && (
+              <div className="mt-2 p-4 border border-dashed border-muted-foreground/50 rounded-md flex items-center justify-center text-muted-foreground text-sm">
+                <Image className="h-5 w-5 mr-2" /> No logo URL provided
+              </div>
+            )}
           </div>
           <Button onClick={handleSaveCompanyProfile} disabled={isSavingCompanyProfile || !hasCompanyProfileChanges}>
             {isSavingCompanyProfile ? (

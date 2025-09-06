@@ -15,6 +15,7 @@ import { useProfile } from "@/context/ProfileContext";
 import { LogOut } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
+import { useOnboarding } from "@/context/OnboardingContext"; // NEW: Import useOnboarding
 
 interface MobileDrawerContentProps {
   onLinkClick: () => void; // Callback to close the sheet after navigation
@@ -25,6 +26,7 @@ const MobileDrawerContent: React.FC<MobileDrawerContentProps> = ({ onLinkClick }
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
+  const { companyProfile } = useOnboarding(); // NEW: Get companyProfile
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut({ scope: 'local' }); // Changed to perform a local logout

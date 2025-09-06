@@ -129,6 +129,7 @@ const AppContent = () => {
   const { isLoadingProfile, fetchProfile, profile } = useProfile(); // Added profile
   const { isPrinting, printContentData, resetPrintState } = usePrint();
   const { locations: structuredLocations } = useOnboarding(); // NEW: Get structured locations
+  const { companyProfile } = useOnboarding(); // NEW: Get companyProfile for PDF props
 
   const qbCallbackProcessedRef = useRef(false);
 
@@ -216,16 +217,16 @@ const AppContent = () => {
       {printContentData && (
         <PrintWrapper contentData={printContentData} onPrintComplete={resetPrintState}>
           {printContentData.type === "purchase-order" && (
-            <PurchaseOrderPdfContent {...printContentData.props} />
+            <PurchaseOrderPdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
           )}
           {printContentData.type === "invoice" && (
-            <InvoicePdfContent {...printContentData.props} />
+            <InvoicePdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
           )}
           {printContentData.type === "dashboard-summary" && (
-            <DashboardSummaryPdfContent {...printContentData.props} />
+            <DashboardSummaryPdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
           )}
           {printContentData.type === "advanced-demand-forecast" && (
-            <AdvancedDemandForecastPdfContent {...printContentData.props} />
+            <AdvancedDemandForecastPdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
           )}
           {printContentData.type === "putaway-label" && (
             <PutawayLabelPdfContent {...printContentData.props} structuredLocations={structuredLocations} />
@@ -234,31 +235,31 @@ const AppContent = () => {
             <LocationLabelPdfContent {...printContentData.props} />
           )}
           {printContentData.type === "picking-wave" && (
-            <PickingWavePdfContent {...printContentData.props} />
+            <PickingWavePdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
           )}
           {printContentData.type === "inventory-valuation-report" && (
-            <InventoryValuationPdfContent {...printContentData.props} />
+            <InventoryValuationPdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
           )}
           {printContentData.type === "low-stock-report" && (
-            <LowStockPdfContent {...printContentData.props} structuredLocations={structuredLocations} />
+            <LowStockPdfContent {...printContentData.props} structuredLocations={structuredLocations} companyLogoUrl={companyProfile?.companyLogoUrl} />
           )}
           {printContentData.type === "inventory-movement-report" && (
-            <InventoryMovementPdfContent {...printContentData.props} structuredLocations={structuredLocations} />
+            <InventoryMovementPdfContent {...printContentData.props} structuredLocations={structuredLocations} companyLogoUrl={companyProfile?.companyLogoUrl} />
           )}
           {printContentData.type === "sales-by-customer-report" && (
-            <SalesByCustomerPdfContent {...printContentData.props} />
+            <SalesByCustomerPdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
           )}
           {printContentData.type === "sales-by-product-report" && (
-            <SalesByProductPdfContent {...printContentData.props} />
+            <SalesByProductPdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
           )}
           {printContentData.type === "purchase-order-status-report" && (
-            <PurchaseOrderStatusPdfContent {...printContentData.props} />
+            <PurchaseOrderStatusPdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
           )}
           {printContentData.type === "profitability-report" && (
-            <ProfitabilityPdfContent {...printContentData.props} />
+            <ProfitabilityPdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
           )}
           {printContentData.type === "discrepancy-report" && (
-            <DiscrepancyPdfContent {...printContentData.props} structuredLocations={structuredLocations} />
+            <DiscrepancyPdfContent {...printContentData.props} structuredLocations={structuredLocations} companyLogoUrl={companyProfile?.companyLogoUrl} />
           )}
         </PrintWrapper>
       )}

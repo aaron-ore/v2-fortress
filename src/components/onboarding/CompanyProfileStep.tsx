@@ -17,13 +17,14 @@ const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
   const [companyName, setCompanyName] = useState(companyProfile?.name || "");
   const [currency, setCurrency] = useState(companyProfile?.currency || "USD");
   const [address, setAddress] = useState(companyProfile?.address || "");
+  const [companyLogoUrl, setCompanyLogoUrl] = useState(companyProfile?.companyLogoUrl || ""); // NEW: State for company logo URL
 
   const handleSave = () => {
     if (!companyName || !currency || !address) {
       showError("Please fill in all company profile fields.");
       return;
     }
-    setCompanyProfile({ name: companyName, currency, address });
+    setCompanyProfile({ name: companyName, currency, address, companyLogoUrl: companyLogoUrl.trim() || undefined }); // NEW: Pass companyLogoUrl
     onNext();
   };
 
@@ -66,6 +67,21 @@ const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
             placeholder="123 Business Rd, Suite 100, City, State, Zip"
             rows={3}
           />
+        </div>
+        {/* NEW: Company Logo URL Input and Preview */}
+        <div className="space-y-2">
+          <Label htmlFor="companyLogoUrl">Company Logo URL (Optional)</Label>
+          <Input
+            id="companyLogoUrl"
+            value={companyLogoUrl}
+            onChange={(e) => setCompanyLogoUrl(e.target.value)}
+            placeholder="e.g., https://yourcompany.com/logo.png"
+          />
+          {companyLogoUrl && (
+            <div className="mt-2 p-2 border border-border rounded-md flex items-center justify-center bg-muted/20">
+              <img src={companyLogoUrl} alt="Company Logo Preview" className="max-h-24 object-contain" />
+            </div>
+          )}
         </div>
       </div>
       <div className="flex justify-end">

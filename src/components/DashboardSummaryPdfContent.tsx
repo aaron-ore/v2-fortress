@@ -74,11 +74,11 @@ const DashboardSummaryPdfContent: React.FC<DashboardSummaryPdfContentProps> = ({
               <span>{totalUnitsOnHand.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-semibold">Low Stock Items:</span>
+              <span className={lowStockItems.length > 0 ? "font-semibold text-red-600" : "font-semibold"}>Low Stock Items:</span>
               <span className={lowStockItems.length > 0 ? "text-red-600" : ""}>{lowStockItems.length}</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-semibold">Out-of-Stock Items:</span>
+              <span className={outOfStockItems.length > 0 ? "font-semibold text-red-600" : "font-semibold"}>Out-of-Stock Items:</span>
               <span className={outOfStockItems.length > 0 ? "text-red-600" : ""}>{outOfStockItems.length}</span>
             </div>
           </div>
@@ -128,7 +128,7 @@ const DashboardSummaryPdfContent: React.FC<DashboardSummaryPdfContentProps> = ({
                 <tr key={item.id} className="border-b border-gray-200">
                   <td className="py-2 px-4 border-r border-gray-200">{item.name}</td>
                   <td className="py-2 px-4 border-r border-gray-200">{item.sku}</td>
-                  <td className="py-2 px-4 text-right border-r border-gray-200">{item.quantity}</td>
+                  <td className="py-2 px-4 text-right border-r border-gray-200 text-red-600">{item.quantity}</td>
                   <td className="py-2 px-4 text-right">{item.reorderLevel}</td>
                 </tr>
               ))}

@@ -82,27 +82,31 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
         <div className="flex items-center space-x-4">
           <MobileNav />
           <div className="flex items-center space-x-2">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="text-primary"
-            >
-              <path
-                d="M12 2L2 12L12 22L22 12L12 2Z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M12 2L2 12L12 22L22 12L12 2Z"
-                fill="currentColor"
-                fillOpacity="0.2"
-              />
-            </svg>
-            <span className="text-xl font-semibold text-foreground">Fortress</span>
+            {companyProfile?.companyLogoUrl ? ( // NEW: Display company logo if available
+              <img src={companyProfile.companyLogoUrl} alt="Company Logo" className="h-6 w-auto object-contain" />
+            ) : (
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="text-primary"
+              >
+                <path
+                  d="M12 2L2 12L12 22L22 12L12 2Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M12 2L2 12L12 22L22 12L12 2Z"
+                  fill="currentColor"
+                  fillOpacity="0.2"
+                />
+              </svg>
+            )}
+            <span className="text-xl font-semibold text-foreground">{companyProfile?.name || "Fortress"}</span>
           </div>
         </div>
 
@@ -132,9 +136,13 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
     <header className="bg-card rounded-lg shadow-sm p-4 flex items-center justify-between h-[80px] flex-shrink-0"> {/* Increased height, added padding, rounded corners, shadow */}
       <div className="flex items-center space-x-4 flex-grow">
         {/* Company Name where search bar used to be */}
-        <h2 className="text-2xl font-bold text-foreground truncate max-w-xs">
-          {companyProfile?.name || "Fortress"}
-        </h2>
+        {companyProfile?.companyLogoUrl ? ( // NEW: Display company logo if available
+          <img src={companyProfile.companyLogoUrl} alt="Company Logo" className="h-8 w-auto object-contain" />
+        ) : (
+          <h2 className="text-2xl font-bold text-foreground truncate max-w-xs">
+            {companyProfile?.name || "Fortress"}
+          </h2>
+        )}
       </div>
 
       <div className="flex items-center space-x-4">

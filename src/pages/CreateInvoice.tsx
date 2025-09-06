@@ -308,7 +308,7 @@ const CreateInvoice: React.FC = () => {
       items,
       notes,
       taxRate,
-      companyLogoUrl: localStorage.getItem("companyLogo") || undefined,
+      companyLogoUrl: companyProfile.companyLogoUrl || undefined, // NEW: Use companyProfile.companyLogoUrl
       invoiceQrCodeSvg: invoiceQrCodeSvg, // Pass QR code SVG to PDF
     };
 
