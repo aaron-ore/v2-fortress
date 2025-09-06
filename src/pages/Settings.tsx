@@ -73,6 +73,11 @@ const Settings: React.FC = () => {
   };
 
   const handleSaveCompanyProfile = async () => {
+    if (!companyName || !currency || !address) {
+      showError("Please fill in all company profile fields.");
+      return;
+    }
+
     setIsSavingCompanyProfile(true);
     let finalCompanyLogoUrl = companyLogoUrlPreview;
 
@@ -99,7 +104,7 @@ const Settings: React.FC = () => {
         currency: companyCurrency,
         companyLogoUrl: finalCompanyLogoUrl,
       }, organizationCodeInput);
-      showSuccess("Company profile updated successfully!");
+      showSuccess("Company profile updated successfully!"); // Moved here
     } catch (error: any) {
       showError(`Failed to update company profile: ${error.message}`);
     } finally {

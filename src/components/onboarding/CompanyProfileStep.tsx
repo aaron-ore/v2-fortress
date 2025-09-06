@@ -85,8 +85,13 @@ const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
       finalCompanyLogoUrl = undefined;
     }
 
-    setCompanyProfile({ name: companyName, currency, address, companyLogoUrl: finalCompanyLogoUrl || undefined });
-    onNext();
+    try {
+      await setCompanyProfile({ name: companyName, currency, address, companyLogoUrl: finalCompanyLogoUrl || undefined });
+      showSuccess("Company profile updated successfully!"); // Moved here
+      onNext(); // Only call onNext if successful
+    } catch (error: any) {
+      showError(`Failed to set up/update organization: ${error.message}`); // Use the error message from setCompanyProfile
+    }
   };
 
   return (
@@ -139,9 +144,9 @@ const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
             onChange={handleFileChange}
           />
           {companyLogoUrlPreview ? (
-            <div className="mt-2 p-2 border border-border rounded-md flex items-center justify-between bg-muted/20"> {/* Added justify-between */}
+            <div className="mt-2 p-2 border border-border rounded-md flex items-center justify-between bg-muted/20">
               <img src={companyLogoUrlPreview} alt="Company Logo Preview" className="max-h-24 object-contain" />
-              <Button variant="ghost" size="icon" onClick={handleClearLogo} aria-label="Clear logo"> {/* NEW: Clear button */}
+              <Button variant="ghost" size="icon" onClick={handleClearLogo} aria-label="Clear logo">
                 <X className="h-4 w-4 text-muted-foreground" />
               </Button>
             </div>
