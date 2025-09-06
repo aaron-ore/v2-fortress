@@ -28,9 +28,10 @@ interface HeaderProps {
   setIsNotificationSheetOpen: (isOpen: boolean) => void;
   setIsGlobalSearchDialogOpen: (isOpen: boolean) => void;
   setIsFeedbackDialogOpen: (isOpen: boolean) => void; // NEW: Add setIsFeedbackDialogOpen prop
+  className?: string; // NEW: Add className prop
 }
 
-const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobalSearchDialogOpen, setIsFeedbackDialogOpen }) => {
+const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobalSearchDialogOpen, setIsFeedbackDialogOpen, className }) => { // NEW: Destructure className
   const location = useLocation();
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
@@ -78,7 +79,7 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
 
   if (isMobile) {
     return (
-      <header className="bg-card border-b border-border px-4 py-3 flex items-center justify-between h-[60px] flex-shrink-0">
+      <header className={cn("bg-card border-b border-border px-4 py-3 flex items-center justify-between h-[60px] flex-shrink-0", className)}> {/* NEW: Apply className */}
         <div className="flex items-center space-x-4">
           <MobileNav />
           <div className="flex items-center space-x-2">
@@ -133,7 +134,7 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
 
   // Desktop Header
   return (
-    <header className="bg-card rounded-lg shadow-sm p-4 flex items-center justify-between h-[80px] flex-shrink-0"> {/* Increased height, added padding, rounded corners, shadow */}
+    <header className={cn("bg-card rounded-lg shadow-sm p-4 flex items-center justify-between h-[80px] flex-shrink-0", className)}> {/* NEW: Apply className */}
       <div className="flex items-center space-x-4 flex-grow">
         {/* Company Name where search bar used to be */}
         {companyProfile?.companyLogoUrl ? ( // NEW: Display company logo if available

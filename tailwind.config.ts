@@ -87,6 +87,9 @@ export default {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+      boxShadow: { // NEW: Custom shadow for theme glow
+        'theme-glow': '0 4px 12px var(--shadow-color)',
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

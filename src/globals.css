@@ -44,6 +44,8 @@
     --scrollbar-background: 220 5% 40%; /* Lighter scrollbar for dark themes */
 
     --radius: 0.75rem; /* Increased default radius for more rounded corners */
+
+    --shadow-color: transparent; /* Default to transparent for dark themes */
   }
 
   /* Explicitly apply dark theme variables when html has 'dark' class */
@@ -77,6 +79,8 @@
     --sidebar-toggle-background: var(--secondary);
 
     --scrollbar-background: 220 5% 40%; /* Lighter scrollbar for dark themes */
+
+    --shadow-color: transparent; /* Ensure transparent for dark themes */
   }
 
   /* Ocean Breeze Palette */
@@ -86,9 +90,11 @@
 
     --card: 0 0% 100%; /* White */
     --card-foreground: 220 10% 8%;
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.08); /* NEW: Subtle glow effect */
 
     --popover: 0 0% 100%;
     --popover-foreground: 220 10% 8%;
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.08); /* NEW: Subtle glow effect */
 
     --primary: 232 96% 87%; /* Light Sky Blue (#BFC8FC) */
     --primary-foreground: 220 10% 8%; /* Dark text for primary buttons */
@@ -118,6 +124,8 @@
     --sidebar-toggle-background: var(--secondary);
 
     --scrollbar-background: 210 20% 80%; /* Lighter scrollbar for light themes */
+
+    --shadow-color: hsl(0 0% 0% / 0.08); /* NEW: Shadow color for glow */
   }
 
   /* Sunset Glow Palette */
@@ -127,9 +135,11 @@
 
     --card: 0 0% 100%; /* White */
     --card-foreground: 220 10% 8%;
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.08); /* NEW: Subtle glow effect */
 
     --popover: 0 0% 100%;
     --popover-foreground: 220 10% 8%;
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.08); /* NEW: Subtle glow effect */
 
     --primary: 0 69% 72%; /* Coral Pink (#F08080) */
     --primary-foreground: 0 0% 100%; /* White text for primary buttons */
@@ -159,6 +169,8 @@
     --sidebar-toggle-background: var(--secondary);
 
     --scrollbar-background: 210 20% 80%; /* Lighter scrollbar for light themes */
+
+    --shadow-color: hsl(0 0% 0% / 0.08); /* NEW: Shadow color for glow */
   }
 
   /* Forest Whisper Palette */
@@ -168,9 +180,11 @@
 
     --card: 0 0% 100%; /* White */
     --card-foreground: 220 10% 8%;
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.08); /* NEW: Subtle glow effect */
 
     --popover: 0 0% 100%;
     --popover-foreground: 220 10% 8%;
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.08); /* NEW: Subtle glow effect */
 
     --primary: 168 48% 85%; /* Teal (#C7EAE4) */
     --primary-foreground: 220 10% 8%; /* Dark text for primary buttons */
@@ -200,6 +214,8 @@
     --sidebar-toggle-background: var(--secondary);
 
     --scrollbar-background: 210 20% 80%; /* Lighter scrollbar for light themes */
+
+    --shadow-color: hsl(0 0% 0% / 0.08); /* NEW: Shadow color for glow */
   }
 
   /* NEW: Emerald Theme Palette */
@@ -209,9 +225,11 @@
 
     --card: 160 20% 20%; /* Slightly lighter emerald */
     --card-foreground: 0 0% 100%;
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.08); /* NEW: Subtle glow effect */
 
     --popover: 160 20% 20%;
     --popover-foreground: 0 0% 100%;
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.08); /* NEW: Subtle glow effect */
 
     --primary: 160 60% 70%; /* Bright Emerald Green */
     --primary-foreground: 0 0% 100%; /* Changed from 220 10% 8% to White */
@@ -241,6 +259,8 @@
     --sidebar-toggle-background: var(--secondary);
 
     --scrollbar-background: 160 15% 40%; /* Lighter scrollbar for emerald theme */
+
+    --shadow-color: hsl(0 0% 0% / 0.08); /* NEW: Shadow color for glow */
   }
 
   /* NEW: Deep Forest Theme Palette */
@@ -250,9 +270,11 @@
 
     --card: 180 25% 16%; /* Very dark green-blue */
     --card-foreground: 0 0% 100%;
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.08); /* NEW: Subtle glow effect */
 
     --popover: 180 25% 16%;
     --popover-foreground: 0 0% 100%;
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.08); /* NEW: Subtle glow effect */
 
     --primary: 168 43% 27%; /* Dark teal */
     --primary-foreground: 0 0% 100%;
@@ -282,6 +304,8 @@
     --sidebar-toggle-background: var(--secondary);
 
     --scrollbar-background: 240 5% 40%; /* Lighter scrollbar for deep-forest theme */
+
+    --shadow-color: hsl(0 0% 0% / 0.08); /* NEW: Shadow color for glow */
   }
 
   /* NEW: Natural Light Theme Palette */
@@ -291,9 +315,11 @@
 
     --card: 40 29% 84%; /* E1DBCB - Very light beige */
     --card-foreground: 220 10% 8%;
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.08); /* NEW: Subtle glow effect */
 
     --popover: 40 29% 84%;
     --popover-foreground: 220 10% 8%;
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.08); /* NEW: Subtle glow effect */
 
     --primary: 80 10% 70%; /* B6BAAB - Sage green */
     --primary-foreground: 0 0% 100%; /* White text for primary buttons */
@@ -323,6 +349,8 @@
     --sidebar-toggle-background: var(--secondary);
 
     --scrollbar-background: 75 8% 75%; /* Darker than muted for contrast */
+
+    --shadow-color: hsl(0 0% 0% / 0.08); /* NEW: Shadow color for glow */
   }
 }
 

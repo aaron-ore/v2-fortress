@@ -29,6 +29,7 @@ const Layout: React.FC = () => {
             setIsNotificationSheetOpen={setIsNotificationSheetOpen}
             setIsGlobalSearchDialogOpen={setIsGlobalSearchDialogOpen}
             setIsFeedbackDialogOpen={setIsFeedbackDialogOpen} // NEW: Pass setIsFeedbackDialogOpen
+            className="shadow-theme-glow" // NEW: Apply shadow-theme-glow
           />
           <AnnouncementBar
             message="Welcome to Fortress. Let's Get You Set Up."
@@ -59,6 +60,7 @@ const Layout: React.FC = () => {
               setIsNotificationSheetOpen={setIsNotificationSheetOpen}
               setIsGlobalSearchDialogOpen={setIsGlobalSearchDialogOpen}
               setIsFeedbackDialogOpen={setIsFeedbackDialogOpen} // NEW: Pass setIsFeedbackDialogOpen
+              className="shadow-theme-glow" // NEW: Apply shadow-theme-glow
             />
             <AnnouncementBar
               message="Welcome to Fortress. Let's Get You Set Up."

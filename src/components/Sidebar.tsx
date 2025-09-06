@@ -196,6 +196,7 @@ const Sidebar: React.FC<SidebarProps> = () => { // REMOVED: Props from function 
       className={cn(
         "fixed top-0 left-0 h-screen flex flex-col bg-sidebar-background text-sidebar-foreground transition-all duration-200 z-30 border-r border-sidebar-border",
         isCollapsed ? "w-[80px]" : "w-[280px]",
+        "shadow-theme-glow" // NEW: Apply shadow-theme-glow
       )}
     >
       {/* Header: Logo and Collapse Button (when expanded) */}
