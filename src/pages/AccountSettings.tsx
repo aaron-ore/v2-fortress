@@ -8,9 +8,11 @@ import { Switch } from "@/components/ui/switch";
 import { Settings as SettingsIcon, Lock, Globe, Palette } from "lucide-react";
 import { showSuccess } from "@/utils/toast";
 import { useTheme } from "next-themes"; // Import useTheme
+import { useProfile } from "@/context/ProfileContext"; // NEW: Import useProfile
 
 const AccountSettings: React.FC = () => {
-  const { theme, setTheme } = useTheme(); // Current active theme from next-themes
+  const { theme } = useTheme(); // Current active theme from next-themes
+  const { profile } = useProfile(); // NEW: Get profile to display organization theme
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -19,18 +21,11 @@ const AccountSettings: React.FC = () => {
 
   // States to hold selected but not yet saved values for General Settings
   const [selectedLanguage, setSelectedLanguage] = useState("en"); // This will be the value in the dropdown
-  const [selectedTheme, setSelectedTheme] = useState(theme); // This will be the value in the dropdown
 
-  // Load initial values for language and theme when component mounts or theme changes externally
+  // Load initial values for language when component mounts
   useEffect(() => {
-    // For language, if it were persisted, load it here. For now, default to 'en'.
-    // const storedLanguage = localStorage.getItem("userLanguage") || "en";
-    // setSelectedLanguage(storedLanguage);
     setSelectedLanguage("en"); // Assuming 'en' is the default/current language for now
-
-    // Initialize selectedTheme with the current active theme
-    setSelectedTheme(theme);
-  }, [theme]); // Re-run if the actual theme changes externally
+  }, []);
 
   const handleChangePassword = () => {
     if (newPassword !== confirmNewPassword) {
@@ -44,15 +39,7 @@ const AccountSettings: React.FC = () => {
   };
 
   const handleSaveGeneralSettings = () => {
-    // Apply theme change if different from current active theme
-    if (selectedTheme !== theme) {
-      setTheme(selectedTheme);
-    }
-    // Apply language change (if persistence were implemented)
-    // if (selectedLanguage !== currentLanguage) { // 'currentLanguage' would be a state or context value
-    //   localStorage.setItem("userLanguage", selectedLanguage);
-    //   // Update a global language context if available
-    // }
+    // Only language setting is saved now
     showSuccess("General settings saved!");
   };
 
@@ -62,7 +49,7 @@ const AccountSettings: React.FC = () => {
   };
 
   // Determine if there are unsaved changes in General Settings
-  const hasGeneralSettingsChanges = selectedTheme !== theme || selectedLanguage !== "en"; // Compare with current/default values
+  const hasGeneralSettingsChanges = selectedLanguage !== "en"; // Compare with current/default values
 
   return (
     <div className="space-y-6">
@@ -95,20 +82,15 @@ const AccountSettings: React.FC = () => {
             <Label htmlFor="theme" className="flex items-center gap-2">
               <Palette className="h-4 w-4 text-muted-foreground" /> Theme
             </Label>
-            <Select value={selectedTheme} onValueChange={setSelectedTheme}>
-              <SelectTrigger id="theme">
-                <SelectValue placeholder="Select theme" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="dark">Dark (Default)</SelectItem>
-                <SelectItem value="ocean-breeze">Ocean Breeze</SelectItem>
-                <SelectItem value="sunset-glow">Sunset Glow</SelectItem>
-                <SelectItem value="forest-whisper">Forest Whisper</SelectItem>
-                <SelectItem value="emerald">Emerald</SelectItem>
-                <SelectItem value="deep-forest">Deep Forest</SelectItem>
-                <SelectItem value="natural-light">Natural Light</SelectItem> {/* NEW: Natural Light Theme */}
-              </SelectContent>
-            </Select>
+            <Input
+              id="theme"
+              value={profile?.organizationTheme ? profile.organizationTheme.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : "Loading..."}
+              disabled
+              className="capitalize"
+            />
+            <p className="text-xs text-muted-foreground">
+              Theme is set by your organization administrator.
+            </p>
           </div>
           <div className="md:col-span-2 flex justify-end">
             <Button onClick={handleSaveGeneralSettings} disabled={!hasGeneralSettingsChanges}>
