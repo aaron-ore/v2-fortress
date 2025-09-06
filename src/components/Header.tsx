@@ -39,7 +39,8 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
   const isMobile = useIsMobile();
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
+    // Changed to perform a local logout
+    const { error } = await supabase.auth.signOut({ scope: 'local' }); 
     if (error) {
       // If the error is specifically "Auth session missing", it means they are effectively logged out.
       // Treat it as a success for the user experience.
