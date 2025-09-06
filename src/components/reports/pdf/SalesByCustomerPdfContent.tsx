@@ -34,7 +34,7 @@ const SalesByCustomerPdfContent: React.FC<SalesByCustomerPdfContentProps> = ({
     : "All Time";
 
   const totalOverallSales = customerSales.reduce((sum, data) => sum + data.totalSales, 0);
-  const totalOverallItems = customerSales.reduce((sum, data) => sum + data.totalItems, 0);
+  const totalOverallUnits = customerSales.reduce((sum, data) => sum + data.totalItems, 0);
 
   return (
     <div className="bg-white text-gray-900 font-sans text-sm p-[20mm]">
@@ -44,7 +44,8 @@ const SalesByCustomerPdfContent: React.FC<SalesByCustomerPdfContentProps> = ({
           {companyLogoUrl ? (
             <img src={companyLogoUrl} alt="Company Logo" className="max-h-20 object-contain mb-2" style={{ maxWidth: '1.5in' }} />
           ) : (
-            <div className="text-xs text-gray-600 mb-1">YOUR LOGO</div>
+            // Removed "YOUR LOGO" placeholder
+            <div className="max-h-20 mb-2" style={{ maxWidth: '1.5in' }}></div>
           )}
           <h1 className="text-5xl font-extrabold uppercase tracking-tight mb-2">
             SALES BY CUSTOMER
@@ -78,7 +79,7 @@ const SalesByCustomerPdfContent: React.FC<SalesByCustomerPdfContentProps> = ({
             </div>
             <div className="flex justify-between">
               <span className="font-semibold">Total Items Sold:</span>
-              <span>{totalOverallItems.toLocaleString()}</span>
+              <span>{totalOverallUnits.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
               <span className="font-semibold">Number of Customers:</span>

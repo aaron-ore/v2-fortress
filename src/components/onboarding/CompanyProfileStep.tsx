@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { showError, showSuccess } from "@/utils/toast";
-import { uploadFileToSupabase } from "@/integrations/supabase/storage"; // NEW: Import uploadFileToSupabase
-import { Image as ImageIcon, Loader2 } from "lucide-react"; // NEW: Import icons
+import { uploadFileToSupabase } from "@/integrations/supabase/storage";
+import { Image as ImageIcon, Loader2, X } from "lucide-react"; // NEW: Import X icon
 
 export interface CompanyProfileStepProps { // Exported interface
   onNext: () => void;
@@ -19,9 +19,9 @@ const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
   const [companyName, setCompanyName] = useState(companyProfile?.name || "");
   const [currency, setCurrency] = useState(companyProfile?.currency || "USD");
   const [address, setAddress] = useState(companyProfile?.address || "");
-  const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null); // NEW: State for file upload
-  const [companyLogoUrlPreview, setCompanyLogoUrlPreview] = useState(companyProfile?.companyLogoUrl || ""); // NEW: State for URL preview
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false); // NEW: State for upload loading
+  const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
+  const [companyLogoUrlPreview, setCompanyLogoUrlPreview] = useState(companyProfile?.companyLogoUrl || "");
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   useEffect(() => {
     if (companyProfile) {
@@ -53,6 +53,12 @@ const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
     }
   };
 
+  const handleClearLogo = () => { // NEW: Handler to clear the logo
+    setCompanyLogoFile(null);
+    setCompanyLogoUrlPreview("");
+    showSuccess("Logo cleared. Save changes to apply.");
+  };
+
   const handleSave = async () => {
     if (!companyName || !currency || !address) {
       showError("Please fill in all company profile fields.");
@@ -64,17 +70,19 @@ const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
     if (companyLogoFile) {
       setIsUploadingLogo(true);
       try {
-        // Upload the file to Supabase Storage
         finalCompanyLogoUrl = await uploadFileToSupabase(companyLogoFile, 'company-logos', 'logos/');
         showSuccess("Company logo uploaded successfully!");
       } catch (error: any) {
         console.error("Error uploading company logo:", error);
         showError(`Failed to upload company logo: ${error.message}`);
         setIsUploadingLogo(false);
-        return; // Stop the process if upload fails
+        return;
       } finally {
         setIsUploadingLogo(false);
       }
+    } else if (companyLogoUrlPreview === "") {
+      // If preview is empty and no new file, it means user cleared the logo
+      finalCompanyLogoUrl = undefined;
     }
 
     setCompanyProfile({ name: companyName, currency, address, companyLogoUrl: finalCompanyLogoUrl || undefined });
@@ -121,7 +129,7 @@ const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
             rows={3}
           />
         </div>
-        {/* NEW: Company Logo File Input and Preview */}
+        {/* Company Logo File Input and Preview */}
         <div className="space-y-2">
           <Label htmlFor="companyLogoFile">Company Logo (Optional)</Label>
           <Input
@@ -131,8 +139,11 @@ const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
             onChange={handleFileChange}
           />
           {companyLogoUrlPreview ? (
-            <div className="mt-2 p-2 border border-border rounded-md flex items-center justify-center bg-muted/20">
+            <div className="mt-2 p-2 border border-border rounded-md flex items-center justify-between bg-muted/20"> {/* Added justify-between */}
               <img src={companyLogoUrlPreview} alt="Company Logo Preview" className="max-h-24 object-contain" />
+              <Button variant="ghost" size="icon" onClick={handleClearLogo} aria-label="Clear logo"> {/* NEW: Clear button */}
+                <X className="h-4 w-4 text-muted-foreground" />
+              </Button>
             </div>
           ) : (
             <div className="mt-2 p-4 border border-dashed border-muted-foreground/50 rounded-md flex items-center justify-center text-muted-foreground text-sm">

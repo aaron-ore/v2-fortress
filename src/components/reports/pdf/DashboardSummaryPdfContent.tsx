@@ -46,7 +46,8 @@ const DashboardSummaryPdfContent: React.FC<DashboardSummaryPdfContentProps> = ({
           {companyLogoUrl ? (
             <img src={companyLogoUrl} alt="Company Logo" className="max-h-20 object-contain mb-2" style={{ maxWidth: '1.5in' }} />
           ) : (
-            <div className="text-xs text-gray-600 mb-1">YOUR LOGO</div>
+            // Removed "YOUR LOGO" placeholder
+            <div className="max-h-20 mb-2" style={{ maxWidth: '1.5in' }}></div>
           )}
           <h1 className="text-5xl font-extrabold uppercase tracking-tight mb-2">
             DASHBOARD SUMMARY
