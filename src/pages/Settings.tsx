@@ -20,30 +20,24 @@ const Settings: React.FC = () => {
   const { profile, updateProfile, isLoadingProfile, fetchProfile, updateOrganizationTheme } = useProfile(); // NEW: Get updateOrganizationTheme
   const { companyProfile, setCompanyProfile, locations, addLocation, removeLocation } = useOnboarding();
 
-  const [companyName, setCompanyName] = useState(companyProfile?.name || "");
-  const [companyAddress, setCompanyAddress] = useState(companyProfile?.address || "");
-  const [companyCurrency, setCompanyCurrency] = useState(companyProfile?.currency || "USD");
+  const [companyName, setCompanyName] = useState(profile?.companyName || ""); // Derived from profile
+  const [companyAddress, setCompanyAddress] = useState(profile?.companyAddress || ""); // Derived from profile
+  const [companyCurrency, setCompanyCurrency] = useState(profile?.companyCurrency || "USD"); // Derived from profile
   const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
-  const [companyLogoUrlPreview, setCompanyLogoUrlPreview] = useState(companyProfile?.companyLogoUrl || "");
+  const [companyLogoUrlPreview, setCompanyLogoUrlPreview] = useState(profile?.companyLogoUrl || ""); // Derived from profile
   const [isSavingCompanyProfile, setIsSavingCompanyProfile] = useState(false);
   const [organizationCodeInput, setOrganizationCodeInput] = useState(profile?.organizationCode || "");
   const [isSavingOrganizationCode, setIsSavingOrganizationCode] = useState(false);
 
   useEffect(() => {
-    if (companyProfile) {
-      setCompanyName(companyProfile.name);
-      setCompanyAddress(companyProfile.address);
-      setCompanyCurrency(companyProfile.currency);
-      setCompanyLogoUrlPreview(companyProfile.companyLogoUrl || "");
+    if (profile) {
+      setCompanyName(profile.companyName || "");
+      setCompanyAddress(profile.companyAddress || "");
+      setCompanyCurrency(profile.companyCurrency || "USD");
+      setCompanyLogoUrlPreview(profile.companyLogoUrl || "");
+      setOrganizationCodeInput(profile.organizationCode || "");
     }
-  }, [companyProfile]);
-
-  // NEW: Update organizationCodeInput when profile.organizationCode changes
-  useEffect(() => {
-    if (profile?.organizationCode) {
-      setOrganizationCodeInput(profile.organizationCode);
-    }
-  }, [profile?.organizationCode]);
+  }, [profile]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -58,11 +52,11 @@ const Settings: React.FC = () => {
       } else {
         showError("Please select an image file (PNG, JPG, GIF, SVG).");
         setCompanyLogoFile(null);
-        setCompanyLogoUrlPreview(companyProfile?.companyLogoUrl || "");
+        setCompanyLogoUrlPreview(profile?.companyLogoUrl || ""); // Revert to profile's logo
       }
     } else {
       setCompanyLogoFile(null);
-      setCompanyLogoUrlPreview(companyProfile?.companyLogoUrl || "");
+      setCompanyLogoUrlPreview(profile?.companyLogoUrl || ""); // Revert to profile's logo
     }
   };
 
@@ -73,7 +67,7 @@ const Settings: React.FC = () => {
   };
 
   const handleSaveCompanyProfile = async () => {
-    if (!companyName || !currency || !address) {
+    if (!companyName || !companyCurrency || !companyAddress) {
       showError("Please fill in all company profile fields.");
       return;
     }
@@ -103,8 +97,8 @@ const Settings: React.FC = () => {
         address: companyAddress,
         currency: companyCurrency,
         companyLogoUrl: finalCompanyLogoUrl,
-      }, organizationCodeInput);
-      showSuccess("Company profile updated successfully!"); // Moved here
+      }, organizationCodeInput); // Pass current organizationCodeInput
+      // showSuccess("Company profile updated successfully!"); // Moved to OnboardingContext
     } catch (error: any) {
       showError(`Failed to update company profile: ${error.message}`);
     } finally {
@@ -135,7 +129,7 @@ const Settings: React.FC = () => {
         currency: companyCurrency,
         companyLogoUrl: companyLogoUrlPreview || undefined, // Pass current logo URL
       }, organizationCodeInput.trim());
-      showSuccess("Organization Code updated successfully!");
+      // showSuccess("Organization Code updated successfully!"); // Moved to OnboardingContext
     } catch (error: any) {
       showError(`Failed to update Organization Code: ${error.message}`);
     } finally {
@@ -144,10 +138,10 @@ const Settings: React.FC = () => {
   };
 
   const hasCompanyProfileChanges =
-    companyName !== (companyProfile?.name || "") ||
-    companyAddress !== (companyProfile?.address || "") ||
-    companyCurrency !== (companyProfile?.currency || "USD") ||
-    companyLogoUrlPreview !== (companyProfile?.companyLogoUrl || "") ||
+    companyName !== (profile?.companyName || "") ||
+    companyAddress !== (profile?.companyAddress || "") ||
+    companyCurrency !== (profile?.companyCurrency || "USD") ||
+    companyLogoUrlPreview !== (profile?.companyLogoUrl || "") ||
     companyLogoFile !== null;
 
   const hasOrganizationCodeChanges = organizationCodeInput !== (profile?.organizationCode || "");

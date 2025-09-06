@@ -33,7 +33,7 @@ interface OnboardingContextType {
   companyProfile: CompanyProfile | null;
   locations: Location[]; // Changed to Location[]
   markOnboardingComplete: () => void;
-  setCompanyProfile: (profile: CompanyProfile, uniqueCode?: string) => void; // Add uniqueCode parameter
+  setCompanyProfile: (profile: CompanyProfile, uniqueCode?: string) => Promise<void>; // Add uniqueCode parameter, make async
   addLocation: (location: Omit<Location, "id" | "createdAt" | "userId" | "organizationId">) => Promise<Location | null>; // Takes structured data, returns Location or null
   updateLocation: (location: Omit<Location, "createdAt" | "userId" | "organizationId">) => Promise<void>; // Takes structured data
   removeLocation: (locationId: string) => Promise<void>; // Removes by ID
@@ -52,39 +52,41 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   const { profile, isLoadingProfile, fetchProfile } = useProfile();
   const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      const storedProfile = localStorage.getItem("companyProfile");
-      return storedProfile !== null && profile?.organizationId !== null;
+      // Onboarding is considered complete if a profile exists and has an organization ID
+      return localStorage.getItem("onboarding_skipped") === "true" || (profile?.organizationId !== null && profile?.organizationId !== undefined);
     }
     return false;
   });
 
-  const [companyProfile, setCompanyProfileState] = useState<CompanyProfile | null>(() => {
-    if (typeof window !== 'undefined') {
-      const storedProfile = localStorage.getItem("companyProfile");
-      return storedProfile ? JSON.parse(storedProfile) : mockCompanyProfile;
+  // Derive companyProfile directly from the profile context
+  const companyProfile: CompanyProfile | null = React.useMemo(() => {
+    if (profile?.organizationId && profile.companyName && profile.companyAddress && profile.companyCurrency) {
+      return {
+        name: profile.companyName,
+        address: profile.companyAddress,
+        currency: profile.companyCurrency,
+        companyLogoUrl: profile.companyLogoUrl,
+      };
     }
     return null;
-  });
+  }, [profile]);
 
   const [locations, setLocations] = useState<Location[]>([]); // Now stores Location objects
 
   // Effect to check onboarding status
   useEffect(() => {
     if (!isLoadingProfile) {
-      const storedProfile = localStorage.getItem("companyProfile");
-      const hasCompanyProfile = storedProfile !== null;
-      const hasOrganizationId = profile?.organizationId !== null;
-
-      setIsOnboardingComplete(hasCompanyProfile && hasOrganizationId);
+      // If profile has an organizationId, onboarding is considered complete
+      if (profile?.organizationId) {
+        setIsOnboardingComplete(true);
+      } else {
+        // If no organizationId, check if onboarding was explicitly skipped
+        setIsOnboardingComplete(localStorage.getItem("onboarding_skipped") === "true");
+      }
     } else if (!isLoadingProfile && !profile) {
       setIsOnboardingComplete(false);
     }
   }, [profile, isLoadingProfile]);
-
-  // Effect to persist company profile to local storage
-  useEffect(() => {
-    localStorage.setItem("companyProfile", JSON.stringify(companyProfile));
-  }, [companyProfile]);
 
   // Helper function to map Supabase data to Location interface
   const mapSupabaseLocationToLocation = (data: any): Location => ({
@@ -137,11 +139,11 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
 
   const markOnboardingComplete = () => {
     setIsOnboardingComplete(true);
+    localStorage.setItem("onboarding_skipped", "true"); // Mark as skipped if user completes it
     showSuccess("Onboarding complete! Welcome to Fortress.");
   };
 
   const setCompanyProfile = async (profileData: CompanyProfile, newUniqueCode?: string) => { // Add newUniqueCode parameter
-    setCompanyProfileState(profileData);
     console.log("[OnboardingContext] setCompanyProfile called with profileData:", profileData, "newUniqueCode:", newUniqueCode);
 
     if (profile) {
@@ -157,7 +159,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
           }
           const { data: orgData, error: orgError } = await supabase
             .from('organizations')
-            .insert({ name: profileData.name, unique_code: uniqueCodeToPersist, company_logo_url: profileData.companyLogoUrl }) // NEW: Save company_logo_url
+            .insert({ name: profileData.name, address: profileData.address, currency: profileData.currency, unique_code: uniqueCodeToPersist, company_logo_url: profileData.companyLogoUrl }) // NEW: Save company_logo_url
             .select()
             .single();
 
@@ -241,6 +243,8 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
             .from('organizations')
             .update({
               name: profileData.name,
+              address: profileData.address, // NEW: Update address
+              currency: profileData.currency, // NEW: Update currency
               unique_code: uniqueCodeToPersist, // Use uniqueCodeToPersist
               default_theme: profile.organizationTheme,
               company_logo_url: profileData.companyLogoUrl, // This will be null if user cleared it

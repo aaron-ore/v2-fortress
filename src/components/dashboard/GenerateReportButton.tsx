@@ -9,6 +9,7 @@ import { showError } from "@/utils/toast";
 import { format, isWithinInterval, startOfDay, endOfDay, isValid } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
+import { useProfile } from "@/context/ProfileContext"; // NEW: Import useProfile
 
 interface GenerateReportButtonProps {
   dateRange: DateRange | undefined; // NEW: dateRange prop
@@ -19,6 +20,7 @@ const GenerateReportButton: React.FC<GenerateReportButtonProps> = ({ dateRange }
   const { companyProfile } = useOnboarding();
   const { inventoryItems } = useInventory();
   const { orders } = useOrders();
+  const { profile } = useProfile(); // NEW: Get profile from ProfileContext
 
   const filterFrom = (dateRange?.from && isValid(dateRange.from)) ? startOfDay(dateRange.from) : null;
   const filterTo = (dateRange?.to && isValid(dateRange.to)) ? endOfDay(dateRange.to) : ((dateRange?.from && isValid(dateRange.from)) ? endOfDay(dateRange.from) : null);
@@ -86,16 +88,16 @@ const GenerateReportButton: React.FC<GenerateReportButtonProps> = ({ dateRange }
   }, [filteredOrders]);
 
   const handleGenerateReport = () => {
-    if (!companyProfile) {
+    if (!profile?.companyName || !profile?.companyAddress || !profile?.companyCurrency) { // NEW: Check profile for company info
       showError("Company profile not set up. Please complete onboarding or set company details in settings.");
       return;
     }
 
     const reportProps = {
-      companyName: companyProfile.name,
-      companyAddress: companyProfile.address,
-      companyContact: companyProfile.currency, // Using currency as a generic contact for company
-      companyLogoUrl: companyProfile.companyLogoUrl || undefined, // NEW: Use companyProfile.companyLogoUrl
+      companyName: profile.companyName, // NEW: Use from profile
+      companyAddress: profile.companyAddress, // NEW: Use from profile
+      companyContact: profile.companyCurrency, // NEW: Use from profile
+      companyLogoUrl: profile.companyLogoUrl || undefined, // NEW: Use from profile
       reportDate: format(new Date(), "MMM dd, yyyy HH:mm"),
       totalStockValue,
       totalUnitsOnHand,

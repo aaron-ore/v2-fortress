@@ -8,6 +8,7 @@ import { useOnboarding } from "@/context/OnboardingContext";
 import { showError, showSuccess } from "@/utils/toast";
 import { uploadFileToSupabase } from "@/integrations/supabase/storage";
 import { Image as ImageIcon, Loader2, X } from "lucide-react"; // NEW: Import X icon
+import { useProfile } from "@/context/ProfileContext"; // NEW: Import useProfile
 
 export interface CompanyProfileStepProps { // Exported interface
   onNext: () => void;
@@ -16,6 +17,8 @@ export interface CompanyProfileStepProps { // Exported interface
 
 const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
   const { companyProfile, setCompanyProfile } = useOnboarding();
+  const { profile } = useProfile(); // NEW: Get profile from ProfileContext
+
   const [companyName, setCompanyName] = useState(companyProfile?.name || "");
   const [currency, setCurrency] = useState(companyProfile?.currency || "USD");
   const [address, setAddress] = useState(companyProfile?.address || "");
@@ -24,13 +27,20 @@ const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   useEffect(() => {
+    // Initialize state from companyProfile (derived from ProfileContext)
     if (companyProfile) {
       setCompanyName(companyProfile.name);
       setCurrency(companyProfile.currency);
       setAddress(companyProfile.address);
       setCompanyLogoUrlPreview(companyProfile.companyLogoUrl || "");
+    } else if (profile) {
+      // If companyProfile is null but profile exists, use profile's organization data if available
+      setCompanyName(profile.companyName || "");
+      setCurrency(profile.companyCurrency || "USD");
+      setAddress(profile.companyAddress || "");
+      setCompanyLogoUrlPreview(profile.companyLogoUrl || "");
     }
-  }, [companyProfile]);
+  }, [companyProfile, profile]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -87,7 +97,7 @@ const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
 
     try {
       await setCompanyProfile({ name: companyName, currency, address, companyLogoUrl: finalCompanyLogoUrl || undefined });
-      showSuccess("Company profile updated successfully!"); // Moved here
+      // showSuccess("Company profile updated successfully!"); // Moved to OnboardingContext
       onNext(); // Only call onNext if successful
     } catch (error: any) {
       showError(`Failed to set up/update organization: ${error.message}`); // Use the error message from setCompanyProfile

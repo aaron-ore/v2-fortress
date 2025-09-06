@@ -1,6 +1,7 @@
 import React from "react";
 import { format, isValid } from "date-fns"; // Import isValid
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
+import { useProfile } from "@/context/ProfileContext"; // NEW: Import useProfile
 
 interface PickListItem {
   itemName: string;
@@ -10,9 +11,9 @@ interface PickListItem {
 }
 
 interface PickingWavePdfContentProps {
-  companyName: string;
-  companyAddress: string;
-  companyContact: string;
+  // REMOVED: companyName: string;
+  // REMOVED: companyAddress: string;
+  // REMOVED: companyContact: string;
   companyLogoUrl?: string;
   waveId: string;
   pickDate: string;
@@ -22,9 +23,9 @@ interface PickingWavePdfContentProps {
 }
 
 const PickingWavePdfContent: React.FC<PickingWavePdfContentProps> = ({
-  companyName,
-  companyAddress,
-  companyContact,
+  // REMOVED: companyName,
+  // REMOVED: companyAddress,
+  // REMOVED: companyContact,
   companyLogoUrl,
   waveId,
   pickDate,
@@ -32,6 +33,7 @@ const PickingWavePdfContent: React.FC<PickingWavePdfContentProps> = ({
   pickListItems,
   pickerName,
 }) => {
+  const { profile } = useProfile(); // NEW: Get profile from ProfileContext
   const pickDateObj = parseAndValidateDate(pickDate);
 
   return (
@@ -60,10 +62,10 @@ const PickingWavePdfContent: React.FC<PickingWavePdfContentProps> = ({
       <div className="mb-8">
         <p className="font-bold mb-2">ISSUED BY:</p>
         <div className="bg-gray-50 p-3 border border-gray-200 rounded">
-          <p className="font-semibold">{companyName}</p>
-          <p>{companyContact}</p>
-          <p>{companyAddress.split('\n')[0]}</p>
-          <p>{companyAddress.split('\n')[1]}</p>
+          <p className="font-semibold">{profile?.companyName || "Your Company"}</p> {/* NEW: Use from profile */}
+          <p>{profile?.companyCurrency || "N/A"}</p> {/* NEW: Use from profile */}
+          <p>{profile?.companyAddress?.split('\n')[0] || "N/A"}</p> {/* NEW: Use from profile */}
+          <p>{profile?.companyAddress?.split('\n')[1] || ""}</p> {/* NEW: Use from profile */}
         </div>
       </div>
 

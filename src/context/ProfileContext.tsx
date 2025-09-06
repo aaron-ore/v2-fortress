@@ -17,6 +17,10 @@ export interface UserProfile {
   organizationId: string | null;
   organizationCode?: string; // NEW: Add organizationCode
   organizationTheme?: string; // NEW: Add organizationTheme
+  companyName?: string; // NEW: Add companyName
+  companyAddress?: string; // NEW: Add companyAddress
+  companyCurrency?: string; // NEW: Add companyCurrency
+  companyLogoUrl?: string; // NEW: Add companyLogoUrl
   createdAt: string;
   quickbooksAccessToken?: string; // NEW: Add QuickBooks Access Token
   quickbooksRefreshToken?: string; // NEW: Add QuickBooks Refresh Token
@@ -29,7 +33,7 @@ interface ProfileContextType {
   profile: UserProfile | null;
   allProfiles: UserProfile[];
   isLoadingProfile: boolean;
-  updateProfile: (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "organizationTheme" | "quickbooksAccessToken" | "quickbooksRefreshToken" | "quickbooksRealmId" | "shopifyAccessToken" | "shopifyStoreName">>) => Promise<void>;
+  updateProfile: (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "organizationTheme" | "companyName" | "companyAddress" | "companyCurrency" | "companyLogoUrl" | "quickbooksAccessToken" | "quickbooksRefreshToken" | "quickbooksRealmId" | "shopifyAccessToken" | "shopifyStoreName">>) => Promise<void>;
   updateUserRole: (userId: string, newRole: string, organizationId: string | null) => Promise<void>;
   updateOrganizationTheme: (theme: string) => Promise<void>; // NEW: Add updateOrganizationTheme
   fetchProfile: () => Promise<void>;
@@ -54,6 +58,10 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     
     const organizationCode = organizationData?.unique_code || undefined;
     const organizationTheme = organizationData?.default_theme || 'dark';
+    const companyName = organizationData?.name || undefined; // NEW: Map company name
+    const companyAddress = organizationData?.address || undefined; // NEW: Map company address
+    const companyCurrency = organizationData?.currency || undefined; // NEW: Map company currency
+    const companyLogoUrl = organizationData?.company_logo_url || undefined; // NEW: Map company logo URL
     const shopifyAccessToken = organizationData?.shopify_access_token || undefined; // NEW: Map shopify_access_token
     const shopifyStoreName = organizationData?.shopify_store_name || undefined; // NEW: Map shopify_store_name
 
@@ -72,6 +80,10 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
       organizationId: p.organization_id,
       organizationCode: organizationCode,
       organizationTheme: organizationTheme,
+      companyName: companyName, // NEW: Assign companyName
+      companyAddress: companyAddress, // NEW: Assign companyAddress
+      companyCurrency: companyCurrency, // NEW: Assign companyCurrency
+      companyLogoUrl: companyLogoUrl, // NEW: Assign companyLogoUrl
       createdAt: createdAtString,
       quickbooksAccessToken: p.quickbooks_access_token || undefined,
       quickbooksRefreshToken: p.quickbooks_refresh_token || undefined,
@@ -125,7 +137,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         console.log(`[ProfileContext] Fetching organization details separately for organization_id: ${userProfileData.organization_id}.`);
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
-          .select('unique_code, default_theme, shopify_access_token, shopify_store_name') // NEW: Select Shopify fields
+          .select('unique_code, default_theme, name, address, currency, company_logo_url, shopify_access_token, shopify_store_name') // NEW: Select company profile fields
           .eq('id', userProfileData.organization_id)
           .single();
 
@@ -182,7 +194,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
         if (p.organization_id) {
           const { data: orgData, error: orgError } = await supabase
             .from('organizations')
-            .select('unique_code, default_theme, shopify_access_token, shopify_store_name')
+            .select('unique_code, default_theme, name, address, currency, company_logo_url, shopify_access_token, shopify_store_name') // NEW: Select company profile fields
             .eq('id', p.organization_id)
             .single();
           if (orgError) {
@@ -219,7 +231,7 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   }, [profile?.role, profile?.organizationId, fetchAllProfiles]);
 
-  const updateProfile = async (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "organizationTheme" | "quickbooksAccessToken" | "quickbooksRefreshToken" | "quickbooksRealmId" | "shopifyAccessToken" | "shopifyStoreName">>) => {
+  const updateProfile = async (updates: Partial<Omit<UserProfile, "id" | "email" | "createdAt" | "role" | "organizationId" | "organizationCode" | "organizationTheme" | "companyName" | "companyAddress" | "companyCurrency" | "companyLogoUrl" | "quickbooksAccessToken" | "quickbooksRefreshToken" | "quickbooksRealmId" | "shopifyAccessToken" | "shopifyStoreName">>) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       showError("You must be logged in to update your profile.");

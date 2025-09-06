@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { userAndSettingsNavItems, supportAndResourcesNavItems, NavItem } from "@/lib/navigation";
 import { Input } from "@/components/ui/input";
-import { useOnboarding } from "@/context/OnboardingContext"; // NEW: Import useOnboarding
+// REMOVED: import { useOnboarding } from "@/context/OnboardingContext"; // NEW: Import useOnboarding
 
 interface HeaderProps {
   setIsNotificationSheetOpen: (isOpen: boolean) => void;
@@ -36,7 +36,7 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
-  const { companyProfile } = useOnboarding(); // NEW: Get companyProfile
+  // REMOVED: const { companyProfile } = useOnboarding(); // NEW: Get companyProfile
   const isMobile = useIsMobile();
 
   const handleLogout = async () => {
@@ -83,8 +83,8 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
         <div className="flex items-center space-x-4">
           <MobileNav />
           <div className="flex items-center space-x-2">
-            {companyProfile?.companyLogoUrl ? ( // NEW: Display company logo if available
-              <img src={companyProfile.companyLogoUrl} alt="Company Logo" className="h-6 w-auto object-contain" />
+            {profile?.companyLogoUrl ? ( // NEW: Display company logo if available
+              <img src={profile.companyLogoUrl} alt="Company Logo" className="h-6 w-auto object-contain" />
             ) : (
               <svg
                 width="24"
@@ -107,7 +107,7 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
                 />
               </svg>
             )}
-            <span className="text-xl font-semibold text-foreground">{companyProfile?.name || "Fortress"}</span>
+            <span className="text-xl font-semibold text-foreground">{profile?.companyName || "Fortress"}</span>
           </div>
         </div>
 
@@ -137,11 +137,11 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
     <header className={cn("bg-card rounded-lg shadow-sm p-4 flex items-center justify-between h-[80px] flex-shrink-0", className)}> {/* NEW: Apply className */}
       <div className="flex items-center space-x-4 flex-grow">
         {/* Company Name where search bar used to be */}
-        {companyProfile?.companyLogoUrl ? ( // NEW: Display company logo if available
-          <img src={companyProfile.companyLogoUrl} alt="Company Logo" className="h-8 w-auto object-contain" />
+        {profile?.companyLogoUrl ? ( // NEW: Display company logo if available
+          <img src={profile.companyLogoUrl} alt="Company Logo" className="h-8 w-auto object-contain" />
         ) : (
           <h2 className="text-2xl font-bold text-foreground truncate max-w-xs">
-            {companyProfile?.name || "Fortress"}
+            {profile?.companyName || "Fortress"}
           </h2>
         )}
       </div>

@@ -1,6 +1,7 @@
 import React from "react";
 import { format, isValid } from "date-fns"; // Import isValid
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
+import { useProfile } from "@/context/ProfileContext"; // NEW: Import useProfile
 
 interface InvoiceItem {
   id: number;
@@ -16,9 +17,9 @@ interface InvoicePdfContentProps {
   customerEmail?: string;
   customerAddress: string;
   customerContact?: string; // This can be phone or another contact detail
-  sellerName: string; // Your company's name
-  sellerAddress: string; // Your company's address
-  sellerContact: string; // Your company's contact (e.g., email/phone)
+  // REMOVED: sellerName: string; // Your company's name
+  // REMOVED: sellerAddress: string; // Your company's address
+  // REMOVED: sellerContact: string; // Your company's contact (e.g., email/phone)
   terms: string; // Payment Terms
   dueDate: string; // Due Date for payment
   items: InvoiceItem[];
@@ -35,9 +36,9 @@ const InvoicePdfContent: React.FC<InvoicePdfContentProps> = ({
   customerEmail,
   customerAddress,
   customerContact,
-  sellerName,
-  sellerAddress,
-  sellerContact,
+  // REMOVED: sellerName,
+  // REMOVED: sellerAddress,
+  // REMOVED: sellerContact,
   terms,
   dueDate,
   items,
@@ -46,6 +47,8 @@ const InvoicePdfContent: React.FC<InvoicePdfContentProps> = ({
   companyLogoUrl,
   invoiceQrCodeSvg, // NEW: Destructure QR code SVG
 }) => {
+  const { profile } = useProfile(); // NEW: Get profile from ProfileContext
+
   const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
   const taxAmount = subtotal * taxRate;
   const totalAmount = subtotal + taxAmount;
@@ -84,10 +87,10 @@ const InvoicePdfContent: React.FC<InvoicePdfContentProps> = ({
         <div>
           <p className="font-bold mb-2">SOLD BY:</p>
           <div className="bg-gray-50 p-3 border border-gray-200 rounded">
-            <p className="font-semibold">{sellerName}</p>
-            <p>{sellerContact}</p>
-            <p>{sellerAddress.split('\n')[0]}</p>
-            <p>{sellerAddress.split('\n')[1]}</p>
+            <p className="font-semibold">{profile?.companyName || "Your Company"}</p> {/* NEW: Use from profile */}
+            <p>{profile?.companyCurrency || "N/A"}</p> {/* NEW: Use from profile */}
+            <p>{profile?.companyAddress?.split('\n')[0] || "N/A"}</p> {/* NEW: Use from profile */}
+            <p>{profile?.companyAddress?.split('\n')[1] || ""}</p> {/* NEW: Use from profile */}
           </div>
         </div>
         <div>

@@ -1,6 +1,7 @@
 import React from "react";
 import { format, isValid } from "date-fns"; // Import isValid
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
+import { useProfile } from "@/context/ProfileContext"; // NEW: Import useProfile
 
 interface POItem {
   id: number;
@@ -16,9 +17,9 @@ interface PurchaseOrderPdfContentProps {
   supplierEmail?: string; // New: Supplier Email
   supplierAddress: string;
   supplierContact: string; // This will be used for phone if email is separate
-  recipientName: string; // This is your company's name
-  recipientAddress: string; // This is your company's address
-  recipientContact: string; // This is your company's contact (e.g., email)
+  // REMOVED: recipientName: string; // This is your company's name
+  // REMOVED: recipientAddress: string; // This is your company's address
+  // REMOVED: recipientContact: string; // This is your company's contact (e.g., email)
   terms: string; // New: Payment Terms
   dueDate: string; // New: Due Date
   items: POItem[];
@@ -35,9 +36,9 @@ const PurchaseOrderPdfContent: React.FC<PurchaseOrderPdfContentProps> = ({
   supplierEmail,
   supplierAddress,
   supplierContact,
-  recipientName,
-  recipientAddress,
-  recipientContact,
+  // REMOVED: recipientName,
+  // REMOVED: recipientAddress,
+  // REMOVED: recipientContact,
   terms,
   dueDate,
   items,
@@ -46,6 +47,8 @@ const PurchaseOrderPdfContent: React.FC<PurchaseOrderPdfContentProps> = ({
   companyLogoUrl,
   poQrCodeSvg, // NEW: Destructure QR code SVG
 }) => {
+  const { profile } = useProfile(); // NEW: Get profile from ProfileContext
+
   const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
   const taxAmount = subtotal * taxRate;
   const totalAmount = subtotal + taxAmount;
@@ -84,10 +87,10 @@ const PurchaseOrderPdfContent: React.FC<PurchaseOrderPdfContentProps> = ({
         <div>
           <p className="font-bold mb-2">FROM:</p>
           <div className="bg-gray-50 p-3 border border-gray-200 rounded">
-            <p className="font-semibold">{recipientName}</p>
-            <p>{recipientContact}</p> {/* Using recipientContact for email/phone */}
-            <p>{recipientAddress.split('\n')[0]}</p>
-            <p>{recipientAddress.split('\n')[1]}</p>
+            <p className="font-semibold">{profile?.companyName || "Your Company"}</p> {/* NEW: Use from profile */}
+            <p>{profile?.companyCurrency || "N/A"}</p> {/* NEW: Use from profile */}
+            <p>{profile?.companyAddress?.split('\n')[0] || "N/A"}</p> {/* NEW: Use from profile */}
+            <p>{profile?.companyAddress?.split('\n')[1] || ""}</p> {/* NEW: Use from profile */}
           </div>
         </div>
         <div>
@@ -146,6 +149,20 @@ const PurchaseOrderPdfContent: React.FC<PurchaseOrderPdfContentProps> = ({
             </tr>
           ))}
         </tbody>
+        <tfoot>
+          <tr className="bg-gray-100 border-t border-gray-300">
+            <td colSpan={3} className="py-2 px-4 text-right font-bold border-r border-gray-300">Subtotal</td>
+            <td className="py-2 px-4 text-right font-bold">${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          </tr>
+          <tr className="bg-gray-100">
+            <td colSpan={3} className="py-2 px-4 text-right font-bold border-r border-gray-300">Tax ({taxRate * 100}%)</td>
+            <td className="py-2 px-4 text-right font-bold">${taxAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          </tr>
+          <tr className="bg-gray-100 border-t border-gray-300">
+            <td colSpan={3} className="py-2 px-4 text-right font-bold text-lg border-r border-gray-300">TOTAL</td>
+            <td className="py-2 px-4 text-right font-bold text-lg">${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          </tr>
+        </tfoot>
       </table>
 
       {/* New container for Notes and Totals */}

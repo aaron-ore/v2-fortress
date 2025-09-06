@@ -1,6 +1,7 @@
 import React from "react";
 import { format, isValid } from "date-fns"; // Import isValid
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
+import { useProfile } from "@/context/ProfileContext"; // NEW: Import useProfile
 
 interface ForecastDataPoint {
   name: string; // Month name
@@ -12,9 +13,9 @@ interface ForecastDataPoint {
 }
 
 interface AdvancedDemandForecastPdfContentProps {
-  companyName: string;
-  companyAddress: string;
-  companyContact: string; // e.g., currency or main contact
+  // REMOVED: companyName: string;
+  // REMOVED: companyAddress: string;
+  // REMOVED: companyContact: string; // e.g., currency or main contact
   companyLogoUrl?: string;
   reportDate: string;
   forecastData: ForecastDataPoint[];
@@ -22,16 +23,15 @@ interface AdvancedDemandForecastPdfContentProps {
 }
 
 const AdvancedDemandForecastPdfContent: React.FC<AdvancedDemandForecastPdfContentProps> = ({
-  companyName,
-  companyAddress,
-  companyContact,
+  // REMOVED: companyName,
+  // REMOVED: companyAddress,
+  // REMOVED: companyContact,
   companyLogoUrl,
   reportDate,
   forecastData,
   selectedItemName,
 }) => {
-  // dateRange is not directly used here, but if it were, it would need isValid checks.
-  // For now, assuming reportDate is the primary date for this PDF.
+  const { profile } = useProfile(); // NEW: Get profile from ProfileContext
   const reportDateObj = parseAndValidateDate(reportDate);
 
   return (
@@ -61,10 +61,10 @@ const AdvancedDemandForecastPdfContent: React.FC<AdvancedDemandForecastPdfConten
       <div className="mb-8">
         <p className="font-bold mb-2">REPORT FOR:</p>
         <div className="bg-gray-50 p-3 border border-gray-200 rounded">
-          <p className="font-semibold">{companyName}</p>
-          <p>{companyContact}</p>
-          <p>{companyAddress.split('\n')[0]}</p>
-          <p>{companyAddress.split('\n')[1]}</p>
+          <p className="font-semibold">{profile?.companyName || "Your Company"}</p> {/* NEW: Use from profile */}
+          <p>{profile?.companyCurrency || "N/A"}</p> {/* NEW: Use from profile */}
+          <p>{profile?.companyAddress?.split('\n')[0] || "N/A"}</p> {/* NEW: Use from profile */}
+          <p>{profile?.companyAddress?.split('\n')[1] || ""}</p> {/* NEW: Use from profile */}
         </div>
       </div>
 

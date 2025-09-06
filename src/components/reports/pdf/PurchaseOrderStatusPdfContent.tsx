@@ -3,11 +3,12 @@ import { format, isValid } from "date-fns"; // Import isValid
 import { OrderItem } from "@/context/OrdersContext";
 import { parseAndValidateDate } from "@/utils/dateUtils"; // NEW: Import parseAndValidateDate
 import { DateRange } from "react-day-picker"; // NEW: Import DateRange
+import { useProfile } from "@/context/ProfileContext"; // NEW: Import useProfile
 
 interface PurchaseOrderStatusPdfContentProps {
-  companyName: string;
-  companyAddress: string;
-  companyContact: string;
+  // REMOVED: companyName: string;
+  // REMOVED: companyAddress: string;
+  // REMOVED: companyContact: string;
   companyLogoUrl?: string;
   reportDate: string;
   orders: OrderItem[];
@@ -16,15 +17,17 @@ interface PurchaseOrderStatusPdfContentProps {
 }
 
 const PurchaseOrderStatusPdfContent: React.FC<PurchaseOrderStatusPdfContentProps> = ({
-  companyName,
-  companyAddress,
-  companyContact,
+  // REMOVED: companyName,
+  // REMOVED: companyAddress,
+  // REMOVED: companyContact,
   companyLogoUrl,
   reportDate,
   orders,
   statusFilter,
   dateRange, // NEW: Destructure dateRange
 }) => {
+  const { profile } = useProfile(); // NEW: Get profile from ProfileContext
+
   const formattedDateRange = (dateRange?.from && isValid(dateRange.from))
     ? `${format(dateRange.from, "MMM dd, yyyy")} - ${dateRange.to && isValid(dateRange.to) ? format(dateRange.to, "MMM dd, yyyy") : format(dateRange.from, "MMM dd, yyyy")}`
     : "All Time";
@@ -61,10 +64,10 @@ const PurchaseOrderStatusPdfContent: React.FC<PurchaseOrderStatusPdfContentProps
       <div className="mb-8">
         <p className="font-bold mb-2">REPORT FOR:</p>
         <div className="bg-gray-50 p-3 border border-gray-200 rounded">
-          <p className="font-semibold">{companyName}</p>
-          <p>{companyContact}</p>
-          <p>{companyAddress.split('\n')[0]}</p>
-          <p>{companyAddress.split('\n')[1]}</p>
+          <p className="font-semibold">{profile?.companyName || "Your Company"}</p> {/* NEW: Use from profile */}
+          <p>{profile?.companyCurrency || "N/A"}</p> {/* NEW: Use from profile */}
+          <p>{profile?.companyAddress?.split('\n')[0] || "N/A"}</p> {/* NEW: Use from profile */}
+          <p>{profile?.companyAddress?.split('\n')[1] || ""}</p> {/* NEW: Use from profile */}
         </div>
       </div>
 
