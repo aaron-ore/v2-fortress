@@ -10,11 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProfile } from "@/context/ProfileContext";
 import { showError, showSuccess } from "@/utils/toast";
-import { Loader2, Palette, Settings as SettingsIcon, Image } from "lucide-react"; // NEW: Import Image icon
+import { Loader2, Palette, Settings as SettingsIcon, Image as ImageIcon } from "lucide-react"; // NEW: Import ImageIcon
 import { useOnboarding } from "@/context/OnboardingContext";
 import { Link } from "react-router-dom";
-// REMOVED: import { FileText, Plug, CheckCircle, RefreshCw, AlertTriangle } from "lucide-react";
-// REMOVED: import { supabase } from "@/lib/supabaseClient";
+import { uploadFileToSupabase } from "@/integrations/supabase/storage"; // NEW: Import uploadFileToSupabase
 
 const Settings: React.FC = () => {
   const { theme, setTheme } = useTheme(); // Current active theme from next-themes
@@ -24,7 +23,8 @@ const Settings: React.FC = () => {
   const [companyName, setCompanyName] = useState(companyProfile?.name || "");
   const [companyAddress, setCompanyAddress] = useState(companyProfile?.address || "");
   const [companyCurrency, setCompanyCurrency] = useState(companyProfile?.currency || "USD");
-  const [companyLogoUrl, setCompanyLogoUrl] = useState(companyProfile?.companyLogoUrl || ""); // NEW: State for company logo URL
+  const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null); // NEW: State for file upload
+  const [companyLogoUrlPreview, setCompanyLogoUrlPreview] = useState(companyProfile?.companyLogoUrl || ""); // NEW: State for URL preview
   const [isSavingCompanyProfile, setIsSavingCompanyProfile] = useState(false);
   const [organizationCodeInput, setOrganizationCodeInput] = useState(profile?.organizationCode || ""); // NEW: State for organization code input
   const [isSavingOrganizationCode, setIsSavingOrganizationCode] = useState(false); // NEW: State for saving organization code
@@ -34,7 +34,7 @@ const Settings: React.FC = () => {
       setCompanyName(companyProfile.name);
       setCompanyAddress(companyProfile.address);
       setCompanyCurrency(companyProfile.currency);
-      setCompanyLogoUrl(companyProfile.companyLogoUrl || ""); // NEW: Set companyLogoUrl from context
+      setCompanyLogoUrlPreview(companyProfile.companyLogoUrl || ""); // NEW: Set companyLogoUrlPreview from context
     }
   }, [companyProfile]);
 
@@ -45,15 +45,54 @@ const Settings: React.FC = () => {
     }
   }, [profile?.organizationCode]);
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const file = event.target.files[0];
+      if (file.type.startsWith("image/")) {
+        setCompanyLogoFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setCompanyLogoUrlPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        showError("Please select an image file (PNG, JPG, GIF, SVG).");
+        setCompanyLogoFile(null);
+        setCompanyLogoUrlPreview(companyProfile?.companyLogoUrl || "");
+      }
+    } else {
+      setCompanyLogoFile(null);
+      setCompanyLogoUrlPreview(companyProfile?.companyLogoUrl || "");
+    }
+  };
+
   const handleSaveCompanyProfile = async () => {
     setIsSavingCompanyProfile(true);
+    let finalCompanyLogoUrl = companyLogoUrlPreview;
+
+    if (companyLogoFile) {
+      try {
+        // Upload the file to Supabase Storage
+        finalCompanyLogoUrl = await uploadFileToSupabase(companyLogoFile, 'company-logos', 'logos/');
+        showSuccess("Company logo uploaded successfully!");
+      } catch (error: any) {
+        console.error("Error uploading company logo:", error);
+        showError(`Failed to upload company logo: ${error.message}`);
+        setIsSavingCompanyProfile(false);
+        return; // Stop the process if upload fails
+      }
+    } else if (companyLogoUrlPreview === "") {
+      // If preview is empty and no new file, it means user cleared the logo
+      finalCompanyLogoUrl = undefined;
+    }
+
     try {
       // Pass the current organizationCodeInput when saving company profile
       await setCompanyProfile({
         name: companyName,
         address: companyAddress,
         currency: companyCurrency,
-        companyLogoUrl: companyLogoUrl.trim() || undefined, // NEW: Pass companyLogoUrl
+        companyLogoUrl: finalCompanyLogoUrl, // NEW: Pass finalCompanyLogoUrl
       }, organizationCodeInput); // Pass organizationCodeInput
       showSuccess("Company profile updated successfully!");
     } catch (error: any) {
@@ -84,7 +123,7 @@ const Settings: React.FC = () => {
         name: companyName,
         address: companyAddress,
         currency: companyCurrency,
-        companyLogoUrl: companyLogoUrl.trim() || undefined, // NEW: Pass companyLogoUrl
+        companyLogoUrl: companyLogoUrlPreview || undefined, // Pass current logo URL
       }, organizationCodeInput.trim());
       showSuccess("Organization Code updated successfully!");
     } catch (error: any) {
@@ -98,7 +137,8 @@ const Settings: React.FC = () => {
     companyName !== (companyProfile?.name || "") ||
     companyAddress !== (companyProfile?.address || "") ||
     companyCurrency !== (companyProfile?.currency || "USD") ||
-    companyLogoUrl !== (companyProfile?.companyLogoUrl || ""); // NEW: Check for logo changes
+    companyLogoUrlPreview !== (companyProfile?.companyLogoUrl || "") || // NEW: Check for logo changes
+    companyLogoFile !== null; // NEW: Check if a new file is selected
 
   const hasOrganizationCodeChanges = organizationCodeInput !== (profile?.organizationCode || "");
 
@@ -144,23 +184,22 @@ const Settings: React.FC = () => {
               onChange={(e) => setCompanyAddress(e.target.value)}
             />
           </div>
-          {/* NEW: Company Logo URL Input and Preview */}
+          {/* NEW: Company Logo File Input and Preview */}
           <div className="space-y-2">
-            <Label htmlFor="companyLogoUrl">Company Logo URL (Optional)</Label>
+            <Label htmlFor="companyLogoFile">Company Logo (Optional)</Label>
             <Input
-              id="companyLogoUrl"
-              value={companyLogoUrl}
-              onChange={(e) => setCompanyLogoUrl(e.target.value)}
-              placeholder="e.g., https://yourcompany.com/logo.png"
+              id="companyLogoFile"
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
             />
-            {companyLogoUrl && (
+            {companyLogoUrlPreview ? (
               <div className="mt-2 p-2 border border-border rounded-md flex items-center justify-center bg-muted/20">
-                <img src={companyLogoUrl} alt="Company Logo Preview" className="max-h-24 object-contain" />
+                <img src={companyLogoUrlPreview} alt="Company Logo Preview" className="max-h-24 object-contain" />
               </div>
-            )}
-            {!companyLogoUrl && (
+            ) : (
               <div className="mt-2 p-4 border border-dashed border-muted-foreground/50 rounded-md flex items-center justify-center text-muted-foreground text-sm">
-                <Image className="h-5 w-5 mr-2" /> No logo URL provided
+                <ImageIcon className="h-5 w-5 mr-2" /> No logo selected
               </div>
             )}
           </div>

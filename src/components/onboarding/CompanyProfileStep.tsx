@@ -5,7 +5,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useOnboarding } from "@/context/OnboardingContext";
-import { showError } from "@/utils/toast";
+import { showError, showSuccess } from "@/utils/toast";
+import { uploadFileToSupabase } from "@/integrations/supabase/storage"; // NEW: Import uploadFileToSupabase
+import { Image as ImageIcon, Loader2 } from "lucide-react"; // NEW: Import icons
 
 export interface CompanyProfileStepProps { // Exported interface
   onNext: () => void;
@@ -17,14 +19,65 @@ const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
   const [companyName, setCompanyName] = useState(companyProfile?.name || "");
   const [currency, setCurrency] = useState(companyProfile?.currency || "USD");
   const [address, setAddress] = useState(companyProfile?.address || "");
-  const [companyLogoUrl, setCompanyLogoUrl] = useState(companyProfile?.companyLogoUrl || ""); // NEW: State for company logo URL
+  const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null); // NEW: State for file upload
+  const [companyLogoUrlPreview, setCompanyLogoUrlPreview] = useState(companyProfile?.companyLogoUrl || ""); // NEW: State for URL preview
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false); // NEW: State for upload loading
 
-  const handleSave = () => {
+  useEffect(() => {
+    if (companyProfile) {
+      setCompanyName(companyProfile.name);
+      setCurrency(companyProfile.currency);
+      setAddress(companyProfile.address);
+      setCompanyLogoUrlPreview(companyProfile.companyLogoUrl || "");
+    }
+  }, [companyProfile]);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const file = event.target.files[0];
+      if (file.type.startsWith("image/")) {
+        setCompanyLogoFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setCompanyLogoUrlPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        showError("Please select an image file (PNG, JPG, GIF, SVG).");
+        setCompanyLogoFile(null);
+        setCompanyLogoUrlPreview(companyProfile?.companyLogoUrl || "");
+      }
+    } else {
+      setCompanyLogoFile(null);
+      setCompanyLogoUrlPreview(companyProfile?.companyLogoUrl || "");
+    }
+  };
+
+  const handleSave = async () => {
     if (!companyName || !currency || !address) {
       showError("Please fill in all company profile fields.");
       return;
     }
-    setCompanyProfile({ name: companyName, currency, address, companyLogoUrl: companyLogoUrl.trim() || undefined }); // NEW: Pass companyLogoUrl
+
+    let finalCompanyLogoUrl = companyLogoUrlPreview;
+
+    if (companyLogoFile) {
+      setIsUploadingLogo(true);
+      try {
+        // Upload the file to Supabase Storage
+        finalCompanyLogoUrl = await uploadFileToSupabase(companyLogoFile, 'company-logos', 'logos/');
+        showSuccess("Company logo uploaded successfully!");
+      } catch (error: any) {
+        console.error("Error uploading company logo:", error);
+        showError(`Failed to upload company logo: ${error.message}`);
+        setIsUploadingLogo(false);
+        return; // Stop the process if upload fails
+      } finally {
+        setIsUploadingLogo(false);
+      }
+    }
+
+    setCompanyProfile({ name: companyName, currency, address, companyLogoUrl: finalCompanyLogoUrl || undefined });
     onNext();
   };
 
@@ -68,24 +121,36 @@ const CompanyProfileStep: React.FC<CompanyProfileStepProps> = ({ onNext }) => {
             rows={3}
           />
         </div>
-        {/* NEW: Company Logo URL Input and Preview */}
+        {/* NEW: Company Logo File Input and Preview */}
         <div className="space-y-2">
-          <Label htmlFor="companyLogoUrl">Company Logo URL (Optional)</Label>
+          <Label htmlFor="companyLogoFile">Company Logo (Optional)</Label>
           <Input
-            id="companyLogoUrl"
-            value={companyLogoUrl}
-            onChange={(e) => setCompanyLogoUrl(e.target.value)}
-            placeholder="e.g., https://yourcompany.com/logo.png"
+            id="companyLogoFile"
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
           />
-          {companyLogoUrl && (
+          {companyLogoUrlPreview ? (
             <div className="mt-2 p-2 border border-border rounded-md flex items-center justify-center bg-muted/20">
-              <img src={companyLogoUrl} alt="Company Logo Preview" className="max-h-24 object-contain" />
+              <img src={companyLogoUrlPreview} alt="Company Logo Preview" className="max-h-24 object-contain" />
+            </div>
+          ) : (
+            <div className="mt-2 p-4 border border-dashed border-muted-foreground/50 rounded-md flex items-center justify-center text-muted-foreground text-sm">
+              <ImageIcon className="h-5 w-5 mr-2" /> No logo selected
             </div>
           )}
         </div>
       </div>
       <div className="flex justify-end">
-        <Button onClick={handleSave}>Next</Button>
+        <Button onClick={handleSave} disabled={isUploadingLogo}>
+          {isUploadingLogo ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...
+            </>
+          ) : (
+            "Next"
+          )}
+        </Button>
       </div>
     </div>
   );
