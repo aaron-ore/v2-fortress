@@ -217,49 +217,49 @@ const AppContent = () => {
       {printContentData && (
         <PrintWrapper contentData={printContentData} onPrintComplete={resetPrintState}>
           {printContentData.type === "purchase-order" && (
-            <PurchaseOrderPdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
+            <PurchaseOrderPdfContent {...printContentData.props} />
           )}
           {printContentData.type === "invoice" && (
-            <InvoicePdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
+            <InvoicePdfContent {...printContentData.props} />
           )}
           {printContentData.type === "dashboard-summary" && (
-            <DashboardSummaryPdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
+            <DashboardSummaryPdfContent {...printContentData.props} />
           )}
           {printContentData.type === "advanced-demand-forecast" && (
-            <AdvancedDemandForecastPdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
+            <AdvancedDemandForecastPdfContent {...printContentData.props} />
           )}
           {printContentData.type === "putaway-label" && (
-            <PutawayLabelPdfContent {...printContentData.props} structuredLocations={structuredLocations} />
+            <PutawayLabelPdfContent {...printContentData.props} />
           )}
           {printContentData.type === "location-label" && (
             <LocationLabelPdfContent {...printContentData.props} />
           )}
           {printContentData.type === "picking-wave" && (
-            <PickingWavePdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
+            <PickingWavePdfContent {...printContentData.props} />
           )}
           {printContentData.type === "inventory-valuation-report" && (
-            <InventoryValuationPdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
+            <InventoryValuationPdfContent {...printContentData.props} />
           )}
           {printContentData.type === "low-stock-report" && (
-            <LowStockPdfContent {...printContentData.props} structuredLocations={structuredLocations} companyLogoUrl={companyProfile?.companyLogoUrl} />
+            <LowStockPdfContent {...printContentData.props} />
           )}
           {printContentData.type === "inventory-movement-report" && (
-            <InventoryMovementPdfContent {...printContentData.props} structuredLocations={structuredLocations} companyLogoUrl={companyProfile?.companyLogoUrl} />
+            <InventoryMovementPdfContent {...printContentData.props} />
           )}
           {printContentData.type === "sales-by-customer-report" && (
-            <SalesByCustomerPdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
+            <SalesByCustomerPdfContent {...printContentData.props} />
           )}
           {printContentData.type === "sales-by-product-report" && (
-            <SalesByProductPdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
+            <SalesByProductPdfContent {...printContentData.props} />
           )}
           {printContentData.type === "purchase-order-status-report" && (
-            <PurchaseOrderStatusPdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
+            <PurchaseOrderStatusPdfContent {...printContentData.props} />
           )}
           {printContentData.type === "profitability-report" && (
-            <ProfitabilityPdfContent {...printContentData.props} companyLogoUrl={companyProfile?.companyLogoUrl} />
+            <ProfitabilityPdfContent {...printContentData.props} />
           )}
           {printContentData.type === "discrepancy-report" && (
-            <DiscrepancyPdfContent {...printContentData.props} structuredLocations={structuredLocations} companyLogoUrl={companyProfile?.companyLogoUrl} />
+            <DiscrepancyPdfContent {...printContentData.props} />
           )}
         </PrintWrapper>
       )}

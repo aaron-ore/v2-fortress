@@ -14,7 +14,7 @@ interface PickingWavePdfContentProps {
   // REMOVED: companyName: string;
   // REMOVED: companyAddress: string;
   // REMOVED: companyContact: string;
-  companyLogoUrl?: string;
+  companyLogoUrl?: string; // Keep this prop for now, as it's passed explicitly
   waveId: string;
   pickDate: string;
   ordersInWave: { id: string; customerSupplier: string; deliveryRoute?: string }[];
@@ -26,7 +26,7 @@ const PickingWavePdfContent: React.FC<PickingWavePdfContentProps> = ({
   // REMOVED: companyName,
   // REMOVED: companyAddress,
   // REMOVED: companyContact,
-  companyLogoUrl,
+  companyLogoUrl, // Keep this prop for now, as it's passed explicitly
   waveId,
   pickDate,
   ordersInWave,
@@ -36,13 +36,17 @@ const PickingWavePdfContent: React.FC<PickingWavePdfContentProps> = ({
   const { profile } = useProfile(); // NEW: Get profile from ProfileContext
   const pickDateObj = parseAndValidateDate(pickDate);
 
+  if (!profile) {
+    return <div className="text-center text-red-500">Error: Company profile not loaded.</div>;
+  }
+
   return (
     <div className="bg-white text-gray-900 font-sans text-sm p-[20mm]">
       {/* Header */}
       <div className="flex justify-between items-start mb-8">
         <div>
-          {companyLogoUrl ? (
-            <img src={companyLogoUrl} alt="Company Logo" className="max-h-20 object-contain mb-2" style={{ maxWidth: '1.5in' }} />
+          {profile.companyLogoUrl ? ( // Use profile.companyLogoUrl
+            <img src={profile.companyLogoUrl} alt="Company Logo" className="max-h-20 object-contain mb-2" style={{ maxWidth: '1.5in' }} />
           ) : (
             // Removed "YOUR LOGO" placeholder
             <div className="max-h-20 mb-2" style={{ maxWidth: '1.5in' }}></div>
@@ -62,10 +66,10 @@ const PickingWavePdfContent: React.FC<PickingWavePdfContentProps> = ({
       <div className="mb-8">
         <p className="font-bold mb-2">ISSUED BY:</p>
         <div className="bg-gray-50 p-3 border border-gray-200 rounded">
-          <p className="font-semibold">{profile?.companyName || "Your Company"}</p> {/* NEW: Use from profile */}
-          <p>{profile?.companyCurrency || "N/A"}</p> {/* NEW: Use from profile */}
-          <p>{profile?.companyAddress?.split('\n')[0] || "N/A"}</p> {/* NEW: Use from profile */}
-          <p>{profile?.companyAddress?.split('\n')[1] || ""}</p> {/* NEW: Use from profile */}
+          <p className="font-semibold">{profile.companyName || "Your Company"}</p> {/* NEW: Use from profile */}
+          <p>{profile.companyCurrency || "N/A"}</p> {/* NEW: Use from profile */}
+          <p>{profile.companyAddress?.split('\n')[0] || "N/A"}</p> {/* NEW: Use from profile */}
+          <p>{profile.companyAddress?.split('\n')[1] || ""}</p> {/* NEW: Use from profile */}
         </div>
       </div>
 

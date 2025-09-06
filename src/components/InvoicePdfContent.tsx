@@ -25,7 +25,7 @@ interface InvoicePdfContentProps {
   items: InvoiceItem[];
   notes: string;
   taxRate: number; // e.g., 0.05 for 5%
-  companyLogoUrl?: string;
+  companyLogoUrl?: string; // Keep this prop for now, as it's passed explicitly
   invoiceQrCodeSvg?: string; // NEW: Add QR code SVG prop
 }
 
@@ -44,10 +44,14 @@ const InvoicePdfContent: React.FC<InvoicePdfContentProps> = ({
   items,
   notes,
   taxRate,
-  companyLogoUrl,
+  companyLogoUrl, // Keep this prop for now, as it's passed explicitly
   invoiceQrCodeSvg, // NEW: Destructure QR code SVG
 }) => {
   const { profile } = useProfile(); // NEW: Get profile from ProfileContext
+
+  if (!profile) {
+    return <div className="text-center text-red-500">Error: Company profile not loaded.</div>;
+  }
 
   const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
   const taxAmount = subtotal * taxRate;
@@ -61,8 +65,8 @@ const InvoicePdfContent: React.FC<InvoicePdfContentProps> = ({
       {/* Header */}
       <div className="flex justify-between items-start mb-8">
         <div>
-          {companyLogoUrl ? (
-            <img src={companyLogoUrl} alt="Company Logo" className="max-h-20 object-contain mb-2" style={{ maxWidth: '1.5in' }} />
+          {profile.companyLogoUrl ? ( // Use profile.companyLogoUrl
+            <img src={profile.companyLogoUrl} alt="Company Logo" className="max-h-20 object-contain mb-2" style={{ maxWidth: '1.5in' }} />
           ) : (
             // Removed "YOUR LOGO" placeholder
             <div className="max-h-20 mb-2" style={{ maxWidth: '1.5in' }}></div>
@@ -87,10 +91,10 @@ const InvoicePdfContent: React.FC<InvoicePdfContentProps> = ({
         <div>
           <p className="font-bold mb-2">SOLD BY:</p>
           <div className="bg-gray-50 p-3 border border-gray-200 rounded">
-            <p className="font-semibold">{profile?.companyName || "Your Company"}</p> {/* NEW: Use from profile */}
-            <p>{profile?.companyCurrency || "N/A"}</p> {/* NEW: Use from profile */}
-            <p>{profile?.companyAddress?.split('\n')[0] || "N/A"}</p> {/* NEW: Use from profile */}
-            <p>{profile?.companyAddress?.split('\n')[1] || ""}</p> {/* NEW: Use from profile */}
+            <p className="font-semibold">{profile.companyName || "Your Company"}</p> {/* NEW: Use from profile */}
+            <p>{profile.companyCurrency || "N/A"}</p> {/* NEW: Use from profile */}
+            <p>{profile.companyAddress?.split('\n')[0] || "N/A"}</p> {/* NEW: Use from profile */}
+            <p>{profile.companyAddress?.split('\n')[1] || ""}</p> {/* NEW: Use from profile */}
           </div>
         </div>
         <div>
