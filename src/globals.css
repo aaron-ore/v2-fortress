@@ -310,7 +310,7 @@
     --destructive: 0 80% 40%; /* Standard red */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 75 8% 80%; /* Slightly darker E1E2DD for better visibility */
+    --border: 40 10% 60%; /* Adjusted for better visibility: darker beige/brown */
     --input: 75 8% 90%; /* Slightly lighter E1E2DD for input fields */
     --ring: 80 10% 70%; /* Primary color */
 
