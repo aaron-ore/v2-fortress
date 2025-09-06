@@ -19,7 +19,7 @@ interface InventoryMovementPdfContentProps {
   structuredLocations: Location[]; // NEW: Add structuredLocations prop
 }
 
-const InventoryMovementPdfContent: React.FC<InventoryMovementReportProps> = ({
+const InventoryMovementPdfContent: React.FC<InventoryMovementPdfContentProps> = ({
   // REMOVED: companyName,
   // REMOVED: companyAddress,
   // REMOVED: companyContact,
