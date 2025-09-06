@@ -146,127 +146,134 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   const setCompanyProfile = async (profileData: CompanyProfile, newUniqueCode?: string) => { // Add newUniqueCode parameter
     console.log("[OnboardingContext] setCompanyProfile called with profileData:", profileData, "newUniqueCode:", newUniqueCode);
 
-    if (profile) {
-      console.log("[OnboardingContext] Current profile:", profile);
-      try {
-        let organizationIdToUse = profile.organizationId;
-        let uniqueCodeToPersist = newUniqueCode; // Use provided newUniqueCode if available
-
-        if (!profile.organizationId) {
-          console.log("[OnboardingContext] User has no organization_id. Creating new organization.");
-          if (!uniqueCodeToPersist) { // If no uniqueCode provided, generate one
-            uniqueCodeToPersist = generateUniqueCode();
-          }
-          const { data: orgData, error: orgError } = await supabase
-            .from('organizations')
-            .insert({ name: profileData.name, address: profileData.address, currency: profileData.currency, unique_code: uniqueCodeToPersist, company_logo_url: profileData.companyLogoUrl }) // NEW: Save company_logo_url
-            .select()
-            .single();
-
-          if (orgError) throw orgError;
-
-          organizationIdToUse = orgData.id;
-          console.log("[OnboardingContext] New organization created:", orgData);
-
-          const { error: profileUpdateError } = await supabase
-            .from('profiles')
-            .update({ organization_id: organizationIdToUse, role: 'admin' })
-            .eq('id', profile.id);
-
-          if (profileUpdateError) throw profileUpdateError;
-          console.log("[OnboardingContext] Profile updated with new organization_id and role.");
-
-          showSuccess(`Organization "${profileData.name}" created and assigned! You are now an admin. Your unique company code is: ${uniqueCodeToPersist}`);
-        } else {
-          console.log("[OnboardingContext] User already has organization_id:", profile.organizationId);
-
-          // --- NEW CHECK FOR DUPLICATE ORGANIZATION NAME ---
-          const { data: existingOrgWithName, error: checkNameError } = await supabase
-            .from('organizations')
-            .select('id')
-            .eq('name', profileData.name)
-            .neq('id', profile.organizationId) // Exclude the current organization
-            .single();
-
-          if (checkNameError && checkNameError.code !== 'PGRST116') { // PGRST116 means no rows found
-            throw checkNameError; // Re-throw if it's a real error, not just no match
-          }
-
-          if (existingOrgWithName) {
-            throw new Error(`An organization with the name "${profileData.name}" already exists. Please choose a different name.`);
-          }
-          // --- END NEW CHECK ---
-
-          const { data: existingOrg, error: fetchOrgError } = await supabase
-            .from('organizations')
-            .select('unique_code, company_logo_url') // Fetch existing company_logo_url
-            .eq('id', profile.organizationId)
-            .single();
-
-          if (fetchOrgError && fetchOrgError.code !== 'PGRST116') {
-            throw fetchOrgError;
-          }
-          console.log("[OnboardingContext] Existing organization fetched:", existingOrg);
-
-          if (!uniqueCodeToPersist) { // If no newUniqueCode provided, use existing or generate if missing
-            if (!existingOrg?.unique_code) {
-              uniqueCodeToPersist = generateUniqueCode();
-              console.log(`[OnboardingContext] Generated missing unique_code: ${uniqueCodeToPersist} for organization ${profile.organizationId}`);
-            } else {
-              uniqueCodeToPersist = existingOrg.unique_code;
-              console.log(`[OnboardingContext] Existing unique_code found: ${uniqueCodeToPersist}`);
-            }
-          } else {
-             console.log(`[OnboardingContext] Using provided newUniqueCode: ${uniqueCodeToPersist}`);
-          }
-
-          const oldCompanyLogoUrl = existingOrg?.company_logo_url;
-          // If the new logo URL is null/undefined/empty AND an old one existed, delete the old file
-          if ((profileData.companyLogoUrl === undefined || profileData.companyLogoUrl === null || profileData.companyLogoUrl === "") && oldCompanyLogoUrl) {
-              const oldFilePath = getStoragePathFromUrl(oldCompanyLogoUrl);
-              if (oldFilePath) {
-                  console.log(`[OnboardingContext] Deleting old logo file: ${oldFilePath}`);
-                  const { error: deleteError } = await supabase.storage
-                      .from('company-logos')
-                      .remove([oldFilePath]);
-
-                  if (deleteError) {
-                      console.error("[OnboardingContext] Error deleting old company logo from storage:", deleteError);
-                      showError(`Failed to delete old company logo from storage: ${deleteError.message}`);
-                  } else {
-                      console.log(`[OnboardingContext] Old logo file ${oldFilePath} deleted successfully.`);
-                  }
-              }
-          }
-
-          const { error: updateOrgError } = await supabase
-            .from('organizations')
-            .update({
-              name: profileData.name,
-              address: profileData.address, // NEW: Update address
-              currency: profileData.currency, // NEW: Update currency
-              unique_code: uniqueCodeToPersist, // Use uniqueCodeToPersist
-              default_theme: profile.organizationTheme,
-              company_logo_url: profileData.companyLogoUrl, // This will be null if user cleared it
-            })
-            .eq('id', profile.organizationId);
-
-          if (updateOrgError) throw updateOrgError;
-          console.log("[OnboardingContext] Organization updated with name and unique_code:", { name: profileData.name, unique_code: uniqueCodeToPersist });
-
-          showSuccess(`Company profile for "${profileData.name}" updated successfully!`);
-        }
-        
-        console.log("[OnboardingContext] Calling fetchProfile to refresh user data.");
-        await fetchProfile();
-        console.log("[OnboardingContext] fetchProfile completed after organization update.");
-
-      } catch (error: any) {
-        console.error("[OnboardingContext] Error during organization setup/update:", error);
-        showError(`Failed to set up/update organization: ${error.message}`);
-      }
-    } else {
+    if (!profile) { // Ensure profile is not null before proceeding
       console.warn("[OnboardingContext] Profile is null, cannot save company profile to Supabase.");
+      showError("User profile not loaded. Please log in again.");
+      return;
+    }
+
+    try {
+      let organizationIdToUse = profile.organizationId;
+      let uniqueCodeToPersist = newUniqueCode;
+
+      if (!profile.organizationId) {
+        console.log("[OnboardingContext] User has no organization_id. Creating new organization.");
+        if (!uniqueCodeToPersist) { // If no uniqueCode provided, generate one
+          uniqueCodeToPersist = generateUniqueCode();
+        }
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .insert({ name: profileData.name, address: profileData.address, currency: profileData.currency, unique_code: uniqueCodeToPersist, company_logo_url: profileData.companyLogoUrl }) // NEW: Save company_logo_url
+          .select()
+          .single();
+
+        if (orgError) throw orgError;
+
+        organizationIdToUse = orgData.id;
+        console.log("[OnboardingContext] New organization created:", orgData);
+
+        const { error: profileUpdateError } = await supabase
+          .from('profiles')
+          .update({ organization_id: organizationIdToUse, role: 'admin' })
+          .eq('id', profile.id);
+
+        if (profileUpdateError) throw profileUpdateError;
+        console.log("[OnboardingContext] Profile updated with new organization_id and role.");
+
+        showSuccess(`Organization "${profileData.name}" created and assigned! You are now an admin. Your unique company code is: ${uniqueCodeToPersist}`);
+      } else {
+        console.log("[OnboardingContext] User already has organization_id:", profile.organizationId);
+
+        // --- NEW CHECK FOR DUPLICATE ORGANIZATION NAME ---
+        const { data: existingOrgWithName, error: checkNameError } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('name', profileData.name)
+          .neq('id', profile.organizationId) // Exclude the current organization
+          .single();
+
+        if (checkNameError && checkNameError.code !== 'PGRST116') { // PGRST116 means no rows found
+          throw checkNameError; // Re-throw if it's a real error, not just no match
+        }
+
+        if (existingOrgWithName) {
+          throw new Error(`An organization with the name "${profileData.name}" already exists. Please choose a different name.`);
+        }
+        // --- END NEW CHECK ---
+
+        const { data: existingOrg, error: fetchOrgError } = await supabase
+          .from('organizations')
+          .select('unique_code, company_logo_url') // Fetch existing company_logo_url
+          .eq('id', profile.organizationId)
+          .single();
+
+        if (fetchOrgError && fetchOrgError.code !== 'PGRST116') {
+          throw fetchOrgError;
+        }
+        console.log("[OnboardingContext] Existing organization fetched:", existingOrg);
+
+        if (!uniqueCodeToPersist) { // If no newUniqueCode provided, use existing or generate if missing
+          if (!existingOrg?.unique_code) {
+            uniqueCodeToPersist = generateUniqueCode();
+            console.log(`[OnboardingContext] Generated missing unique_code: ${uniqueCodeToPersist} for organization ${profile.organizationId}`);
+          } else {
+            uniqueCodeToPersist = existingOrg.unique_code;
+            console.log(`[OnboardingContext] Existing unique_code found: ${uniqueCodeToPersist}`);
+          }
+        } else {
+           console.log(`[OnboardingContext] Using provided newUniqueCode: ${uniqueCodeToPersist}`);
+        }
+
+        const oldCompanyLogoUrl = existingOrg?.company_logo_url;
+        // If the new logo URL is null/undefined/empty AND an old one existed, delete the old file
+        if ((profileData.companyLogoUrl === undefined || profileData.companyLogoUrl === null || profileData.companyLogoUrl === "") && oldCompanyLogoUrl) {
+            const oldFilePath = getStoragePathFromUrl(oldCompanyLogoUrl);
+            if (oldFilePath) {
+                console.log(`[OnboardingContext] Deleting old logo file: ${oldFilePath}`);
+                const { error: deleteError } = await supabase.storage
+                    .from('company-logos')
+                    .remove([oldFilePath]);
+
+                if (deleteError) {
+                    console.error("[OnboardingContext] Error deleting old company logo from storage:", deleteError);
+                    showError(`Failed to delete old company logo from storage: ${deleteError.message}`);
+                } else {
+                    console.log(`[OnboardingContext] Old logo file ${oldFilePath} deleted successfully.`);
+                }
+            }
+        }
+
+        const updatePayload = {
+          name: profileData.name,
+          address: profileData.address,
+          currency: profileData.currency,
+          unique_code: uniqueCodeToPersist,
+          default_theme: profile.organizationTheme,
+          company_logo_url: profileData.companyLogoUrl,
+        };
+        console.log("[OnboardingContext] Update payload for organizations table:", updatePayload);
+
+        const { error: updateOrgError } = await supabase
+          .from('organizations')
+          .update(updatePayload)
+          .eq('id', profile.organizationId);
+
+        if (updateOrgError) {
+          console.error("[OnboardingContext] Error updating organization:", updateOrgError);
+          throw updateOrgError; // Throw the full error object
+        }
+        console.log("[OnboardingContext] Organization updated successfully.");
+        showSuccess(`Company profile for "${profileData.name}" updated successfully!`);
+      }
+      
+      console.log("[OnboardingContext] Calling fetchProfile to refresh user data.");
+      await fetchProfile();
+      console.log("[OnboardingContext] fetchProfile completed after organization update.");
+
+    } catch (error: any) {
+      console.error("[OnboardingContext] Error during organization setup/update:", error); // Log full error object
+      showError(`Failed to set up/update organization: ${error.message || 'Unknown error'}`);
+      throw error; // Re-throw to propagate to caller if needed
     }
   };
 
