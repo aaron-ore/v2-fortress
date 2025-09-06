@@ -27,7 +27,7 @@ const MobileDrawerContent: React.FC<MobileDrawerContentProps> = ({ onLinkClick }
   const { profile } = useProfile();
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut({ scope: 'local' }); // Changed to perform a local logout
     if (error) {
       // If the error is specifically "Auth session missing", it means they are effectively logged out.
       // Treat it as a success for the user experience.

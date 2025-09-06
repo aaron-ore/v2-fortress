@@ -41,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = () => { // REMOVED: Props from function 
       return;
     }
 
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut({ scope: 'local' }); // Changed to perform a local logout
     if (error) {
       showError("Failed to log out: " + error.message);
     } else {
