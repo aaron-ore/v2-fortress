@@ -37,7 +37,7 @@
     --sidebar-background: var(--background);
     --sidebar-foreground: var(--foreground);
     --sidebar-active-background: var(--secondary);
-    --sidebar-active-foreground: var(--primary-foreground);
+    --sidebar-active-foreground: 0 0% 100%; /* Explicitly white for dark themes */
     --sidebar-border: var(--border);
     --sidebar-toggle-background: var(--secondary);
 
@@ -72,7 +72,7 @@
     --sidebar-background: var(--background);
     --sidebar-foreground: var(--foreground);
     --sidebar-active-background: var(--secondary);
-    --sidebar-active-foreground: var(--primary-foreground);
+    --sidebar-active-foreground: 0 0% 100%; /* Explicitly white for dark themes */
     --sidebar-border: var(--border);
     --sidebar-toggle-background: var(--secondary);
 
@@ -214,7 +214,7 @@
     --popover-foreground: 0 0% 100%;
 
     --primary: 160 60% 70%; /* Bright Emerald Green */
-    --primary-foreground: 220 10% 8%; /* Dark text for primary buttons */
+    --primary-foreground: 0 0% 100%; /* Changed from 220 10% 8% to White */
 
     --secondary: 160 15% 30%; /* Muted green */
     --secondary-foreground: 0 0% 100%;
@@ -223,7 +223,7 @@
     --muted-foreground: 160 10% 60%;
 
     --accent: 160 60% 80%; /* Lighter bright emerald */
-    --accent-foreground: 220 10% 8%;
+    --accent-foreground: 0 0% 100%; /* Changed from 220 10% 8% to White */
 
     --destructive: 0 80% 60%; /* Red */
     --destructive-foreground: 0 0% 100%;
@@ -236,7 +236,7 @@
     --sidebar-background: var(--background);
     --sidebar-foreground: var(--foreground);
     --sidebar-active-background: var(--secondary);
-    --sidebar-active-foreground: var(--primary-foreground);
+    --sidebar-active-foreground: 0 0% 100%; /* Explicitly white for dark themes */
     --sidebar-border: var(--border);
     --sidebar-toggle-background: var(--secondary);
 
@@ -277,7 +277,7 @@
     --sidebar-background: var(--background);
     --sidebar-foreground: var(--foreground);
     --sidebar-active-background: var(--secondary);
-    --sidebar-active-foreground: var(--primary-foreground);
+    --sidebar-active-foreground: 0 0% 100%; /* Explicitly white for dark themes */
     --sidebar-border: var(--border);
     --sidebar-toggle-background: var(--secondary);
 
